@@ -1,0 +1,140 @@
+﻿@using MyPo.Blazor.App.Shared
+
+@attribute [Route(UIGlobals.ROUTE_LOGIN)]
+@layout Layout.Empty
+@inherits BaseComponent
+
+<!--
+* CoreUI - Free Bootstrap Admin Template
+* @version v5.1.0
+* @link https://coreui.io/product/free-bootstrap-admin-template/
+* Copyright (c) 2024 creativeLabs Łukasz Holeczek
+* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
+-->
+
+<PageTitle>Login | @AppInfo?.Name</PageTitle>
+
+<!--
+<HeadContent>
+    <title>Login | @AppInfo?.Name</title>
+</HeadContent>
+-->
+
+<div class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card-group d-block d-md-flex row">
+                    <div class="card col-md-7 p-4 mb-0">
+                        <div class="card-body">
+                            <h1>Login</h1>
+                            <p class="text-body-secondary">Sign In to your account</p>
+                            @if (!string.IsNullOrEmpty(AlertMessage))
+                            {
+                                <CAlert type="@AlertType">
+                                    @AlertMessage
+                                </CAlert>
+                            }
+                            @if (!HideLoginForm)
+                            {
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text">
+                                        <CIcon icon="cil-user" />
+                                    </span>
+                                    <input class="form-control" type="text" placeholder="Email" @bind="@Email">
+                                </div>
+                                <div class="input-group mb-4">
+                                    <span class="input-group-text">
+                                        <CIcon icon="cil-lock-locked" />
+                                    </span>
+                                    <input class="form-control" type="password" placeholder="Password" @bind="@Password">
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <button class="btn btn-primary px-4" type="button" @onclick="BtnClickLogin">Login</button>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <button class="btn btn-link px-0" type="button" @onclick="ShowModalNotImplemented">Forgot password?</button>
+                                    </div>
+                                </div>
+                            }
+							<div class="row justify-content-center mt-2">
+								<div class="btn-group" role="group" aria-label="Theme">
+									<input type="radio" class="btn-check" name="btnTheme" id="btnThemeLight" autocomplete="off" data-coreui-theme-value="light">
+									<label class="btn btn-sm btn-outline-primary" for="btnThemeLight">
+										<CIcon icon="cil-sun" className="icon icon-sm me-3" />Light
+									</label>
+
+									<input type="radio" class="btn-check" name="btnTheme" id="btnThemeDark" autocomplete="off" data-coreui-theme-value="dark">
+									<label class="btn btn-sm btn-outline-primary" for="btnThemeDark">
+										<CIcon icon="cil-moon" className="icon icon-sm me-3" />Dark
+									</label>
+
+									<input type="radio" class="btn-check" name="btnTheme" id="btnThemeAuto" autocomplete="off" data-coreui-theme-value="auto">
+									<label class="btn btn-sm btn-outline-primary" for="btnThemeAuto">
+										<CIcon icon="cil-contrast" className="icon icon-sm me-3" />Auto
+									</label>
+								</div>
+							</div>
+                        </div>
+                    </div>
+                    <div class="card col-md-5 text-white bg-primary py-5">
+                        <div class="card-body text-center">
+                            <div>
+                                <h2>Login With</h2>
+								<div class="d-grid gap-2 col-6 mx-auto">
+									@foreach (var provider in ExternalAuthProviders)
+									{
+										<button class="btn btn-lg btn-outline-light mt-1 text-start" type="button" disabled="@DisableExternalLogin" @onclick="() => BtnClickExternalLogin(provider)">
+											@if (provider.ToUpper() == "MICROSOFT")
+											{
+												<BIcon icon="bi-microsoft" />
+											}
+											else if (provider.ToUpper() == "LINKEDIN")
+											{
+												<BIcon icon="bi-linkedin" />
+											} else if (provider.ToUpper() == "GITHUB")
+											{
+												<BIcon icon="bi-github" />
+											}
+											@* else if (provider == "Google")
+											{
+												<BIcon icon="bi-google" />
+											}
+											else if (provider == "Facebook")
+											{
+												<BIcon icon="bi-facebook" />
+											}
+											else if (provider == "Twitter")
+											{
+												<BIcon icon="bi-twitter" />
+											} *@
+											else
+											{
+												<BIcon icon="bi-person" />
+											}
+											&nbsp;@provider
+										</button>
+									}
+								</div>
+                                <!--
+								<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                                <button class="btn btn-lg btn-outline-light mt-3" type="button" @onclick="() => BtnClickRegister()">Register Now!</button>
+								-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="@UIGlobals.COREUI_BASE/vendors/@@coreui/utils/js/index.js" defer></script>
+<script src="@UIGlobals.ASSET_ROOT/blazor-coreui-fix/blazor-coreui-fix.js" defer></script>
+
+<CModal @ref="@ModalDialog" title="Not Implemented" centered="false" type="warning">
+    <div class="text-center">
+        <p>This feature is not implemented yet.</p>
+        <button type="button" class="btn btn-primary" @onclick="() => ModalDialog.Close()"><CIcon icon="x-circle" /> Close</button>
+    </div>
+</CModal>

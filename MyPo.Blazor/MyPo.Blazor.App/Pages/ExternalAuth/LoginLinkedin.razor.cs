@@ -1,0 +1,68 @@
+using MyPo.Blazor.App.Helpers;
+using MyPo.Blazor.App.Services;
+using MyPo.Blazor.App.Shared;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace MyPo.Blazor.App.Pages.ExternalAuth;
+
+public partial class LoginLinkedin
+{
+	private string AlertType { get; set; } = string.Empty;
+	private string AlertMessage { get; set; } = string.Empty;
+	private bool ShowReturnLinks { get; set; } = false;
+
+	[Inject]
+	private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+	private void ShowAlert(string type, string message)
+	{
+		AlertType = type;
+		AlertMessage = message;
+		StateHasChanged();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		ShowAlert("waiting", "Logging in, please wait...");
+		await base.OnInitializedAsync();
+
+		var authData = ParseQueryParams(htmlDecode: true);
+		if (authData.TryGetValue("error", out var errorCode))
+		{
+			ShowReturnLinks = true;
+			ShowAlert("danger", $"{errorCode}: {authData["error_description"] ?? string.Empty}");
+			return;
+		}
+
+		var uriBuilder = new UriBuilder(NavigationManager.BaseUri)
+		{
+			Path = UIGlobals.ROUTE_LOGIN_EXTERNAL_LINKEDIN,
+		};
+		if ((uriBuilder.Scheme == "http" && uriBuilder.Port == 80) || (uriBuilder.Scheme == "https" && uriBuilder.Port == 443))
+		{
+			uriBuilder.Port = -1;
+		}
+		authData["redirect_uri"] = uriBuilder.ToString();
+		var apiResult = await ApiClient.ExternalLoginAsync(new MyPo.Shared.Api.ExternalAuthReq
+		{
+			Provider = "LinkedIn",
+			AuthData = authData
+		}, ApiBaseUrl);
+		if (apiResult.Status != 200)
+		{
+			ShowReturnLinks = true;
+			ShowAlert("danger", $"{apiResult.Status}: {apiResult.Message}");
+			return;
+		}
+
+		ShowAlert("success", "Authenticated successfully, logging in...⏳");
+		ShowReturnLinks = true;
+		var localStorage = ServiceProvider.GetRequiredService<LocalStorageHelper>();
+		await localStorage.SetItemAsync(Globals.LOCAL_STORAGE_KEY_AUTH_TOKEN, apiResult.Data.Token!);
+		((JwtAuthenticationStateProvider)AuthenticationStateProvider).NotifyStageChanged();
+		var returnUrl = apiResult.Data.ReturnUrl ?? UIGlobals.ROUTE_HOME;
+		NavigationManager.NavigateTo(returnUrl, forceLoad: false);
+	}
+}
