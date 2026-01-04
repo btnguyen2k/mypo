@@ -6,6 +6,18 @@ namespace MyPo.Shared.Identity;
 public class UserFetchOptions
 {
 	public static readonly UserFetchOptions DEFAULT = new();
+	public static readonly UserFetchOptions FETCH_ALL = new()
+	{
+		IncludeRoles = true,
+		IncludeClaims = true,
+		IncludeRoleClaims = true,
+	};
+	public static readonly UserFetchOptions FETCH_ROLES_AND_CLAIMS_ONLY = new()
+	{
+		IncludeRoles = true,
+		IncludeClaims = true,
+		IncludeRoleClaims = false,
+	};
 
 	/// <summary>
 	/// Fetches the roles along with the user.
@@ -57,6 +69,10 @@ public class UserFetchOptions
 public class RoleFetchOptions
 {
 	public static readonly RoleFetchOptions DEFAULT = new();
+	public static readonly RoleFetchOptions FETCH_ALL = new()
+	{
+		IncludeClaims = true,
+	};
 
 	/// <summary>
 	/// Fetches the claims along with the role.
@@ -109,6 +125,7 @@ public interface IIdentityRepository
 	ValueTask<MyPoUser?> GetUserByIDAsync(string userId, UserFetchOptions? options = default, CancellationToken cancellationToken = default);
 	ValueTask<MyPoUser?> GetUserByEmailAsync(string email, UserFetchOptions? options = default, CancellationToken cancellationToken = default);
 	ValueTask<MyPoUser?> GetUserByUserNameAsync(string userName, UserFetchOptions? options = default, CancellationToken cancellationToken = default);
+	ValueTask<IEnumerable<MyPoUser>> GetAllUsersAsync(UserFetchOptions? options = default, CancellationToken cancellationToken = default);
 	IAsyncEnumerable<MyPoUser> AllUsersAsync();
 
 	/// <summary>
@@ -256,7 +273,7 @@ public interface IIdentityRepository
 
 	ValueTask<MyPoRole?> GetRoleByIDAsync(string roleId, RoleFetchOptions? options = default, CancellationToken cancellationToken = default);
 	ValueTask<MyPoRole?> GetRoleByNameAsync(string roleName, RoleFetchOptions? options = default, CancellationToken cancellationToken = default);
-
+	ValueTask<IEnumerable<MyPoRole>> GetAllRolesAsync(RoleFetchOptions? options = default, CancellationToken cancellationToken = default);
 	IAsyncEnumerable<MyPoRole> AllRolesAsync();
 
 	/// <summary>

@@ -95,10 +95,18 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 	}
 
 	/// <inheritdoc/>
-	public IAsyncEnumerable<MyPoUser> AllUsersAsync()
+	public async ValueTask<IEnumerable<MyPoUser>> GetAllUsersAsync(UserFetchOptions? options = default, CancellationToken cancellationToken = default)
 	{
-		return Users.AsAsyncEnumerable();
+		var users = await Users.OrderBy(e => e.NormalizedUserName).ToListAsync(cancellationToken) ?? [];
+		foreach (var user in users)
+		{
+			await PostFetchUser(user, options, cancellationToken);
+		}
+		return users;
 	}
+
+	/// <inheritdoc/>
+	public IAsyncEnumerable<MyPoUser> AllUsersAsync() => Users.OrderBy(u => u.NormalizedUserName).AsAsyncEnumerable();
 
 	/// <inheritdoc/>
 	public async ValueTask<MyPoUser?> UpdateAsync(MyPoUser user, CancellationToken cancellationToken = default)
@@ -130,6 +138,7 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 		var roles = await UserRoles
 			.Where(ur => ur.UserId == user.Id)
 			.Join(Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r)
+			.OrderBy(ur => ur.NormalizedName)
 			.ToListAsync(cancellationToken) ?? [];
 		foreach (var role in roles)
 		{
@@ -143,6 +152,7 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 	{
 		return await UserClaims
 			.Where(uc => uc.UserId == user.Id)
+			.OrderBy(uc => uc.ClaimType).OrderBy(uc => uc.ClaimValue)
 			.ToListAsync(cancellationToken) ?? [];
 	}
 
@@ -311,7 +321,18 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 	}
 
 	/// <inheritdoc/>
-	public IAsyncEnumerable<MyPoRole> AllRolesAsync() => Roles.AsAsyncEnumerable();
+	public async ValueTask<IEnumerable<MyPoRole>> GetAllRolesAsync(RoleFetchOptions? options = null, CancellationToken cancellationToken = default)
+	{
+		var roles = await Roles.OrderBy(r => r.NormalizedName).ToListAsync(cancellationToken) ?? [];
+		foreach (var role in roles)
+		{
+			await PostFetchRole(role, options, cancellationToken);
+		}
+		return roles;
+	}
+
+	/// <inheritdoc/>
+	public IAsyncEnumerable<MyPoRole> AllRolesAsync() => Roles.OrderBy(r => r.NormalizedName).AsAsyncEnumerable();
 
 	/// <inheritdoc/>
 	public async ValueTask<MyPoRole?> UpdateAsync(MyPoRole role, CancellationToken cancellationToken = default)
@@ -335,6 +356,7 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 	{
 		return await RoleClaims
 			.Where(rc => rc.RoleId == role.Id)
+			.OrderBy(rc => rc.ClaimType).OrderBy(rc => rc.ClaimValue)
 			.ToListAsync(cancellationToken) ?? [];
 	}
 

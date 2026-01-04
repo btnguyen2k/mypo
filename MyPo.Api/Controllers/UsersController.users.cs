@@ -17,12 +17,10 @@ public partial class UsersController
 	[Authorize(Policy = BuiltinPolicies.POLICY_NAME_ADMIN_ROLE_OR_USER_MANAGER)]
 	public async Task<ActionResult<ApiResp<IEnumerable<UserResp>>>> GetAllUsers()
 	{
-		var users = IdentityRepository.AllUsersAsync();
+		var users = await IdentityRepository.GetAllUsersAsync(UserFetchOptions.FETCH_ROLES_AND_CLAIMS_ONLY);
 		var result = new List<UserResp>();
-		await foreach (var user in users)
+		foreach (var user in users)
 		{
-			user.Roles ??= await IdentityRepository.GetRolesAsync(user);
-			user.Claims ??= await IdentityRepository.GetClaimsAsync(user);
 			result.Add(UserResp.BuildFromUser(user));
 		}
 		return ResponseOk(result);
