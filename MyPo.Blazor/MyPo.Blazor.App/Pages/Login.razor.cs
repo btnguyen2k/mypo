@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace MyPo.Blazor.App.Pages;
 
@@ -29,10 +30,14 @@ public partial class Login : BaseComponent
 	private string AlertType { get; set; } = "info";
 	private string AlertMessage { get; set; } = string.Empty;
 	private bool HideLoginForm { get; set; } = false;
+	private bool DisabledLocalAuth { get; set; } = false;
 	private bool DisableExternalLogin { get; set; } = false;
 
 	[Inject]
 	private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+	[Inject]
+	private IConfiguration AppConfig { get; set; } = default!;
 
 	private void CloseAlert()
 	{
@@ -56,7 +61,7 @@ public partial class Login : BaseComponent
 		// FIXME: NOT TO USE THIS IN PRODUCTION!
 		// for demo purpose: automatically fill the login form
 		// if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
-		if (firstRender && HostEnvironment.Equals(EnvironmentName.Development, StringComparison.InvariantCultureIgnoreCase))
+		if (!DisabledLocalAuth && firstRender && HostEnvironment.Equals(EnvironmentName.Development, StringComparison.InvariantCultureIgnoreCase))
 		{
 			Logger.LogCritical("DevMode - automatically fill the login form. DO NOT USE THIS IN PRODUCTION!");
 			var seedUsers = await ApiClient.GetSeedUsersAsync(ApiBaseUrl);
@@ -67,12 +72,18 @@ public partial class Login : BaseComponent
 
 			ShowAlert("info", "DevMode: Automatically fill login info.");
 		}
+		if (DisabledLocalAuth)
+		{
+			ShowAlert("warning", "Local authentication is disabled. Please use external login providers.");
+		}
 	}
 
 	protected override async Task OnInitializedAsync()
 	{
 		ShowAlert("waiting", "Please wait...");
 		await base.OnInitializedAsync();
+
+		DisabledLocalAuth = AppConfig.GetValue<bool>("Authentication:DisabledLocalAuth");
 
 		var providers = await ApiClient.GetExternalAuthProvidersAsync(ApiBaseUrl);
 		ExternalAuthProviders = providers.Data ?? [];
@@ -138,6 +149,11 @@ public partial class Login : BaseComponent
 
 	private async void BtnClickLogin()
 	{
+		if (DisabledLocalAuth)
+		{
+			ShowAlert("danger", "Local authentication is disabled. Please use external login providers.");
+			return;
+		}
 		if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
 		{
 			ShowAlert("warning", "Please enter Email and Password to login.");
