@@ -45,10 +45,12 @@ public partial class Login : BaseComponent
 		StateHasChanged();
 	}
 
-	private void ShowAlert(string type, string message)
+	private bool alertIntact = true;
+	private void ShowAlert(string type, string message, bool setAlertIntactFlag = false)
 	{
 		AlertType = type;
 		AlertMessage = message;
+		alertIntact = setAlertIntactFlag;
 		StateHasChanged();
 	}
 
@@ -58,10 +60,17 @@ public partial class Login : BaseComponent
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
+
+		if (firstRender && DisabledLocalAuth)
+		{
+			ShowAlert("warning", "Local authentication is disabled. Please use external login providers.");
+			return;
+		}
+
 		// FIXME: NOT TO USE THIS IN PRODUCTION!
 		// for demo purpose: automatically fill the login form
 		// if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
-		if (!DisabledLocalAuth && firstRender && HostEnvironment.Equals(EnvironmentName.Development, StringComparison.InvariantCultureIgnoreCase))
+		if (firstRender && HostEnvironment.Equals(EnvironmentName.Development, MyPo.Shared.Globals.StringComparison))
 		{
 			Logger.LogCritical("DevMode - automatically fill the login form. DO NOT USE THIS IN PRODUCTION!");
 			var seedUsers = await ApiClient.GetSeedUsersAsync(ApiBaseUrl);
@@ -72,23 +81,19 @@ public partial class Login : BaseComponent
 
 			ShowAlert("info", "DevMode: Automatically fill login info.");
 		}
-		if (DisabledLocalAuth)
-		{
-			ShowAlert("warning", "Local authentication is disabled. Please use external login providers.");
-		}
 	}
 
 	protected override async Task OnInitializedAsync()
 	{
-		ShowAlert("waiting", "Please wait...");
+		ShowAlert("waiting", "Please wait...", setAlertIntactFlag: true);
 		await base.OnInitializedAsync();
 
-		DisabledLocalAuth = AppConfig.GetValue<bool>("Authentication:DisabledLocalAuth");
+		DisabledLocalAuth = AppConfig.GetValue<bool>(MyPo.Shared.Globals.CONF_AUTH_DISABLED_LOCAL_AUTH);
 
 		var providers = await ApiClient.GetExternalAuthProvidersAsync(ApiBaseUrl);
 		ExternalAuthProviders = providers.Data ?? [];
 
-		CloseAlert();
+		if (alertIntact) CloseAlert();
 	}
 
 	private async void BtnClickExternalLogin(string provider)

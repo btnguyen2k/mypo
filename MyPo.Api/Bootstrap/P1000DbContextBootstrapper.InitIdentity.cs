@@ -11,7 +11,6 @@ using System.Reflection;
 namespace MyPo.Api.Bootstrap;
 
 sealed class IdentityInitializer(
-	IConfiguration appConfig,
 	IServiceProvider serviceProvider,
 	ILogger<IdentityInitializer> logger,
 	IWebHostEnvironment environment) : BackgroundService
