@@ -49,6 +49,7 @@ sealed class IdentityInitializer(
 			{
 				var config = new ConfigurationBuilder()
 					.AddJsonStream(stream!)
+					.AddEnvironmentVariables()
 					.Build();
 
 				await SeedRoles(dbContext, config, nameNormalizer, cancellationToken);
@@ -71,7 +72,7 @@ sealed class IdentityInitializer(
 	private async Task SeedRoles(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding roles...");
-		var seedRoles = config.GetSection("Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
+		var seedRoles = config.GetSection("SeedingData:Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
 		foreach (var r in seedRoles)
 		{
 			if (string.IsNullOrEmpty(r.Name))
@@ -125,7 +126,7 @@ sealed class IdentityInitializer(
 	private async Task SeedUsers(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, IdentityOptions identityOptions, IPasswordHasher<MyPoUser> passwordHasher, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding user accounts...");
-		var seedUsers = config.GetSection("Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
+		var seedUsers = config.GetSection("SeedingData:Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
 		foreach (var u in seedUsers)
 		{
 			if (string.IsNullOrEmpty(u.UserName) || string.IsNullOrEmpty(u.Email))

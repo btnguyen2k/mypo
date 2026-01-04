@@ -6,6 +6,7 @@
 # Custom ignore rules
 data/**/sqlite/*.dbs
 [Tt]emp/
+run_local.*
 
 # User-specific files
 *.rsuser
