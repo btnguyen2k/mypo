@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using MyPo.Shared.Api;
+using System.Reflection;
 
 namespace MyPo.Api.Bootstrap;
 
@@ -15,6 +16,7 @@ sealed class IdentityInitializer(
 	ILogger<IdentityInitializer> logger,
 	IWebHostEnvironment environment) : BackgroundService
 {
+	private const string SEEDING_DATA_FILE = "Resources.seeding.json";
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Initializing identity data...");
@@ -33,11 +35,28 @@ sealed class IdentityInitializer(
 			var nameNormalizer = scope.ServiceProvider.GetRequiredService<ILookupNormalizer>()
 				?? throw new InvalidOperationException("LookupNormalizer service is not registered.");
 
-			await SeedRoles(dbContext, nameNormalizer, cancellationToken);
+			var assembly = Assembly.GetExecutingAssembly();
+			var resourceName = $"{assembly.GetName().Name}.{SEEDING_DATA_FILE}";
+			var availableResources = assembly.GetManifestResourceNames();
+            if (Array.IndexOf(availableResources, resourceName) == -1)
+            {
+				return;
+            }
 
-			var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<MyPoUser>>();
-			var identityOptions = scope.ServiceProvider.GetRequiredService<IOptions<IdentityOptions>>()?.Value!;
-			await SeedUsers(dbContext, nameNormalizer, identityOptions, passwordHasher, cancellationToken);
+			logger.LogInformation("Found seeding data '{resourceName}', creating seeding data...", resourceName);
+
+			using (var stream = assembly.GetManifestResourceStream(resourceName))
+			{
+				var config = new ConfigurationBuilder()
+					.AddJsonStream(stream!)
+					.Build();
+
+				await SeedRoles(dbContext, config, nameNormalizer, cancellationToken);
+
+				var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<MyPoUser>>();
+				var identityOptions = scope.ServiceProvider.GetRequiredService<IOptions<IdentityOptions>>()?.Value!;
+				await SeedUsers(dbContext, config, nameNormalizer, identityOptions, passwordHasher, cancellationToken);
+			}
 		}
 	}
 
@@ -49,10 +68,10 @@ sealed class IdentityInitializer(
 		public IEnumerable<string>? Claims { get; set; }
 	}
 
-	private async Task SeedRoles(IIdentityRepository dbContext, ILookupNormalizer lookupNormalizer, CancellationToken cancellationToken)
+	private async Task SeedRoles(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding roles...");
-		var seedRoles = appConfig.GetSection("SeedingData:Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
+		var seedRoles = config.GetSection("Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
 		foreach (var r in seedRoles)
 		{
 			if (string.IsNullOrEmpty(r.Name))
@@ -103,10 +122,10 @@ sealed class IdentityInitializer(
 		public IEnumerable<string>? Claims { get; set; }
 	}
 
-	private async Task SeedUsers(IIdentityRepository dbContext, ILookupNormalizer lookupNormalizer, IdentityOptions identityOptions, IPasswordHasher<MyPoUser> passwordHasher, CancellationToken cancellationToken)
+	private async Task SeedUsers(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, IdentityOptions identityOptions, IPasswordHasher<MyPoUser> passwordHasher, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding user accounts...");
-		var seedUsers = appConfig.GetSection("SeedingData:Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
+		var seedUsers = config.GetSection("Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
 		foreach (var u in seedUsers)
 		{
 			if (string.IsNullOrEmpty(u.UserName) || string.IsNullOrEmpty(u.Email))

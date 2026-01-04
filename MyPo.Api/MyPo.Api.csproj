@@ -18,11 +18,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\\seeding.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MyPo.Libs\MyPo.Libs.csproj" />
     <ProjectReference Include="..\MyPo.Shared\MyPo.Shared.csproj" />
     <ProjectReference Include="..\MyPo.Shared.EF\MyPo.Shared.EF.csproj" />
     <ProjectReference Include="..\MyPo.Shared.Api\MyPo.Shared.Api.csproj" />
-    <ProjectReference Include="..\MyPo.Demo.Api\MyPo.Demo.Api.csproj" />
   </ItemGroup>
 
 </Project>
