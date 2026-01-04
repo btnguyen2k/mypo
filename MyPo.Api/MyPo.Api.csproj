@@ -26,6 +26,7 @@
     <ProjectReference Include="..\MyPo.Shared\MyPo.Shared.csproj" />
     <ProjectReference Include="..\MyPo.Shared.EF\MyPo.Shared.EF.csproj" />
     <ProjectReference Include="..\MyPo.Shared.Api\MyPo.Shared.Api.csproj" />
+    <ProjectReference Include="..\MyPo.Portfolio.Api\MyPo.Portfolio.Api.csproj" />
   </ItemGroup>
 
 </Project>

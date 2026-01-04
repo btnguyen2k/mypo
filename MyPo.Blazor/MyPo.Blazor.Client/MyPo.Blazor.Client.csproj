@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\MyPo.Shared\MyPo.Shared.csproj" />
     <ProjectReference Include="..\MyPo.Blazor.App\MyPo.Blazor.App.csproj" />
     <ProjectReference Include="..\..\MyPo.Libs\MyPo.Libs.csproj" />
+    <ProjectReference Include="..\MyPo.Blazor.Portfolio.App\MyPo.Blazor.Portfolio.App.csproj" />
   </ItemGroup>
 
 </Project>
