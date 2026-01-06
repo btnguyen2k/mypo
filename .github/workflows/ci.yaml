@@ -97,6 +97,7 @@ jobs:
           CONTAINER=$(docker run -d \
             --name test \
             -p 1234:8080 \
+            -e Databases__Identity__Type=Memory -e Databases__Portfolio__Type=Memory \
             --platform ${{ matrix.platforms }} \
             test)
           sleep 30 # Wait for the container to start and bootstrap, increase wait time if needed
