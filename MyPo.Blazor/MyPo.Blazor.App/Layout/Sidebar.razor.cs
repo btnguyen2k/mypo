@@ -39,7 +39,7 @@ public partial class Sidebar
 		}
 	}
 
-	private class SidebarEntryComparer : IComparer<SidebarEntry>
+	private sealed class SidebarEntryComparer : IComparer<SidebarEntry>
 	{
 		public static readonly SidebarEntryComparer Instance = new();
 

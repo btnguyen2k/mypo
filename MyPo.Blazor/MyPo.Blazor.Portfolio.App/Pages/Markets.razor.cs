@@ -10,12 +10,10 @@ public partial class Markets : BasePage
 	private IEnumerable<MarketDefinitionResp>? MarketsList { get; set; }
 	private Dictionary<string, MarketDefinitionResp>? MarketsMap { get; set; }
 	private MarketDefinitionResp? SelectedMarket { get; set; }
-	private int _marketIndex = 0;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
-		_marketIndex = 0;
 		if (firstRender)
 		{
 			HideUI = true;
