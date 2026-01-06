@@ -11,12 +11,12 @@ public partial class PortfolioController
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MARKETS)]
-	public ActionResult<ApiResp<List<MarketDefinitionResp>>> GetMarkets()
+	public ActionResult<ApiResp<List<MarketDefResp>>> GetMarkets()
 	{
-		var result = new List<MarketDefinitionResp>();
+		var result = new List<MarketDefResp>();
 		 foreach (var market in Globals.Markets)
 		{
-			result.Add(MarketDefinitionResp.BuildFrom(market));
+			result.Add(MarketDefResp.BuildFrom(market));
 		}
 		return ResponseOk(result);
 	}

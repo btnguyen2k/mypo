@@ -3,11 +3,11 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
 
-public struct MarketDefinitionResp
+public struct MarketDefResp
 {
-	public static MarketDefinitionResp BuildFrom(MarketDefinition md)
+	public static MarketDefResp BuildFrom(MarketDef md)
 	{
-		return new MarketDefinitionResp
+		return new MarketDefResp
 		{
 			Id = md.Id,
 			Code = md.Code,

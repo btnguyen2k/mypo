@@ -4,10 +4,10 @@ namespace MyPo.Portfolio.Api;
 
 public sealed class Globals
 {
-	private sealed class MarketDefinitionComparer : IComparer<MarketDefinition>
+	private sealed class MarketDefComparer : IComparer<MarketDef>
 	{
-		public static readonly MarketDefinitionComparer Instance = new();
-		public int Compare(MarketDefinition? x, MarketDefinition? y)
+		public static readonly MarketDefComparer Instance = new();
+		public int Compare(MarketDef? x, MarketDef? y)
 		{
 			if (x == null && y == null) return 0;
 			if (x == null) return -1;
@@ -17,5 +17,5 @@ public sealed class Globals
 		}
 	}
 
-	public static readonly ISet<MarketDefinition> Markets = new SortedSet<MarketDefinition>(MarketDefinitionComparer.Instance);
+	public static readonly ISet<MarketDef> Markets = new SortedSet<MarketDef>(MarketDefComparer.Instance);
 }

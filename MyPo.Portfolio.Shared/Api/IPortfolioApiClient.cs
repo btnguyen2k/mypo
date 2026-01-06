@@ -13,5 +13,5 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<IEnumerable<MarketDefinitionResp>>> GetMarketsAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<IEnumerable<MarketDefResp>>> GetMarketsAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }

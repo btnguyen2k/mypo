@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace MyPo.Portfolio.Shared.Models;
 
-public sealed class MarketDefinition
+public sealed class MarketDef
 {
 	public string Id { get; set; } = string.Empty;
 
@@ -22,9 +22,9 @@ public sealed class MarketDefinition
 
 	public List<DayOfWeek> TradingDays { get; set; } = [];
 
-	public static MarketDefinition Build(string id, IConfigurationSection data)
+	public static MarketDef Build(string id, IConfigurationSection data)
 	{
-		var marketDef = data.Get<MarketDefinition>()!;
+		var marketDef = data.Get<MarketDef>()!;
 		marketDef.Id = id;
 		marketDef.OpenHour = TimeOnly.Parse(data["trading_hours:open"] ?? "00:00");
 		marketDef.CloseHour = TimeOnly.Parse(data["trading_hours:close"] ?? "23:59");

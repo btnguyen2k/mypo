@@ -10,7 +10,7 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IEnumerable<MarketDefinitionResp>>> GetMarketsAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<IEnumerable<MarketDefResp>>> GetMarketsAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
 	{
 		using var httpResult = await BuildAndSendRequestAsync(
 			requestHttpClient,
@@ -19,6 +19,6 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IEnumerable<MarketDefinitionResp>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<IEnumerable<MarketDefResp>>(httpResult, cancellationToken);
 	}
 }

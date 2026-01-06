@@ -33,7 +33,7 @@ public class MarketsBootstrapper
 			Globals.Markets.Clear();
 			foreach (var marketData in marketsData.GetChildren())
 			{
-				var marketDef = MarketDefinition.Build(marketData.Key, marketData);
+				var marketDef = MarketDef.Build(marketData.Key, marketData);
 				Globals.Markets.Add(marketDef);
 			}
 		}

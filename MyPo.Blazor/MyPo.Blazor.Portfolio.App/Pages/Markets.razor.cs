@@ -7,9 +7,9 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class Markets : BasePage
 {
-	private IEnumerable<MarketDefinitionResp>? MarketsList { get; set; }
-	private Dictionary<string, MarketDefinitionResp>? MarketsMap { get; set; }
-	private MarketDefinitionResp? SelectedMarket { get; set; }
+	private IEnumerable<MarketDefResp>? MarketsList { get; set; }
+	private Dictionary<string, MarketDefResp>? MarketsMap { get; set; }
+	private MarketDefResp? SelectedMarket { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
