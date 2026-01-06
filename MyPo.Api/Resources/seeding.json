@@ -14,6 +14,11 @@
           "Name": "Account Admin",
           "Description": "Account Administrator with permissions to manage users and roles.",
           "Claims": [ "#role:user-manager", "#perm:create-user", "#perm:delete-user", "#perm:modify-user" ]
+        },
+        {
+          "Name": "Portfolio Manager",
+          "Description": "Person who have permissions to manage portfolio.",
+          "Claims": [ "#role:portfolio-manager" ]
         }
       ],
       "Users": [
