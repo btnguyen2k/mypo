@@ -1,0 +1,57 @@
+{
+  "NASDAQ": {
+    "name": "NASDAQ Stock Market",
+    "country": "USA",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "trading_hours": {
+      "open": "09:30",
+      "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "NYSE": {
+    "name": "New York Stock Exchange",
+    "country": "USA",
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "trading_hours": {
+      "open": "09:30",
+      "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "ASX": {
+    "name": "Australian Securities Exchange",
+    "country": "Australia",
+    "currency": "AUD",
+    "timezone": "Australia/Sydney",
+    "trading_hours": {
+      "open": "10:00",
+      "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "HOSE": {
+    "name": "Ho Chi Minh Stock Exchange",
+    "country": "Vietnam",
+    "currency": "VND",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "trading_hours": {
+      "open": "09:00",
+      "close": "15:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "HNX": {
+    "name": "Hanoi Stock Exchange",
+    "country": "Vietnam",
+    "currency": "VND",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "trading_hours": {
+      "open": "09:00",
+      "close": "15:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  }
+}

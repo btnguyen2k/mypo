@@ -12,10 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.22" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\MyPo.Blazor.App\MyPo.Blazor.App.csproj" />
     <ProjectReference Include="..\..\MyPo.Portfolio.Shared\MyPo.Portfolio.Shared.csproj" />
   </ItemGroup>
 
