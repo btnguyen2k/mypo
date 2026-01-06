@@ -70,7 +70,7 @@ public partial class Sidebar
 		_sidebarMenu.Add(entry);
 	}
 
-	private static SidebarEntry[] Entries
+	public static IEnumerable<SidebarEntry> Entries
 	{
 		get
 		{
