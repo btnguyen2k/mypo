@@ -11,7 +11,7 @@ namespace MyPo.Portfolio.Api;
 public class MarketsBootstrapper
 {
 	private const string MARKETS_DATA_FILE = "Resources.markets.json";
-	public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
+	public static void ConfigureBuilder(WebApplicationBuilder _)
 	{
 		var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<MarketsBootstrapper>();
 		logger.LogInformation("Loading pre-defined markets data...");

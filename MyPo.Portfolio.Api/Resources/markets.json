@@ -1,5 +1,6 @@
 {
-  "NASDAQ": {
+  "us-nasdaq": {
+    "code": "NASDAQ",
     "name": "NASDAQ Stock Market",
     "country": "USA",
     "currency": "USD",
@@ -10,7 +11,8 @@
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
-  "NYSE": {
+  "us-nyse": {
+    "code": "NYSE",
     "name": "New York Stock Exchange",
     "country": "USA",
     "currency": "USD",
@@ -21,7 +23,8 @@
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
-  "ASX": {
+  "au-asx": {
+    "code": "ASX",
     "name": "Australian Securities Exchange",
     "country": "Australia",
     "currency": "AUD",
@@ -32,7 +35,8 @@
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
-  "HOSE": {
+  "vn-hose": {
+    "code": "HOSE",
     "name": "Ho Chi Minh Stock Exchange",
     "country": "Vietnam",
     "currency": "VND",
@@ -43,7 +47,8 @@
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
-  "HNX": {
+  "vn-hnx": {
+    "code": "HNX",
     "name": "Hanoi Stock Exchange",
     "country": "Vietnam",
     "currency": "VND",

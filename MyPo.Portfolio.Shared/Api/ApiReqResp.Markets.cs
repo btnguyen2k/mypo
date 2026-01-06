@@ -9,6 +9,7 @@ public struct MarketDefinitionResp
 	{
 		return new MarketDefinitionResp
 		{
+			Id = md.Id,
 			Code = md.Code,
 			Name = md.Name,
 			Country = md.Country,
@@ -19,6 +20,9 @@ public struct MarketDefinitionResp
 			TradingDays = [.. md.TradingDays.Select(d => d.ToString())]
 		};
 	}
+
+	[JsonPropertyName("id")]
+	public string Id { get; set; }
 
 	[JsonPropertyName("code")]
 	public string Code { get; set; }
