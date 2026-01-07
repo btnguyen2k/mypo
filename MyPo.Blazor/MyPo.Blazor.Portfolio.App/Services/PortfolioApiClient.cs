@@ -8,7 +8,6 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 {
 	public PortfolioApiClient(HttpClient httpClient) : base(httpClient) { }
 
-
 	/// <inheritdoc/>
 	public async Task<ApiResp<IEnumerable<MarketDefResp>>> GetMarketsAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
 	{
@@ -20,5 +19,31 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 			cancellationToken
 		);
 		return await ReadAndCloseResponseAsync<IEnumerable<MarketDefResp>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<PortfolioRecResp>>> GetMyPortfolioAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Get, baseUrl, IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO,
+			authToken,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<PortfolioRecResp>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<PortfolioRecResp>> CreatePortfolioAsync(CreateOrUpdatePortfolioRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Post, baseUrl, IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO,
+			authToken,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<PortfolioRecResp>(httpResult, cancellationToken);
 	}
 }

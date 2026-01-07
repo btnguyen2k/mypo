@@ -29,4 +29,16 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	}
 
 	/*----------------------------------------------------------------------*/
+
+	public DbSet<PortfolioRec> PortfolioRecStore { get; set; }
+
+	/// <inheritdoc />
+	public async ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+	{
+		return await PortfolioRecStore.AsNoTracking()
+			.Where(pr => pr.OwnerUserId == userId)
+			.OrderBy(pr => pr.Name)
+			.ToListAsync(cancellationToken)
+			.ConfigureAwait(false);
+	}
 }

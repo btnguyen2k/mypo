@@ -8,6 +8,11 @@ public sealed class PortfolioRec : Entity<string>
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
 
 	/// <summary>
+	/// Id of the parent portfolio, if any.
+	/// </summary>
+	public string? ParentId { get; set; }
+
+	/// <summary>
 	/// Portfolio's friendly name.
 	/// </summary>
 	public string Name { get; set; } = default!;
@@ -15,7 +20,7 @@ public sealed class PortfolioRec : Entity<string>
 	/// <summary>
 	/// Portfolio's description.
 	/// </summary>
-	public string Description { get; set; } = string.Empty;
+	public string? Description { get; set; }
 
 	/// <summary>
 	/// Base currency for the portfolio.

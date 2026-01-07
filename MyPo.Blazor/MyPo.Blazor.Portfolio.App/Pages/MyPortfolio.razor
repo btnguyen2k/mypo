@@ -1,0 +1,108 @@
+﻿@using MyPo.Blazor.App.Shared;
+@using MyPo.Blazor.Portfolio.App.Shared;
+@using MyPo.Blazor.App.Layout;
+@using MyPo.Portfolio.Shared.Identity;
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView>
+    <Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">@PAGE_TITLE</h4>
+                </div>
+                <div class="card-body">
+					@if (!string.IsNullOrEmpty(AlertMessage))
+					{
+						<CAlert type="@AlertType">
+							@AlertMessage
+						</CAlert>
+					}
+					@if (!HideUI)
+					{
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<ChildContent Context="context1">
+								<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
+							</ChildContent>
+						</AuthorizeView>
+					}
+                    @if (MyPortfolioList != null && !HideUI)
+                    {
+                        <table class="table table-sm table-bordered border-primary table-striped table-hover">
+                            <thead>
+                                <tr>
+									<th scope="col" class="text-center">#</th>
+                                    <th scope="col" class="text-center">Currency</th>
+                                    <th scope="col" class="text-center">Name</th>
+									<th scope="col" class="text-center">Investment</th>
+									<th scope="col" class="text-center">Return</th>
+									<th scope="col" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+							@if (MyPortfolioList.Count() == 0)
+							{
+								<tbody>
+									<tr>
+										<td colspan="6" class="text-center">No data found.</td>
+									</tr>
+								</tbody>
+							}
+							else
+							{
+								<tbody>
+									@foreach (var item in MyPortfolioList)
+									{
+										<tr>
+											@*
+											<td>@item.Code - @item.Name</td>
+											<td>@item.Country (@item.Currency)</td>
+											<td class="text-center">@item.OpenHour - @item.CloseHour</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Monday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Tuesday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Wednesday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Thursday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Friday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Saturday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Sunday")>=0 ? "✅" : "-")</td>
+											 *@
+										</tr>
+									}
+								</tbody>
+							}
+                        </table>
+                    }
+					@if (!HideUI)
+					{
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<ChildContent Context="context2">
+								<button class="btn btn-primary btn-sm float-end" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
+							</ChildContent>
+						</AuthorizeView>
+					}
+                </div>
+            </div>
+        </div>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "My Portfolio";
+}
