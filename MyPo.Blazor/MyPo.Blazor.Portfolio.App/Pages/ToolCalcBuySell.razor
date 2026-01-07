@@ -1,0 +1,149 @@
+﻿@using MyPo.Blazor.App.Shared;
+@using MyPo.Blazor.Portfolio.App.Shared;
+@using MyPo.Blazor.App.Layout;
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView>
+    <Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-warning border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">Buy With Fee</h4>
+                </div>
+                <div class="card-body">
+					<div class="row">
+						<div class="col-md-4 col-sm-12">
+							<label for="buyUnitPrice" class="form-label">Unit Price:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" min="0.001" step="0.1" class="form-control" id="buyUnitPrice" placeholder="Enter unit price" @bind="buyUnitPrice" />
+							</div>
+						</div>
+						<div class="col-md-4 col-sm-12">
+							<label for="buyNumUnits" class="form-label">Num Units:</label>
+							<div class="input-group input-group-sm">
+								<input type="number" min="1" step="1" class="form-control" id="buyNumUnits" placeholder="Units to buy" @bind="buyNumUnits" />
+							</div>
+						</div>
+						<div class="col-md-4 col-sm-12">
+							<label for="buyFee" class="form-label">Tx Fee:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" min="0.001" step="0.1" class="form-control" id="buyFee" placeholder="Transaction fee" @bind="buyFee" />
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-12">
+							<label for="buyTotalCost" class="form-label">Total Cost:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" class="form-control" id="buyTotalCost" disabled value="@(buyUnitPrice*buyNumUnits+buyFee)"/>
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-6">
+							<label for="buyEffectiveUnitPrice" class="form-label">Effective Unit Price:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" class="form-control" id="buyEffectiveUnitPrice" disabled value="@(buyNumUnits>0?(buyUnitPrice*buyNumUnits+buyFee)/buyNumUnits:0)"/>
+							</div>
+						</div>
+						<div class="col-6">
+							<label for="buyBreakEven" class="form-label">Break-even:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">%</span>
+								<input type="number" step="0.01" class="form-control" id="buyBreakEven" disabled value="@(buyUnitPrice>0?(((buyUnitPrice*buyNumUnits+buyFee)/buyNumUnits)/buyUnitPrice-1)*100.00m:0)"/>
+							</div>
+						</div>
+					</div>
+                </div>
+            </div>
+
+			<div class="card border-top-success border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">Sell With Fee</h4>
+                </div>
+                <div class="card-body">
+					<div class="row">
+						<div class="col-md-4 col-sm-12">
+							<label for="sellUnitPrice" class="form-label">Unit Price:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" min="0.001" step="0.1" class="form-control" id="sellUnitPrice" placeholder="Enter unit price" @bind="sellUnitPrice" />
+							</div>
+						</div>
+						<div class="col-md-4 col-sm-12">
+							<label for="sellNumUnits" class="form-label">Num Units:</label>
+							<div class="input-group input-group-sm">
+								<input type="number" min="1" step="1" class="form-control" id="sellNumUnits" placeholder="Units to sell" @bind="sellNumUnits" />
+							</div>
+						</div>
+						<div class="col-md-4 col-sm-12">
+							<label for="sellFee" class="form-label">Tx Fee:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" min="0.001" step="0.1" class="form-control" id="sellFee" placeholder="Transaction fee" @bind="sellFee" />
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-12">
+							<label for="sellTotalReturn" class="form-label">Total Return:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" class="form-control" id="sellTotalReturn" disabled value="@(sellUnitPrice*sellNumUnits-sellFee)"/>
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-6">
+							<label for="sellEffectiveUnitPrice" class="form-label">Effective Unit Price:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">$</span>
+								<input type="number" class="form-control" id="sellEffectiveUnitPrice" disabled value="@(sellNumUnits>0?(sellUnitPrice*sellNumUnits-sellFee)/sellNumUnits:0)"/>
+							</div>
+						</div>
+						<div class="col-6">
+							<label for="sellBreakEven" class="form-label">Break-even:</label>
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">%</span>
+								<input type="number" step="0.01" class="form-control" id="sellBreakEven" disabled value="@(sellUnitPrice>0?(((sellUnitPrice*sellNumUnits-sellFee)/sellNumUnits)/sellUnitPrice-1)*100.00m:0)"/>
+							</div>
+						</div>
+					</div>
+                </div>
+            </div>
+        </div>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "Buy/Sell Calculator";
+	private decimal buyUnitPrice { get; set; } = 100.00m;
+	private int buyNumUnits { get; set; } = 10;
+	private decimal buyFee { get; set; } = 5.00m;
+
+	private decimal sellUnitPrice { get; set; } = 120.00m;
+	private int sellNumUnits { get; set; } = 5;
+	private decimal sellFee { get; set; } = 5.00m;
+}
