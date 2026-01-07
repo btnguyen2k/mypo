@@ -38,7 +38,14 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await PortfolioRecStore.AsNoTracking()
 			.Where(pr => pr.OwnerUserId == userId)
 			.OrderBy(pr => pr.Name)
-			.ToListAsync(cancellationToken)
-			.ConfigureAwait(false);
+			.ToListAsync(cancellationToken);
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<PortfolioRec> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	{
+		var entry = await PortfolioRecStore.AddAsync(portfolioRec, cancellationToken);
+		await SaveChangesAsync(cancellationToken);
+		return entry.Entity;
 	}
 }

@@ -46,10 +46,10 @@
 					}
                     @if (MyPortfolioList != null && !HideUI)
                     {
-                        <table class="table table-sm table-bordered border-primary table-striped table-hover">
+                        <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
                             <thead>
                                 <tr>
-									<th scope="col" class="text-center">#</th>
+									<th scope="col" class="text-center">&nbsp;</th>
                                     <th scope="col" class="text-center">Currency</th>
                                     <th scope="col" class="text-center">Name</th>
 									<th scope="col" class="text-center">Investment</th>
@@ -71,18 +71,26 @@
 									@foreach (var item in MyPortfolioList)
 									{
 										<tr>
+											<td class="text-center"><BIcon icon="diagram-2" /></td>
+											<td class="text-center">@item.Currency</td>
+											<td>
+												@item.Name
+												<p class="small">@item.Description</p>
+											</td>
+											<td>-</td>
+											<td>-</td>
+											<td>-</td>
 											@*
-											<td>@item.Code - @item.Name</td>
-											<td>@item.Country (@item.Currency)</td>
-											<td class="text-center">@item.OpenHour - @item.CloseHour</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Monday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Tuesday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Wednesday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Thursday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Friday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Saturday")>=0 ? "✅" : "-")</td>
-											<td class="text-center">@(item.TradingDays.IndexOf("Sunday")>=0 ? "✅" : "-")</td>
-											 *@
+											<td>
+												<button class="btn btn-sm btn-primary me-1" title="View Details" @onclick="(()=>BtnClickViewDetails(item.Id))"><CIcon icon="cil-magnifying-glass" /></button>
+												<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+													<ChildContent Context="context3">
+														<button class="btn btn-sm btn-secondary me-1" title="Edit Portfolio" @onclick="(()=>BtnClickEdit(item.Id))"><CIcon icon="cil-pencil" /></button>
+														<button class="btn btn-sm btn-danger" title="Delete Portfolio" @onclick="(()=>BtnClickDelete(item.Id))"><CIcon icon="cil-trash" /></button>
+													</ChildContent>
+												</AuthorizeView>
+											</td>
+											*@
 										</tr>
 									}
 								</tbody>

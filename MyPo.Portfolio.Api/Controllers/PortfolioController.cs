@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api.Controller;
 using MyPo.Shared.Api.Services;
 using MyPo.Shared.Identity;
@@ -15,12 +16,14 @@ public partial class PortfolioController : ApiBaseController
 	private readonly IAuthenticatorAsync? AuthenticatorAsync;
 	private readonly IIdentityRepository IdentityRepository;
 	private readonly IdentityOptions IdentityOptions;
+	private readonly IPortfolioRepository PortfolioRepository;
 
 	public PortfolioController(
 		IIdentityRepository identityRepository,
 		IOptions<IdentityOptions> identityOptions,
 		IAuthenticator? authenticator,
-		IAuthenticatorAsync? authenticatorAsync)
+		IAuthenticatorAsync? authenticatorAsync,
+		IPortfolioRepository portfolioRepository)
 	{
 		ArgumentNullException.ThrowIfNull(identityRepository, nameof(identityRepository));
 		ArgumentNullException.ThrowIfNull(identityOptions, nameof(identityOptions));
@@ -28,11 +31,13 @@ public partial class PortfolioController : ApiBaseController
 		{
 			throw new ArgumentNullException("No authenticator defined.");
 		}
+		ArgumentNullException.ThrowIfNull(portfolioRepository, nameof(portfolioRepository));
 
 		IdentityRepository = identityRepository;
 		IdentityOptions = identityOptions.Value;
 		Authenticator = authenticator;
 		AuthenticatorAsync = authenticatorAsync;
+		PortfolioRepository = portfolioRepository;
 	}
 
 	private async Task<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()
