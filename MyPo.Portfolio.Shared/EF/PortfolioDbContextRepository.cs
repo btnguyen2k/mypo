@@ -2,6 +2,7 @@
 using MyPo.Shared.Cache;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.EF;
 
@@ -30,6 +31,13 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 
 	/*----------------------------------------------------------------------*/
 
+	private static T PrepareForUpdate<T>(T t) where T : Entity<string>
+	{
+		t.UpdatedAt = DateTime.UtcNow;
+		t.ConcurrencyStamp = Guid.NewGuid().ToString();
+		return t;
+	}
+
 	public DbSet<PortfolioRec> PortfolioRecStore { get; set; }
 
 	/// <inheritdoc />
@@ -47,5 +55,24 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		var entry = await PortfolioRecStore.AddAsync(portfolioRec, cancellationToken);
 		await SaveChangesAsync(cancellationToken);
 		return entry.Entity;
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<PortfolioRec?> UpdatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	{
+		var existingEntry = await PortfolioRecStore.FindAsync([portfolioRec.Id], cancellationToken);
+		if (existingEntry == null)
+		{
+			return null;
+		}
+		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(portfolioRec));
+		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<bool> DeletePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	{
+		PortfolioRecStore.Remove(portfolioRec);
+		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 }

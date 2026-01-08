@@ -11,8 +11,7 @@ public partial class MyPortfolio : BasePage
 	private IEnumerable<PortfolioRecResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioRecResp>? MyInactivePortfolioList { get; set; }
 
-	// private IEnumerable<PortfolioRecResp>? MyPortfolioList { get; set; }
-	// private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
+	private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
 	private PortfolioRecResp? SelectedPortfolio { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -27,12 +26,12 @@ public partial class MyPortfolio : BasePage
 			if (result.Status == 200)
 			{
 				HideUI = false;
-				var portfolioTree = PortfolioUtils.BuildPortfolioTree(result.Data ?? []);
+				var allPortfolios = result.Data ?? [];
+				MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
+				var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
 				MyActivePortfolioList = portfolioTree.Where(p => p.IsActive);
 				MyInactivePortfolioList = portfolioTree.Where(p => !p.IsActive);
 
-				// MyPortfolioList = result.Data ?? [];
-				// MyPortfolioMap = MyPortfolioList.ToDictionary(p => p.Id);
 				var queryParameters = QueryHelpers.ParseQuery(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
 				var alertMessage = queryParameters.TryGetValue("alertMessage", out var alertMessageValue) ? alertMessageValue.ToString() : string.Empty;
 				var alertType = queryParameters.TryGetValue("alertType", out var alertTypeValue) ? alertTypeValue.ToString() : string.Empty;
@@ -65,8 +64,8 @@ public partial class MyPortfolio : BasePage
 
 	private void BtnClickModify(string pid)
 	{
-		// SelectedApp = AppMap?[appId];
-		// NavigationManager.NavigateTo(DemoUIGlobals.ROUTE_APPLICATIONS_MODIFY.Replace("{id}", appId, StringComparison.OrdinalIgnoreCase));
+		SelectedPortfolio = MyPortfolioMap?[pid];
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{id}", pid, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickDelete(string pid)

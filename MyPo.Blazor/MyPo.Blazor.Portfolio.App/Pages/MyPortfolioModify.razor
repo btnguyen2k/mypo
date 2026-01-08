@@ -1,0 +1,87 @@
+@using MyPo.Blazor.App.Layout
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+	<li class="breadcrumb-item">
+        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+	<Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">@PAGE_TITLE</h4>
+                </div>
+                <div class="card-body">
+					@if (!string.IsNullOrEmpty(AlertMessage))
+					{
+						<CAlert type="@AlertType">
+							@AlertMessage
+						</CAlert>
+					}
+					@if (!HideUI)
+					{
+						<form>
+							<div class="row align-items-center mb-2">
+								<div class="col-md-7 col-sm-12">
+									<div class="form-floating">
+										<input type="text" class="form-control" id="name" placeholder="Name" @bind-value="Name">
+										<label for="name">Name (*)</label>
+									</div>
+								</div>
+								<div class="col-md-3 col-sm-12">
+									<div class="form-floating">
+										<input type="text" class="form-control" id="currency" placeholder="Currency" @bind-value="Currency">
+										<label for="currency">Currency (*)</label>
+									</div>
+								</div>
+								<div class="col-md-2 col-sm-12">
+									<div class="form-check">
+										<input type="checkbox" class="form-check-input" id="isActive" @bind="IsActive" />
+										<label class="form-check-label" for="isActive">Active</label>
+									</div>
+								</div>
+							</div>
+							<div class="form-floating mb-2">
+								<textarea type="text" class="form-control" id="desc" placeholder="Description" style="height: 256px"
+									@bind-value:event="oninput" @bind-value="Description"></textarea>
+								<label for="desc">Description</label>
+							</div>
+						</form>
+					}
+                </div>
+				<div class="card-footer">
+					<button class="btn btn-secondary" @onclick="(()=>BtnClickCancel())"><CIcon icon="cil-x-circle" /> Cancel</button>
+					@if (!HideUI)
+					{
+						<button class="btn btn-primary ms-2" @onclick="(()=>BtnClickSave())"><CIcon icon="cil-save" /> Save</button>
+					}
+				</div>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "Modify Portfolio";
+}

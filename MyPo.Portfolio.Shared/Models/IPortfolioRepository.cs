@@ -11,4 +11,14 @@ public interface IPortfolioRepository
 	/// Creates a new portfolio record.
 	/// </summary>
 	public ValueTask<PortfolioRec> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Updates an existing portfolio record.
+	/// </summary>
+	public ValueTask<PortfolioRec?> UpdatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Deletes an existing portfolio record.
+	/// </summary>
+	public ValueTask<bool> DeletePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
 }

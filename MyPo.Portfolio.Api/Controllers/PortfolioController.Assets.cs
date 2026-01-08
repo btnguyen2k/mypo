@@ -76,4 +76,44 @@ public partial class PortfolioController
 
 		return ResponseOk(PortfolioRecResp.BuildFrom(portfolioRec));
 	}
+
+	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
+	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioRecReq req)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		// validate name and currency
+		if (string.IsNullOrWhiteSpace(req.Name))
+		{
+			return ResponseNoData(400, "Name is required.");
+		}
+		if (string.IsNullOrWhiteSpace(req.Currency))
+		{
+			return ResponseNoData(400, "Currency is required.");
+		}
+
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(404, "Portfolio not found.");
+		}
+
+		existingPortfolio.IsActive = req.IsActive;
+		existingPortfolio.Name = req.Name.Trim();
+		existingPortfolio.Description = req.Description?.Trim() ?? string.Empty;
+		existingPortfolio.Currency = req.Currency.ToUpper().Trim();
+
+		existingPortfolio = await PortfolioRepository.UpdatePortfolioAsync(existingPortfolio);
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(500, $"Failed to update portfolio '{id}'.");
+		}
+		return ResponseOk(PortfolioRecResp.BuildFrom(existingPortfolio));
+	}
 }

@@ -139,18 +139,17 @@
 										</td>
 										<td>-</td>
 										<td>-</td>
-										<td>-</td>
-										@*
-										<td>
-											<button class="btn btn-sm btn-primary me-1" title="View Details" @onclick="(()=>BtnClickViewDetails(item.Id))"><CIcon icon="cil-magnifying-glass" /></button>
-											<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-												<ChildContent Context="context3">
-													<button class="btn btn-sm btn-secondary me-1" title="Edit Portfolio" @onclick="(()=>BtnClickEdit(item.Id))"><CIcon icon="cil-pencil" /></button>
-													<button class="btn btn-sm btn-danger" title="Delete Portfolio" @onclick="(()=>BtnClickDelete(item.Id))"><CIcon icon="cil-trash" /></button>
-												</ChildContent>
-											</AuthorizeView>
+										<td class="text-center">
+											<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
+												<CIcon icon="cil-info" />
+											</button>
+											<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(item.Id))">
+												<CIcon icon="cil-pencil" />
+											</button>
+											<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(item.Id))">
+												<CIcon icon="cil-x" />
+											</button>
 										</td>
-										*@
 									</tr>
 								}
 							</tbody>
