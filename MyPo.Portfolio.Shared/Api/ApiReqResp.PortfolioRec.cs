@@ -65,4 +65,7 @@ public struct PortfolioRecResp
 
 	[JsonPropertyName("updated_at")]
 	public DateTimeOffset UpdatedAt { get; set; }
+
+	[JsonIgnore]
+	public SortedSet<PortfolioRecResp>? Children { get; set; }
 }
