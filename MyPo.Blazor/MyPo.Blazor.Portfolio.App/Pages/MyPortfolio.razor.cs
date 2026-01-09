@@ -60,8 +60,8 @@ public partial class MyPortfolio : BasePage
 
 	private void BtnClickInfo(string pid)
 	{
-		// SelectedPortfolio = AppMap?[appId];
-		// ModalDialogInfo.Open();
+		SelectedPortfolio = MyPortfolioMap?[pid];
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", pid, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickModify(string pid)

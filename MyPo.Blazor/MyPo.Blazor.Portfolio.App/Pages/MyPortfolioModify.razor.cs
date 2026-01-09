@@ -3,7 +3,6 @@ using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
-using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -56,7 +55,6 @@ public partial class MyPortfolioModify : BasePage
 			{
 				return;
 			}
-			Console.WriteLine($"Loaded portfolio: {JsonSerializer.Serialize(SelectedPortfolio.Value)}");
 			Name = SelectedPortfolio!.Value.Name;
 			Description = SelectedPortfolio!.Value.Description ?? string.Empty;
 			Currency = SelectedPortfolio!.Value.Currency;

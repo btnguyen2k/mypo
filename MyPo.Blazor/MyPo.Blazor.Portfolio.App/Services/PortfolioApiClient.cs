@@ -74,4 +74,34 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 		);
 		return await ReadAndCloseResponseAsync<PortfolioRecResp>(httpResult, cancellationToken);
 	}
+
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<TransactionRecResp>>> GetMyPortfolioTransactionsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS.Replace("{id}", portfolioId, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			authToken,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<TransactionRecResp>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS.Replace("{id}", req.PortfolioId, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			authToken,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<TransactionRecResp>(httpResult, cancellationToken);
+	}
 }

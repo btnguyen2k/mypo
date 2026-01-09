@@ -7,6 +7,7 @@ public interface IPortfolioApiClient : IApiClient
 	public const string API_PORTFOLIO_ENDPOINT_MARKETS = "/api/markets";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO = "/api/my_portfolio";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID = "/api/my_portfolio/{id}";
+	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS = "/api/my_portfolio/{id}/transactions";
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MARKETS"/> to get markets metadata.
@@ -34,10 +35,10 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="req"></param>
 	/// <param name="authToken"></param>
 	/// <param name="baseUrl"></param>
-	/// <param name="httpClient"></param>
+	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<PortfolioRecResp>> CreatePortfolioAsync(CreateOrUpdatePortfolioRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<PortfolioRecResp>> CreatePortfolioAsync(CreateOrUpdatePortfolioRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID"/> to update an existing portfolio.
@@ -46,10 +47,10 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="req"></param>
 	/// <param name="authToken"></param>
 	/// <param name="baseUrl"></param>
-	/// <param name="httpClient"></param>
+	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<PortfolioRecResp>> UpdateMyPortfolioAsync(string id, CreateOrUpdatePortfolioRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<PortfolioRecResp>> UpdateMyPortfolioAsync(string id, CreateOrUpdatePortfolioRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID"/> to delete an existing portfolio.
@@ -57,8 +58,30 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="id"></param>
 	/// <param name="authToken"></param>
 	/// <param name="baseUrl"></param>
-	/// <param name="httpClient"></param>
+	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<PortfolioRecResp>> DeleteMyPortfolioAsync(string id, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<PortfolioRecResp>> DeleteMyPortfolioAsync(string id, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS"/> to get transactions for a given portfolio.
+	/// </summary>
+	/// <param name="portfolioId"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<IEnumerable<TransactionRecResp>>> GetMyPortfolioTransactionsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS"/> to create a new transaction for a given portfolio.
+	/// </summary>
+	/// <param name="req"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }

@@ -29,8 +29,6 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		new PortfolioRecEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioRec>());
 	}
 
-	/*----------------------------------------------------------------------*/
-
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>
 	{
 		t.UpdatedAt = DateTime.UtcNow;
@@ -38,7 +36,9 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return t;
 	}
 
-	public DbSet<PortfolioRec> PortfolioRecStore { get; set; }
+	/*----------------------------------------------------------------------*/
+
+	private DbSet<PortfolioRec> PortfolioRecStore { get; set; }
 
 	/// <inheritdoc />
 	public async ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserIdAsync(string userId, CancellationToken cancellationToken = default)
@@ -74,5 +74,26 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	{
 		PortfolioRecStore.Remove(portfolioRec);
 		return await SaveChangesAsync(cancellationToken) > 0;
+	}
+
+	/*----------------------------------------------------------------------*/
+
+	private DbSet<TransactionRec> TxRecStore { get; set; }
+
+	/// <inheritdoc />
+	public async ValueTask<IEnumerable<TransactionRec>> GetTransactionsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+	{
+		return await TxRecStore.AsNoTracking()
+			.Where(tr => tr.PortfolioId == portfolioId)
+			.OrderByDescending(tr => tr.Time)
+			.ToListAsync(cancellationToken);
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<TransactionRec> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default)
+	{
+		var entry = await TxRecStore.AddAsync(txRec, cancellationToken);
+		await SaveChangesAsync(cancellationToken);
+		return entry.Entity;
 	}
 }

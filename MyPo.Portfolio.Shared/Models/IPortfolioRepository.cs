@@ -21,4 +21,16 @@ public interface IPortfolioRepository
 	/// Deletes an existing portfolio record.
 	/// </summary>
 	public ValueTask<bool> DeletePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+
+	/*----------------------------------------------------------------------*/
+
+	/// <summary>
+	/// Gets transaction records by portfolio ID.
+	/// </summary>
+	public ValueTask<IEnumerable<TransactionRec>> GetTransactionsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Creates a new transaction record.
+	/// </summary>
+	public ValueTask<TransactionRec> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
 }
