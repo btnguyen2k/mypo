@@ -158,6 +158,41 @@
 				</div>
 			}
         </div>
+
+		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio" centered="false" type="danger" size="large">
+			<div class="card">
+				<div class="card-body">
+					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio?</span></CAlert>
+					<form>
+						<div class="row">
+							<div class="col-8">
+								<div class="form-floating mb-1">
+									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name)">
+									<label for="pName">Name</label>
+								</div>
+							</div>
+							<div class="col-4">
+								<div class="form-floating mb-1">
+									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency)">
+									<label for="pCurrency">Currency</label>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12">
+								<div class="form-floating mb-1">
+									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description)</textarea>
+									<label for="pDesc">Description</label>
+								</div>
+							</div>
+						</div>
+					</form>
+					<hr />
+					<button type="button" class="btn btn-secondary" @onclick="() => ModalDialogDelete.Close()"><CIcon icon="x-circle" /> Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="() => BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button>
+				</div>
+			</div>
+		</CModal>
 	</Authorized>
 </AuthorizeView>
 

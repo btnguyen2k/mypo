@@ -116,4 +116,35 @@ public partial class PortfolioController
 		}
 		return ResponseOk(PortfolioRecResp.BuildFrom(existingPortfolio));
 	}
+
+	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
+	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> DeleteMyPortfolio([FromRoute] string id)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(404, "Portfolio not found.");
+		}
+
+		var children = myPortfolioList.Where(p => p.ParentId == existingPortfolio.Id).ToList();
+		if (children.Count > 0)
+		{
+			return ResponseNoData(409, "Cannot delete portfolio with child portfolios. Please delete or reassign the child portfolios first.");
+		}
+
+		var resultDelete = await PortfolioRepository.DeletePortfolioAsync(existingPortfolio);
+		if (!resultDelete)
+		{
+			return ResponseNoData(500, $"Failed to delete portfolio '{id}'.");
+		}
+		return ResponseOk(PortfolioRecResp.BuildFrom(existingPortfolio));
+	}
 }

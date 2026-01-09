@@ -8,6 +8,8 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolio : BasePage
 {
+	private CModal ModalDialogDelete { get; set; } = default!;
+
 	private IEnumerable<PortfolioRecResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioRecResp>? MyInactivePortfolioList { get; set; }
 
@@ -70,7 +72,26 @@ public partial class MyPortfolio : BasePage
 
 	private void BtnClickDelete(string pid)
 	{
-		// SelectedApp = AppMap?[appId];
-		// ModalDialogDelete.Open();
+		SelectedPortfolio = MyPortfolioMap?[pid];
+		ModalDialogDelete.Open();
+	}
+
+	private async void BtnClickDeleteConfirm()
+	{
+		ModalDialogDelete.Close();
+		HideUI = true;
+		ShowAlert("info", $"Deleting portfolio '{SelectedPortfolio?.Name}', please wait...");
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var result = await apiClient.DeleteMyPortfolioAsync(SelectedPortfolio?.Id ?? string.Empty, await GetAuthTokenAsync(), ApiBaseUrl);
+		HideUI = false;
+		if (result.Status == 200)
+		{
+			await OnAfterRenderAsync(true);
+			ShowAlert("success", $"Portfolio '{SelectedPortfolio?.Name}' deleted successfully.");
+		}
+		else
+		{
+			ShowAlert("danger", result.Message ?? "Unknown error");
+		}
 	}
 }

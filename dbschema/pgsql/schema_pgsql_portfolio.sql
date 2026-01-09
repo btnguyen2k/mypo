@@ -14,7 +14,7 @@ CREATE TABLE mypo_portfolio (
     is_active boolean NOT NULL DEFAULT TRUE,
     concurrency_stamp varchar(48) NULL,
     CONSTRAINT pk_mypo_portfolio PRIMARY KEY (portfolio_id),
-    CONSTRAINT fk_mypo_portfolio_parent_id_mypo_portfolio_id FOREIGN KEY (parent_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
+    CONSTRAINT fk_mypo_portfolio_parent_id_mypo_portfolio_id FOREIGN KEY (parent_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE RESTRICT
 );
 CREATE INDEX idx_mypo_portfolio_owner_id ON mypo_portfolio (owner_id);
 CREATE INDEX idx_mypo_portfolio_parent_id ON mypo_portfolio (parent_id);
