@@ -27,6 +27,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	{
 		base.OnModelCreating(modelBuilder);
 		new PortfolioRecEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioRec>());
+		new TransactionRecEntityTypeConfiguration().Configure(modelBuilder.Entity<TransactionRec>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>

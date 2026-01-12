@@ -16,4 +16,5 @@ public class TransactionRec : Entity<string>
 	public string ItemCode { get; set; } = default!;
 	public string? MarketId { get; set; }
 	public string? Notes { get; set; }
+	public bool IsSettled { get; set; } = false;
 }

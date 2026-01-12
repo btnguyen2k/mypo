@@ -40,16 +40,30 @@
 					{
 						<nav>
 							<div class="nav nav-tabs" id="nav-tab" role="tablist">
-								<button class="nav-link active" id="nav-home-tab" data-coreui-toggle="tab" data-coreui-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Home</button>
-								<button class="nav-link" id="nav-profile-tab" data-coreui-toggle="tab" data-coreui-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Profile</button>
-								<button class="nav-link" id="nav-contact-tab" data-coreui-toggle="tab" data-coreui-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact" aria-selected="false">Contact</button>
+								<button class="nav-link active"
+									id="nav-holdings-tab"
+									data-coreui-toggle="tab" data-coreui-target="#nav-holdings"
+									type="button" role="tab" aria-controls="nav-holdings" aria-selected="true">Holdings</button>
+								<button class="nav-link"
+									id="nav-transactions-tab"
+									data-coreui-toggle="tab" data-coreui-target="#nav-transactions"
+									type="button" role="tab" aria-controls="nav-transactions" aria-selected="false">Buys/Sells</button>
+								<button class="nav-link"
+									id="nav-roi-tab"
+									data-coreui-toggle="tab" data-coreui-target="#nav-roi"
+									type="button" role="tab" aria-controls="nav-roi" aria-selected="false">Investments and Returns</button>
 							</div>
 						</nav>
 						<div class="tab-content" id="nav-tabContent">
-							<div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">0...</div>
-							<div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">1...</div>
-							<div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab" tabindex="0">2...</div>
-							<div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab" tabindex="0">3...</div>
+							<div class="tab-pane fade show active" id="nav-holdings" role="tabpanel" aria-labelledby="nav-holdings-tab" tabindex="0">
+								Holdings
+							</div>
+							<div class="tab-pane fade" id="nav-transactions" role="tabpanel" aria-labelledby="nav-transactions-tab" tabindex="0">
+								<CPortfolioTransactions Transactions="Transactions" Markets="Markets" />
+							</div>
+							<div class="tab-pane fade" id="nav-roi" role="tabpanel" aria-labelledby="nav-roi-tab" tabindex="0">
+								P & L
+							</div>
 						</div>
 					}
 				</div>
@@ -57,6 +71,17 @@
 		</div>
     </Authorized>
 </AuthorizeView>
+
+<!-- Plugins and scripts required by this page-->
+<!-- Popperjs -->
+<script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha256-BRqBN7dYgABqtY9Hd4ynE+1slnEw+roEPFzQ7TRRfcg=" crossorigin="anonymous"></script>
+<!-- Tempus Dominus JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
+
+<!-- Tempus Dominus Styles -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
+
+@* <script src="/_content/@(typeof(MyPortfolioDetails).Assembly.GetName().Name!)/portfolio/datetime-picker.js" defer></script> *@
 
 @code {
     private const string PAGE_TITLE = "My Portfolio";

@@ -58,7 +58,8 @@ public struct TransactionRecResp
 		ItemType = tr.ItemType,
 		ItemCode = tr.ItemCode,
 		MarketId = tr.MarketId,
-		Notes = tr.Notes
+		Notes = tr.Notes,
+		IsSettled = tr.IsSettled,
 	};
 
 	[JsonPropertyName("id")]
@@ -99,4 +100,7 @@ public struct TransactionRecResp
 
 	[JsonPropertyName("notes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Notes { get; set; }
+
+	[JsonPropertyName("is_settled")]
+	public bool IsSettled { get; set; }
 }

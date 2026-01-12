@@ -13,6 +13,7 @@ public partial class MyPortfolioDetails : BasePage
 	private PortfolioRecResp? SelectedPortfolio { get; set; }
 	private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
 	private IEnumerable<TransactionRecResp>? Transactions { get; set; }
+	private IEnumerable<MarketDefResp>? Markets { get; set; }
 
 	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -50,19 +51,41 @@ public partial class MyPortfolioDetails : BasePage
 		return portfolio;
 	}
 
+	private async Task<IEnumerable<MarketDefResp>?> LoadMarketsAsync(string authToken)
+	{
+		ShowAlert("info", "Loading markets metadata...");
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var result = await apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
+		if (result.Status == 200)
+		{
+			return result.Data ?? [];
+		}
+		ShowAlert("danger", result.Message ?? "Unknown error while loading markets metadata.");
+		return null;
+	}
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
 		if (firstRender)
 		{
 			HideUI = true;
+
+			Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
+
 			SelectedPortfolio = await LoadPortfolioAsync(Id, await GetAuthTokenAsync());
 			if (SelectedPortfolio == null)
 			{
 				return;
 			}
+
 			HideUI = false;
 			CloseAlert();
 		}
+	}
+
+	private static void BtnClickAddTx()
+	{
+		Console.WriteLine("Add transaction button clicked.");
 	}
 }
