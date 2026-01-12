@@ -18,6 +18,14 @@ public partial class CPortfolioTransactions : BaseComponent
 	private string TxType { get; set; } = string.Empty;
 	private string TxMarket { get; set; } = string.Empty;
 	private string TxTime { get; set; } = string.Empty;
+	private string TxItemType { get; set; } = string.Empty;
+	private string TxItemCode { get; set; } = string.Empty;
+	private decimal TxItemPrice { get; set; } = 0.00m;
+	private decimal TxQuantity { get; set; } = 0;
+	private decimal FeeTx { get; set; } = 0.00m;
+	private decimal FeeTax { get; set; } = 0.00m;
+	private decimal FeeOther { get; set; } = 0.00m;
+	private string TxNotes { get; set; } = string.Empty;
 
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;

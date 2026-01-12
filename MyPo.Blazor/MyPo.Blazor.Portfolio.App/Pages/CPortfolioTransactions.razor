@@ -63,37 +63,60 @@
 							</div>
 						</div>
 					</div>
-
-					@* <script type="text/javascript">
-						(function () {
-							console.log("Initializing datetime picker...");
-							const elements = document.querySelectorAll('[data-datetime-picker="true"]');
-							for (let i = 0; i < elements.length; i++) {
-								console.log(elements[i]);
-							}
-						})();
-					</script> *@
 				</div>
-
-				<div class="row">
-					<div class="col-8">
-						<div class="form-floating mb-1">
-							<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="(SelectedPortfolio?.Name)">
-							<label for="pName">Name</label>
+				<div class="row mb-3 align-items-center">
+					<div class="col-3">
+						<div class="form-floating">
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="TxItemType">
+								<option value="Stock">Stock</option>
+							</select>
+							<label for="txType">Item Type:</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" value="@TxItemCode">
+							<label for="txItemCode">Item Code:</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0.00" class="form-control" id="txPrice" aria-label="Price" value="@TxItemPrice">
+							<label for="txPrice">Price:</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0.01" class="form-control" id="txQuantity" aria-label="Quantity" value="@TxQuantity">
+							<label for="txQuantity">Quantity:</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" class="form-control" id="txFeeTx" aria-label="Transaction Fee" value="@FeeTx">
+							<label for="txFeeTx">Transaction Fee:</label>
 						</div>
 					</div>
 					<div class="col-4">
-						<div class="form-floating mb-1">
-							<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="(SelectedPortfolio?.Currency)">
-							<label for="pCurrency">Currency</label>
+						<div class="form-floating">
+							<input type="number" min="0.00" class="form-control" id="txFeeTax" aria-label="Tax" value="@FeeTax">
+							<label for="txFeeTax">Tax:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" class="form-control" id="txFeeOther" aria-label="Tax" value="@FeeOther">
+							<label for="txFeeOther">Tax:</label>
 						</div>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col-sm-12">
-						<div class="form-floating mb-1">
-							<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">(SelectedPortfolio?.Description)</textarea>
-							<label for="pDesc">Description</label>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txNotes" aria-label="Notes" value="@TxNotes">
+							<label for="txNotes">Notes:</label>
 						</div>
 					</div>
 				</div>
