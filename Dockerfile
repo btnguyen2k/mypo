@@ -26,6 +26,10 @@ RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION-$BASEIMAGE AS final
 WORKDIR /app
 
+RUN apk add --no-cache tzdata
+# Change the time zone as needed.
+ENV TZ="Etc/UTC"
+
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
 
