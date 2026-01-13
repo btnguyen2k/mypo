@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dotnet: [ '8.x', '9.x' ]
+        dotnet: [ '8.x', '9.x', '10.x' ]
     name: Build and test with dotnet ${{ matrix.dotnet }}
     steps:
       - name: Checkout code
