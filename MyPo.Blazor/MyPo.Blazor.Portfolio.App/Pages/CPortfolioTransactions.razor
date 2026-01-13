@@ -3,11 +3,19 @@
 
 @inherits BaseComponent
 
+@if (!string.IsNullOrEmpty(AlertMessage))
+{
+	<CAlert type="@AlertType">
+		@AlertMessage
+	</CAlert>
+}
+
 <div class="container mt-3">
-	<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAddTx"><CIcon icon="cil-plus" /> Add Transaction</button>
+	<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 		<thead>
 			<tr>
+				<th scope="col" class="text-center">&nbsp;</th>
 				<th scope="col" class="text-center">Type</th>
 				<th scope="col" class="text-center">Time</th>
 				<th scope="col" class="text-center">Item</th>
@@ -16,36 +24,69 @@
 				<th scope="col" class="text-center">Tx Fee</th>
 				<th scope="col" class="text-center">Tax</th>
 				<th scope="col" class="text-center">Cost (other)</th>
+				<th scope="col" class="text-center">Actions</th>
 			</tr>
 		</thead>
-		@if (Transactions == null || Transactions.Count() == 0)
-		{
-			<tbody>
+		<tbody>
+			@if (Transactions == null || Transactions.Count() == 0)
+			{
 				<tr>
-					<td colspan="8" class="text-center">No data found.</td>
+					<td colspan="10" class="text-center">No data found.</td>
 				</tr>
-			</tbody>
-		}
+			}
+			else
+			{
+				@foreach (var tx in Transactions)
+				{
+					<tr>
+						<td class="text-center w-auto">@(tx.IsSettled?"✅":"-")</td>
+						<td class="text-center w-auto">@(tx.Type)</td>
+						<td class="text-center w-auto">@(tx.Time.ToString("dd-MMM-yyyy HH:mmzz"))</td>
+						<td class="text-start">@(tx.ItemType) - @(tx.ItemCode) (@(tx.MarketId??"-"))</td>
+						<td class="text-end w-auto">@(tx.Quantity.ToString("f2"))</td>
+						<td class="text-end w-auto">@(tx.Price.ToString("f4"))</td>
+						<td class="text-end w-auto">@(tx.FeeTx.ToString("f4"))</td>
+						<td class="text-end w-auto">@(tx.FeeTax.ToString("f4"))</td>
+						<td class="text-end w-auto">@(tx.FeeOther.ToString("f4"))</td>
+						<td class="text-center">
+							<button class="btn btn-sm btn-outline-info" title="Update transaction" @onclick="(()=>BtnClickUpdateTx(tx.Id))">
+								<CIcon icon="cil-pencil" />
+							</button>
+							<button class="btn btn-sm @(tx.IsSettled?"btn-outline-secondary":"btn-outline-danger")" disabled="@(tx.IsSettled)" title="Delete transaction" onclick="(()=>BtnClickDelete(item.Id))">
+								<CIcon icon="cil-x" />
+							</button>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
 	</table>
 </div>
 
 <CModal @ref="@ModalDialogAddTx" title="Record A New Transaction" centered="false" type="primary" size="extra-large">
 	<div class="card">
 		<div class="card-body">
+			@if (!string.IsNullOrEmpty(AlertMessage))
+			{
+				<CAlert type="@AlertType">
+					@AlertMessage
+				</CAlert>
+			}
 			<form>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="TxType">
-								<option value="Buy">Buy</option>
-								<option value="Sell">Sell</option>
+							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type">
+								<option value="BUY">BUY</option>
+								<option value="SELL">SELL</option>
 							</select>
-							<label for="txType">Buy/Sell:</label>
+							<label for="txType">Buy/Sell (*):</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="txMarket" aria-label="Market" @bind="TxMarket">
+							<select class="form-select" id="txMarket" aria-label="Market" @bind="Tx.MarketId">
+								<option value=""></option>
 								@foreach (var m in Markets ?? [])
 								{
 									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
@@ -67,63 +108,69 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-3">
 						<div class="form-floating">
-							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="TxItemType">
-								<option value="Stock">Stock</option>
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType">
+								<option value="STOCK">Stock</option>
 							</select>
-							<label for="txType">Item Type:</label>
+							<label for="txType">Item Type (*):</label>
 						</div>
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" value="@TxItemCode">
-							<label for="txItemCode">Item Code:</label>
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode">
+							<label for="txItemCode">Item Code (*):</label>
 						</div>
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0.00" class="form-control" id="txPrice" aria-label="Price" value="@TxItemPrice">
-							<label for="txPrice">Price:</label>
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" @bind="Tx.Price">
+							<label for="txPrice">Price (*):</label>
 						</div>
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0.01" class="form-control" id="txQuantity" aria-label="Quantity" value="@TxQuantity">
-							<label for="txQuantity">Quantity:</label>
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity">
+							<label for="txQuantity">Quantity (*):</label>
 						</div>
 					</div>
 				</div>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" class="form-control" id="txFeeTx" aria-label="Transaction Fee" value="@FeeTx">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx">
 							<label for="txFeeTx">Transaction Fee:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" class="form-control" id="txFeeTax" aria-label="Tax" value="@FeeTax">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax">
 							<label for="txFeeTax">Tax:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" class="form-control" id="txFeeOther" aria-label="Tax" value="@FeeOther">
-							<label for="txFeeOther">Tax:</label>
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther">
+							<label for="txFeeOther">Other Fee:</label>
 						</div>
 					</div>
 				</div>
 				<div class="row mb-3 align-items-center">
 					<div class="col-12">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="txNotes" aria-label="Notes" value="@TxNotes">
+							<input type="text" class="form-control" id="txNotes" aria-label="Notes" @bind="Tx.Notes">
 							<label for="txNotes">Notes:</label>
 						</div>
 					</div>
 				</div>
 			</form>
+			@*
 			<hr />
-			@* <button type="button" class="btn btn-secondary" @onclick="() => ModalDialogDelete.Close()"><CIcon icon="x-circle" /> Cancel</button> *@
-			@* <button type="button" class="btn btn-danger" @onclick="() => BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button> *@
+			<button type="button" class="btn btn-secondary" @onclick="() => ModalDialogAddTx.Close()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" onclick="() => BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
+			*@
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>ModalDialogAddTx.Close()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
 		</div>
 	</div>
 </CModal>

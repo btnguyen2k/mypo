@@ -92,7 +92,7 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 	}
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateOrUpdateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
 		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS.Replace("{id}", req.PortfolioId, StringComparison.OrdinalIgnoreCase);
 		using var httpResult = await BuildAndSendRequestAsync(

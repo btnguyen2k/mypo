@@ -21,7 +21,7 @@ Modal dialog with a button to close:
 -->
 
 <div class="modal fade @cssClassShow @cssClassSize" role="dialog"
-    data-coreui-backdrop="static" 
+    data-coreui-backdrop="static"
     data-coreui-keyboard="false"
     tabindex="-1"
     aria-labelledby="staticBackdropLiveLabel" aria-hidden="@hidden" aria-modal="@modal" style="display:@display;">
@@ -98,8 +98,8 @@ Modal dialog with a button to close:
         get => type.ToLower() switch
         {
             "warning" => "bi-exclamation-triangle",
-            "danger" => "x-circle-fill",
-            "success" => "check-circle",
+            "danger" => "bi-x-circle-fill",
+            "success" => "bi-check-circle",
             _ => "bi-info-circle"
         };
     }

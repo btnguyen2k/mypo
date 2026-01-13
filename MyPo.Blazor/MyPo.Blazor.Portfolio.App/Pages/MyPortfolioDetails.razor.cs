@@ -3,6 +3,7 @@ using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
+using Microsoft.JSInterop;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -51,6 +52,10 @@ public partial class MyPortfolioDetails : BasePage
 		return portfolio;
 	}
 
+	[Inject]
+	private IJSRuntime JS { get; set; } = default!;
+	private IJSObjectReference jsLocalStorage = default!;
+
 	private async Task<IEnumerable<MarketDefResp>?> LoadMarketsAsync(string authToken)
 	{
 		ShowAlert("info", "Loading markets metadata...");
@@ -70,6 +75,12 @@ public partial class MyPortfolioDetails : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
+			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>(
+				"import", $"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js")
+				.AsTask());
+			jsLocalStorage = await moduleTask.Value;
+			var activeTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
+			ActiveTab = string.IsNullOrEmpty(activeTab) ? TabIdHoldings : activeTab;
 
 			Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
 
@@ -80,12 +91,22 @@ public partial class MyPortfolioDetails : BasePage
 			}
 
 			HideUI = false;
-			CloseAlert();
+
+			var (alertType, alertMessage) = GetPassedMessageFromQuery();
+			if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+				ShowAlert(alertType, alertMessage!);
+			else
+				CloseAlert();
 		}
 	}
 
-	private static void BtnClickAddTx()
+	private string ActiveTab { get; set; } = TabIdHoldings;
+	private const string TabIdHoldings = "nav-holdings-tab";
+	private const string TabIdTransactions = "nav-tx-tab";
+	private const string TabIdRoi = "nav-roi-tab";
+
+	private async void SwitchTab(string tab)
 	{
-		Console.WriteLine("Add transaction button clicked.");
+		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
 	}
 }

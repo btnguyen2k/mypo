@@ -4,6 +4,8 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public class TransactionRec : Entity<string>
 {
+	/// <inheritdoc />
+	public override string Id { get; set; } = Guid.NewGuid().ToString();
 	public string PortfolioId { get; set; } = default!;
 	public string Type { get; set; } = default!;
 	public DateTimeOffset Time { get; set; } = DateTimeOffset.UtcNow;

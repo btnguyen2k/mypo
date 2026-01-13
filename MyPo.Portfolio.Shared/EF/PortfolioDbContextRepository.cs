@@ -51,11 +51,10 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<PortfolioRec> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	public async ValueTask<PortfolioRec?> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
 	{
 		var entry = await PortfolioRecStore.AddAsync(portfolioRec, cancellationToken);
-		await SaveChangesAsync(cancellationToken);
-		return entry.Entity;
+		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 
 	/// <inheritdoc />
@@ -91,10 +90,9 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<TransactionRec> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default)
+	public async ValueTask<TransactionRec?> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default)
 	{
 		var entry = await TxRecStore.AddAsync(txRec, cancellationToken);
-		await SaveChangesAsync(cancellationToken);
-		return entry.Entity;
+		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 }

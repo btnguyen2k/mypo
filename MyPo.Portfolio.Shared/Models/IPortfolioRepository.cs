@@ -10,7 +10,7 @@ public interface IPortfolioRepository
 	/// <summary>
 	/// Creates a new portfolio record.
 	/// </summary>
-	public ValueTask<PortfolioRec> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+	public ValueTask<PortfolioRec?> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Updates an existing portfolio record.
@@ -32,5 +32,5 @@ public interface IPortfolioRepository
 	/// <summary>
 	/// Creates a new transaction record.
 	/// </summary>
-	public ValueTask<TransactionRec> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
+	public ValueTask<TransactionRec?> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
 }

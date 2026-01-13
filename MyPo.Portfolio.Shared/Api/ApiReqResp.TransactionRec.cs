@@ -3,7 +3,7 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
 
-public struct CreateTransactionRecReq
+public struct CreateOrUpdateTransactionRecReq
 {
 	[JsonPropertyName("portfolio_id")]
 	public string PortfolioId { get; set; }
@@ -40,27 +40,39 @@ public struct CreateTransactionRecReq
 
 	[JsonPropertyName("notes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Notes { get; set; }
+
+	[JsonPropertyName("is_settled")]
+	public bool IsSettled { get; set; }
 }
 
 public struct TransactionRecResp
 {
-	public static TransactionRecResp BuildFrom(TransactionRec tr) => new()
+	public static TransactionRecResp BuildFrom(TransactionRec tr, MarketDef? market = null)
 	{
-		Id = tr.Id,
-		PortfolioId = tr.PortfolioId,
-		Type = tr.Type,
-		Time = tr.Time,
-		Quantity = tr.Quantity,
-		Price = tr.Price,
-		FeeTx = tr.FeeTx,
-		FeeTax = tr.FeeTax,
-		FeeOther = tr.FeeOther,
-		ItemType = tr.ItemType,
-		ItemCode = tr.ItemCode,
-		MarketId = tr.MarketId,
-		Notes = tr.Notes,
-		IsSettled = tr.IsSettled,
-	};
+		var txRecResp = new TransactionRecResp()
+		{
+			Id = tr.Id,
+			PortfolioId = tr.PortfolioId,
+			Type = tr.Type,
+			Time = tr.Time,
+			Quantity = tr.Quantity,
+			Price = tr.Price,
+			FeeTx = tr.FeeTx,
+			FeeTax = tr.FeeTax,
+			FeeOther = tr.FeeOther,
+			ItemType = tr.ItemType,
+			ItemCode = tr.ItemCode,
+			MarketId = tr.MarketId,
+			Notes = tr.Notes,
+			IsSettled = tr.IsSettled,
+		};
+		if (market!=null)
+		{
+			Console.WriteLine($"Converting time {tr.Time} to market timezone {market.TZ.Id}");
+			txRecResp.Time = TimeZoneInfo.ConvertTime(tr.Time, market.TZ);
+		}
+		return txRecResp;
+	}
 
 	[JsonPropertyName("id")]
 	public string Id { get; set; }

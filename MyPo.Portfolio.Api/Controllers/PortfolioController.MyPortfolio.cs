@@ -72,9 +72,12 @@ public partial class PortfolioController
 			IsActive = true,
 
 		};
-		await PortfolioRepository.CreatePortfolioAsync(portfolioRec);
-
-		return ResponseOk(PortfolioRecResp.BuildFrom(portfolioRec));
+		var result = await PortfolioRepository.CreatePortfolioAsync(portfolioRec);
+		if (result == null)
+		{
+			return ResponseNoData(500, "Failed to create new portfolio.");
+		}
+		return ResponseOk(PortfolioRecResp.BuildFrom(result));
 	}
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]

@@ -83,5 +83,5 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<TransactionRecResp>> CreateTransactionAsync(CreateOrUpdateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }
