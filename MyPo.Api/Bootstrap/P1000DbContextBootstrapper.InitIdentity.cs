@@ -112,6 +112,7 @@ sealed class IdentityInitializer(
 					throw new InvalidOperationException(resultClaim.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} claims to role '{roleName}'.", seedClaims.Count(), role.Name);
 		}
 	}
 
@@ -189,6 +190,7 @@ sealed class IdentityInitializer(
 					throw new InvalidOperationException(resultRole.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} roles to user '{userName}'.", userRoles.Count(), user.UserName);
 
 			// add claims to the user
 			var seedClaims = u.Claims?.Select(IdentityClaim.CreateFrom).Where(c => c != null && GlobalRegistry.ClaimExists((IdentityClaim)c!)) ?? [];
@@ -203,6 +205,7 @@ sealed class IdentityInitializer(
 					throw new InvalidOperationException(resultClaim.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} claims to user '{userName}'.", seedClaims.Count(), user.UserName);
 		}
 	}
 }
