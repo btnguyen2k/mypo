@@ -25,4 +25,23 @@ public static class PortfolioUtils
 
         return rootPortfolios;
     }
+
+	public static string FormatValueWithScale(decimal value, decimal scale = 1)
+	{
+		if (scale <= 0) scale = 1;
+		value *= scale;
+		if (scale >= 1000)
+		{
+			return value.ToString($"N0", System.Globalization.CultureInfo.CurrentCulture);
+		}
+		if (scale >= 100)
+		{
+			return value.ToString($"N1", System.Globalization.CultureInfo.CurrentCulture);
+		}
+		if (scale > 1)
+		{
+			return value.ToString($"N2", System.Globalization.CultureInfo.CurrentCulture);
+		}
+		return value.ToString($"N4", System.Globalization.CultureInfo.CurrentCulture);
+	}
 }

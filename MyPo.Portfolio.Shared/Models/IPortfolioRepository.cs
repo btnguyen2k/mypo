@@ -30,7 +30,22 @@ public interface IPortfolioRepository
 	public ValueTask<IEnumerable<TransactionRec>> GetTransactionsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Gets a transaction record by its ID.
+	/// </summary>
+	public ValueTask<TransactionRec?> GetTxAsync(string id, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Creates a new transaction record.
 	/// </summary>
 	public ValueTask<TransactionRec?> CreateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Updates an existing transaction record.
+	/// </summary>
+	public ValueTask<TransactionRec?> UpdateTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Deletes an existing transaction record.
+	/// </summary>
+	public ValueTask<bool> DeleteTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
 }

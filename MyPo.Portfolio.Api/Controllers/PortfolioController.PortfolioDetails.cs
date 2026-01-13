@@ -41,7 +41,7 @@ public partial class PortfolioController
 
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<TransactionRecResp>> AddTransactionToPortfolioAsync([FromBody] CreateOrUpdateTransactionRecReq req)
+	public async Task<ActionResult<TransactionRecResp>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -91,10 +91,10 @@ public partial class PortfolioController
 
 		// validate portfolio, must be current user's portfolio
 		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == req.PortfolioId);
-		if (existingPortfolio == null)
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		if (existingPortfolio == null || existingPortfolio.Id != req.PortfolioId)
 		{
-			return ResponseNoData(404, "Portfolio not found.");
+			return ResponseNoData(404, "Portfolio not found or mismatched.");
 		}
 
 		var tx = new TransactionRec
@@ -119,5 +119,96 @@ public partial class PortfolioController
 			return ResponseNoData(500, "Failed to create transaction record.");
 		}
 		return ResponseOk(TransactionRecResp.BuildFrom(tx));
+	}
+
+	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
+	public async Task<ActionResult<TransactionRecResp>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var existingTx = await PortfolioRepository.GetTxAsync(txid);
+		if (existingTx == null)
+		{
+			return ResponseNoData(404, "Transaction record not found.");
+		}
+
+		// validate transaction type, must be either BUY or SELL
+		req.Type = req.Type.ToUpper().Trim();
+		if (!existingTx.IsSettled && (req.Type != "BUY" && req.Type != "SELL"))
+		{
+			return ResponseNoData(400, $"Transaction type must be either 'BUY' or 'SELL', currently '{req.Type}'.");
+		}
+
+		// validate item code, must not be empty
+		req.ItemCode = req.ItemCode.ToUpper().Trim();
+		if (!existingTx.IsSettled && string.IsNullOrEmpty(req.ItemCode))
+		{
+			return ResponseNoData(400, "Item code must not be empty.");
+		}
+
+		// validate price, must be positive
+		if (!existingTx.IsSettled && req.Price <= 0.00m)
+		{
+			return ResponseNoData(400, "Price must be a positive value.");
+		}
+
+		// validate quantity, must be positive
+		if (!existingTx.IsSettled && req.Quantity <= 0)
+		{
+			return ResponseNoData(400, "Quantity must be a positive value.");
+		}
+
+		// validate market, must be a valid one or empty
+		req.MarketId = req.MarketId?.Trim() ?? null;
+		if (!existingTx.IsSettled && !string.IsNullOrEmpty(req.MarketId))
+		{
+			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(req.MarketId, StringComparison.OrdinalIgnoreCase));
+			if (market == null)
+			{
+				return ResponseNoData(400, $"Market '{req.MarketId}' is not recognized.");
+			}
+			req.Time = TimeZoneInfo.ConvertTime(req.Time, market.TZ).Subtract(market.TZ.BaseUtcOffset);
+		}
+		req.Time = req.Time.UtcDateTime; // convert to UTC for storing into database
+
+		// validate portfolio, must be current user's portfolio
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		if (existingPortfolio == null || existingPortfolio.Id != req.PortfolioId)
+		{
+			return ResponseNoData(404, "Portfolio not found or mismatched.");
+		}
+
+		if (existingTx.IsSettled)
+		{
+			// for settled transaction, only notes can be updated
+			existingTx.Notes = req.Notes?.Trim() ?? null;
+		}
+		else
+		{
+			existingTx.Type = req.Type;
+			existingTx.Time = req.Time == default ? DateTimeOffset.Now.UtcDateTime : req.Time;
+			existingTx.Quantity = req.Quantity;
+			existingTx.Price = req.Price;
+			existingTx.Notes = req.Notes?.Trim() ?? null;
+			existingTx.FeeTx = req.FeeTx ?? 0.0m;
+			existingTx.FeeTax = req.FeeTax ?? 0.0m;
+			existingTx.FeeOther = req.FeeOther ?? 0.0m;
+			existingTx.ItemType = req.ItemType;
+			existingTx.ItemCode = req.ItemCode;
+			existingTx.MarketId = req.MarketId;
+		}
+		existingTx = await PortfolioRepository.UpdateTxAsync(existingTx);
+		if (existingTx == null)
+		{
+			return ResponseNoData(500, "Failed to update settled transaction record.");
+		}
+		return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
 	}
 }

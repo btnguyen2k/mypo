@@ -63,12 +63,12 @@ public struct TransactionRecResp
 			ItemType = tr.ItemType,
 			ItemCode = tr.ItemCode,
 			MarketId = tr.MarketId,
+			Market = market != null ? MarketDefResp.BuildFrom(market) : null,
 			Notes = tr.Notes,
 			IsSettled = tr.IsSettled,
 		};
 		if (market!=null)
 		{
-			Console.WriteLine($"Converting time {tr.Time} to market timezone {market.TZ.Id}");
 			txRecResp.Time = TimeZoneInfo.ConvertTime(tr.Time, market.TZ);
 		}
 		return txRecResp;
@@ -109,6 +109,8 @@ public struct TransactionRecResp
 
 	[JsonPropertyName("market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? MarketId { get; set; }
+	[JsonPropertyName("market"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public MarketDefResp? Market { get; set; }
 
 	[JsonPropertyName("notes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Notes { get; set; }

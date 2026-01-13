@@ -12,7 +12,7 @@ public partial class CPortfolioTransactions : BaseComponent
 	[Parameter]
 	public IEnumerable<TransactionRecResp>? Transactions { get; set; }
 	private Dictionary<string, TransactionRecResp> TransactionsMap => Transactions?.ToDictionary(t => t.Id, t => t) ?? [];
-	private TransactionRecResp? SelectedTransaction { get; set; }
+	// private TransactionRecResp SelectedTx { get; set; } = default!;
 
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
@@ -49,6 +49,7 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
 	private string TxTime { get; set; } = string.Empty;
+	private string TxId { get; set; } = string.Empty;
 
 	private void InitAddTx()
 	{
@@ -72,7 +73,24 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private void InitUpdateTx(TransactionRecResp tx)
 	{
-		SelectedTransaction = tx with {};
+		Tx = new()
+		{
+			PortfolioId = tx.PortfolioId,
+			Type = tx.Type,
+			MarketId = tx.MarketId,
+			Time = tx.Time,
+			ItemType = tx.ItemType,
+			ItemCode = tx.ItemCode,
+			Price = tx.Price,
+			Quantity = tx.Quantity,
+			FeeTx = tx.FeeTx,
+			FeeTax = tx.FeeTax,
+			FeeOther = tx.FeeOther,
+			Notes = tx.Notes,
+			IsSettled = tx.IsSettled,
+		};
+		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
+		TxId = tx.Id;
 		CloseAlert();
 	}
 
@@ -103,6 +121,76 @@ public partial class CPortfolioTransactions : BaseComponent
 		{
 			ShowAlert("danger", $"Transaction '{tid}' not found.");
 		}
+	}
+
+	private bool validateTxForUpdateOrSettle()
+	{
+		// validate transaction type, must be either BUY or SELL
+		Tx.Type = Tx.Type.ToUpper().Trim();
+		if (!Tx.IsSettled && (Tx.Type != "BUY" && Tx.Type != "SELL"))
+		{
+			ShowAlert("danger", $"Transaction type must be either 'BUY' or 'SELL', currently '{Tx.Type}'.");
+			return false;
+		}
+
+		// validate item, must not be empty
+		Tx.ItemType = Tx.ItemType.ToUpper().Trim();
+		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemType))
+		{
+			ShowAlert("danger", "Item type must not be empty.");
+			return false;
+		}
+
+		// validate item code, must not be empty
+		Tx.ItemCode = Tx.ItemCode.ToUpper().Trim();
+		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemCode))
+		{
+			ShowAlert("danger", "Item code must not be empty.");
+			return false;
+		}
+
+		// validate price, must be positive
+		if (!Tx.IsSettled && Tx.Price <= 0.00m)
+		{
+			ShowAlert("danger", "Price must be a positive value.");
+			return false;
+		}
+
+		// validate quantity, must be positive
+		if (!Tx.IsSettled && Tx.Quantity <= 0)
+		{
+			ShowAlert("danger", "Quantity must be a positive value.");
+			return false;
+		}
+		return true;
+	}
+
+	private async void BtnClickUpdateTxSave()
+	{
+		if (!validateTxForUpdateOrSettle())
+		{
+			return;
+		}
+
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var resp = await apiClient.UpdateTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (resp.Status != 200)
+		{
+			ShowAlert("danger", resp.Message!);
+			return;
+		}
+		ShowAlert("success", "Transaction updated successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Transaction '{resp.Data.Id}' updated successfully.";
+		var passAlertType = "success";
+		await Task.Delay(500);
+		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
+		ModalDialogAddTx.Close();
+	}
+
+	private async void BtnClickUpdateTxSettle()
+	{
+		await Task.CompletedTask;
+		ModalDialogUpdateTx.Close();
 	}
 
 	private void BtnClickAddTx()
