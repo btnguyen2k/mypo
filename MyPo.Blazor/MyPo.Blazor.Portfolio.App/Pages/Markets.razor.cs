@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -8,8 +7,8 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class Markets : BasePage
 {
 	private IEnumerable<MarketDefResp>? MarketsList { get; set; }
-	private Dictionary<string, MarketDefResp>? MarketsMap { get; set; }
-	private MarketDefResp? SelectedMarket { get; set; }
+	// private Dictionary<string, MarketDefResp>? MarketsMap { get; set; }
+	// private MarketDefResp? SelectedMarket { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -24,18 +23,12 @@ public partial class Markets : BasePage
 			{
 				HideUI = false;
 				MarketsList = result.Data ?? [];
-				MarketsMap = MarketsList.ToDictionary(m => $"{m.Country} / {m.Code}");
-				var queryParameters = QueryHelpers.ParseQuery(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
-				var alertMessage = queryParameters.TryGetValue("alertMessage", out var alertMessageValue) ? alertMessageValue.ToString() : string.Empty;
-				var alertType = queryParameters.TryGetValue("alertType", out var alertTypeValue) ? alertTypeValue.ToString() : string.Empty;
+				// MarketsMap = MarketsList.ToDictionary(m => $"{m.Country} / {m.Code}");
+				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-				{
 					ShowAlert(alertType, alertMessage);
-				}
 				else
-				{
 					CloseAlert();
-				}
 			}
 			else
 			{

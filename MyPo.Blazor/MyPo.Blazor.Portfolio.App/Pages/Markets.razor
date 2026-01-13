@@ -42,6 +42,7 @@
                                 <tr>
                                     <th scope="col" class="text-center">Name</th>
 									<th scope="col" class="text-center">Country</th>
+									<th scope="col" class="text-center">Currency</th>
 									<th scope="col" class="text-center">Trading Hours</th>
 									<th scope="col" class="text-center">Mon</th>
 									<th scope="col" class="text-center">Tue</th>
@@ -56,7 +57,7 @@
 							{
 								<tbody>
 									<tr>
-										<td colspan="10" class="text-center">No data found.</td>
+										<td colspan="11" class="text-center">No data found.</td>
 									</tr>
 								</tbody>
 							}
@@ -67,7 +68,8 @@
 									{
 										<tr>
 											<td>@item.Code - @item.Name</td>
-											<td>@item.Country (@item.Currency)</td>
+											<td class="text-center">@item.Country</td>
+											<td class="text-center">@item.Currency - @item.CurrencySymbol (@item.PriceScale)</td>
 											<td class="text-center">@item.OpenHour - @item.CloseHour</td>
 											<td class="text-center">@(item.TradingDays.IndexOf("Monday")>=0 ? "✅" : "-")</td>
 											<td class="text-center">@(item.TradingDays.IndexOf("Tuesday")>=0 ? "✅" : "-")</td>

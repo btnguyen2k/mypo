@@ -4,6 +4,8 @@
     "name": "NASDAQ Stock Market",
     "country": "USA",
     "currency": "USD",
+    "currency_symbol": "$",
+    "price_scale": 1,
     "timezone": "America/New_York",
     "trading_hours": {
       "open": "09:30",
@@ -16,6 +18,8 @@
     "name": "New York Stock Exchange",
     "country": "USA",
     "currency": "USD",
+    "currency_symbol": "$",
+    "price_scale": 1,
     "timezone": "America/New_York",
     "trading_hours": {
       "open": "09:30",
@@ -28,6 +32,8 @@
     "name": "Australian Securities Exchange",
     "country": "Australia",
     "currency": "AUD",
+    "currency_symbol": "A$",
+    "price_scale": 1,
     "timezone": "Australia/Sydney",
     "trading_hours": {
       "open": "10:00",
@@ -40,6 +46,8 @@
     "name": "Ho Chi Minh Stock Exchange",
     "country": "Vietnam",
     "currency": "VND",
+    "currency_symbol": "₫",
+    "price_scale": 1000,
     "timezone": "Asia/Ho_Chi_Minh",
     "trading_hours": {
       "open": "09:00",
@@ -52,6 +60,22 @@
     "name": "Hanoi Stock Exchange",
     "country": "Vietnam",
     "currency": "VND",
+    "currency_symbol": "₫",
+    "price_scale": 1000,
+    "timezone": "Asia/Ho_Chi_Minh",
+    "trading_hours": {
+      "open": "09:00",
+      "close": "15:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "vn-upcom": {
+    "code": "UPCOM",
+    "name": "Unlisted Public Company Market",
+    "country": "Vietnam",
+    "currency": "VND",
+    "currency_symbol": "₫",
+    "price_scale": 1000,
     "timezone": "Asia/Ho_Chi_Minh",
     "trading_hours": {
       "open": "09:00",

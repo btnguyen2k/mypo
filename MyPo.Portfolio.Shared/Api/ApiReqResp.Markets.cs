@@ -14,6 +14,8 @@ public struct MarketDefResp
 			Name = md.Name,
 			Country = md.Country,
 			Currency = md.Currency,
+			CurrencySymbol = md.CurrencySymbol,
+			PriceScale = md.PriceScale,
 			TimeZone = md.TimeZone,
 			OpenHour = md.OpenHour.ToString("HH:mm"),
 			CloseHour = md.CloseHour.ToString("HH:mm"),
@@ -34,6 +36,12 @@ public struct MarketDefResp
 
 	[JsonPropertyName("currency")]
 	public string Currency { get; set; }
+
+	[JsonPropertyName("currency_symbol")]
+	public string CurrencySymbol { get; set; }
+
+	[JsonPropertyName("price_scale")]
+	public decimal PriceScale { get; set; }
 
 	[JsonPropertyName("timezone")]
 	public string TimeZone { get; set; }
