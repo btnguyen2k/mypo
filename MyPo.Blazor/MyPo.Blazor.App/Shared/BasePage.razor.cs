@@ -33,6 +33,7 @@ public abstract class BasePage : BaseComponent
 
 	public const string QUERY_PARM_ALERT_TYPE = "alertType";
 	public const string QUERY_PARM_ALERT_MESSAGE = "alertMessage";
+	public const string QUERY_PARM_REFRESH = "refresh";
 
 	protected (string, string) GetPassedMessageFromQuery()
 	{

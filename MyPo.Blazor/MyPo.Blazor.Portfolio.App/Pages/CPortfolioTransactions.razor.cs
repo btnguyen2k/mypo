@@ -46,6 +46,7 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private CModal ModalDialogAddTx { get; set; } = default!;
 	private CModal ModalDialogUpdateTx { get; set; } = default!;
+	private CModal ModalDialogDeleteTx { get; set; } = default!;
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
 	private string TxTime { get; set; } = string.Empty;
@@ -97,6 +98,11 @@ public partial class CPortfolioTransactions : BaseComponent
 		CloseAlert();
 	}
 
+	private void InitDeleteTx(TransactionRecResp tx)
+	{
+		InitUpdateTx(tx);
+	}
+
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;
 
@@ -109,20 +115,6 @@ public partial class CPortfolioTransactions : BaseComponent
         	await module.InvokeAsync<string>("InitDatetimePickers");
 
 			// MarketsMap = Markets?.ToDictionary(m => m.Id, m => m) ?? [];
-		}
-	}
-
-	private void BtnClickUpdateTx(string tid)
-	{
-		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
-		if (selectedTx != null)
-		{
-			InitUpdateTx(selectedTx.Value);
-			ModalDialogUpdateTx.Open();
-		}
-		else
-		{
-			ShowAlert("danger", $"Transaction '{tid}' not found.");
 		}
 	}
 
@@ -180,6 +172,20 @@ public partial class CPortfolioTransactions : BaseComponent
 		return true;
 	}
 
+	private void BtnClickUpdateTx(string tid)
+	{
+		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
+		if (selectedTx != null)
+		{
+			InitUpdateTx(selectedTx.Value);
+			ModalDialogUpdateTx.Open();
+		}
+		else
+		{
+			ShowAlert("danger", $"Transaction '{tid}' not found.");
+		}
+	}
+
 	private async void BtnClickUpdateTxSave()
 	{
 		if (!ValidateTx())
@@ -200,7 +206,11 @@ public partial class CPortfolioTransactions : BaseComponent
 		await Task.Delay(500);
 		ModalDialogUpdateTx.Close();
 		CloseAlert();
-		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 
 	private async void BtnClickUpdateTxSettle()
@@ -236,6 +246,46 @@ public partial class CPortfolioTransactions : BaseComponent
 		await Task.Delay(500);
 		ModalDialogAddTx.Close();
 		CloseAlert();
-		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+	}
+
+	private void BtnClickDeleteTx(string tid)
+	{
+		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
+		if (selectedTx != null)
+		{
+			InitDeleteTx(selectedTx.Value);
+			ModalDialogDeleteTx.Open();
+		}
+		else
+		{
+			ShowAlert("danger", $"Transaction '{tid}' not found.");
+		}
+	}
+
+	private async void BtnClickDeleteTxConfirm()
+	{
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var resp = await apiClient.DeleteTransactionAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (resp.Status != 200)
+		{
+			ShowAlert("danger", resp.Message!);
+			return;
+		}
+		ShowAlert("success", "Transaction deleted successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Transaction '{TxId}' deleted successfully.";
+		var passAlertType = "success";
+		await Task.Delay(500);
+		ModalDialogDeleteTx.Close();
+		CloseAlert();
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 }

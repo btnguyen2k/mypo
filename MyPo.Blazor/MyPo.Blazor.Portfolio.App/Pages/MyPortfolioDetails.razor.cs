@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
+using MyPo.Blazor.App.Bootstrap;
+using Microsoft.Extensions.Logging;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -95,9 +97,40 @@ public partial class MyPortfolioDetails : BasePage
 
 			var (alertType, alertMessage) = GetPassedMessageFromQuery();
 			if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-				ShowAlert(alertType, alertMessage!);
+				ShowAlert(alertType, alertMessage);
 			else
 				CloseAlert();
+		}
+
+		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
+		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))
+		{
+			// rebuild the URL without the refresh query parameter
+			queryParams.Remove(QUERY_PARM_REFRESH);
+			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
+			{
+				Query = queryParams.ToString() ?? string.Empty
+			};
+			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
+			// fire a background task
+			await Task.Run(async () =>
+			{
+				HideUI = true;
+				Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
+				SelectedPortfolio = await LoadPortfolioAsync(Id, await GetAuthTokenAsync());
+				HideUI = false;
+
+				var (alertType, alertMessage) = GetPassedMessageFromQuery();
+				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+				{
+					ShowAlert(alertType, alertMessage);
+				}
+				else
+				{
+					CloseAlert();
+				}
+				await Task.CompletedTask;
+			});
 		}
 	}
 

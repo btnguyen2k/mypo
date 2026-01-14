@@ -189,4 +189,44 @@ public partial class PortfolioController
 		}
 		return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
 	}
+
+	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
+	public async Task<ActionResult<TransactionRecResp>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var existingTx = await PortfolioRepository.GetTxAsync(txid);
+		if (existingTx == null)
+		{
+			return ResponseNoData(404, "Transaction record not found.");
+		}
+
+		// validate portfolio, must be current user's portfolio
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (!(existingPortfolio?.Id.Equals(existingTx.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
+		{
+			return ResponseNoData(400, "Portfolio not found or mismatched.");
+		}
+
+		if (existingTx.IsSettled)
+		{
+			return ResponseNoData(400, "Cannot delete a settled transaction.");
+		}
+		else
+		{
+			var result = await PortfolioRepository.DeleteTxAsync(existingTx);
+			if (!result)
+			{
+				return ResponseNoData(500, "Failed to delete transaction record.");
+			}
+			return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
+		}
+	}
 }
