@@ -9,6 +9,7 @@ public interface IPortfolioApiClient : IApiClient
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID = "/api/my_portfolio/{id}";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS = "/api/my_portfolio/{id}/transactions";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID = "/api/my_portfolio/{id}/tx/{txid}";
+	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID = "/api/my_portfolio/{id}/settle_tx/{txid}";
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MARKETS"/> to get markets metadata.
@@ -109,4 +110,16 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	public Task<ApiResp<TransactionRecResp>> DeleteTransactionAsync(string portfolioId, string txid, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID"/> to settle an existing transaction.
+	/// </summary>
+	/// <param name="txid"></param>
+	/// <param name="req"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<TransactionRecResp>> SettleTransactionAsync(string txid, CreateOrUpdateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }

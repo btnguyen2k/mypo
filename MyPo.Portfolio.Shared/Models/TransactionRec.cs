@@ -4,7 +4,7 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public class TransactionRec : Entity<string>
 {
-	/// <inheritdoc />
+	//// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
 	public string PortfolioId { get; set; } = default!;
 	public string Type { get; set; } = default!;
@@ -19,4 +19,6 @@ public class TransactionRec : Entity<string>
 	public string? MarketId { get; set; }
 	public string? Notes { get; set; }
 	public bool IsSettled { get; set; } = false;
+
+	public decimal TotalFee => FeeTx + FeeTax + FeeOther;
 }

@@ -215,8 +215,35 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private async void BtnClickUpdateTxSettle()
 	{
-		await Task.CompletedTask;
+		if (!ValidateTx())
+		{
+			return;
+		}
+
+		if (Tx.IsSettled)
+		{
+			ShowAlert("warning", "Transaction has already been settled.");
+			return;
+		}
+
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var resp = await apiClient.SettleTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (resp.Status != 200)
+		{
+			ShowAlert("danger", resp.Message!);
+			return;
+		}
+		ShowAlert("success", "Transaction settled successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Transaction '{resp.Data.Id}' settled successfully.";
+		var passAlertType = "success";
+		await Task.Delay(500);
 		ModalDialogUpdateTx.Close();
+		CloseAlert();
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 
 	private void BtnClickAddTx()

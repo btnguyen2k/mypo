@@ -45,7 +45,6 @@ CREATE TABLE mypo_transactions (
 CREATE INDEX idx_mypo_transactions_portfolio_id ON mypo_transactions (portfolio_id);
 CREATE INDEX idx_mypo_transactions_tx_time ON mypo_transactions (tx_time);
 
-DROP TABLE IF EXISTS mypo_ownings;
 CREATE TABLE mypo_ownings (
     owning_id varchar(48) NOT NULL,
     portfolio_id varchar(48) NOT NULL,
@@ -61,3 +60,4 @@ CREATE TABLE mypo_ownings (
     CONSTRAINT fk_mypo_ownings_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
 );
 CREATE INDEX idx_mypo_ownings_portfolio_id ON mypo_ownings (portfolio_id);
+CREATE UNIQUE INDEX uidx_mypo_ownings_portfolio_item ON mypo_ownings (portfolio_id, item_type, item_code, market_id);

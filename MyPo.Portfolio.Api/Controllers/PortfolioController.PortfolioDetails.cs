@@ -39,7 +39,7 @@ public partial class PortfolioController
 		return ResponseOk(result);
 	}
 
-	private (CreateOrUpdateTransactionRecReq?, ObjectResult?) ValidateTx(CreateOrUpdateTransactionRecReq reqTx, TransactionRec? existingTx)
+	private static (CreateOrUpdateTransactionRecReq?, ObjectResult?) ValidateTx(CreateOrUpdateTransactionRecReq reqTx, TransactionRec? existingTx)
 	{
 		// validate transaction type, must be either BUY or SELL
 		reqTx.Type = reqTx.Type.ToUpper().Trim();
@@ -86,7 +86,7 @@ public partial class PortfolioController
 
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<TransactionRecResp>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async Task<ActionResult<ApiResp<TransactionRecResp>>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -135,7 +135,7 @@ public partial class PortfolioController
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<TransactionRecResp>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async Task<ActionResult<ApiResp<TransactionRecResp>>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -192,7 +192,7 @@ public partial class PortfolioController
 
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<TransactionRecResp>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
+	public async Task<ActionResult<ApiResp<TransactionRecResp>>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -228,5 +228,59 @@ public partial class PortfolioController
 			}
 			return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
 		}
+	}
+
+	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
+	public async Task<ActionResult<ApiResp<TransactionRecResp>>> SettleTransactionInPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var existingTx = await PortfolioRepository.GetTxAsync(txid);
+		if (existingTx == null)
+		{
+			return ResponseNoData(404, "Transaction record not found.");
+		}
+		if (existingTx.IsSettled)
+		{
+			return ResponseNoData(400, "Transaction is already settled.");
+		}
+		var (reqTx, validationResult) = ValidateTx(req, existingTx);
+		if (validationResult != null)
+		{
+			return validationResult;
+		}
+
+		// validate portfolio, must be current user's portfolio
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
+		{
+			return ResponseNoData(400, "Portfolio not found or mismatched.");
+		}
+
+		existingTx.Type = reqTx!.Value.Type;
+		existingTx.Time = reqTx!.Value.Time == default ? DateTimeOffset.UtcNow : reqTx!.Value.Time;
+		existingTx.Quantity = reqTx!.Value.Quantity;
+		existingTx.Price = reqTx!.Value.Price;
+		existingTx.Notes = reqTx!.Value.Notes?.Trim() ?? null;
+		existingTx.FeeTx = reqTx!.Value.FeeTx ?? 0.0m;
+		existingTx.FeeTax = reqTx!.Value.FeeTax ?? 0.0m;
+		existingTx.FeeOther = reqTx!.Value.FeeOther ?? 0.0m;
+		existingTx.ItemType = reqTx!.Value.ItemType;
+		existingTx.ItemCode = reqTx!.Value.ItemCode;
+		existingTx.MarketId = reqTx!.Value.MarketId;
+
+		existingTx = await PortfolioRepository.SettleTxAsync(existingTx);
+		if (existingTx == null)
+		{
+			return ResponseNoData(500, "Failed to settle transaction record.");
+		}
+		return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
 	}
 }

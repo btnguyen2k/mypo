@@ -136,4 +136,20 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 		);
 		return await ReadAndCloseResponseAsync<TransactionRecResp>(httpResult, cancellationToken);
 	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<TransactionRecResp>> SettleTransactionAsync(string txid, CreateOrUpdateTransactionRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID
+			.Replace("{txid}", txid, StringComparison.OrdinalIgnoreCase)
+			.Replace("{id}", req.PortfolioId, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			authToken,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<TransactionRecResp>(httpResult, cancellationToken);
+	}
 }

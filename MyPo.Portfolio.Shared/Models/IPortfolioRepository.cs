@@ -48,4 +48,9 @@ public interface IPortfolioRepository
 	/// Deletes an existing transaction record.
 	/// </summary>
 	public ValueTask<bool> DeleteTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Settles a transaction record.
+	/// </summary>
+	public ValueTask<TransactionRec?> SettleTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
 }

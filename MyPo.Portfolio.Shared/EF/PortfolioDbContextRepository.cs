@@ -28,6 +28,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		base.OnModelCreating(modelBuilder);
 		new PortfolioRecEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioRec>());
 		new TransactionRecEntityTypeConfiguration().Configure(modelBuilder.Entity<TransactionRec>());
+		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<Asset>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>
@@ -119,5 +120,97 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	{
 		TxRecStore.Remove(txRec);
 		return await SaveChangesAsync(cancellationToken) > 0;
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<TransactionRec?> SettleTxAsync(TransactionRec tx, CancellationToken cancellationToken = default)
+	{
+		using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+		try
+		{
+			var existingTx = await TxRecStore.FindAsync([tx.Id], cancellationToken);
+			if (existingTx == null)
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return null;
+			}
+
+			// update owning asset
+			var existingAsset = await GetAssetByOwningAsync(existingTx.PortfolioId, existingTx.ItemType, existingTx.ItemCode, existingTx.MarketId);
+			if (existingAsset == null)
+			{
+				existingAsset = await CreateAssetAsync(new()
+				{
+					PortfolioId = existingTx.PortfolioId,
+					ItemType = existingTx.ItemType,
+					ItemCode = existingTx.ItemCode,
+					MarketId = existingTx.MarketId,
+					Quantity = 0.0m,
+					AveragePrice = 0.0m,
+				}, cancellationToken);
+				if (existingAsset == null)
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return null;
+				}
+			}
+			var newQuantity = existingAsset.Quantity + tx.Quantity;
+			var newTotalCost = existingAsset.AveragePrice * existingAsset.Quantity + tx.Price * tx.Quantity + tx.TotalFee;
+			var newAveragePrice = newQuantity != 0.0m ? newTotalCost / newQuantity : 0.0m;
+			existingAsset.Quantity = newQuantity;
+			existingAsset.AveragePrice = newAveragePrice;
+			var updatedAsset = await UpdateAssetAsync(existingAsset, cancellationToken);
+			if (updatedAsset == null)
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return null;
+			}
+
+			// update transaction record
+			tx.IsSettled = true;
+			var updatedTx = await UpdateTxAsync(tx, cancellationToken);
+			if (updatedTx == null)
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return null;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return updatedTx;
+		}
+		catch (Exception e)
+		{
+			await transaction.RollbackAsync(cancellationToken);
+			throw e;
+		}
+	}
+
+	/*----------------------------------------------------------------------*/
+
+	private DbSet<Asset> AssetStore { get; set; }
+	private async ValueTask<Asset?> GetAssetByOwningAsync(string portfolioId, string itemType, string itemCode, string? marketId)
+	{
+		return await AssetStore.AsNoTracking()
+			.FirstOrDefaultAsync(a => a.PortfolioId == portfolioId
+				&& a.ItemType == itemType
+				&& a.ItemCode == itemCode
+				&& a.MarketId == marketId);
+	}
+
+	private async ValueTask<Asset?> CreateAssetAsync(Asset asset, CancellationToken cancellationToken = default)
+	{
+		var entry = await AssetStore.AddAsync(asset, cancellationToken);
+		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
+	}
+
+	private async ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default)
+	{
+		var existingEntry = await AssetStore.FindAsync([asset.Id], cancellationToken);
+		if (existingEntry == null)
+		{
+			return null;
+		}
+		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(asset));
+		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
 	}
 }

@@ -48,3 +48,22 @@ sealed class TransactionRecEntityTypeConfiguration : GenericEntityTypeConfigurat
 		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
 	}
 }
+
+sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset, string>
+{
+	public override void Configure(EntityTypeBuilder<Asset> builder)
+	{
+		base.Configure(builder);
+		builder.ToTable($"{Globals.TABLE_PREFIX}ownings"); // change table name if needed
+		builder.Property(p => p.Id).HasColumnName("owning_id").HasMaxLength(48);
+		builder.Property(p => p.PortfolioId).HasColumnName("portfolio_id").HasMaxLength(48);
+		builder.Property(p => p.ItemType).HasColumnName("item_type").HasMaxLength(16);
+		builder.Property(p => p.ItemCode).HasColumnName("item_code").HasMaxLength(16);
+		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
+		builder.Property(p => p.Quantity).HasColumnName("item_quantity");
+		builder.Property(p => p.AveragePrice).HasColumnName("average_price");
+		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
+		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
+		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+	}
+}
