@@ -55,6 +55,7 @@ public partial class CPortfolioTransactions : BaseComponent
 	{
 		Tx = new()
 		{
+			PortfolioId = PortfolioId,
 			Type = string.Empty,
 			// MarketId = string.Empty,
 			Time = DateTimeOffset.Now,
@@ -66,8 +67,10 @@ public partial class CPortfolioTransactions : BaseComponent
 			FeeTax = 0.00m,
 			FeeOther = 0.00m,
 			// Notes = string.Empty
+			IsSettled = false,
 		};
 		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
+		TxId = string.Empty;
 		CloseAlert();
 	}
 
@@ -123,13 +126,25 @@ public partial class CPortfolioTransactions : BaseComponent
 		}
 	}
 
-	private bool validateTxForUpdateOrSettle()
+	private bool ValidateTx()
 	{
 		// validate transaction type, must be either BUY or SELL
 		Tx.Type = Tx.Type.ToUpper().Trim();
 		if (!Tx.IsSettled && (Tx.Type != "BUY" && Tx.Type != "SELL"))
 		{
 			ShowAlert("danger", $"Transaction type must be either 'BUY' or 'SELL', currently '{Tx.Type}'.");
+			return false;
+		}
+
+		// validate time
+		try
+		{
+			var time = DateTimeOffset.ParseExact(TxTime, "dd-MMM-yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+			Tx.Time = time;
+		}
+		catch (Exception e)
+		{
+			ShowAlert("danger", $"Invalid transaction time: {e.Message}");
 			return false;
 		}
 
@@ -167,7 +182,7 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private async void BtnClickUpdateTxSave()
 	{
-		if (!validateTxForUpdateOrSettle())
+		if (!ValidateTx())
 		{
 			return;
 		}
@@ -183,8 +198,9 @@ public partial class CPortfolioTransactions : BaseComponent
 		var passAlertMessage = $"Transaction '{resp.Data.Id}' updated successfully.";
 		var passAlertType = "success";
 		await Task.Delay(500);
+		ModalDialogUpdateTx.Close();
+		CloseAlert();
 		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
-		ModalDialogAddTx.Close();
 	}
 
 	private async void BtnClickUpdateTxSettle()
@@ -201,41 +217,8 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	private async void BtnClickAddTxSave()
 	{
-		// validate transaction type, must be either BUY or SELL
-		Tx.Type = Tx.Type.ToUpper().Trim();
-		if (Tx.Type != "BUY" && Tx.Type != "SELL")
+		if (!ValidateTx())
 		{
-			ShowAlert("danger", $"Transaction type must be either 'BUY' or 'SELL', currently '{Tx.Type}'.");
-			return;
-		}
-
-		// validate item, must not be empty
-		Tx.ItemType = Tx.ItemType.ToUpper().Trim();
-		if (string.IsNullOrEmpty(Tx.ItemType))
-		{
-			ShowAlert("danger", "Item type must not be empty.");
-			return;
-		}
-
-		// validate item code, must not be empty
-		Tx.ItemCode = Tx.ItemCode.ToUpper().Trim();
-		if (string.IsNullOrEmpty(Tx.ItemCode))
-		{
-			ShowAlert("danger", "Item code must not be empty.");
-			return;
-		}
-
-		// validate price, must be positive
-		if (Tx.Price <= 0.00m)
-		{
-			ShowAlert("danger", "Price must be a positive value.");
-			return;
-		}
-
-		// validate quantity, must be positive
-		if (Tx.Quantity <= 0)
-		{
-			ShowAlert("danger", "Quantity must be a positive value.");
 			return;
 		}
 
@@ -251,7 +234,8 @@ public partial class CPortfolioTransactions : BaseComponent
 		var passAlertMessage = $"Transaction '{resp.Data.Id}' added successfully.";
 		var passAlertType = "success";
 		await Task.Delay(500);
-		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
 		ModalDialogAddTx.Close();
+		CloseAlert();
+		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}?{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}", forceLoad: true);
 	}
 }

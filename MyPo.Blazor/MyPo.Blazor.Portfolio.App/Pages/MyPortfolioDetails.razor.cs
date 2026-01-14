@@ -47,7 +47,6 @@ public partial class MyPortfolioDetails : BasePage
 			return null;
 		}
 		Transactions = apiRespTx.Data ?? [];
-		Console.WriteLine($"Loaded {Transactions.Count()} transactions for portfolio '{portfolio.Name}'.");
 
 		return portfolio;
 	}
@@ -72,9 +71,11 @@ public partial class MyPortfolioDetails : BasePage
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
+
 		if (firstRender)
 		{
 			HideUI = true;
+
 			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>(
 				"import", $"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js")
 				.AsTask());

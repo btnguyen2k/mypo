@@ -7,15 +7,7 @@ export function InitDatetimePickers(opts = {}) {
 
 function initDatetimePicker(el, opts = {}) {
     opts = opts ?? {};
-
-    // check if el is text input, if so use its value as default datetime
-    if (el.tagName.toLowerCase() === 'input' && el.type === 'text') {
-        if (el.value) {
-            opts['useCurrent'] = false;
-        }
-        // opts['defaultDate'] = el.value ? new Date(el.value) : null;
-    }
-
+    opts['useCurrent'] = false;
     opts['localization'] = opts['localization'] ?? {format: 'dd-MMM-yyyy HH:mm', hourCycle: 'h23'};
     opts['display'] = opts['display'] ?? {};
     opts['display']['icons'] = opts['display']['icons'] ?? {

@@ -107,7 +107,7 @@
 						<div>
 							<label for="txTime">Transaction Time:</label>
 							<div class="input-group input-group-sm">
-								<input type="text" disabled="@Tx.IsSettled" class="form-control" id="txTime" placeholder="Transaction Time" value="@TxTime" data-datetime-picker="true"/>
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true" disabled="@Tx.IsSettled"/>
 								<span class="input-group-text"><CIcon icon="calendar"/></span>
 							</div>
 						</div>
@@ -219,7 +219,7 @@
 						<div>
 							<label for="txTime">Transaction Time:</label>
 							<div class="input-group input-group-sm">
-								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" value="@TxTime" data-datetime-picker="true"/>
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true"/>
 								<span class="input-group-text"><CIcon icon="calendar"/></span>
 							</div>
 						</div>

@@ -39,6 +39,51 @@ public partial class PortfolioController
 		return ResponseOk(result);
 	}
 
+	private (CreateOrUpdateTransactionRecReq?, ObjectResult?) ValidateTx(CreateOrUpdateTransactionRecReq reqTx, TransactionRec? existingTx)
+	{
+		// validate transaction type, must be either BUY or SELL
+		reqTx.Type = reqTx.Type.ToUpper().Trim();
+		if (!(existingTx?.IsSettled??false) && (reqTx.Type != "BUY" && reqTx.Type != "SELL"))
+		{
+			return (null, ResponseNoData(400, $"Transaction type must be either 'BUY' or 'SELL', currently '{reqTx.Type}'."));
+		}
+
+		// validate item code, must not be empty
+		reqTx.ItemCode = reqTx.ItemCode.ToUpper().Trim();
+		if (!(existingTx?.IsSettled??false) && string.IsNullOrEmpty(reqTx.ItemCode))
+		{
+			return (null, ResponseNoData(400, "Item code must not be empty."));
+		}
+
+		// validate price, must be positive
+		if (!(existingTx?.IsSettled??false) && reqTx.Price <= 0.00m)
+		{
+			return (null, ResponseNoData(400, "Price must be a positive value."));
+		}
+
+		// validate quantity, must be positive
+		if (!(existingTx?.IsSettled??false) && reqTx.Quantity <= 0)
+		{
+			return (null, ResponseNoData(400, "Quantity must be a positive value."));
+		}
+
+		// validate market, must be a valid one or empty
+		reqTx.MarketId = reqTx.MarketId?.Trim() ?? null;
+		if (!(existingTx?.IsSettled??false) && !string.IsNullOrEmpty(reqTx.MarketId))
+		{
+			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(reqTx.MarketId, StringComparison.OrdinalIgnoreCase));
+			if (market == null)
+			{
+				return (null, ResponseNoData(400, $"Market '{reqTx.MarketId}' is not recognized."));
+			}
+			// shift the transaction's timezone to market's timezone
+			reqTx.Time = new DateTimeOffset(reqTx.Time.DateTime, market.TZ.BaseUtcOffset);
+		}
+		reqTx.Time = reqTx.Time.ToUniversalTime(); // convert to UTC for storing into database
+
+		return (reqTx, null);
+	}
+
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
 	public async Task<ActionResult<TransactionRecResp>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
@@ -50,67 +95,34 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		// validate transaction type, must be either BUY or SELL
-		req.Type = req.Type.ToUpper().Trim();
-		if (req.Type != "BUY" && req.Type != "SELL")
+		var (reqTx, validationResult) = ValidateTx(req, null);
+		if (validationResult != null)
 		{
-			return ResponseNoData(400, $"Transaction type must be either 'BUY' or 'SELL', currently '{req.Type}'.");
+			return validationResult;
 		}
-
-		// validate item code, must not be empty
-		req.ItemCode = req.ItemCode.ToUpper().Trim();
-		if (string.IsNullOrEmpty(req.ItemCode))
-		{
-			return ResponseNoData(400, "Item code must not be empty.");
-		}
-
-		// validate price, must be positive
-		if (req.Price <= 0.00m)
-		{
-			return ResponseNoData(400, "Price must be a positive value.");
-		}
-
-		// validate quantity, must be positive
-		if (req.Quantity <= 0)
-		{
-			return ResponseNoData(400, "Quantity must be a positive value.");
-		}
-
-		// validate market, must be a valid one or empty
-		req.MarketId = req.MarketId?.Trim() ?? null;
-		if (!string.IsNullOrEmpty(req.MarketId))
-		{
-			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(req.MarketId, StringComparison.OrdinalIgnoreCase));
-			if (market == null)
-			{
-				return ResponseNoData(400, $"Market '{req.MarketId}' is not recognized.");
-			}
-			req.Time = TimeZoneInfo.ConvertTime(req.Time, market.TZ).Subtract(market.TZ.BaseUtcOffset);
-		}
-		req.Time = req.Time.UtcDateTime; // convert to UTC for storing into database
 
 		// validate portfolio, must be current user's portfolio
 		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
-		if (existingPortfolio == null || existingPortfolio.Id != req.PortfolioId)
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
-			return ResponseNoData(404, "Portfolio not found or mismatched.");
+			return ResponseNoData(400, "Portfolio not found or mismatched.");
 		}
 
 		var tx = new TransactionRec
 		{
-			PortfolioId = req.PortfolioId,
-			Type = req.Type,
-			Time = req.Time == default ? DateTimeOffset.Now.UtcDateTime : req.Time,
-			Quantity = req.Quantity,
-			Price = req.Price,
-			Notes = req.Notes?.Trim() ?? null,
-			FeeTx = req.FeeTx ?? 0.0m,
-			FeeTax = req.FeeTax ?? 0.0m,
-			FeeOther = req.FeeOther ?? 0.0m,
-			ItemType = req.ItemType,
-			ItemCode = req.ItemCode,
-			MarketId = req.MarketId,
+			PortfolioId = reqTx!.Value.PortfolioId,
+			Type = reqTx!.Value.Type,
+			Time = reqTx!.Value.Time == default ? DateTimeOffset.UtcNow : reqTx!.Value.Time,
+			Quantity = reqTx!.Value.Quantity,
+			Price = reqTx!.Value.Price,
+			Notes = reqTx!.Value.Notes?.Trim() ?? null,
+			FeeTx = reqTx!.Value.FeeTx ?? 0.0m,
+			FeeTax = reqTx!.Value.FeeTax ?? 0.0m,
+			FeeOther = reqTx!.Value.FeeOther ?? 0.0m,
+			ItemType = reqTx!.Value.ItemType,
+			ItemCode = reqTx!.Value.ItemCode,
+			MarketId = reqTx!.Value.MarketId,
 			IsSettled = false,
 		};
 		var result = await PortfolioRepository.CreateTxAsync(tx);
@@ -137,72 +149,38 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(404, "Transaction record not found.");
 		}
-
-		// validate transaction type, must be either BUY or SELL
-		req.Type = req.Type.ToUpper().Trim();
-		if (!existingTx.IsSettled && (req.Type != "BUY" && req.Type != "SELL"))
+		var (reqTx, validationResult) = ValidateTx(req, existingTx);
+		if (validationResult != null)
 		{
-			return ResponseNoData(400, $"Transaction type must be either 'BUY' or 'SELL', currently '{req.Type}'.");
+			return validationResult;
 		}
-
-		// validate item code, must not be empty
-		req.ItemCode = req.ItemCode.ToUpper().Trim();
-		if (!existingTx.IsSettled && string.IsNullOrEmpty(req.ItemCode))
-		{
-			return ResponseNoData(400, "Item code must not be empty.");
-		}
-
-		// validate price, must be positive
-		if (!existingTx.IsSettled && req.Price <= 0.00m)
-		{
-			return ResponseNoData(400, "Price must be a positive value.");
-		}
-
-		// validate quantity, must be positive
-		if (!existingTx.IsSettled && req.Quantity <= 0)
-		{
-			return ResponseNoData(400, "Quantity must be a positive value.");
-		}
-
-		// validate market, must be a valid one or empty
-		req.MarketId = req.MarketId?.Trim() ?? null;
-		if (!existingTx.IsSettled && !string.IsNullOrEmpty(req.MarketId))
-		{
-			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(req.MarketId, StringComparison.OrdinalIgnoreCase));
-			if (market == null)
-			{
-				return ResponseNoData(400, $"Market '{req.MarketId}' is not recognized.");
-			}
-			req.Time = TimeZoneInfo.ConvertTime(req.Time, market.TZ).Subtract(market.TZ.BaseUtcOffset);
-		}
-		req.Time = req.Time.UtcDateTime; // convert to UTC for storing into database
 
 		// validate portfolio, must be current user's portfolio
 		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
-		if (existingPortfolio == null || existingPortfolio.Id != req.PortfolioId)
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
-			return ResponseNoData(404, "Portfolio not found or mismatched.");
+			return ResponseNoData(400, "Portfolio not found or mismatched.");
 		}
 
 		if (existingTx.IsSettled)
 		{
-			// for settled transaction, only notes can be updated
-			existingTx.Notes = req.Notes?.Trim() ?? null;
+			// for settled transactions, only notes can be updated
+			existingTx.Notes = reqTx!.Value.Notes?.Trim() ?? null;
 		}
 		else
 		{
-			existingTx.Type = req.Type;
-			existingTx.Time = req.Time == default ? DateTimeOffset.Now.UtcDateTime : req.Time;
-			existingTx.Quantity = req.Quantity;
-			existingTx.Price = req.Price;
-			existingTx.Notes = req.Notes?.Trim() ?? null;
-			existingTx.FeeTx = req.FeeTx ?? 0.0m;
-			existingTx.FeeTax = req.FeeTax ?? 0.0m;
-			existingTx.FeeOther = req.FeeOther ?? 0.0m;
-			existingTx.ItemType = req.ItemType;
-			existingTx.ItemCode = req.ItemCode;
-			existingTx.MarketId = req.MarketId;
+			existingTx.Type = reqTx!.Value.Type;
+			existingTx.Time = reqTx!.Value.Time == default ? DateTimeOffset.UtcNow : reqTx!.Value.Time;
+			existingTx.Quantity = reqTx!.Value.Quantity;
+			existingTx.Price = reqTx!.Value.Price;
+			existingTx.Notes = reqTx!.Value.Notes?.Trim() ?? null;
+			existingTx.FeeTx = reqTx!.Value.FeeTx ?? 0.0m;
+			existingTx.FeeTax = reqTx!.Value.FeeTax ?? 0.0m;
+			existingTx.FeeOther = reqTx!.Value.FeeOther ?? 0.0m;
+			existingTx.ItemType = reqTx!.Value.ItemType;
+			existingTx.ItemCode = reqTx!.Value.ItemCode;
+			existingTx.MarketId = reqTx!.Value.MarketId;
 		}
 		existingTx = await PortfolioRepository.UpdateTxAsync(existingTx);
 		if (existingTx == null)
