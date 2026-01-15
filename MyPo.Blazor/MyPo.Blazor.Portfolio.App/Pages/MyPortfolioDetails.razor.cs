@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
-using MyPo.Blazor.App.Bootstrap;
-using Microsoft.Extensions.Logging;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -14,9 +12,11 @@ public partial class MyPortfolioDetails : BasePage
 	[Parameter]
 	public string Id { get; set; } = string.Empty;
 	private PortfolioRecResp? SelectedPortfolio { get; set; }
-	private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
-	private IEnumerable<TransactionRecResp>? Transactions { get; set; }
+	// private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
+
 	private IEnumerable<MarketDefResp>? Markets { get; set; }
+	private IEnumerable<TransactionRecResp>? Transactions { get; set; }
+	private IEnumerable<AssetResp>? Assets { get; set; }
 
 	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -32,10 +32,10 @@ public partial class MyPortfolioDetails : BasePage
 		}
 
 		var allPortfolios = apiRespPortfolio.Data ?? [];
-		MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
+		var myPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
 		var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
 		PortfolioRecResp portfolio = default!;
-		if (!MyPortfolioMap.TryGetValue(id, out portfolio))
+		if (!myPortfolioMap.TryGetValue(id, out portfolio))
 		{
 			ShowAlert("danger", $"Portfolio '{id}' not found.");
 			return null;
@@ -49,6 +49,15 @@ public partial class MyPortfolioDetails : BasePage
 			return null;
 		}
 		Transactions = apiRespTx.Data ?? [];
+
+		ShowAlert("info", "Loading portfolio assets, please wait...");
+		var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		if (apiRespAssets.Status != 200)
+		{
+			ShowAlert("danger", apiRespAssets.Message ?? $"Error while loading portfolio assets.");
+			return null;
+		}
+		Assets = apiRespAssets.Data ?? [];
 
 		return portfolio;
 	}

@@ -53,4 +53,11 @@ public interface IPortfolioRepository
 	/// Settles a transaction record.
 	/// </summary>
 	public ValueTask<TransactionRec?> SettleTxAsync(TransactionRec txRec, MarketDef? market, CancellationToken cancellationToken = default);
+
+	/*----------------------------------------------------------------------*/
+
+	/// <summary>
+	/// Gets assets by portfolio ID.
+	/// </summary>
+	public ValueTask<IEnumerable<Asset>> GetAssetsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
 }

@@ -152,4 +152,20 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 		);
 		return await ReadAndCloseResponseAsync<TransactionRecResp>(httpResult, cancellationToken);
 	}
+
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<AssetResp>>> GetMyPortfolioAssetsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS.Replace("{id}", portfolioId, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			authToken,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<AssetResp>>(httpResult, cancellationToken);
+	}
 }

@@ -259,6 +259,16 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	/*----------------------------------------------------------------------*/
 
 	private DbSet<Asset> AssetStore { get; set; }
+
+	/// <inheritdoc />
+	public async ValueTask<IEnumerable<Asset>> GetAssetsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+	{
+		return await AssetStore.AsNoTracking()
+			.Where(tr => tr.PortfolioId == portfolioId)
+			.OrderBy(tr => tr.ItemType).OrderBy(tr => tr.ItemCode).OrderBy(tr => tr.MarketId)
+			.ToListAsync(cancellationToken);
+	}
+
 	private async ValueTask<Asset?> GetAssetByOwningAsync(string portfolioId, string itemType, string itemCode, string? marketId)
 	{
 		return await AssetStore.AsNoTracking()
@@ -285,9 +295,10 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
 	}
 
-		/*----------------------------------------------------------------------*/
+	/*----------------------------------------------------------------------*/
 
 	private DbSet<RoiRec> RoiRecStore { get; set; }
+
 	private async ValueTask<RoiRec?> CreateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
 	{
 		var entry = await RoiRecStore.AddAsync(roiRec, cancellationToken);

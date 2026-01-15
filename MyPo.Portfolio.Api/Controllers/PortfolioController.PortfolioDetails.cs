@@ -23,7 +23,7 @@ public partial class PortfolioController
 		}
 
 		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
 		if (existingPortfolio == null)
 		{
 			return ResponseNoData(404, "Portfolio not found.");
@@ -283,5 +283,35 @@ public partial class PortfolioController
 			return ResponseNoData(500, "Failed to settle transaction record.");
 		}
 		return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
+	}
+
+	/// <summary>
+	/// Gets current user's portfolio assets.
+	/// </summary>
+	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS)]
+	public async Task<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioAssets([FromRoute] string id)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(404, "Portfolio not found.");
+		}
+
+		var assetList = await PortfolioRepository.GetAssetsByPortfolioIdAsync(id);
+		var result = new List<AssetResp>();
+		foreach (var asset in assetList)
+		{
+			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(asset.MarketId, StringComparison.OrdinalIgnoreCase));
+			result.Add(AssetResp.BuildFrom(asset, market));
+		}
+		return ResponseOk(result);
 	}
 }
