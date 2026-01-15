@@ -4,6 +4,9 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public class TransactionRec : Entity<string>
 {
+	public const string TXTYPE_BUY = "BUY";
+	public const string TXTYPE_SELL = "SELL";
+
 	//// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
 	public string PortfolioId { get; set; } = default!;

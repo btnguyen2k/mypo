@@ -5,6 +5,8 @@ namespace MyPo.Portfolio.Shared.Api;
 
 public struct CreateOrUpdateTransactionRecReq
 {
+	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string Id { get; set; }
 	[JsonPropertyName("portfolio_id")]
 	public string PortfolioId { get; set; }
 

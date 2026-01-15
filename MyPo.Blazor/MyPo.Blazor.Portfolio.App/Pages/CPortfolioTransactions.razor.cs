@@ -12,7 +12,7 @@ public partial class CPortfolioTransactions : BaseComponent
 	[Parameter]
 	public IEnumerable<TransactionRecResp>? Transactions { get; set; }
 	private Dictionary<string, TransactionRecResp> TransactionsMap => Transactions?.ToDictionary(t => t.Id, t => t) ?? [];
-	// private TransactionRecResp SelectedTx { get; set; } = default!;
+	private Dictionary<string, TransactionRecResp> SelectedTransactionsMap { get; set; } = [];
 
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
@@ -47,10 +47,23 @@ public partial class CPortfolioTransactions : BaseComponent
 	private CModal ModalDialogAddTx { get; set; } = default!;
 	private CModal ModalDialogUpdateTx { get; set; } = default!;
 	private CModal ModalDialogDeleteTx { get; set; } = default!;
+	private CModal ModalDialogSettleTxMultiple { get; set; } = default!;
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
 	private string TxTime { get; set; } = string.Empty;
 	private string TxId { get; set; } = string.Empty;
+
+	private void InitSettleTxMultiple()
+	{
+		var keys = SelectedTransactionsMap.Keys.ToArray();
+		foreach (var key in keys)
+		{
+			if (TransactionsMap.TryGetValue(key, out var tx) && tx.IsSettled)
+			{
+				SelectedTransactionsMap.Remove(key);
+			}
+		}
+	}
 
 	private void InitAddTx()
 	{
@@ -75,10 +88,11 @@ public partial class CPortfolioTransactions : BaseComponent
 		CloseAlert();
 	}
 
-	private void InitUpdateTx(TransactionRecResp tx)
+	private static CreateOrUpdateTransactionRecReq NewTxReqFrom(TransactionRecResp tx)
 	{
-		Tx = new()
+		return new CreateOrUpdateTransactionRecReq()
 		{
+			Id = tx.Id,
 			PortfolioId = tx.PortfolioId,
 			Type = tx.Type,
 			MarketId = tx.MarketId,
@@ -93,6 +107,11 @@ public partial class CPortfolioTransactions : BaseComponent
 			Notes = tx.Notes,
 			IsSettled = tx.IsSettled,
 		};
+	}
+
+	private void InitUpdateTx(TransactionRecResp tx)
+	{
+		Tx = NewTxReqFrom(tx);
 		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
 		TxId = tx.Id;
 		CloseAlert();
@@ -308,6 +327,72 @@ public partial class CPortfolioTransactions : BaseComponent
 		var passAlertType = "success";
 		await Task.Delay(500);
 		ModalDialogDeleteTx.Close();
+		CloseAlert();
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+	}
+
+	private void TxCheckboxClicked(string txid)
+	{
+		if (!SelectedTransactionsMap.Remove(txid))
+		{
+			TransactionRecResp? tx = TransactionsMap.TryGetValue(txid, out var t) ? t : null;
+			if (tx != null)
+			{
+				SelectedTransactionsMap[txid] = tx.Value;
+			}
+		}
+	}
+
+	private void BtnClickSettleTxMultiple()
+	{
+		InitSettleTxMultiple();
+		if (SelectedTransactionsMap.Count == 0)
+		{
+			ShowAlert("warning", "No transactions valid for settlement.");
+		}
+		else
+		{
+			ShowAlert("info", $"{SelectedTransactionsMap.Count} transaction(s) selected for settlement.");
+		}
+		ModalDialogSettleTxMultiple.Open();
+	}
+
+	private async void BtnClickSettleTxMultipleConfirm()
+	{
+		var txList = SelectedTransactionsMap.Values.OrderBy(t => t.Time).ToList();
+		ShowAlert("info", $"Settling {txList.Count} transaction(s)...");
+
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var (numTxDone, numTxTotal) = (0, txList.Count);
+		foreach (var tx in txList)
+		{
+			var txReq = NewTxReqFrom(tx);
+			ShowAlert("info", $"Settling transaction '{txReq.Id}'...");
+			var resp = await apiClient.SettleTransactionAsync(txReq.Id, txReq, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (resp.Status != 200)
+			{
+				ShowAlert("danger", $"Failed to settle transaction '{tx.Id}': {resp.Message}");
+				break;
+			}
+			numTxDone++;
+		}
+
+		var (passAlertType, passAlertMessage) = ("success", $"All {numTxTotal} selected transaction(s) settled successfully.");
+		if (numTxDone != numTxTotal)
+		{
+			ShowAlert("warning", $"Failed to settle all selected transaction(s). {numTxDone} out of {numTxTotal} settled.");
+			(passAlertType, passAlertMessage) = ("warning", $"Failed to settle all selected transaction(s). {numTxDone} out of {numTxTotal} settled.");
+		}
+		else
+		{
+			ShowAlert("success", $"All {numTxTotal} selected transaction(s) settled successfully. Navigating to portfolio page...");
+		}
+		await Task.Delay(500);
+		ModalDialogSettleTxMultiple.Close();
 		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"

@@ -276,7 +276,8 @@ public partial class PortfolioController
 		existingTx.ItemCode = reqTx!.Value.ItemCode;
 		existingTx.MarketId = reqTx!.Value.MarketId;
 
-		existingTx = await PortfolioRepository.SettleTxAsync(existingTx);
+		var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(existingTx.MarketId, StringComparison.OrdinalIgnoreCase));
+		existingTx = await PortfolioRepository.SettleTxAsync(existingTx, market);
 		if (existingTx == null)
 		{
 			return ResponseNoData(500, "Failed to settle transaction record.");

@@ -62,6 +62,30 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
 		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
 		builder.Property(p => p.Quantity).HasColumnName("item_quantity");
 		builder.Property(p => p.AveragePrice).HasColumnName("average_price");
+		builder.Property(p => p.Tags).HasColumnName("tags").HasMaxLength(256);
+		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
+		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
+		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+	}
+}
+
+sealed class RoiRecEntityTypeConfiguration : GenericEntityTypeConfiguration<RoiRec, string>
+{
+	public override void Configure(EntityTypeBuilder<RoiRec> builder)
+	{
+		base.Configure(builder);
+		builder.ToTable($"{Globals.TABLE_PREFIX}roi"); // change table name if needed
+		builder.Property(p => p.Id).HasColumnName("roi_id").HasMaxLength(48);
+		builder.Property(p => p.Status).HasColumnName("tx_status").HasMaxLength(8);
+		builder.Property(p => p.PortfolioId).HasColumnName("portfolio_id").HasMaxLength(48);
+		builder.Property(p => p.TxType).HasColumnName("tx_type").HasMaxLength(8);
+		builder.Property(p => p.TxTime).HasColumnName("tx_time");
+		builder.Property(p => p.TxValue).HasColumnName("tx_value");
+		builder.Property(p => p.RefTxId).HasColumnName("ref_tx_id").HasMaxLength(48);
+		builder.Property(p => p.RefItemType).HasColumnName("ref_item_type").HasMaxLength(16);
+		builder.Property(p => p.RefItemCode).HasColumnName("ref_item_code").HasMaxLength(16);
+		builder.Property(p => p.RefMarketId).HasColumnName("ref_market_id").HasMaxLength(16);
+		builder.Property(p => p.TxDesc).HasColumnName("tx_desc").HasMaxLength(256);
 		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
 		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
 		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();

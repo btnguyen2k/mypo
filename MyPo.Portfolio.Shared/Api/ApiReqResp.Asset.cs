@@ -17,6 +17,7 @@ public struct AssetResp
 			AveragePrice = a.AveragePrice,
 			MarketId = a.MarketId,
 			Market = market != null ? MarketDefResp.BuildFrom(market) : null,
+			Tags = a.Tags,
 		};
 		return aResp;
 	}
@@ -43,4 +44,7 @@ public struct AssetResp
 	public string? MarketId { get; set; }
 	[JsonPropertyName("market"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public MarketDefResp? Market { get; set; }
+
+	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Tags { get; set; }
 }

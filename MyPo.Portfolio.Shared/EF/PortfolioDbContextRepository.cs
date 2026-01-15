@@ -29,6 +29,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		new PortfolioRecEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioRec>());
 		new TransactionRecEntityTypeConfiguration().Configure(modelBuilder.Entity<TransactionRec>());
 		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<Asset>());
+		new RoiRecEntityTypeConfiguration().Configure(modelBuilder.Entity<RoiRec>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>
@@ -122,58 +123,128 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 
-	/// <inheritdoc />
-	public async ValueTask<TransactionRec?> SettleTxAsync(TransactionRec tx, CancellationToken cancellationToken = default)
+	private async Task SettleTxUpdateAssetAsync(TransactionRec tx, CancellationToken cancellationToken = default)
 	{
+		// update owning asset
+		var existingAsset = await GetAssetByOwningAsync(tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
+		if (existingAsset == null)
+		{
+			existingAsset = await CreateAssetAsync(new()
+			{
+				PortfolioId = tx.PortfolioId,
+				ItemType = tx.ItemType,
+				ItemCode = tx.ItemCode,
+				MarketId = tx.MarketId,
+				Quantity = 0.0m,
+				AveragePrice = 0.0m,
+			}, cancellationToken);
+			if (existingAsset == null)
+			{
+				throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create owning asset.");
+			}
+		}
+		var txType = tx.Type.Trim().ToUpper();
+		var newQuantity = existingAsset.Quantity + (txType==TransactionRec.TXTYPE_BUY ? tx.Quantity : -tx.Quantity);
+		var assetTotalCost = existingAsset.AveragePrice * existingAsset.Quantity;
+		var txBaseCost = tx.Price * tx.Quantity;
+		var newTotalCost = assetTotalCost + (txType==TransactionRec.TXTYPE_BUY ? txBaseCost : -txBaseCost) + tx.TotalFee;
+		var newAveragePrice = newQuantity != 0.0m ? newTotalCost / newQuantity : 0.0m;
+		existingAsset.Quantity = newQuantity;
+		existingAsset.AveragePrice = newAveragePrice;
+		var _ = await UpdateAssetAsync(existingAsset, cancellationToken)
+			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update owning asset.");
+	}
+
+	private async Task SettleTxUpdateRoiAsync(TransactionRec tx, MarketDef? market, CancellationToken cancellationToken = default)
+	{
+		var txType = tx.Type.Trim().ToUpper();
+		var roiRec = new RoiRec()
+		{
+			PortfolioId = tx.PortfolioId,
+			Status = RoiRec.STATUS_FINAL,
+			TxType = txType == TransactionRec.TXTYPE_SELL ? RoiRec.TX_TYPE_SELL : RoiRec.TX_TYPE_BUY,
+			TxTime = tx.Time,
+			TxValue = tx.Price * tx.Quantity,
+			RefTxId = tx.Id,
+			RefItemType = tx.ItemType,
+			RefItemCode = tx.ItemCode,
+			RefMarketId = tx.MarketId,
+			TxDesc = txType == TransactionRec.TXTYPE_SELL
+				? $"Sold {tx.Quantity} of ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}"
+				: $"Bought {tx.Quantity} of ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+		};
+		_ = await CreateRoiRecAsync(roiRec, cancellationToken)
+			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+
+		if (tx.FeeTax != 0.0m)
+		{
+			var taxRoiRec = new RoiRec()
+			{
+				PortfolioId = tx.PortfolioId,
+				Status = RoiRec.STATUS_FINAL,
+				TxType = RoiRec.TX_TYPE_TAX,
+				TxTime = tx.Time,
+				TxValue = tx.FeeTax,
+				RefTxId = tx.Id,
+				RefItemType = tx.ItemType,
+				RefItemCode = tx.ItemCode,
+				RefMarketId = tx.MarketId,
+				TxDesc = $"Transaction Tax for @{txType} ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+			};
+			_ = await CreateRoiRecAsync(taxRoiRec, cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+		}
+
+		if (tx.FeeTx != 0.0m || tx.FeeOther != 0.0m)
+		{
+			var feeRoiRec = new RoiRec()
+			{
+				PortfolioId = tx.PortfolioId,
+				Status = RoiRec.STATUS_FINAL,
+				TxType = RoiRec.TX_TYPE_FEE,
+				TxTime = tx.Time,
+				TxValue = tx.FeeTx + tx.FeeOther,
+				RefTxId = tx.Id,
+				RefItemType = tx.ItemType,
+				RefItemCode = tx.ItemCode,
+				RefMarketId = tx.MarketId,
+				TxDesc = $"Transaction Fee for @{txType} ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+			};
+			_ = await CreateRoiRecAsync(feeRoiRec, cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+		}
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<TransactionRec?> SettleTxAsync(TransactionRec tx, MarketDef? market, CancellationToken cancellationToken = default)
+	{
+		var txType = tx.Type.Trim().ToUpper();
+		if (txType != TransactionRec.TXTYPE_BUY && txType != TransactionRec.TXTYPE_SELL)
+		{
+			throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Only buy/sell transactions can be settled.");
+		}
+
 		using var transaction = await Database.BeginTransactionAsync(cancellationToken);
 		try
 		{
-			var existingTx = await TxRecStore.FindAsync([tx.Id], cancellationToken);
-			if (existingTx == null)
+			var existingTx = await TxRecStore.FindAsync([tx.Id], cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Transaction record not found.");
+			if (existingTx.IsSettled)
 			{
-				await transaction.RollbackAsync(cancellationToken);
-				return null;
+				throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Transaction has already been settled.");
+			}
+			if (!existingTx.PortfolioId.Equals(tx.PortfolioId,StringComparison.OrdinalIgnoreCase))
+			{
+				throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Transaction portfolio ID mismatch (Input: {tx.PortfolioId}) vs Existing: {existingTx.PortfolioId}.");
 			}
 
-			// update owning asset
-			var existingAsset = await GetAssetByOwningAsync(existingTx.PortfolioId, existingTx.ItemType, existingTx.ItemCode, existingTx.MarketId);
-			if (existingAsset == null)
-			{
-				existingAsset = await CreateAssetAsync(new()
-				{
-					PortfolioId = existingTx.PortfolioId,
-					ItemType = existingTx.ItemType,
-					ItemCode = existingTx.ItemCode,
-					MarketId = existingTx.MarketId,
-					Quantity = 0.0m,
-					AveragePrice = 0.0m,
-				}, cancellationToken);
-				if (existingAsset == null)
-				{
-					await transaction.RollbackAsync(cancellationToken);
-					return null;
-				}
-			}
-			var newQuantity = existingAsset.Quantity + tx.Quantity;
-			var newTotalCost = existingAsset.AveragePrice * existingAsset.Quantity + tx.Price * tx.Quantity + tx.TotalFee;
-			var newAveragePrice = newQuantity != 0.0m ? newTotalCost / newQuantity : 0.0m;
-			existingAsset.Quantity = newQuantity;
-			existingAsset.AveragePrice = newAveragePrice;
-			var updatedAsset = await UpdateAssetAsync(existingAsset, cancellationToken);
-			if (updatedAsset == null)
-			{
-				await transaction.RollbackAsync(cancellationToken);
-				return null;
-			}
+			await SettleTxUpdateAssetAsync(tx, cancellationToken);
 
-			// update transaction record
+			await SettleTxUpdateRoiAsync(tx, market, cancellationToken);
+
 			tx.IsSettled = true;
-			var updatedTx = await UpdateTxAsync(tx, cancellationToken);
-			if (updatedTx == null)
-			{
-				await transaction.RollbackAsync(cancellationToken);
-				return null;
-			}
+			var updatedTx = await UpdateTxAsync(tx, cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update transaction record.");
 
 			await transaction.CommitAsync(cancellationToken);
 			return updatedTx;
@@ -211,6 +282,26 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 			return null;
 		}
 		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(asset));
+		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
+	}
+
+		/*----------------------------------------------------------------------*/
+
+	private DbSet<RoiRec> RoiRecStore { get; set; }
+	private async ValueTask<RoiRec?> CreateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	{
+		var entry = await RoiRecStore.AddAsync(roiRec, cancellationToken);
+		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
+	}
+
+	private async ValueTask<RoiRec?> UpdateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	{
+		var existingEntry = await RoiRecStore.FindAsync([roiRec.Id], cancellationToken);
+		if (existingEntry == null)
+		{
+			return null;
+		}
+		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(roiRec));
 		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
 	}
 }

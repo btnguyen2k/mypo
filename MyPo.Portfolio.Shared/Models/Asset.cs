@@ -12,4 +12,5 @@ public sealed class Asset : Entity<string>
 	public string? MarketId { get; set; }
 	public decimal Quantity { get; set; } = 0.0m;
 	public decimal AveragePrice { get; set; } = 0.0m;
+	public string? Tags { get; set; }
 }

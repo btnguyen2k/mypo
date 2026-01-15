@@ -52,5 +52,5 @@ public interface IPortfolioRepository
 	/// <summary>
 	/// Settles a transaction record.
 	/// </summary>
-	public ValueTask<TransactionRec?> SettleTxAsync(TransactionRec txRec, CancellationToken cancellationToken = default);
+	public ValueTask<TransactionRec?> SettleTxAsync(TransactionRec txRec, MarketDef? market, CancellationToken cancellationToken = default);
 }
