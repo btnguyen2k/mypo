@@ -27,6 +27,17 @@ public sealed class MarketDef
 
 	public List<DayOfWeek> TradingDays { get; set; } = [];
 
+	public bool IsCurrentlyOpen()
+	{
+		var now = TimeZoneInfo.ConvertTime(DateTimeOffset.Now, TZ);
+		if (!TradingDays.Contains(now.DayOfWeek))
+		{
+			return false;
+		}
+		var currentTime = TimeOnly.FromDateTime(now.DateTime);
+		return currentTime >= OpenHour && currentTime <= CloseHour;
+	}
+
 	public static MarketDef Build(string id, IConfigurationSection data)
 	{
 		var marketDef = data.Get<MarketDef>()!;

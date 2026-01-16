@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -12,6 +13,7 @@ public partial class CPortfolioAssets : BaseComponent
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
 	private AssetResp? SelectedAsset;
+	private MarketDef? SelectedMarket;
 	private string AssetTags = string.Empty;
 
 	[Parameter]
@@ -50,6 +52,7 @@ public partial class CPortfolioAssets : BaseComponent
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
 		if (SelectedAsset != null)
 		{
+			SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset!.Value.MarketId).ToModel() ?? null;
 			AssetTags = SelectedAsset?.Tags ?? string.Empty;
 			ModalDialogAssetInfo.Open();
 		}
@@ -79,7 +82,7 @@ public partial class CPortfolioAssets : BaseComponent
 		}
 		ShowAlert("success", "Asset tags updated successfully.");
 
-		var passAlertMessage = $"{SelectedAsset?.ItemCode}'s tags updated successfully.";
+		var passAlertMessage = $"{SelectedAsset!.Value.ItemCode}'s tags updated successfully.";
 		var passAlertType = "success";
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
