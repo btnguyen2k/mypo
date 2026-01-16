@@ -3,6 +3,33 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
 
+public struct CreateOrUpdateAssetReq
+{
+	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Id { get; set; }
+
+	[JsonPropertyName("portfolio_id")]
+	public string PortfolioId { get; set; }
+
+	[JsonPropertyName("item_type")]
+	public string ItemType { get; set; }
+
+	[JsonPropertyName("item_code")]
+	public string ItemCode { get; set; }
+
+	[JsonPropertyName("quantity")]
+	public decimal Quantity { get; set; }
+
+	[JsonPropertyName("average_price")]
+	public decimal AveragePrice { get; set; }
+
+	[JsonPropertyName("market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? MarketId { get; set; }
+
+	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Tags { get; set; }
+}
+
 public struct AssetResp
 {
 	public static AssetResp BuildFrom(Asset a, MarketDef? market = null)

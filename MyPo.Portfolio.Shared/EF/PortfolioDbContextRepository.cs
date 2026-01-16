@@ -284,7 +284,15 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 
-	private async ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default)
+	/// <inheritdoc />
+	public async ValueTask<Asset?> GetAssetAsync(string assetId, CancellationToken cancellationToken = default)
+	{
+		return await AssetStore.AsNoTracking().FirstOrDefaultAsync(a => a.Id == assetId, cancellationToken);
+	}
+
+
+	/// <inheritdoc />
+	public async ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default)
 	{
 		var existingEntry = await AssetStore.FindAsync([asset.Id], cancellationToken);
 		if (existingEntry == null)

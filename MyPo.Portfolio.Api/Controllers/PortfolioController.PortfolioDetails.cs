@@ -314,4 +314,46 @@ public partial class PortfolioController
 		}
 		return ResponseOk(result);
 	}
+
+	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
+	public async Task<ActionResult<ApiResp<AssetResp>>> UpdateAssetFromPortfolio([FromRoute] string id, [FromRoute] string aid, [FromBody] CreateOrUpdateAssetReq req)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var existingAsset = await PortfolioRepository.GetAssetAsync(aid);
+		if (existingAsset == null)
+		{
+			return ResponseNoData(404, "Asset not found.");
+		}
+		// var (reqTx, validationResult) = ValidateAsset(req, existingAsset);
+		// if (validationResult != null)
+		// {
+		// 	return validationResult;
+		// }
+
+		// validate portfolio, must be current user's portfolio
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
+		{
+			return ResponseNoData(400, "Portfolio not found or mismatched.");
+		}
+
+		// only tags list can be updated for asset
+		var tagsSet = (req.Tags?.Trim() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
+		existingAsset.Tags = tagsSet.Count > 0 ? string.Join(',', tagsSet) : string.Empty;
+
+		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
+		if (existingAsset == null)
+		{
+			return ResponseNoData(500, "Failed to update asset.");
+		}
+		return ResponseOk(AssetResp.BuildFrom(existingAsset));
+	}
 }

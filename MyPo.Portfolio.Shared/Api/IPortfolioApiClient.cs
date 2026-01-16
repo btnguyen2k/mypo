@@ -11,6 +11,7 @@ public interface IPortfolioApiClient : IApiClient
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID = "/api/my_portfolio/{id}/tx/{txid}";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID = "/api/my_portfolio/{id}/settle_tx/{txid}";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS = "/api/my_portfolio/{id}/assets";
+	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID = "/api/my_portfolio/{id}/asset/{aid}";
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MARKETS"/> to get markets metadata.
@@ -134,4 +135,17 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	public Task<ApiResp<IEnumerable<AssetResp>>> GetMyPortfolioAssetsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID"/> to update an existing asset.
+	/// </summary>
+	/// <param name="portfolioId"></param>
+	/// <param name="assetId"></param>
+	/// <param name="req"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<AssetResp>> UpdateMyPortfolioAssetAsync(string portfolioId, string assetId, CreateOrUpdateAssetReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }

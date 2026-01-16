@@ -60,4 +60,14 @@ public interface IPortfolioRepository
 	/// Gets assets by portfolio ID.
 	/// </summary>
 	public ValueTask<IEnumerable<Asset>> GetAssetsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Gets an asset by its ID.
+	/// </summary>
+	public ValueTask<Asset?> GetAssetAsync(string assetId, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Upserts an asset record.
+	/// </summary>
+	public ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default);
 }
