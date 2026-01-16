@@ -347,7 +347,7 @@ public partial class PortfolioController
 
 		// only tags list can be updated for asset
 		var tagsSet = (req.Tags?.Trim() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
-		existingAsset.Tags = tagsSet.Count > 0 ? string.Join(',', tagsSet) : string.Empty;
+		existingAsset.Tags = tagsSet.Count > 0 ? string.Join(", ", tagsSet) : string.Empty;
 
 		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
 		if (existingAsset == null)

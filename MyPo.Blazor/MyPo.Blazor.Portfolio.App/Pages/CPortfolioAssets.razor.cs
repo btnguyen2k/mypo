@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -46,25 +45,6 @@ public partial class CPortfolioAssets : BaseComponent
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
 
-	// private CreateOrUpdateTransactionRecReq Tx = default!;
-	// private string TxTime { get; set; } = string.Empty;
-	// private string TxId { get; set; } = string.Empty;
-
-	// [Inject]
-	// private IJSRuntime JS { get; set; } = default!;
-
-	// protected override async Task OnAfterRenderAsync(bool firstRender)
-	// {
-	// 	if (firstRender)
-	// 	{
-	// 		Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>("import", $"./_content/{typeof(CPortfolioTransactions).Assembly.GetName().Name!}/js/datetime-picker.js").AsTask());
-	// 		var module = await moduleTask.Value;
-    //     	await module.InvokeAsync<string>("InitDatetimePickers");
-
-	// 		// MarketsMap = Markets?.ToDictionary(m => m.Id, m => m) ?? [];
-	// 	}
-	// }
-
 	private void BtnClickAssetInfo(string assetId)
 	{
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
@@ -98,5 +78,13 @@ public partial class CPortfolioAssets : BaseComponent
 			return;
 		}
 		ShowAlert("success", "Asset tags updated successfully.");
+
+		var passAlertMessage = $"{SelectedAsset?.ItemCode}'s tags updated successfully.";
+		var passAlertType = "success";
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 }

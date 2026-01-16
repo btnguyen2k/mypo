@@ -41,7 +41,12 @@
 						<td class="text-center w-auto">@(asset.MarketId??"-") / @(asset.Market?.CurrencySymbol??"-")</td>
 						<td class="text-end w-auto">@(asset.Quantity.ToString("N2"))</td>
 						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1))</td>
-						<td class="text-center">@(asset.Tags??"-")</td>
+						<td class="text-center">
+							@foreach(var tag in asset.TagsList)
+							{
+								<CRandomBadge Text="@tag" />
+							}
+						</td>
 						<td class="text-center">
 							<button class="btn btn-sm btn-outline-info" title="Details" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
 								<CIcon icon="cil-info" />
@@ -81,13 +86,58 @@
 					</tr>
 				</tbody>
 			</table>
+			@if (SelectedAsset?.ItemType == "STOCK")
+			{
+				<CStockChart Market="@SelectedAsset?.Market?.ToModel()" Symbol="@SelectedAsset?.ItemCode" />
+				@*<div class="container" style="height:480px; width:100%;">*@
+					@*
+					<iframe id="frame-chart" src="https://stockchart.vietstock.vn/?stockcode=DBD&lang=vi&isIframe=1" style="width: 100%; height:100%;" scrolling="no" frameborder="0" title="ta chart"></iframe>
+					*@
+					@*
+					<!-- TradingView Widget BEGIN -->
+					<div class="tradingview-widget-container" style="height:100%; width:100%">
+						<div class="tradingview-widget-container__widget" style="height:calc(100% - 32px); width:100%"></div>
+						<div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/HOSE-BID/" rel="noopener nofollow" target="_blank"><span class="blue-text">BID stock chart</span></a><span class="trademark"> by TradingView</span></div>
+						<script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+						{
+							"allow_symbol_change": false,
+							"calendar": false,
+							"details": false,
+							"hide_side_toolbar": true,
+							"hide_top_toolbar": false,
+							"hide_legend": false,
+							"hide_volume": false,
+							"hotlist": false,
+							"interval": "D",
+							"locale": "en",
+							"save_image": true,
+							"style": "1",
+							"symbol": "HOSE:BID",
+							"theme": "light",
+							"timezone": "Etc/UTC",
+							"backgroundColor": "#ffffff",
+							"gridColor": "rgba(46, 46, 46, 0.06)",
+							"watchlist": [],
+							"withdateranges": false,
+							"compareSymbols": [],
+							"studies": [],
+							"autosize": true
+						}
+						</script>
+					</div>
+					<!-- TradingView Widget END -->
+					*@
+				@* </div> *@
+			}
 		</div>
 		<div class="card-footer">
-			<button type="button" class="btn btn-secondary" @onclick="()=>ModalDialogAssetInfo.Close()"><CIcon icon="x-circle" /> Close</button>
-			@* <button type="button" class="btn btn-success" @onclick="()=>BtnClickSettleTxMultipleConfirm()"><CIcon icon="check" /> Settle</button> *@
+			<span style="font-size: small;">@warningMsg</span>
 		</div>
 	</div>
 </CModal>
 
 @code {
+	private string warningMsg = "Stock chart and data are provided by third-party services. " +
+		"The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
+		"Users should verify the data independently before making any investment decisions.";
 }

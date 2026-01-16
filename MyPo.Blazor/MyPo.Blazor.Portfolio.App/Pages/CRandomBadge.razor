@@ -1,0 +1,20 @@
+<span class="badge rounded-pill me-1 @BadgeColorClass()">@Text</span>
+@code {
+	[Parameter]
+	public string Text { get; set; } = "Badge";
+
+	private string BadgeColorClass()
+	{
+		var availableClasses = new List<string>
+		{
+			"text-bg-primary",
+			"text-bg-success",
+			"text-bg-danger",
+			"text-bg-warning",
+			"text-bg-info",
+		};
+		int hash = Text.GetHashCode();
+		int index = Math.Abs(hash) % availableClasses.Count;
+		return availableClasses[index];
+	}
+}
