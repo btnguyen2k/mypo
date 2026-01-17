@@ -1,0 +1,22 @@
+﻿using Finance.Net;
+using Finance.Net.Extensions;
+using MyPo.Shared.Bootstrap;
+
+namespace MyPo.Portfolio.Api.Bootstrap;
+
+/// <summary>
+/// Bootstrapper that register services used by MyPo.Portfolio module.
+/// </summary>
+[Bootstrapper]
+public class ServicesBootstrapper
+{
+    public static void ConfigureServices(IServiceCollection services)
+	{
+		services.AddFinanceNet(new FinanceNetConfiguration
+		{
+			HttpTimeout = 5,
+			HttpRetryCount = 3,
+			AlphaVantageApiKey = "<ALPHA_VANTAGE__API_KEY>",
+		});
+	}
+}

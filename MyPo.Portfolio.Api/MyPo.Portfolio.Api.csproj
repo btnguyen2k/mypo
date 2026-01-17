@@ -15,4 +15,8 @@
     <ProjectReference Include="..\MyPo.Shared.Api\MyPo.Shared.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Finance.NET" Version="1.1.13" />
+  </ItemGroup>
+
 </Project>

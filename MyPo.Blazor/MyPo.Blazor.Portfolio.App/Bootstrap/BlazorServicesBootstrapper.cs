@@ -1,7 +1,7 @@
+﻿using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.Portfolio.App.Services;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Shared.Bootstrap;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MyPo.Blazor.Portfolio.App.Bootstrap;
 

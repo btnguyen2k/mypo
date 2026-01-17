@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -47,7 +47,7 @@ public partial class CPortfolioAssets : BaseComponent
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
 
-	private void BtnClickAssetInfo(string assetId)
+	private async void BtnClickAssetInfo(string assetId)
 	{
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
 		if (SelectedAsset != null)
@@ -55,6 +55,7 @@ public partial class CPortfolioAssets : BaseComponent
 			SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset!.Value.MarketId).ToModel() ?? null;
 			AssetTags = SelectedAsset?.Tags ?? string.Empty;
 			ModalDialogAssetInfo.Open();
+			await Task.CompletedTask;
 		}
 	}
 
