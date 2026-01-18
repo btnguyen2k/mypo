@@ -73,7 +73,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platforms: [ 'linux/amd64', 'linux/arm64' ]
+        # platforms: [ 'linux/amd64', 'linux/arm64' ]
+        platforms: [ 'linux/amd64' ] # Finance.NET not working with ARM yet!
         dockerfiles: [ 'Dockerfile', 'Dockerfile.dev' ]
     name: Test building Docker image(s) for Linux
     steps:
