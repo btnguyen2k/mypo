@@ -14,8 +14,8 @@ public class ServicesBootstrapper
 	{
 		services.AddFinanceNet(new FinanceNetConfiguration
 		{
-			HttpTimeout = 5,
-			HttpRetryCount = 3,
+			HttpTimeout = 10,
+			HttpRetryCount = 2,
 			AlphaVantageApiKey = "<ALPHA_VANTAGE__API_KEY>",
 		});
 	}

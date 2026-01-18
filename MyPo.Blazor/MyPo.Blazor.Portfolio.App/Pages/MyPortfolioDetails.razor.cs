@@ -12,7 +12,6 @@ public partial class MyPortfolioDetails : BasePage
 	[Parameter]
 	public string Id { get; set; } = string.Empty;
 	private PortfolioRecResp? SelectedPortfolio { get; set; }
-	// private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
 
 	private IEnumerable<MarketDefResp>? Markets { get; set; }
 	private IEnumerable<TransactionRecResp>? Transactions { get; set; }

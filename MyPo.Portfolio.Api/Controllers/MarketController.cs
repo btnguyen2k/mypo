@@ -1,12 +1,15 @@
 ﻿using Finance.Net.Interfaces;
 using Finance.Net.Models.Yahoo;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
 using MyPo.Shared.Api.Controller;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
+[Authorize]
 public partial class MarketsController : ApiBaseController
 {
 	private readonly IYahooFinanceService YFService = default!;
@@ -34,8 +37,8 @@ public partial class MarketsController : ApiBaseController
 	/// </summary>
 	/// <param name="symbols">Comma-separated list of symbols. Each symbol is in the following format CODE:market-id</param>
 	/// <returns></returns>
-	[HttpGet("/stock/quote/{symbols}")]
-	public async Task<ActionResult<ApiResp<IEnumerable<Quote>>>> GetStockQuotes([FromRoute] string symbols)
+	[HttpGet(IPortfolioApiClient.API_STOCKS_GET_QUOTES)]
+	public async Task<ActionResult<ApiResp<IEnumerable<Quote>>>> GetStockQuotes([FromQuery] string symbols)
 	{
 		var yfSymbolMap = new Dictionary<string, string>();
 		var pairsCodeMarketId = symbols.ToUpper().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

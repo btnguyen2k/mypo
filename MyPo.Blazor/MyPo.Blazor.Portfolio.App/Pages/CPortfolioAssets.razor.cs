@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Finance.Net.Models.Yahoo;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -7,11 +8,12 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
-public partial class CPortfolioAssets : BaseComponent
+public partial class CPortfolioAssets : CBase
 {
 	[Parameter]
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
+	private Dictionary<string, Quote> QuotesMap = [];
 	private AssetResp? SelectedAsset;
 	private MarketDef? SelectedMarket;
 	private string AssetTags = string.Empty;
@@ -22,30 +24,56 @@ public partial class CPortfolioAssets : BaseComponent
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
 
-	private string AlertType { get; set; } = string.Empty;
-	private string AlertMessage { get; set; } = string.Empty;
-	protected bool AlertHasChanged {get; set; } = false;
-
-	protected void CloseAlert()
-	{
-		AlertMessage = string.Empty;
-		AlertHasChanged = false;
-		StateHasChanged();
-	}
-
-	protected void ShowAlert(string type, string message)
-	{
-		var oldAlertType = AlertType;
-		var oldAlertMessage = AlertMessage;
-		AlertType = type;
-		AlertMessage = message;
-		AlertHasChanged = !String.IsNullOrEmpty(oldAlertMessage)
-			&& (String.Compare(oldAlertMessage, message, MyPo.Shared.Globals.StringComparison) != 0
-				|| String.Compare(oldAlertType, type, MyPo.Shared.Globals.StringComparison) != 0);
-		StateHasChanged();
-	}
-
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
+
+	private bool StopRefreshQuotes = false;
+
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			StopRefreshQuotesBackground();
+		}
+		base.Dispose(disposing);
+	}
+
+	private void StopRefreshQuotesBackground()
+	{
+		StopRefreshQuotes = true;
+	}
+
+	private async Task GetStocksQuotesBackground(List<string> symbolsList)
+	{
+		if (symbolsList.Count > 0 && !StopRefreshQuotes)
+		{
+			var symbols = string.Join(",",symbolsList);
+			Console.WriteLine($"[DEBUG] Fetching quotes for symbols: {symbols}");
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var quotesResp = await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (quotesResp.Status == 200)
+			{
+				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
+				StateHasChanged();
+			}
+			if (!StopRefreshQuotes)
+			{
+				var sleepTime = Random.Shared.NextInt64(30000, 60000);
+				Console.WriteLine($"[DEBUG] Sleeping {sleepTime} ms before next quotes refresh...");
+				await Task.Delay((int)sleepTime);
+				await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
+			}
+		}
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await base.OnAfterRenderAsync(firstRender);
+		if (firstRender && Assets != null && Markets != null && !string.IsNullOrEmpty(PortfolioId))
+		{
+			var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
+		}
+	}
 
 	private async void BtnClickAssetInfo(string assetId)
 	{

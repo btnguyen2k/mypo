@@ -1,4 +1,4 @@
-﻿using MyPo.Blazor.App.Helpers;
+using MyPo.Blazor.App.Helpers;
 using MyPo.Blazor.App.Layout;
 using MyPo.Blazor.App.Services;
 using MyPo.Shared.Api;
@@ -10,7 +10,7 @@ namespace MyPo.Blazor.App.Shared;
 /// <summary>
 /// Base Razor component class that provides common properties and utility methods.
 /// </summary>
-public abstract class BaseComponent : ComponentBase
+public abstract class BaseComponent : ComponentBase, IDisposable
 {
 	[Inject]
 	protected IServiceProvider ServiceProvider { get; init; } = default!;
@@ -63,9 +63,20 @@ public abstract class BaseComponent : ComponentBase
 		}
 	}
 
+	/// <inheritdoc />
 	public void Dispose()
 	{
-		StateContainer.OnChange -= StateHasChanged;
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private bool isDisposed;
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if (isDisposed) return;
+		if (disposing) StateContainer.OnChange -= StateHasChanged;
+		isDisposed = true;
 	}
 
 	protected override async Task OnInitializedAsync()

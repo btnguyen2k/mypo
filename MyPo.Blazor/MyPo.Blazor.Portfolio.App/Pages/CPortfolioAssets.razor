@@ -2,7 +2,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 
-@inherits BaseComponent
+@inherits CBase
 
 @if (!string.IsNullOrEmpty(AlertMessage))
 {
@@ -10,6 +10,8 @@
 		@AlertMessage
 	</CAlert>
 }
+
+@* <NavigationLock ConfirmExternalNavigation="false" OnBeforeInternalNavigation="()=>StopRefreshQuotesBackground()" /> *@
 
 <div class="container mt-3">
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
@@ -20,6 +22,8 @@
 				<th scope="col" class="text-center">Exchange</th>
 				<th scope="col" class="text-center">Quantity</th>
 				<th scope="col" class="text-center">Average Price</th>
+				<th scope="col" class="text-center">Latest Price</th>
+				<th scope="col" class="text-center">Unsettled P/L</th>
 				<th scope="col" class="text-center">Tags</th>
 				<th scope="col" class="text-center">Actions</th>
 			</tr>
@@ -28,7 +32,7 @@
 			@if (Assets == null || Assets.Count() == 0)
 			{
 				<tr>
-					<td colspan="6" class="text-center">No assets found. Settle transactions to update the asset list.</td>
+					<td colspan="9" class="text-center">No assets found. Settle transactions to update the asset list.</td>
 				</tr>
 			}
 			else
@@ -41,6 +45,20 @@
 						<td class="text-center w-auto">@(asset.MarketId??"-") / @(asset.Market?.CurrencySymbol??"-")</td>
 						<td class="text-end w-auto">@(asset.Quantity.ToString("N2"))</td>
 						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1))</td>
+						<td class="text-end w-auto">
+							@(QuotesMap.TryGetValue($"{asset.ItemCode}:{asset.MarketId??"-"}".ToUpper(), out var q1)
+								? PortfolioUtils.FormatRawValueWithScale(q1.RegularMarketPrice??0, asset.Market?.PriceScale??1)
+								: "⌛"
+							)
+						</td>
+						<td class="text-end w-auto">
+							<span class="badge text-danger">
+								@(QuotesMap.TryGetValue($"{asset.ItemCode}:{asset.MarketId??"-"}".ToUpper(), out var q2)
+									? PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.CalculatePnL(asset, asset.Market, q2), asset.Market?.PriceScale??1)
+									: "⌛"
+								)
+							</span>
+						</td>
 						<td class="text-center">
 							@foreach(var tag in asset.TagsList)
 							{

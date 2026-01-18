@@ -75,4 +75,19 @@ public struct AssetResp
 	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Tags { get; set; }
 	public readonly IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+
+	public readonly Asset ToModel()
+	{
+		return new Asset()
+		{
+			Id = this.Id,
+			PortfolioId = this.PortfolioId,
+			ItemType = this.ItemType,
+			ItemCode = this.ItemCode,
+			Quantity = this.Quantity,
+			AveragePrice = this.AveragePrice,
+			MarketId = this.MarketId,
+			Tags = this.Tags,
+		};
+	}
 }

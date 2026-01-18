@@ -63,7 +63,8 @@
 								<CPortfolioAssets
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									Assets="@(Assets)"
-									Markets="@(Markets)" />
+									Markets="@(Markets)"
+								/>
 							</div>
 							<div class="tab-pane fade @(ActiveTab == TabIdTransactions ? "show active" : "")" id="nav-transactions" role="tabpanel" aria-labelledby="@TabIdTransactions" tabindex="0">
 								<CPortfolioTransactions
