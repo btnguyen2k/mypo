@@ -10,13 +10,14 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 [Bootstrapper]
 public class ServicesBootstrapper
 {
-    public static void ConfigureServices(IServiceCollection services)
+    public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
 	{
-		services.AddFinanceNet(new FinanceNetConfiguration
+		appBuilder.Services.AddFinanceNet(new FinanceNetConfiguration
 		{
 			HttpTimeout = 10,
 			HttpRetryCount = 2,
 			AlphaVantageApiKey = "<ALPHA_VANTAGE__API_KEY>",
 		});
+		appBuilder.Services.AddHostedService<YFinanceInitializer>();
 	}
 }

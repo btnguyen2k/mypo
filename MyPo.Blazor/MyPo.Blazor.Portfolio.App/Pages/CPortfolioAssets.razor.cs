@@ -1,4 +1,5 @@
-﻿using Finance.Net.Models.Yahoo;
+﻿using System.Linq.Expressions;
+using Finance.Net.Models.Yahoo;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
@@ -14,6 +15,9 @@ public partial class CPortfolioAssets : CBase
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
 	private Dictionary<string, Quote> QuotesMap = [];
+	private Dictionary<string, decimal> LatestPricesMap = [];
+	private Dictionary<string, decimal> UnsettledPnLMap = [];
+
 	private AssetResp? SelectedAsset;
 	private MarketDef? SelectedMarket;
 	private string AssetTags = string.Empty;
@@ -53,6 +57,18 @@ public partial class CPortfolioAssets : CBase
 			if (quotesResp.Status == 200)
 			{
 				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
+				foreach (var asset in Assets ?? [])
+				{
+					var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
+					if (QuotesMap.TryGetValue(symbolKey, out var quote))
+					{
+						var latestPrice = (decimal)(quote.RegularMarketPrice ?? 0);
+						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
+						LatestPricesMap[asset.Id] = latestPrice;
+						var unsettledPnL = (latestPrice - asset.AveragePrice) * (decimal)asset.Quantity;
+						UnsettledPnLMap[asset.Id] = unsettledPnL;
+					}
+				}
 				StateHasChanged();
 			}
 			if (!StopRefreshQuotes)

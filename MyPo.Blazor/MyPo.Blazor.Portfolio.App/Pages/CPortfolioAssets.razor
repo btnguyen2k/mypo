@@ -46,17 +46,13 @@
 						<td class="text-end w-auto">@(asset.Quantity.ToString("N2"))</td>
 						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1))</td>
 						<td class="text-end w-auto">
-							@(QuotesMap.TryGetValue($"{asset.ItemCode}:{asset.MarketId??"-"}".ToUpper(), out var q1)
-								? PortfolioUtils.FormatRawValueWithScale(q1.RegularMarketPrice??0, asset.Market?.PriceScale??1)
-								: "⌛"
-							)
+							<span class="@(UnsettledPnLMap.TryGetValue(asset.Id, out var p0)&&p0>=0?"text-success":"text-danger")">
+								@(LatestPricesMap.TryGetValue(asset.Id, out var lp)?PortfolioUtils.FormatValueWithScale(lp, asset.Market?.PriceScale??1):"⌛")
+							</span>
 						</td>
 						<td class="text-end w-auto">
-							<span class="badge text-danger">
-								@(QuotesMap.TryGetValue($"{asset.ItemCode}:{asset.MarketId??"-"}".ToUpper(), out var q2)
-									? PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.CalculatePnL(asset, asset.Market, q2), asset.Market?.PriceScale??1)
-									: "⌛"
-								)
+							<span class="@(UnsettledPnLMap.TryGetValue(asset.Id, out var p1)&&p1>=0?"text-success":"text-danger")">
+								@(UnsettledPnLMap.TryGetValue(asset.Id, out var pl)?PortfolioUtils.FormatValueWithScale(pl, asset.Market?.PriceScale??1):"⌛")
 							</span>
 						</td>
 						<td class="text-center">
