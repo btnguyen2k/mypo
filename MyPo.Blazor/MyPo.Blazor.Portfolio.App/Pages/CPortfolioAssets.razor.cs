@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using Finance.Net.Models.Yahoo;
+﻿using Finance.Net.Models.Yahoo;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
@@ -17,6 +16,7 @@ public partial class CPortfolioAssets : CBase
 	private Dictionary<string, Quote> QuotesMap = [];
 	private Dictionary<string, decimal> LatestPricesMap = [];
 	private Dictionary<string, decimal> UnsettledPnLMap = [];
+	private Dictionary<string, decimal> UnsettledPnLPercentMap = [];
 
 	private AssetResp? SelectedAsset;
 	private MarketDef? SelectedMarket;
@@ -67,6 +67,10 @@ public partial class CPortfolioAssets : CBase
 						LatestPricesMap[asset.Id] = latestPrice;
 						var unsettledPnL = (latestPrice - asset.AveragePrice) * (decimal)asset.Quantity;
 						UnsettledPnLMap[asset.Id] = unsettledPnL;
+						UnsettledPnLPercentMap[asset.Id] = PortfolioUtils.CalculatePercentageChange(
+							asset.AveragePrice,
+							latestPrice
+						);
 					}
 				}
 				StateHasChanged();

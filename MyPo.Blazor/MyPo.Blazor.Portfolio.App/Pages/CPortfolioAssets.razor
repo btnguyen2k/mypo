@@ -53,6 +53,7 @@
 						<td class="text-end w-auto">
 							<span class="@(UnsettledPnLMap.TryGetValue(asset.Id, out var p1)&&p1>=0?"text-success":"text-danger")">
 								@(UnsettledPnLMap.TryGetValue(asset.Id, out var pl)?PortfolioUtils.FormatValueWithScale(pl, asset.Market?.PriceScale??1):"⌛")
+								(@(UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp)?plp.ToString("N2")+"%":"-"))
 							</span>
 						</td>
 						<td class="text-center">
