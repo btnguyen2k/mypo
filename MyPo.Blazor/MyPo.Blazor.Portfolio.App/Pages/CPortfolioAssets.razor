@@ -103,7 +103,7 @@
 </div>
 
 <CModal @ref="@ModalDialogAssetInfo" title="Asset Details" centered="false" type="info" size="extra-large">
-	<div class="card">
+	<div class="card mb-2">
 		<div class="card-body">
 			@if (!string.IsNullOrEmpty(AlertMessage))
 			{
@@ -118,8 +118,21 @@
 						<td class="text-center w-auto">@(SelectedAsset?.ItemCode)</td>
 						<td class="text-center w-auto">@(SelectedMarket==null?"-":SelectedMarket.Id.ToUpper()+(SelectedMarket.IsCurrentlyOpen()?" (Market Open)":" (Market Close)"))</td>
 						<td class="text-center w-auto">@(SelectedAsset?.Market?.Currency??"-")</td>
-						<td class="text-center w-auto">@(SelectedAsset?.Quantity.ToString("N2")) @@ (@(PortfolioUtils.FormatValueWithScale(SelectedAsset?.AveragePrice??0, SelectedAsset?.Market?.PriceScale??1)))</td>
-						<td class="col-4">
+						<td class="text-center w-auto">
+							@(SelectedAsset?.Quantity.ToString("N2"))
+							@@
+							@(PortfolioUtils.FormatValueWithScale(SelectedAsset?.AveragePrice??0, SelectedAsset?.Market?.PriceScale??1))
+							/
+							<span class="@(UnsettledPnLMap.TryGetValue(SelectedAsset?.Id??"", out var p0)&&p0>=0?"text-success":"text-danger")">
+								@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var q0)
+									? $"{PortfolioUtils.FormatValueWithScale(q0, SelectedAsset?.Market?.PriceScale??1)}"
+									: "-"
+								)
+								(@(UnsettledPnLPercentMap.TryGetValue(SelectedAsset?.Id??"", out var plp)?plp.ToString("N2")+"%":"-"))
+							</span>
+
+						</td>
+						<td class="col-3">
 							<div class="input-group input-group-sm">
 								<span class="input-group-text">Tags:</span>
 								<input type="text" class="form-control" @bind="AssetTags" placeholder="Comma separated, e.g. ETF, Divident,..."/>
@@ -134,9 +147,9 @@
 				<CStockChart Market="@SelectedAsset?.Market?.ToModel()" Symbol="@SelectedAsset?.ItemCode" />
 			}
 		</div>
-		<div class="card-footer">
-			<span style="font-size: small;">@warningMsg</span>
-		</div>
+	</div>
+	<div class="alert alert-warning" role="alert">
+		<span style="font-size: small">@warningMsg</span>
 	</div>
 </CModal>
 

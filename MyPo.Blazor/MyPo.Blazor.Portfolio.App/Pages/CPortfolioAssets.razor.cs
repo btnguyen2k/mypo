@@ -23,7 +23,7 @@ public partial class CPortfolioAssets : CBase
 		return 0;
 	}) ?? 0;
 	private MarketDefResp? DefaultMarket => Assets?.FirstOrDefault(a => a.Market!=null).Market;
-	private Dictionary<string, Quote> QuotesMap = [];
+	private Dictionary<string, Quote> QuotesMap = []; // map {asset-id --> quote}
 	private readonly Dictionary<string, decimal> LatestPricesMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLPercentMap = [];
