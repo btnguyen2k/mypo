@@ -3,17 +3,24 @@ using MyPo.Shared.Cache;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MyPo.Shared.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MyPo.Portfolio.Shared.EF;
 
 public sealed class PortfolioDbContextRepository : DbContext, IPortfolioRepository
 {
 	private readonly ICacheFacade<IPortfolioRepository>? cache;
+	private ILogger<PortfolioDbContextRepository>? logger;
 
-	public PortfolioDbContextRepository(DbContextOptions<PortfolioDbContextRepository> options, ICacheFacade<IPortfolioRepository>? cache = default)
+	public PortfolioDbContextRepository(
+		DbContextOptions<PortfolioDbContextRepository> options,
+		ICacheFacade<IPortfolioRepository>? cache = default,
+		ILogger<PortfolioDbContextRepository>? logger = default
+		)
 		: base(options)
 	{
 		this.cache = cache;
+		this.logger = logger;
 	}
 
 	//protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -57,6 +64,12 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	{
 		var entry = await PortfolioRecStore.AddAsync(portfolioRec, cancellationToken);
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<PortfolioRec?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+	{
+		return await PortfolioRecStore.AsNoTracking().FirstOrDefaultAsync(pr => pr.Id == portfolioId, cancellationToken);
 	}
 
 	/// <inheritdoc />
@@ -155,8 +168,16 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update owning asset.");
 	}
 
-	private async Task SettleTxUpdateRoiAsync(TransactionRec tx, MarketDef? market, CancellationToken cancellationToken = default)
+	private async Task SettleTxUpdateRoiAsync(PortfolioRec portfolio, TransactionRec tx, MarketDef market, CancellationToken cancellationToken = default)
 	{
+		if (!portfolio.Currency.Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
+		{
+			// ignore ROI record if market currency is different from portfolio currency
+			logger?.LogWarning("SettleTx - (Tx: {txid}) Market currency ({marketCurrency}) is different from portfolio currency ({portfolioCurrency}). Skipping ROI record creation.",
+				tx.Id, market.Currency, portfolio.Currency);
+			return;
+		}
+
 		var txType = tx.Type.Trim().ToUpper();
 		var roiRec = new RoiRec()
 		{
@@ -223,7 +244,8 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		{
 			throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Only buy/sell transactions can be settled.");
 		}
-
+		var portfolio = await GetPortfolioByIdAsync(tx.PortfolioId, cancellationToken)
+			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Portfolio {tx.PortfolioId} not found.");
 		using var transaction = await Database.BeginTransactionAsync(cancellationToken);
 		try
 		{
@@ -240,7 +262,10 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 
 			await SettleTxUpdateAssetAsync(tx, cancellationToken);
 
-			await SettleTxUpdateRoiAsync(tx, market, cancellationToken);
+			if (market != null)
+			{
+				await SettleTxUpdateRoiAsync(portfolio, tx, market, cancellationToken);
+			}
 
 			tx.IsSettled = true;
 			var updatedTx = await UpdateTxAsync(tx, cancellationToken)
@@ -290,7 +315,6 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await AssetStore.AsNoTracking().FirstOrDefaultAsync(a => a.Id == assetId, cancellationToken);
 	}
 
-
 	/// <inheritdoc />
 	public async ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default)
 	{
@@ -313,14 +337,65 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 
-	private async ValueTask<RoiRec?> UpdateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	/// <inheritdoc />
+	public async ValueTask<PnlSummary> GetRoiSummaryForPortfolio(string portfolioId, CancellationToken cancellationToken = default)
 	{
-		var existingEntry = await RoiRecStore.FindAsync([roiRec.Id], cancellationToken);
-		if (existingEntry == null)
+		var roiSummary = new PnlSummary()
 		{
-			return null;
+			PortfolioId = portfolioId,
+			TotalBuyValue = 0.0m,
+			TotalSellValue = 0.0m,
+			TotalDividends = 0.0m,
+			TotalFees = 0.0m,
+			TotalCashIn = 0.0m,
+			TotalCashOut = 0.0m,
+		};
+		var rows = await RoiRecStore.AsNoTracking()
+			.Where(rr => rr.PortfolioId == portfolioId)
+			.Where(rr => rr.Status != RoiRec.STATUS_ARCHIVED)
+			.GroupBy(rr => rr.TxType)
+			.Select(g => new
+			{
+				TxType = g.Key,
+				TotalValue = g.Sum(rr => rr.TxValue)
+			})
+			.ToListAsync(cancellationToken);
+		foreach (var row in rows)
+		{
+			switch (row.TxType)
+			{
+				case RoiRec.TX_TYPE_BUY:
+					roiSummary.TotalBuyValue = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_SELL:
+					roiSummary.TotalSellValue = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_DIVIDEND:
+					roiSummary.TotalDividends = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_FEE:
+					roiSummary.TotalFees = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_CASHIN:
+					roiSummary.TotalCashIn = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_CASHOUT:
+					roiSummary.TotalCashOut = row.TotalValue;
+					break;
+			}
 		}
-		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(roiRec));
-		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
+
+		return roiSummary;
 	}
+
+	// private async ValueTask<RoiRec?> UpdateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	// {
+	// 	var existingEntry = await RoiRecStore.FindAsync([roiRec.Id], cancellationToken);
+	// 	if (existingEntry == null)
+	// 	{
+	// 		return null;
+	// 	}
+	// 	Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(roiRec));
+	// 	return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
+	// }
 }

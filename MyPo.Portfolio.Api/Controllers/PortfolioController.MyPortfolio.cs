@@ -81,6 +81,7 @@ public partial class PortfolioController
 	}
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
 	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
@@ -121,6 +122,7 @@ public partial class PortfolioController
 	}
 
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
+	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
 	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> DeleteMyPortfolio([FromRoute] string id)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();

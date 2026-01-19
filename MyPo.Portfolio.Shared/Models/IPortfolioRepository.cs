@@ -13,6 +13,11 @@ public interface IPortfolioRepository
 	public ValueTask<PortfolioRec?> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Gets a portfolio record by its ID.
+	/// </summary>
+	public ValueTask<PortfolioRec?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Updates an existing portfolio record.
 	/// </summary>
 	public ValueTask<PortfolioRec?> UpdatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
@@ -70,4 +75,11 @@ public interface IPortfolioRepository
 	/// Upserts an asset record.
 	/// </summary>
 	public ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default);
+
+	/*----------------------------------------------------------------------*/
+
+	/// <summary>
+	/// Gets ROI summary for a portfolio.
+	/// </summary>
+	public ValueTask<PnlSummary> GetRoiSummaryForPortfolio(string portfolioId, CancellationToken cancellationToken = default);
 }

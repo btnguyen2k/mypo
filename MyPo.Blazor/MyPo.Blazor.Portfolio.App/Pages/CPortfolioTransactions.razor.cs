@@ -372,7 +372,7 @@ public partial class CPortfolioTransactions : BaseComponent
 		{
 			var txReq = NewTxReqFrom(tx);
 			ShowAlert("info", $"Settling transaction '{txReq.Id}'...");
-			var resp = await apiClient.SettleTransactionAsync(txReq.Id, txReq, await GetAuthTokenAsync(), ApiBaseUrl);
+			var resp = await apiClient.SettleTransactionAsync(txReq.Id!, txReq, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (resp.Status != 200)
 			{
 				ShowAlert("danger", $"Failed to settle transaction '{tx.Id}': {resp.Message}");

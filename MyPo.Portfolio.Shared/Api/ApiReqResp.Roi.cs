@@ -57,3 +57,55 @@ public struct RoiRecResp
 	[JsonPropertyName("market"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public MarketDefResp? Market { get; set; }
 }
+
+public struct PnlSummaryResp
+{
+	public static PnlSummaryResp BuildFrom(PnlSummary pnl)
+	{
+		return new PnlSummaryResp()
+		{
+			PortfolioId = pnl.PortfolioId,
+			TotalBuyValue = pnl.TotalBuyValue,
+			TotalSellValue = pnl.TotalSellValue,
+			TotalDividends = pnl.TotalDividends,
+			TotalFees = pnl.TotalFees,
+			TotalCashIn = pnl.TotalCashIn,
+			TotalCashOut = pnl.TotalCashOut
+		};
+	}
+
+	[JsonPropertyName("portfolio_id")]
+	public string PortfolioId { get; set; }
+
+	[JsonPropertyName("total_buy_value")]
+	public decimal TotalBuyValue { get; set; }
+
+	[JsonPropertyName("total_sell_value")]
+	public decimal TotalSellValue { get; set; }
+
+	[JsonPropertyName("total_dividends")]
+	public decimal TotalDividends { get; set; }
+
+	[JsonPropertyName("total_fees")]
+	public decimal TotalFees { get; set; }
+
+	[JsonPropertyName("total_cash_in")]
+	public decimal TotalCashIn { get; set; }
+
+	[JsonPropertyName("total_cash_out")]
+	public decimal TotalCashOut { get; set; }
+
+	public readonly PnlSummary ToModel()
+	{
+		return new PnlSummary()
+		{
+			PortfolioId = this.PortfolioId,
+			TotalBuyValue = this.TotalBuyValue,
+			TotalSellValue = this.TotalSellValue,
+			TotalDividends = this.TotalDividends,
+			TotalFees = this.TotalFees,
+			TotalCashIn = this.TotalCashIn,
+			TotalCashOut = this.TotalCashOut
+		};
+	}
+}

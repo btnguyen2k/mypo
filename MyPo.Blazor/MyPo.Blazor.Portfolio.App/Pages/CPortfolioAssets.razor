@@ -17,15 +17,15 @@
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 		<thead>
 			<tr>
-				<th scope="col" class="text-center">Type</th>
-				<th scope="col" class="text-center">Code</th>
-				<th scope="col" class="text-center">Exchange</th>
-				<th scope="col" class="text-center">Quantity</th>
-				<th scope="col" class="text-center">Average Price</th>
-				<th scope="col" class="text-center">Latest Price</th>
-				<th scope="col" class="text-center">Unsettled P/L</th>
+				<th scope="col" class="text-center w-auto">Type</th>
+				<th scope="col" class="text-center w-auto">Code</th>
+				<th scope="col" class="text-center w-auto">Exchange</th>
+				<th scope="col" class="text-center w-auto">Quantity</th>
+				<th scope="col" class="text-center w-auto">Average Price</th>
+				<th scope="col" class="text-center w-auto">Latest Price</th>
+				<th scope="col" class="text-center w-auto" colspan="2">Unsettled P/L</th>
 				<th scope="col" class="text-center">Tags</th>
-				<th scope="col" class="text-center">Actions</th>
+				<th scope="col" class="text-center w-auto">Actions</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -53,7 +53,11 @@
 						<td class="text-end w-auto">
 							<span class="@(UnsettledPnLMap.TryGetValue(asset.Id, out var p1)&&p1>=0?"text-success":"text-danger")">
 								@(UnsettledPnLMap.TryGetValue(asset.Id, out var pl)?PortfolioUtils.FormatValueWithScale(pl, asset.Market?.PriceScale??1):"⌛")
-								(@(UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp)?plp.ToString("N2")+"%":"-"))
+							</span>
+						</td>
+						<td class="text-end w-auto">
+							<span class="@(UnsettledPnLMap.TryGetValue(asset.Id, out var p2)&&p2>=0?"text-success":"text-danger")">
+								@(UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp)?plp.ToString("N2")+"%":"-")
 							</span>
 						</td>
 						<td class="text-center">
@@ -62,7 +66,7 @@
 								<CRandomBadge Text="@tag" />
 							}
 						</td>
-						<td class="text-center">
+						<td class="text-center w-auto">
 							<button class="btn btn-sm btn-outline-info" title="Details" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
 								<CIcon icon="cil-info" />
 							</button>
@@ -71,7 +75,31 @@
 				}
 			}
 		</tbody>
+		<tfoot>
+			<tr>
+				<th colspan="3" class="text-center">
+					Total Cost / Market Value:
+				</th>
+				<th colspan="2" class="text-center">
+					@(PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1))
+				</th>
+				<th colspan="2" class="text-center">
+					<span class="@(TotalCost<TotalMarketValue?"text-success":"text-danger")">
+						@(PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1))
+						(@(
+							TotalCost!=0
+								? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
+								: "-"
+						))
+					</span>
+				</th>
+				<th colspan="2">&nbsp;</th>
+			</tr>
+		</tfoot>
 	</table>
+	<div class="alert alert-warning" role="alert">
+		<span style="font-size: small">@warningMsg</span>
+	</div>
 </div>
 
 <CModal @ref="@ModalDialogAssetInfo" title="Asset Details" centered="false" type="info" size="extra-large">
@@ -104,45 +132,6 @@
 			@if (SelectedAsset?.ItemType == "STOCK")
 			{
 				<CStockChart Market="@SelectedAsset?.Market?.ToModel()" Symbol="@SelectedAsset?.ItemCode" />
-				@*<div class="container" style="height:480px; width:100%;">*@
-					@*
-					<iframe id="frame-chart" src="https://stockchart.vietstock.vn/?stockcode=DBD&lang=vi&isIframe=1" style="width: 100%; height:100%;" scrolling="no" frameborder="0" title="ta chart"></iframe>
-					*@
-					@*
-					<!-- TradingView Widget BEGIN -->
-					<div class="tradingview-widget-container" style="height:100%; width:100%">
-						<div class="tradingview-widget-container__widget" style="height:calc(100% - 32px); width:100%"></div>
-						<div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/HOSE-BID/" rel="noopener nofollow" target="_blank"><span class="blue-text">BID stock chart</span></a><span class="trademark"> by TradingView</span></div>
-						<script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-						{
-							"allow_symbol_change": false,
-							"calendar": false,
-							"details": false,
-							"hide_side_toolbar": true,
-							"hide_top_toolbar": false,
-							"hide_legend": false,
-							"hide_volume": false,
-							"hotlist": false,
-							"interval": "D",
-							"locale": "en",
-							"save_image": true,
-							"style": "1",
-							"symbol": "HOSE:BID",
-							"theme": "light",
-							"timezone": "Etc/UTC",
-							"backgroundColor": "#ffffff",
-							"gridColor": "rgba(46, 46, 46, 0.06)",
-							"watchlist": [],
-							"withdateranges": false,
-							"compareSymbols": [],
-							"studies": [],
-							"autosize": true
-						}
-						</script>
-					</div>
-					<!-- TradingView Widget END -->
-					*@
-				@* </div> *@
 			}
 		</div>
 		<div class="card-footer">

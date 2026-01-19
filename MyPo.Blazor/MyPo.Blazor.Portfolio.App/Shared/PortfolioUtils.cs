@@ -36,21 +36,7 @@ public static class PortfolioUtils
 	public static string FormatValueWithScale(decimal value, decimal scale = 1, string? format = null)
 	{
 		if (scale <= 0) scale = 1;
-		value *= scale;
-		return FormatRawValueWithScale(value, scale, format);
-		// if (scale >= 1000)
-		// {
-		// 	return value.ToString(!string.IsNullOrEmpty(format)?format:"N1", System.Globalization.CultureInfo.CurrentCulture);
-		// }
-		// if (scale >= 100)
-		// {
-		// 	return value.ToString(!string.IsNullOrEmpty(format)?format:"N2", System.Globalization.CultureInfo.CurrentCulture);
-		// }
-		// if (scale > 1)
-		// {
-		// 	return value.ToString(!string.IsNullOrEmpty(format)?format:"N3", System.Globalization.CultureInfo.CurrentCulture);
-		// }
-		// return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", System.Globalization.CultureInfo.CurrentCulture);
+		return FormatRawValueWithScale(value*scale, scale, format);
 	}
 
 	public static string FormatRawValueWithScale(double value, decimal scale = 1, string? format = null)

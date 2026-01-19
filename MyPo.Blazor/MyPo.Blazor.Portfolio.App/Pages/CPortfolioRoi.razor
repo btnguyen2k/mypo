@@ -1,0 +1,14 @@
+@using MyPo.Blazor.App.Shared
+
+@inherits CBase
+
+@if (!string.IsNullOrEmpty(AlertMessage))
+{
+	<CAlert type="@AlertType">
+		@AlertMessage
+	</CAlert>
+}
+
+@code {
+
+}

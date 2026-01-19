@@ -356,4 +356,25 @@ public partial class PortfolioController
 		}
 		return ResponseOk(AssetResp.BuildFrom(existingAsset));
 	}
+
+	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_PNL)]
+	public async Task<ActionResult<ApiResp<PnlSummaryResp>>> GetMyPortfolioPnl([FromRoute] string id)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(404, "Portfolio not found.");
+		}
+
+		var pnlSummary = await PortfolioRepository.GetRoiSummaryForPortfolio(id);
+		return ResponseOk(PnlSummaryResp.BuildFrom(pnlSummary));
+	}
 }

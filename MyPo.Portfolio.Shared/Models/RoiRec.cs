@@ -15,6 +15,7 @@ public sealed class RoiRec : Entity<string>
 
 	public const string STATUS_NEW = "NEW";
 	public const string STATUS_FINAL = "FINAL";
+	public const string STATUS_ARCHIVED = "ARCHIVED";
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();

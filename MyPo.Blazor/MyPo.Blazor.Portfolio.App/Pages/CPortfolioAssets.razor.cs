@@ -13,10 +13,20 @@ public partial class CPortfolioAssets : CBase
 	[Parameter]
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
+	private decimal TotalCost => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a => a.AveragePrice*(decimal)a.Quantity) ?? 0;
+	private decimal TotalMarketValue => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a =>
+	{
+		if (LatestPricesMap.TryGetValue(a.Id, out var latestPrice))
+		{
+			return latestPrice * (decimal)a.Quantity;
+		}
+		return 0;
+	}) ?? 0;
+	private MarketDefResp? DefaultMarket => Assets?.FirstOrDefault(a => a.Market!=null).Market;
 	private Dictionary<string, Quote> QuotesMap = [];
-	private Dictionary<string, decimal> LatestPricesMap = [];
-	private Dictionary<string, decimal> UnsettledPnLMap = [];
-	private Dictionary<string, decimal> UnsettledPnLPercentMap = [];
+	private readonly Dictionary<string, decimal> LatestPricesMap = [];
+	private readonly Dictionary<string, decimal> UnsettledPnLMap = [];
+	private readonly Dictionary<string, decimal> UnsettledPnLPercentMap = [];
 
 	private AssetResp? SelectedAsset;
 	private MarketDef? SelectedMarket;
@@ -27,6 +37,7 @@ public partial class CPortfolioAssets : CBase
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
+	private PortfolioRecResp? Portfolio { get; set; }
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
 
@@ -77,7 +88,7 @@ public partial class CPortfolioAssets : CBase
 			}
 			if (!StopRefreshQuotes)
 			{
-				var sleepTime = Random.Shared.NextInt64(30000, 60000);
+				var sleepTime = Random.Shared.NextInt64(60000, 180000);
 				Console.WriteLine($"[DEBUG] Sleeping {sleepTime} ms before next quotes refresh...");
 				await Task.Delay((int)sleepTime);
 				await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
@@ -90,6 +101,10 @@ public partial class CPortfolioAssets : CBase
 		await base.OnAfterRenderAsync(firstRender);
 		if (firstRender && Assets != null && Markets != null && !string.IsNullOrEmpty(PortfolioId))
 		{
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var myPortfolios = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
+
 			var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
 		}
