@@ -68,10 +68,6 @@ public partial class MyPortfolioDetails : BasePage
 		return portfolio;
 	}
 
-	[Inject]
-	private IJSRuntime JS { get; set; } = default!;
-	private IJSObjectReference jsLocalStorage = default!;
-
 	private async Task<IEnumerable<MarketDefResp>?> LoadMarketsAsync(string authToken)
 	{
 		ShowAlert("info", "Loading markets metadata...");
@@ -85,36 +81,33 @@ public partial class MyPortfolioDetails : BasePage
 		return null;
 	}
 
+	private async void InitializePage()
+	{
+		HideUI = true;
+
+		SwitchToSavedTab();
+
+		Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
+
+		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
+		if (SelectedPortfolio == null) return;
+
+		HideUI = false;
+
+		var (alertType, alertMessage) = GetPassedMessageFromQuery();
+		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+			ShowAlert(alertType, alertMessage);
+		else
+			CloseAlert();
+	}
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
 
 		if (firstRender)
 		{
-			HideUI = true;
-
-			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>(
-				"import", $"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js")
-				.AsTask());
-			jsLocalStorage = await moduleTask.Value;
-			var activeTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
-			ActiveTab = string.IsNullOrEmpty(activeTab) ? TabIdHoldings : activeTab;
-
-			Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
-
-			SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
-			if (SelectedPortfolio == null)
-			{
-				return;
-			}
-
-			HideUI = false;
-
-			var (alertType, alertMessage) = GetPassedMessageFromQuery();
-			if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-				ShowAlert(alertType, alertMessage);
-			else
-				CloseAlert();
+			InitializePage();
 		}
 
 		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
@@ -127,25 +120,9 @@ public partial class MyPortfolioDetails : BasePage
 				Query = queryParams.ToString() ?? string.Empty
 			};
 			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
-			// fire a background task
-			await Task.Run(async () =>
-			{
-				HideUI = true;
-				Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
-				SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
-				HideUI = false;
 
-				var (alertType, alertMessage) = GetPassedMessageFromQuery();
-				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-				{
-					ShowAlert(alertType, alertMessage);
-				}
-				else
-				{
-					CloseAlert();
-				}
-				await Task.CompletedTask;
-			});
+			// reload page data in the background
+			await Task.Run(() => InitializePage());
 		}
 	}
 
@@ -154,8 +131,28 @@ public partial class MyPortfolioDetails : BasePage
 	private const string TabIdTransactions = "nav-tx-tab";
 	private const string TabIdRoi = "nav-roi-tab";
 
+	[Inject]
+	private IJSRuntime JS { get; set; } = default!;
+	private IJSObjectReference? jsLocalStorage;
+
+	private async void SwitchToSavedTab()
+	{
+		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
+		);
+		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
+		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdHoldings : savedTab;
+
+		Console.WriteLine($"[MyPortfolioDetails] Restored active tab: {ActiveTab}");
+	}
+
 	private async void SwitchTab(string tab)
 	{
+		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
+		);
 		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
 	}
 }
