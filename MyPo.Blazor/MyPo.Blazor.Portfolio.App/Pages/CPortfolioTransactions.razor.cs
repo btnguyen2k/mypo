@@ -7,7 +7,7 @@ using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
-public partial class CPortfolioTransactions : BaseComponent
+public partial class CPortfolioTransactions : CBase
 {
 	[Parameter]
 	public IEnumerable<TransactionRecResp>? Transactions { get; set; }
@@ -16,37 +16,12 @@ public partial class CPortfolioTransactions : BaseComponent
 
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
-	// private Dictionary<string, MarketDefResp> MarketsMap { get; set; } = default!;
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
 
-	private string AlertType { get; set; } = string.Empty;
-	private string AlertMessage { get; set; } = string.Empty;
-	protected bool AlertHasChanged {get; set; } = false;
-
-	protected void CloseAlert()
-	{
-		AlertMessage = string.Empty;
-		AlertHasChanged = false;
-		StateHasChanged();
-	}
-
-	protected void ShowAlert(string type, string message)
-	{
-		var oldAlertType = AlertType;
-		var oldAlertMessage = AlertMessage;
-		AlertType = type;
-		AlertMessage = message;
-		AlertHasChanged = !String.IsNullOrEmpty(oldAlertMessage)
-			&& (String.Compare(oldAlertMessage, message, MyPo.Shared.Globals.StringComparison) != 0
-				|| String.Compare(oldAlertType, type, MyPo.Shared.Globals.StringComparison) != 0);
-		StateHasChanged();
-	}
-
 	private CModal ModalDialogAddTx { get; set; } = default!;
 	private CModal ModalDialogUpdateTx { get; set; } = default!;
-	private CModal ModalDialogDeleteTx { get; set; } = default!;
 	private CModal ModalDialogSettleTxMultiple { get; set; } = default!;
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
@@ -109,17 +84,12 @@ public partial class CPortfolioTransactions : BaseComponent
 		};
 	}
 
-	private void InitUpdateTx(TransactionRecResp tx)
+	private void PrepareUpdateTx(TransactionRecResp tx)
 	{
 		Tx = NewTxReqFrom(tx);
 		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
 		TxId = tx.Id;
 		CloseAlert();
-	}
-
-	private void InitDeleteTx(TransactionRecResp tx)
-	{
-		InitUpdateTx(tx);
 	}
 
 	[Inject]
@@ -196,7 +166,7 @@ public partial class CPortfolioTransactions : BaseComponent
 		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
 		if (selectedTx != null)
 		{
-			InitUpdateTx(selectedTx.Value);
+			PrepareUpdateTx(selectedTx.Value);
 			ModalDialogUpdateTx.Open();
 		}
 		else
@@ -291,42 +261,6 @@ public partial class CPortfolioTransactions : BaseComponent
 		var passAlertType = "success";
 		await Task.Delay(500);
 		ModalDialogAddTx.Close();
-		CloseAlert();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
-			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
-			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
-			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
-	}
-
-	private void BtnClickDeleteTx(string tid)
-	{
-		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
-		if (selectedTx != null)
-		{
-			InitDeleteTx(selectedTx.Value);
-			ModalDialogDeleteTx.Open();
-		}
-		else
-		{
-			ShowAlert("danger", $"Transaction '{tid}' not found.");
-		}
-	}
-
-	private async void BtnClickDeleteTxConfirm()
-	{
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.DeleteTransactionAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
-		if (resp.Status != 200)
-		{
-			ShowAlert("danger", resp.Message!);
-			return;
-		}
-		ShowAlert("success", "Transaction deleted successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"Transaction '{TxId}' deleted successfully.";
-		var passAlertType = "success";
-		await Task.Delay(500);
-		ModalDialogDeleteTx.Close();
 		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"

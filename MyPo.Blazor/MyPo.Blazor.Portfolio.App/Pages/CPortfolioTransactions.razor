@@ -3,16 +3,15 @@
 @using MyPo.Portfolio.Shared.Api
 
 
-@inherits BaseComponent
-
-@if (!string.IsNullOrEmpty(AlertMessage))
-{
-	<CAlert type="@AlertType">
-		@AlertMessage
-	</CAlert>
-}
+@inherits CBase
 
 <div class="container mt-3">
+	@if (!string.IsNullOrEmpty(AlertMessage))
+	{
+		<CAlert type="@AlertType">
+			@AlertMessage
+		</CAlert>
+	}
 	<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
 	<button class="btn @(SelectedTransactionsMap.Count>0?"btn-success":"btn-outline-secondary") btn-sm mb-3"
 		disabled="@(SelectedTransactionsMap.Count==0)" @onclick="()=>BtnClickSettleTxMultiple()"><CIcon icon="cil-check" /> Settle Transactions</button>
@@ -202,7 +201,7 @@
 			}
 		</div>
 		<div class="card-footer">
-			<button type="button" class="btn btn-secondary" @onclick="()=>ModalDialogDeleteTx.Close()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteTxClose()"><CIcon icon="x-circle" /> Cancel</button>
 			<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteTxConfirm()"><CIcon icon="trash" /> Delete</button>
 		</div>
 	</div>
