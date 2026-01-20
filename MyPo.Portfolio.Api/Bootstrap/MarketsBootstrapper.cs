@@ -31,10 +31,12 @@ public class MarketsBootstrapper
 				.Build();
 
 			Globals.Markets.Clear();
+			Globals.MarketsMap.Clear();
 			foreach (var marketData in marketsData.GetChildren())
 			{
 				var marketDef = MarketDef.Build(marketData.Key, marketData);
 				Globals.Markets.Add(marketDef);
+				Globals.MarketsMap[marketDef.Id.ToUpper()] = marketDef;
 			}
 		}
 	}

@@ -40,7 +40,7 @@ public partial class PortfolioController : ApiBaseController
 		PortfolioRepository = portfolioRepository;
 	}
 
-	private async Task<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()
+	private async ValueTask<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()
 	{
 		var jwtToken = GetAuthToken();
 		var tokenValidationResult = await ValidateAuthTokenAsync(Authenticator, AuthenticatorAsync, jwtToken);
@@ -58,5 +58,13 @@ public partial class PortfolioController : ApiBaseController
 		}
 
 		return (null, currentUser);
+	}
+
+	private async ValueTask<PortfolioRec?> GetPortfolioIfOwnedByUser(MyPoUser user, string portfolioId)
+	{
+		var portfolioRec = await PortfolioRepository.GetPortfolioByIdAsync(portfolioId);
+		return portfolioRec != null && portfolioRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+			? portfolioRec
+			: null;
 	}
 }

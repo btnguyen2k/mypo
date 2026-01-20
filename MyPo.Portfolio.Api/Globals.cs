@@ -18,4 +18,5 @@ public sealed class Globals
 	}
 
 	public static readonly ISet<MarketDef> Markets = new SortedSet<MarketDef>(MarketDefComparer.Instance);
+	public static readonly Dictionary<string, MarketDef> MarketsMap = [];
 }

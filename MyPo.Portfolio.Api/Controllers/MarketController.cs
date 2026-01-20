@@ -38,7 +38,7 @@ public partial class MarketsController : ApiBaseController
 	/// <param name="symbols">Comma-separated list of symbols. Each symbol is in the following format CODE:market-id</param>
 	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_STOCKS_GET_QUOTES)]
-	public async Task<ActionResult<ApiResp<IEnumerable<Quote>>>> GetStockQuotes([FromQuery] string symbols)
+	public async ValueTask<ActionResult<ApiResp<IEnumerable<Quote>>>> GetStockQuotes([FromQuery] string symbols)
 	{
 		var yfSymbolMap = new Dictionary<string, string>();
 		var pairsCodeMarketId = symbols.ToUpper().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -49,7 +49,7 @@ public partial class MarketsController : ApiBaseController
 				var arr when arr.Length == 2 => (arr[0], arr[1]),
 				_ => (codeMarketIdPair, string.Empty),
 			};
-			var market = Globals.Markets.FirstOrDefault(m => string.Equals(m.Id, marketId, StringComparison.OrdinalIgnoreCase));
+			var market = Globals.MarketsMap.TryGetValue(marketId.ToUpper(), out var mkt) ? mkt : null;
 			if (market != null)
 			{
 				var symbol = BuildYFSymbol(code, market);

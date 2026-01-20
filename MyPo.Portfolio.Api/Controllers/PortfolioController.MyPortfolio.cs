@@ -15,7 +15,7 @@ public partial class PortfolioController
 	/// <returns></returns>
 	/// <remarks>The user is identified by the auth token.</remarks>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO)]
-	public async Task<ActionResult<ApiResp<List<PortfolioRecResp>>>> GetMyPortfolio()
+	public async ValueTask<ActionResult<ApiResp<List<PortfolioRecResp>>>> GetMyPortfolio()
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -41,7 +41,7 @@ public partial class PortfolioController
 	/// <remarks>The user is identified by the auth token.</remarks>
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> CreatePortfolio([FromBody] CreateOrUpdatePortfolioRecReq req)
+	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> CreatePortfolio([FromBody] CreateOrUpdatePortfolioRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -82,7 +82,7 @@ public partial class PortfolioController
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioRecReq req)
+	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -101,8 +101,7 @@ public partial class PortfolioController
 			return ResponseNoData(400, "Currency is required.");
 		}
 
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (existingPortfolio == null)
 		{
 			return ResponseNoData(404, "Portfolio not found.");
@@ -123,7 +122,7 @@ public partial class PortfolioController
 
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<PortfolioRecResp>>> DeleteMyPortfolio([FromRoute] string id)
+	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> DeleteMyPortfolio([FromRoute] string id)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)

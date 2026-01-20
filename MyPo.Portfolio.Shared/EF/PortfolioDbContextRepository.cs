@@ -338,7 +338,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<PnlSummary> GetRoiSummaryForPortfolio(string portfolioId, CancellationToken cancellationToken = default)
+	public async ValueTask<PnlSummary> GetRoiSummaryForPortfolioAsync(string portfolioId, CancellationToken cancellationToken = default)
 	{
 		var roiSummary = new PnlSummary()
 		{
@@ -388,14 +388,12 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return roiSummary;
 	}
 
-	// private async ValueTask<RoiRec?> UpdateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
-	// {
-	// 	var existingEntry = await RoiRecStore.FindAsync([roiRec.Id], cancellationToken);
-	// 	if (existingEntry == null)
-	// 	{
-	// 		return null;
-	// 	}
-	// 	Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(roiRec));
-	// 	return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
-	// }
+	/// <inheritdoc />
+	public async ValueTask<IEnumerable<RoiRec>> GetRoiRecsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+	{
+		return await RoiRecStore.AsNoTracking()
+			.Where(rr => rr.PortfolioId == portfolioId).Where(rr => rr.Status != RoiRec.STATUS_ARCHIVED)
+			.OrderByDescending(rr => rr.TxTime)
+			.ToListAsync(cancellationToken);
+	}
 }

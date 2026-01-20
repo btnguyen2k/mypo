@@ -81,5 +81,10 @@ public interface IPortfolioRepository
 	/// <summary>
 	/// Gets ROI summary for a portfolio.
 	/// </summary>
-	public ValueTask<PnlSummary> GetRoiSummaryForPortfolio(string portfolioId, CancellationToken cancellationToken = default);
+	public ValueTask<PnlSummary> GetRoiSummaryForPortfolioAsync(string portfolioId, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Gets ROI records for a portfolio.
+	/// </summary>
+	public ValueTask<IEnumerable<RoiRec>> GetRoiRecsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
 }

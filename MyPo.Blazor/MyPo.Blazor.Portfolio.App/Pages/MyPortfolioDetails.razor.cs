@@ -30,9 +30,7 @@ public partial class MyPortfolioDetails : BasePage
 			return null;
 		}
 
-		var allPortfolios = apiRespPortfolio.Data ?? [];
-		var myPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
-		var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+		var myPortfolioMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
 		PortfolioRecResp portfolio = default!;
 		if (!myPortfolioMap.TryGetValue(id, out portfolio))
 		{

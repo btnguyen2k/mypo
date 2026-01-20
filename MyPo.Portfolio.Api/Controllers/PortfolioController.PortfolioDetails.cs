@@ -13,7 +13,7 @@ public partial class PortfolioController
 	/// Gets current user's portfolio transactions.
 	/// </summary>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
-	public async Task<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioTransactions([FromRoute] string id)
+	public async ValueTask<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioTransactions([FromRoute] string id)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -22,8 +22,8 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		// validate portfolio, must be current user's portfolio
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (existingPortfolio == null)
 		{
 			return ResponseNoData(404, "Portfolio not found.");
@@ -33,7 +33,7 @@ public partial class PortfolioController
 		var result = new List<TransactionRecResp>();
 		foreach (var tx in txList)
 		{
-			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(tx.MarketId, StringComparison.OrdinalIgnoreCase));
+			var market = Globals.MarketsMap.TryGetValue(tx.MarketId?.ToUpper()??string.Empty, out var mkt) ? mkt : null;
 			result.Add(TransactionRecResp.BuildFrom(tx, market));
 		}
 		return ResponseOk(result);
@@ -71,7 +71,7 @@ public partial class PortfolioController
 		reqTx.MarketId = reqTx.MarketId?.Trim() ?? null;
 		if (!(existingTx?.IsSettled??false) && !string.IsNullOrEmpty(reqTx.MarketId))
 		{
-			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(reqTx.MarketId, StringComparison.OrdinalIgnoreCase));
+			var market = Globals.MarketsMap.TryGetValue(reqTx.MarketId.ToUpper(), out var mkt) ? mkt : null;
 			if (market == null)
 			{
 				return (null, ResponseNoData(400, $"Market '{reqTx.MarketId}' is not recognized."));
@@ -86,7 +86,7 @@ public partial class PortfolioController
 
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<TransactionRecResp>>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -102,8 +102,7 @@ public partial class PortfolioController
 		}
 
 		// validate portfolio, must be current user's portfolio
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
@@ -135,7 +134,7 @@ public partial class PortfolioController
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<TransactionRecResp>>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -156,8 +155,7 @@ public partial class PortfolioController
 		}
 
 		// validate portfolio, must be current user's portfolio
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
@@ -192,7 +190,7 @@ public partial class PortfolioController
 
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<TransactionRecResp>>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -208,8 +206,7 @@ public partial class PortfolioController
 		}
 
 		// validate portfolio, must be current user's portfolio
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (!(existingPortfolio?.Id.Equals(existingTx.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
@@ -232,7 +229,7 @@ public partial class PortfolioController
 
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<TransactionRecResp>>> SettleTransactionInPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> SettleTransactionInPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -257,8 +254,7 @@ public partial class PortfolioController
 		}
 
 		// validate portfolio, must be current user's portfolio
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
@@ -276,7 +272,7 @@ public partial class PortfolioController
 		existingTx.ItemCode = reqTx!.Value.ItemCode;
 		existingTx.MarketId = reqTx!.Value.MarketId;
 
-		var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(existingTx.MarketId, StringComparison.OrdinalIgnoreCase));
+		var market = Globals.MarketsMap.TryGetValue(existingTx.MarketId?.ToUpper()??string.Empty, out var mkt) ? mkt : null;
 		existingTx = await PortfolioRepository.SettleTxAsync(existingTx, market);
 		if (existingTx == null)
 		{
@@ -289,7 +285,7 @@ public partial class PortfolioController
 	/// Gets current user's portfolio assets.
 	/// </summary>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS)]
-	public async Task<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioAssets([FromRoute] string id)
+	public async ValueTask<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioAssets([FromRoute] string id)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -298,8 +294,8 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		// validate portfolio, must be current user's portfolio
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (existingPortfolio == null)
 		{
 			return ResponseNoData(404, "Portfolio not found.");
@@ -309,7 +305,7 @@ public partial class PortfolioController
 		var result = new List<AssetResp>();
 		foreach (var asset in assetList)
 		{
-			var market = Globals.Markets.FirstOrDefault(m => m.Id.Equals(asset.MarketId, StringComparison.OrdinalIgnoreCase));
+			var market = Globals.MarketsMap.TryGetValue(asset.MarketId?.ToUpper()??string.Empty, out var mkt) ? mkt : null;
 			result.Add(AssetResp.BuildFrom(asset, market));
 		}
 		return ResponseOk(result);
@@ -317,7 +313,7 @@ public partial class PortfolioController
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async Task<ActionResult<ApiResp<AssetResp>>> UpdateAssetFromPortfolio([FromRoute] string id, [FromRoute] string aid, [FromBody] CreateOrUpdateAssetReq req)
+	public async ValueTask<ActionResult<ApiResp<AssetResp>>> UpdateAssetFromPortfolio([FromRoute] string id, [FromRoute] string aid, [FromBody] CreateOrUpdateAssetReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -338,8 +334,7 @@ public partial class PortfolioController
 		// }
 
 		// validate portfolio, must be current user's portfolio
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase)??false))
 		{
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
@@ -357,6 +352,36 @@ public partial class PortfolioController
 		return ResponseOk(AssetResp.BuildFrom(existingAsset));
 	}
 
+	/// <summary>
+	/// Gets current user's portfolio ROI records.
+	/// </summary>
+	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS)]
+	public async ValueTask<ActionResult<ApiResp<IEnumerable<RoiRecResp>>>> GetMyPortfolioRoiRecs([FromRoute] string id)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		// validate portfolio, must be current user's portfolio
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
+		if (existingPortfolio == null)
+		{
+			return ResponseNoData(404, "Portfolio not found.");
+		}
+
+		var roiRecList = await PortfolioRepository.GetRoiRecsByPortfolioIdAsync(id);
+		var result = new List<RoiRecResp>();
+		foreach (var rr in roiRecList)
+		{
+			var market = Globals.MarketsMap.TryGetValue(rr.RefMarketId?.ToUpper()??string.Empty, out var mkt) ? mkt : null;
+			result.Add(RoiRecResp.BuildFrom(rr, market));
+		}
+		return ResponseOk(result);
+	}
+
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_PNL)]
 	public async Task<ActionResult<ApiResp<PnlSummaryResp>>> GetMyPortfolioPnl([FromRoute] string id)
 	{
@@ -367,14 +392,14 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		// validate portfolio, must be current user's portfolio
+		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
 		if (existingPortfolio == null)
 		{
 			return ResponseNoData(404, "Portfolio not found.");
 		}
 
-		var pnlSummary = await PortfolioRepository.GetRoiSummaryForPortfolio(id);
+		var pnlSummary = await PortfolioRepository.GetRoiSummaryForPortfolioAsync(id);
 		return ResponseOk(PnlSummaryResp.BuildFrom(pnlSummary));
 	}
 }

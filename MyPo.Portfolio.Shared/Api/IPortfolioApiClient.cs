@@ -17,6 +17,7 @@ public interface IPortfolioApiClient : IApiClient
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS = "/api/my_portfolio/{id}/assets";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID = "/api/my_portfolio/{id}/asset/{aid}";
 
+	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS = "/api/my_portfolio/{id}/roi_recs";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_PNL = "/api/my_portfolio/{id}/pnl";
 
 	/// <summary>

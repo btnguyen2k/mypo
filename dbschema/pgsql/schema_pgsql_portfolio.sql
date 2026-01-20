@@ -83,5 +83,7 @@ CREATE TABLE mypo_roi (
     CONSTRAINT fk_mypo_roi_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
 );
 CREATE INDEX idx_mypo_roi_portfolio_id ON mypo_roi (portfolio_id);
-CREATE INDEX idx_mypo_roi_tx_time ON mypo_roi (tx_time);
-CREATE INDEX idx_mypo_roi_tx_type ON mypo_roi (tx_type);
+CREATE INDEX idx_mypo_roi_portfolio_id_tx_time ON mypo_roi (portfolio_id, tx_time);
+CREATE INDEX idx_mypo_roi_portfolio_id_tx_type ON mypo_roi (portfolio_id, tx_type);
+-- CREATE INDEX idx_mypo_roi_tx_time ON mypo_roi (tx_time);
+-- CREATE INDEX idx_mypo_roi_tx_type ON mypo_roi (tx_type);
