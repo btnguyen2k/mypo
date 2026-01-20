@@ -1,4 +1,4 @@
-@using MyPo.Blazor.App.Layout
+﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
@@ -15,7 +15,7 @@
         <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
     </li>
     <li class="breadcrumb-item active">
-        <span>@(SelectedPortfolio?.Name ?? Id)</span>
+        <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
     </li>
 </SectionContent>
 
@@ -74,7 +74,8 @@
 							</div>
 							<div class="tab-pane fade @(ActiveTab == TabIdRoi ? "show active" : "")" id="nav-roi" role="tabpanel" aria-labelledby="@TabIdRoi" tabindex="0">
 								<CPortfolioRoi
-									PortfolioId="@(SelectedPortfolio?.Id)" />
+									PortfolioId="@(SelectedPortfolio?.Id)"
+									RoiRecords="@(RoiRecords)" />
 							</div>
 						</div>
 					}

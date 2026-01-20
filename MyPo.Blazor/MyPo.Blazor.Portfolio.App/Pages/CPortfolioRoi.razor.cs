@@ -9,10 +9,13 @@ public partial class CPortfolioRoi : CBase
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
 
+	[Parameter]
+	public IEnumerable<RoiRecResp>? RoiRecords { get; set; }
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
-		if (firstRender && !string.IsNullOrEmpty(PortfolioId))
+		if (firstRender && !string.IsNullOrEmpty(PortfolioId) && RoiRecords != null)
 		{
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 			var pnlSummary = await apiClient.GetMyPortfolioPnlSummaryAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);

@@ -157,6 +157,17 @@ public interface IPortfolioApiClient : IApiClient
 	public Task<ApiResp<AssetResp>> UpdateMyPortfolioAssetAsync(string portfolioId, string assetId, CreateOrUpdateAssetReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS"/> to get ROI records for a given portfolio.
+	/// </summary>
+	/// <param name="portfolioId"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<IEnumerable<RoiRecResp>>> GetMyPortfolioRoiRecsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_PNL"/> to get PnL summary for a given portfolio.
 	/// </summary>
 	/// <param name="portfolioId"></param>

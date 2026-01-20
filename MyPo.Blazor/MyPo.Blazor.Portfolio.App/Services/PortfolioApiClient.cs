@@ -187,6 +187,22 @@ public class PortfolioApiClient : ApiClient, IPortfolioApiClient
 		return await ReadAndCloseResponseAsync<AssetResp>(httpResult, cancellationToken);
 	}
 
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc />
+	public async Task<ApiResp<IEnumerable<RoiRecResp>>> GetMyPortfolioRoiRecsAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS.Replace("{id}", portfolioId, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			authToken,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<RoiRecResp>>(httpResult, cancellationToken);
+	}
+
 	/// <inheritdoc />
 	public async Task<ApiResp<PnlSummaryResp>> GetMyPortfolioPnlSummaryAsync(string portfolioId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
 	{

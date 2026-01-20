@@ -1,5 +1,4 @@
-using MyPo.Blazor.Portfolio.App.Shared;
-using MyPo.Portfolio.Shared.Api;
+﻿using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
@@ -10,12 +9,13 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolioDetails : BasePage
 {
 	[Parameter]
-	public string Id { get; set; } = string.Empty;
+	public string PortfolioId { get; set; } = string.Empty;
 	private PortfolioRecResp? SelectedPortfolio { get; set; }
 
 	private IEnumerable<MarketDefResp>? Markets { get; set; }
 	private IEnumerable<TransactionRecResp>? Transactions { get; set; }
 	private IEnumerable<AssetResp>? Assets { get; set; }
+	private IEnumerable<RoiRecResp>? RoiRecords { get; set; }
 
 	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -56,6 +56,15 @@ public partial class MyPortfolioDetails : BasePage
 		}
 		Assets = apiRespAssets.Data ?? [];
 
+		ShowAlert("info", "Loading portfolio ROI records, please wait...");
+		var apiRespRoiRecs = await apiClient.GetMyPortfolioRoiRecsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		if (apiRespRoiRecs.Status != 200)
+		{
+			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio ROI records.");
+			return null;
+		}
+		RoiRecords = apiRespRoiRecs.Data ?? [];
+
 		return portfolio;
 	}
 
@@ -93,7 +102,7 @@ public partial class MyPortfolioDetails : BasePage
 
 			Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
 
-			SelectedPortfolio = await LoadPortfolioAsync(Id, await GetAuthTokenAsync());
+			SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 			if (SelectedPortfolio == null)
 			{
 				return;
@@ -123,7 +132,7 @@ public partial class MyPortfolioDetails : BasePage
 			{
 				HideUI = true;
 				Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
-				SelectedPortfolio = await LoadPortfolioAsync(Id, await GetAuthTokenAsync());
+				SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 				HideUI = false;
 
 				var (alertType, alertMessage) = GetPassedMessageFromQuery();

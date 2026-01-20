@@ -34,9 +34,7 @@ public partial class MyPortfolio : BasePage
 				MyActivePortfolioList = portfolioTree.Where(p => p.IsActive);
 				MyInactivePortfolioList = portfolioTree.Where(p => !p.IsActive);
 
-				var queryParameters = QueryHelpers.ParseQuery(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
-				var alertMessage = queryParameters.TryGetValue("alertMessage", out var alertMessageValue) ? alertMessageValue.ToString() : string.Empty;
-				var alertType = queryParameters.TryGetValue("alertType", out var alertTypeValue) ? alertTypeValue.ToString() : string.Empty;
+				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
 				{
 					ShowAlert(alertType, alertMessage);
@@ -61,13 +59,13 @@ public partial class MyPortfolio : BasePage
 	private void BtnClickInfo(string pid)
 	{
 		SelectedPortfolio = MyPortfolioMap?[pid];
-		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", pid, StringComparison.OrdinalIgnoreCase));
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickModify(string pid)
 	{
 		SelectedPortfolio = MyPortfolioMap?[pid];
-		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{id}", pid, StringComparison.OrdinalIgnoreCase));
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickDelete(string pid)
