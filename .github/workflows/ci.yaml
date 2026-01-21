@@ -10,7 +10,7 @@ on:
 
 env:
   TAG_PREFIX: v
-  DOCKER_IMAGE: mypo
+  DOCKER_IMAGE: btnguyen2k/mypo
 
 jobs:
   BuildAndTest:
