@@ -29,12 +29,7 @@
                     <h4 class="card-title">@PAGE_TITLE</h4>
                 </div>
                 <div class="card-body">
-					@if (!string.IsNullOrEmpty(AlertMessage))
-					{
-						<CAlert type="@AlertType">
-							@AlertMessage
-						</CAlert>
-					}
+					<CAlert @ref="@Alert" />
                     @if (MarketsList != null && !HideUI)
                     {
                         <table class="table table-sm table-bordered border-primary table-striped table-hover">

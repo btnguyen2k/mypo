@@ -7,8 +7,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class Markets : BasePage
 {
 	private IEnumerable<MarketDefResp>? MarketsList { get; set; }
-	// private Dictionary<string, MarketDefResp>? MarketsMap { get; set; }
-	// private MarketDefResp? SelectedMarket { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -23,10 +21,9 @@ public partial class Markets : BasePage
 			{
 				HideUI = false;
 				MarketsList = result.Data ?? [];
-				// MarketsMap = MarketsList.ToDictionary(m => $"{m.Country} / {m.Code}");
 				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-					ShowAlert(alertType, alertMessage);
+					ShowAlert(alertType, alertMessage, 5000);
 				else
 					CloseAlert();
 			}
