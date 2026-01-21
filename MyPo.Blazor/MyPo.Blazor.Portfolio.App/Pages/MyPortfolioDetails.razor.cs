@@ -143,8 +143,6 @@ public partial class MyPortfolioDetails : BasePage
 		);
 		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
 		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdHoldings : savedTab;
-
-		Console.WriteLine($"[MyPortfolioDetails] Restored active tab: {ActiveTab}");
 	}
 
 	private async void SwitchTab(string tab)

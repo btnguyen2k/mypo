@@ -18,16 +18,21 @@
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 		<thead>
 			<tr>
-				<th scope="col" class="text-center">&nbsp;</th>
-				<th scope="col" class="text-center">Type</th>
-				<th scope="col" class="text-center">Time</th>
-				<th scope="col" class="text-center">Item</th>
-				<th scope="col" class="text-center">Quantity</th>
-				<th scope="col" class="text-center">Price</th>
-				<th scope="col" class="text-center">Tx Fee</th>
-				<th scope="col" class="text-center">Tax</th>
-				<th scope="col" class="text-center">Cost (other)</th>
-				<th scope="col" class="text-center">Actions</th>
+				<th rowspan="2" scope="col" class="text-center align-middle">&nbsp;</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Type</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Time</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Item</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Quantity</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Price</th>
+  				<th colspan="3" scope="col" class="text-center align-middle">Cost</th>
+  				<!-- <th scope="col" class="text-center align-middle">1</th> -->
+  				<!-- <th scope="col" class="text-center align-middle">2</th> -->
+  				<th rowspan="2" scope="col" class="text-center align-middle">Actions</th>
+			</tr>
+			<tr>
+				<th scope="col" class="text-center align-middle">Tx Fee</th>
+				<th scope="col" class="text-center align-middle">Tax</th>
+				<th scope="col" class="text-center align-middle">Other</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -51,7 +56,9 @@
 								/>
 							}
 						</td>
-						<td class="text-center w-auto">@(tx.Type)</td>
+						<td class="text-center w-auto">
+							<CBadgeTxType Text="@tx.Type" />
+						</td>
 						<td class="text-center w-auto">@(tx.Time.ToString(TX_DATETIME_FORMAT))</td>
 						<td class="text-start">@(tx.ItemType) - @(tx.ItemCode) (@(tx.MarketId??"-") / @(tx.Market?.CurrencySymbol??"-"))</td>
 						<td class="text-end w-auto">@(tx.Quantity.ToString("N2"))</td>
@@ -424,14 +431,9 @@
 					</div>
 				</div>
 			</form>
-			@*
-			<hr />
-			<button type="button" class="btn btn-secondary" @onclick="() => ModalDialogAddTx.Close()"><CIcon icon="x-circle" /> Cancel</button>
-			<button type="button" class="btn btn-primary" onclick="() => BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
-			*@
 		</div>
 		<div class="card-footer">
-			<button type="button" class="btn btn-secondary" @onclick="()=>ModalDialogAddTx.Close()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickAddTxClose()"><CIcon icon="x-circle" /> Cancel</button>
 			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
 		</div>
 	</div>

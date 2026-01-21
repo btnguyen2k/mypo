@@ -6,7 +6,7 @@ using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
-public partial class CPortfolioTransactions : CBase
+public partial class CPortfolioTransactions
 {
 	private CModal ModalDialogUpdateTx { get; set; } = default!;
 

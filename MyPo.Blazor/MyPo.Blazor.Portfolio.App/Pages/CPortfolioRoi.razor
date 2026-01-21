@@ -24,7 +24,7 @@
 						@(roiRec.TxTime.ToString("yyyy-MM-dd HH:mm"))
 					</td>
 					<td class="text-center w-auto">
-						<CRandomBadge Text="@(roiRec.TxType)" />
+						<CBadgeTxType Text="@(roiRec.TxType)" />
 					</td>
 					<td class="text-center w-auto">
 						@(roiRec.RefItemType??"-") / @(roiRec.RefItemCode??"-")

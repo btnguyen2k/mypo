@@ -136,9 +136,23 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 
+	/// <summary>
+	/// Updates the owning asset after settling the transaction, using Average method.
+	/// </summary>
+	/// <param name="tx"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	/// <exception cref="InvalidOperationException"></exception>
 	private async Task SettleTxUpdateAssetAsync(TransactionRec tx, CancellationToken cancellationToken = default)
 	{
-		// update owning asset
+		// only accept transaction type of SELL or BUY
+		if (!tx.Type.Equals(TransactionRec.TXTYPE_BUY, StringComparison.OrdinalIgnoreCase)
+			&& !tx.Type.Equals(TransactionRec.TXTYPE_SELL, StringComparison.OrdinalIgnoreCase))
+		{
+			throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Only buy/sell transactions can update assets.");
+		}
+
+		// get existing owning asset, create if not exist
 		var existingAsset = await GetAssetByOwningAsync(tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
 		if (existingAsset == null)
 		{
@@ -157,13 +171,28 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 			}
 		}
 		var txType = tx.Type.Trim().ToUpper();
-		var newQuantity = existingAsset.Quantity + (txType==TransactionRec.TXTYPE_BUY ? tx.Quantity : -tx.Quantity);
-		var assetTotalCost = existingAsset.AveragePrice * existingAsset.Quantity;
-		var txBaseCost = tx.Price * tx.Quantity;
-		var newTotalCost = assetTotalCost + (txType==TransactionRec.TXTYPE_BUY ? txBaseCost : -txBaseCost) + tx.TotalFee;
-		var newAveragePrice = newQuantity != 0.0m ? newTotalCost / newQuantity : 0.0m;
+
+		// validate quantity for sell transaction
+		if (txType.Equals(TransactionRec.TXTYPE_SELL, StringComparison.OrdinalIgnoreCase) && existingAsset.Quantity < tx.Quantity)
+		{
+			throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Insufficient asset quantity to settle sell transaction. Available: {existingAsset.Quantity}, Required: {tx.Quantity}.");
+		}
+
+		// update owning asset
+		var newQuantity = existingAsset.Quantity + (txType.Equals(TransactionRec.TXTYPE_BUY, StringComparison.OrdinalIgnoreCase) ? tx.Quantity : -tx.Quantity);
+		if (tx.Type.Equals(TransactionRec.TXTYPE_BUY,StringComparison.OrdinalIgnoreCase))
+		{
+			// update owning asset average price for buy transaction
+			var assetTotalCost = existingAsset.AveragePrice * existingAsset.Quantity;
+			var txBaseCost = tx.Price * tx.Quantity;
+			var newTotalCost = assetTotalCost + txBaseCost + tx.TotalFee;
+			existingAsset.AveragePrice = newQuantity != 0.0m ? newTotalCost / newQuantity : 0.0m;
+		}
 		existingAsset.Quantity = newQuantity;
-		existingAsset.AveragePrice = newAveragePrice;
+		if (newQuantity == 0.0m)
+		{
+			existingAsset.AveragePrice = 0.0m; // reset average price if quantity is zero
+		}
 		var _ = await UpdateAssetAsync(existingAsset, cancellationToken)
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update owning asset.");
 	}
@@ -191,8 +220,8 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 			RefItemCode = tx.ItemCode,
 			RefMarketId = tx.MarketId,
 			TxDesc = txType == TransactionRec.TXTYPE_SELL
-				? $"Sold {tx.Quantity} of ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}"
-				: $"Bought {tx.Quantity} of ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+				? $"Sold {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}"
+				: $"Bought {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
 		};
 		_ = await CreateRoiRecAsync(roiRec, cancellationToken)
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
@@ -210,7 +239,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Tax for @{txType} ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+				TxDesc = $"Transaction Tax for {txType} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
 			};
 			_ = await CreateRoiRecAsync(taxRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
@@ -229,7 +258,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Fee for @{txType} ({tx.ItemType} - {tx.ItemCode}) @ {market?.CurrencySymbol??""} {tx.Price}",
+				TxDesc = $"Transaction Fee for {txType} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
 			};
 			_ = await CreateRoiRecAsync(feeRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
