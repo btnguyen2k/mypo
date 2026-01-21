@@ -9,15 +9,17 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolioModify : BasePage
 {
 	[Parameter]
-	public string Id { get; set; } = string.Empty;
+	public string PortfolioId { get; set; } = string.Empty;
 
+	private string ParentPortfolioId { get; set; } = string.Empty;
 	private string Name { get; set; } = string.Empty;
 	private string Description { get; set; } = string.Empty;
 	private string Currency { get; set; } = string.Empty;
 	private bool IsActive { get; set; } = true;
 
-	private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
-	private PortfolioRecResp? SelectedPortfolio { get; set; }
+	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
+	// private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
+	// private PortfolioRecResp? SelectedPortfolio { get; set; }
 
 	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -28,14 +30,14 @@ public partial class MyPortfolioModify : BasePage
 		var result = await apiClient.GetMyPortfolioAsync(authToken, ApiBaseUrl);
 		if (result.Status != 200)
 		{
-			errorMsg = result.Message!;
+			errorMsg = result.Message ?? "Error loading portfolio.";
 		}
 		else
 		{
 			var allPortfolios = result.Data ?? [];
-			MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
-			var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
-			if (MyPortfolioMap.TryGetValue(id, out var portfolio))
+			MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+			var myPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
+			if (myPortfolioMap.TryGetValue(id, out var portfolio))
 			{
 				return portfolio;
 			}
@@ -50,15 +52,16 @@ public partial class MyPortfolioModify : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-			SelectedPortfolio = await LoadPortfolioAsync(Id, await GetAuthTokenAsync());
-			if (SelectedPortfolio == null)
+			var portfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
+			if (portfolio == null)
 			{
 				return;
 			}
-			Name = SelectedPortfolio.Name;
-			Description = SelectedPortfolio.Description ?? string.Empty;
-			Currency = SelectedPortfolio.Currency;
-			IsActive = SelectedPortfolio.IsActive;
+			ParentPortfolioId = portfolio.ParentId ?? string.Empty;
+			Name = portfolio.Name;
+			Description = portfolio.Description ?? string.Empty;
+			Currency = portfolio.Currency;
+			IsActive = portfolio.IsActive;
 
 			HideUI = false;
 			CloseAlert();
@@ -93,18 +96,19 @@ public partial class MyPortfolioModify : BasePage
 
 		var req = new CreateOrUpdatePortfolioRecReq
 		{
+			Id = PortfolioId,
 			Name = Name.Trim(),
 			Description = Description.Trim(),
 			Currency = Currency.ToUpper().Trim(),
-			ParentId = null,
+			ParentId = ParentPortfolioId,
 			IsActive = IsActive,
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.UpdateMyPortfolioAsync(Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.UpdateMyPortfolioAsync(PortfolioId, req, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
 			HideUI = false;
-			ShowAlert("danger", resp.Message!);
+			ShowAlert("danger", resp.Message ?? "Error updating the portfolio.");
 			return;
 		}
 		ShowAlert("success", "Portfolio updated successfully. Navigating to my portfolio page...");

@@ -5,6 +5,8 @@ namespace MyPo.Portfolio.Shared.Api;
 
 public struct CreateOrUpdatePortfolioRecReq
 {
+	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Id { get; set; }
 	[JsonPropertyName("parent_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? ParentId { get; set; }
 

@@ -119,10 +119,26 @@ public partial class PortfolioController
 			return ResponseNoData(404, "Portfolio not found.");
 		}
 
+		// validate parent id
+		var parentId = req.ParentId?.Trim();
+		if (!string.IsNullOrWhiteSpace(parentId))
+		{
+			var parentPortfolio = await PortfolioRepository.GetPortfolioByIdAsync(parentId);
+			if (parentPortfolio == null
+				|| !parentPortfolio.OwnerUserId.Equals(currentUser.Id, StringComparison.OrdinalIgnoreCase)
+				|| parentPortfolio.Id.Equals(existingPortfolio.Id, StringComparison.OrdinalIgnoreCase))
+			{
+				return ResponseNoData(400, "Invalid parent portfolio ID.");
+			}
+
+			// TODO portfolio tree depth limit check!
+		}
+
 		existingPortfolio.IsActive = req.IsActive;
 		existingPortfolio.Name = req.Name.Trim();
 		existingPortfolio.Description = req.Description?.Trim() ?? string.Empty;
 		existingPortfolio.Currency = req.Currency.ToUpper().Trim();
+		existingPortfolio.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
 
 		existingPortfolio = await PortfolioRepository.UpdatePortfolioAsync(existingPortfolio);
 		if (existingPortfolio == null)

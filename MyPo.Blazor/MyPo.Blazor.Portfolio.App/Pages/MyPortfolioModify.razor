@@ -33,39 +33,47 @@
                     <h4 class="card-title">@PAGE_TITLE</h4>
                 </div>
                 <div class="card-body">
-					@if (!string.IsNullOrEmpty(AlertMessage))
-					{
-						<CAlert type="@AlertType">
-							@AlertMessage
-						</CAlert>
-					}
+					<CAlert @ref="@Alert" />
 					@if (!HideUI)
 					{
 						<form>
+							<div class="form-floating mb-2">
+								<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
+									<option value="@(string.Empty)">-</option>
+									@foreach (var p in MyPortfolioTree??[])
+									{
+										@if(p.Id != PortfolioId)
+										{
+											<option value="@p.Id">@p.Name</option>
+										}
+									}
+								</select>
+								<label for="pParentId">Parent Portfolio:</label>
+							</div>
 							<div class="row align-items-center mb-2">
 								<div class="col-md-7 col-sm-12">
 									<div class="form-floating">
-										<input type="text" class="form-control" id="name" placeholder="Name" @bind-value="Name">
-										<label for="name">Name (*)</label>
+										<input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
+										<label for="pName">Name (*)</label>
 									</div>
 								</div>
 								<div class="col-md-3 col-sm-12">
 									<div class="form-floating">
-										<input type="text" class="form-control" id="currency" placeholder="Currency" @bind-value="Currency">
-										<label for="currency">Currency (*)</label>
+										<input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
+										<label for="pCurrency">Currency (*)</label>
 									</div>
 								</div>
 								<div class="col-md-2 col-sm-12">
 									<div class="form-check">
-										<input type="checkbox" class="form-check-input" id="isActive" @bind="IsActive" />
-										<label class="form-check-label" for="isActive">Active</label>
+										<input type="checkbox" class="form-check-input" id="pIsActive" @bind="IsActive" />
+										<label class="form-check-label" for="pIsActive">Active</label>
 									</div>
 								</div>
 							</div>
 							<div class="form-floating mb-2">
-								<textarea type="text" class="form-control" id="desc" placeholder="Description" style="height: 256px"
+								<textarea type="text" class="form-control" id="pDesc" placeholder="Description" style="height: 100px"
 									@bind-value:event="oninput" @bind-value="Description"></textarea>
-								<label for="desc">Description</label>
+								<label for="pDesc">Description</label>
 							</div>
 						</form>
 					}
