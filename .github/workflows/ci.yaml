@@ -180,8 +180,8 @@ jobs:
           platforms: ${{ matrix.platforms }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.DOCKER_IMAGE }},push-by-digest=true,name-canonical=true,push=true
-          file: ${{ env.TEMPLATE_ROOT }}/Dockerfile.dev
-          context: ${{ env.TEMPLATE_ROOT }}
+          file: ./Dockerfile.dev
+          context: ./
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
