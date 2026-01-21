@@ -7,6 +7,8 @@ namespace MyPo.Blazor.App.Shared;
 /// </summary>
 public abstract class BasePage : BaseComponent
 {
+	protected const int ALERT_AUTO_CLOSE_MS = 5000;
+
 	protected string AlertMessage { get; set; } = string.Empty;
 	protected string AlertType { get; set; } = "info";
 	// protected bool AlertHasChanged {get; set; } = false;

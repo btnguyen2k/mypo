@@ -31,12 +31,7 @@
         <div class="container-lg px-4">
 			<div class="card border-top-primary border-top-3 mb-4">
                 <div class="card-body">
-					@if (!string.IsNullOrEmpty(AlertMessage))
-					{
-						<CAlert type="@AlertType">
-							@AlertMessage
-						</CAlert>
-					}
+					<CAlert @ref="@Alert" />
 					@if (!HideUI)
 					{
 						<nav>

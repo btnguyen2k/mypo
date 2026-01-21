@@ -50,7 +50,7 @@ public partial class MyPortfolioAdd : BasePage
 		if (resp.Status != 200)
 		{
 			HideUI = false;
-			ShowAlert("danger", resp.Message!);
+			ShowAlert("danger", resp.Message ?? "Error creating the portfolio.");
 			return;
 		}
 		ShowAlert("success", "Portfolio created successfully. Navigating to my portfolio page...");

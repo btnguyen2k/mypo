@@ -7,6 +7,7 @@ public abstract class CBase : BaseComponent
 	protected string AlertType { get; set; } = string.Empty;
 	protected string AlertMessage { get; set; } = string.Empty;
 	protected bool AlertHasChanged {get; set; } = false;
+	protected CAlert Alert { get; set; } = default!;
 
 	protected void CloseAlert()
 	{

@@ -96,7 +96,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		var (alertType, alertMessage) = GetPassedMessageFromQuery();
 		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-			ShowAlert(alertType, alertMessage);
+			ShowAlert(alertType, alertMessage, autoCloseAfterMs: 5000);
 		else
 			CloseAlert();
 	}

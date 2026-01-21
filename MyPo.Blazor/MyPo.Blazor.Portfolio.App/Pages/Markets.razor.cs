@@ -23,7 +23,7 @@ public partial class Markets : BasePage
 				MarketsList = result.Data ?? [];
 				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-					ShowAlert(alertType, alertMessage, 5000);
+					ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
 				else
 					CloseAlert();
 			}

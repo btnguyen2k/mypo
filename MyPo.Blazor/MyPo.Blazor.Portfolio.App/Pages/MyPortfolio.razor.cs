@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -9,7 +9,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolio : BasePage
 {
 	private CModal ModalDialogDelete { get; set; } = default!;
-
 	private IEnumerable<PortfolioRecResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioRecResp>? MyInactivePortfolioList { get; set; }
 
@@ -37,7 +36,7 @@ public partial class MyPortfolio : BasePage
 				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
 				{
-					ShowAlert(alertType, alertMessage);
+					ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
 				}
 				else
 				{
@@ -72,6 +71,11 @@ public partial class MyPortfolio : BasePage
 	{
 		SelectedPortfolio = MyPortfolioMap?[pid];
 		ModalDialogDelete.Open();
+	}
+
+	private void BtnClickDeleteClose()
+	{
+		ModalDialogDelete.Close();
 	}
 
 	private async void BtnClickDeleteConfirm()

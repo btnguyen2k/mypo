@@ -30,12 +30,7 @@
                     <h4 class="card-title">My Portfolios</h4>
                 </div>
                 <div class="card-body">
-					@if (!string.IsNullOrEmpty(AlertMessage))
-					{
-						<CAlert type="@AlertType">
-							@AlertMessage
-						</CAlert>
-					}
+					<CAlert @ref="@Alert" />
 					@if (!HideUI)
 					{
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
@@ -44,7 +39,7 @@
 							</ChildContent>
 						</AuthorizeView>
 					}
-                    @if (MyActivePortfolioList != null && !HideUI)
+                    @if (!HideUI)
                     {
                         <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
                             <thead>
@@ -57,7 +52,7 @@
 									<th scope="col" class="text-center">Actions</th>
                                 </tr>
                             </thead>
-							@if (MyActivePortfolioList.Count() == 0)
+							@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
 							{
 								<tbody>
 									<tr>
@@ -188,8 +183,8 @@
 						</div>
 					</form>
 					<hr />
-					<button type="button" class="btn btn-secondary" @onclick="() => ModalDialogDelete.Close()"><CIcon icon="x-circle" /> Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="() => BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button>
+					<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteClose()"><CIcon icon="x-circle" /> Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button>
 				</div>
 			</div>
 		</CModal>
