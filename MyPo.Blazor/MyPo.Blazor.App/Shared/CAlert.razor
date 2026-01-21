@@ -9,7 +9,7 @@ Sample usage:
     </CAlert>
 -->
 
-<div class="alert @alertClass d-flex align-items-center" role="alert">
+<div class="alert @alertClass d-flex align-items-center fade" role="alert">
     <BIcon icon="@icon" extraClassName="@iconClass"/>
     <div>
         @ChildContent
@@ -22,15 +22,55 @@ Sample usage:
     /// The alert will display an icon corresponding to the type. The icon is taken from Bootstrap Icons.
     /// </summary>
     [Parameter]
-    public string type { get; set; } = "info";
+    public string Type { get; set; } = string.Empty;
 
     // property name must be ChildContent
     [Parameter]
     public RenderFragment ChildContent { get; set; } = default!;
 
+	private bool isVisible => !string.IsNullOrEmpty(Type);
+
+	private DateTimeOffset? autoCloseTimestamp { get; set; } = null;
+
+	public void Show(string alertType, string alertMessage, int autoCloseAfterMs = 0)
+	{
+		this.Type = alertType;
+		this.ChildContent = builder =>
+		{
+			builder.AddContent(0, alertMessage);
+		};
+		@* isVisible = true; *@
+		StateHasChanged();
+		if (autoCloseAfterMs > 0)
+		{
+			autoCloseTimestamp = DateTimeOffset.Now.AddMilliseconds(autoCloseAfterMs);
+			Task.Run(async () =>
+			{
+				await Task.Delay(autoCloseAfterMs);
+				if (autoCloseTimestamp != null && autoCloseTimestamp.Value <= DateTimeOffset.Now)
+				{
+					Hide();
+				}
+			});
+		}
+		else
+		{
+			autoCloseTimestamp = null;
+		}
+	}
+
+	public void Hide()
+	{
+		this.Type = string.Empty;
+		this.ChildContent = builder => { };
+		this.autoCloseTimestamp = null;
+		@* isVisible = false; *@
+		StateHasChanged();
+	}
+
     private string icon
     {
-        get => type.ToLower() switch
+        get => Type.ToLower() switch
         {
             "warning" => "bi-exclamation-triangle",
             "danger" => "x-circle-fill",
@@ -41,7 +81,7 @@ Sample usage:
     }
     private string iconClass
     {
-        get => type.ToLower() switch
+        get => Type.ToLower() switch
         {
             "warning" => "flex-shrink-0 me-2 text-warning",
             "danger" => "flex-shrink-0 me-2 text-danger",
@@ -53,14 +93,14 @@ Sample usage:
     }
     private string alertClass
     {
-        get => type.ToLower() switch
+        get => Type.ToLower() switch
         {
-            "warning" => "alert-warning",
-            "danger" => "alert-danger",
-            "success" => "alert-success",
-            "primary" => "alert-primary",
-            "secondary" => "alert-secondary",
-            _ => "alert-info"
+            "warning" => "alert-warning" + (isVisible ? " show" : " d-none"),
+            "danger" => "alert-danger" + (isVisible ? " show" : " d-none"),
+            "success" => "alert-success" + (isVisible ? " show" : " d-none"),
+            "primary" => "alert-primary" + (isVisible ? " show" : " d-none"),
+            "secondary" => "alert-secondary" + (isVisible ? " show" : " d-none"),
+            _ => "alert-info" + (isVisible ? " show" : " d-none"),
         };
     }
 }
