@@ -60,17 +60,29 @@ public partial class PortfolioController
 			return ResponseNoData(400, "Currency is required.");
 		}
 
+		// validate parent id
+		var parentId = req.ParentId?.Trim();
+		if (!string.IsNullOrWhiteSpace(parentId))
+		{
+			var parentPortfolio = await PortfolioRepository.GetPortfolioByIdAsync(parentId);
+			if (parentPortfolio == null || !parentPortfolio.OwnerUserId.Equals(currentUser.Id, StringComparison.OrdinalIgnoreCase))
+			{
+				return ResponseNoData(400, "Invalid parent portfolio ID.");
+			}
+
+			// TODO portfolio tree depth limit check!
+		}
+
 		// Create new portfolio record
 		var portfolioRec = new PortfolioRec
 		{
 			// Id = Guid.NewGuid().ToString(),
-			ParentId = req.ParentId?.Trim(),
+			ParentId = parentId,
 			Name = req.Name.Trim(),
 			Description = req.Description?.Trim(),
 			Currency = req.Currency.ToUpper().Trim(),
 			OwnerUserId = currentUser.Id,
 			IsActive = true,
-
 		};
 		var result = await PortfolioRepository.CreatePortfolioAsync(portfolioRec);
 		if (result == null)

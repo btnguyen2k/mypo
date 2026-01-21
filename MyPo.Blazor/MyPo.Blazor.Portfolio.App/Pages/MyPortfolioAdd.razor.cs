@@ -8,9 +8,12 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolioAdd : BasePage
 {
+	private string ParentPortfolioId { get; set; } = string.Empty;
 	private string Name { get; set; } = string.Empty;
 	private string Description { get; set; } = string.Empty;
 	private string Currency { get; set; } = string.Empty;
+
+	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
 
 	private void BtnClickCancel()
 	{
@@ -43,7 +46,7 @@ public partial class MyPortfolioAdd : BasePage
 			Name = Name.Trim(),
 			Description = Description.Trim(),
 			Currency = Currency.ToUpper().Trim(),
-			ParentId = null,
+			ParentId = ParentPortfolioId,
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.CreatePortfolioAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
@@ -58,5 +61,28 @@ public partial class MyPortfolioAdd : BasePage
 		var passAlertType = "success";
 		await Task.Delay(500);
 		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}");
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await base.OnAfterRenderAsync(firstRender);
+		if (firstRender)
+		{
+			HideUI = true;
+			ShowAlert("info", "Loading portfolio...");
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var result = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (result.Status == 200)
+			{
+				var allPortfolios = result.Data ?? [];
+				MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+				HideUI = false;
+				CloseAlert();
+			}
+			else
+			{
+				ShowAlert("danger", result.Message ?? "Unknown error");
+			}
+		}
 	}
 }

@@ -87,6 +87,31 @@
 												</button>
 											</td>
 										</tr>
+										@foreach (var child in item.Children??[])
+										{
+											<tr>
+												<td class="text-center">&nbsp;@*↳*@</td>
+												<td class="text-center">@child.Currency</td>
+												<td>
+													@child.Name
+													<br/>
+													<span class="small">@child.Description</span>
+												</td>
+												<td>-</td>
+												<td>-</td>
+												<td class="text-center">
+													<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(child.Id))">
+														<CIcon icon="cil-info" />
+													</button>
+													<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(child.Id))">
+														<CIcon icon="cil-pencil" />
+													</button>
+													<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(child.Id))">
+														<CIcon icon="cil-x" />
+													</button>
+												</td>
+											</tr>
+										}
 									}
 								</tbody>
 							}

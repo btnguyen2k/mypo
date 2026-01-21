@@ -21,7 +21,7 @@ public struct CreateOrUpdatePortfolioRecReq
 	public bool IsActive { get; set; }
 }
 
-public struct PortfolioRecResp
+public sealed class PortfolioRecResp
 {
 	public static PortfolioRecResp BuildFrom(PortfolioRec pr)
 	{
@@ -40,22 +40,22 @@ public struct PortfolioRecResp
 	}
 
 	[JsonPropertyName("id")]
-	public string Id { get; set; }
+	public string Id { get; set; } = default!;
 
 	[JsonPropertyName("parent_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? ParentId { get; set; }
 
 	[JsonPropertyName("name")]
-	public string Name { get; set; }
+	public string Name { get; set; } = default!;
 
 	[JsonPropertyName("desc"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Description { get; set; }
 
 	[JsonPropertyName("currency")]
-	public string Currency { get; set; }
+	public string Currency { get; set; } = default!;
 
 	[JsonPropertyName("owner_uid")]
-	public string OwnerUserId { get; set; }
+	public string OwnerUserId { get; set; } = default!;
 
 	[JsonPropertyName("is_active")]
 	public bool IsActive { get; set; }

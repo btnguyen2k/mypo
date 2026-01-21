@@ -55,10 +55,10 @@ public partial class MyPortfolioModify : BasePage
 			{
 				return;
 			}
-			Name = SelectedPortfolio!.Value.Name;
-			Description = SelectedPortfolio!.Value.Description ?? string.Empty;
-			Currency = SelectedPortfolio!.Value.Currency;
-			IsActive = SelectedPortfolio!.Value.IsActive;
+			Name = SelectedPortfolio.Name;
+			Description = SelectedPortfolio.Description ?? string.Empty;
+			Currency = SelectedPortfolio.Currency;
+			IsActive = SelectedPortfolio.IsActive;
 
 			HideUI = false;
 			CloseAlert();
