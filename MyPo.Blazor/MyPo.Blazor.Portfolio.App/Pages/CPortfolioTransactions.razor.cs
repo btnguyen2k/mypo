@@ -9,6 +9,8 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class CPortfolioTransactions : CBase
 {
+	public const string TX_DATETIME_FORMAT = "dd-MMM-yyyy HH:mm";
+
 	[Parameter]
 	public IEnumerable<TransactionRecResp>? Transactions { get; set; }
 	private Dictionary<string, TransactionRecResp> TransactionsMap => Transactions?.ToDictionary(t => t.Id, t => t) ?? [];
@@ -21,7 +23,6 @@ public partial class CPortfolioTransactions : CBase
 	public string PortfolioId { get; set; } = string.Empty;
 
 	private CModal ModalDialogAddTx { get; set; } = default!;
-	private CModal ModalDialogUpdateTx { get; set; } = default!;
 	private CModal ModalDialogSettleTxMultiple { get; set; } = default!;
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
@@ -58,7 +59,7 @@ public partial class CPortfolioTransactions : CBase
 			// Notes = string.Empty
 			IsSettled = false,
 		};
-		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
+		TxTime = Tx.Time.ToString(TX_DATETIME_FORMAT);
 		TxId = string.Empty;
 		CloseAlert();
 	}
@@ -82,14 +83,6 @@ public partial class CPortfolioTransactions : CBase
 			Notes = tx.Notes,
 			IsSettled = tx.IsSettled,
 		};
-	}
-
-	private void PrepareUpdateTx(TransactionRecResp tx)
-	{
-		Tx = NewTxReqFrom(tx);
-		TxTime = Tx.Time.ToString("dd-MMM-yyyy HH:mm");
-		TxId = tx.Id;
-		CloseAlert();
 	}
 
 	[Inject]
@@ -120,7 +113,7 @@ public partial class CPortfolioTransactions : CBase
 		// validate time
 		try
 		{
-			var time = DateTimeOffset.ParseExact(TxTime, "dd-MMM-yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+			var time = DateTimeOffset.ParseExact(TxTime, TX_DATETIME_FORMAT, System.Globalization.CultureInfo.InvariantCulture);
 			Tx.Time = time;
 		}
 		catch (Exception e)
@@ -159,80 +152,6 @@ public partial class CPortfolioTransactions : CBase
 			return false;
 		}
 		return true;
-	}
-
-	private void BtnClickUpdateTx(string tid)
-	{
-		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
-		if (selectedTx != null)
-		{
-			PrepareUpdateTx(selectedTx.Value);
-			ModalDialogUpdateTx.Open();
-		}
-		else
-		{
-			ShowAlert("danger", $"Transaction '{tid}' not found.");
-		}
-	}
-
-	private async void BtnClickUpdateTxSave()
-	{
-		if (!ValidateTx())
-		{
-			return;
-		}
-
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.UpdateTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
-		if (resp.Status != 200)
-		{
-			ShowAlert("danger", resp.Message!);
-			return;
-		}
-		ShowAlert("success", "Transaction updated successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"Transaction '{resp.Data.Id}' updated successfully.";
-		var passAlertType = "success";
-		await Task.Delay(500);
-		ModalDialogUpdateTx.Close();
-		CloseAlert();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
-			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
-			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
-			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
-	}
-
-	private async void BtnClickUpdateTxSettle()
-	{
-		if (!ValidateTx())
-		{
-			return;
-		}
-
-		if (Tx.IsSettled)
-		{
-			ShowAlert("warning", "Transaction has already been settled.");
-			return;
-		}
-
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.SettleTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
-		if (resp.Status != 200)
-		{
-			ShowAlert("danger", resp.Message!);
-			return;
-		}
-		ShowAlert("success", "Transaction settled successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"Transaction '{resp.Data.Id}' settled successfully.";
-		var passAlertType = "success";
-		await Task.Delay(500);
-		ModalDialogUpdateTx.Close();
-		CloseAlert();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
-			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
-			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
-			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 
 	private void BtnClickAddTx()
