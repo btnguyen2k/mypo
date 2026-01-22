@@ -1,0 +1,92 @@
+<div class="card border-top-info border-top-3 mb-4">
+	<div class="card-header align-items-center">
+		<h5 class="card-title float-start">Buy With Fee</h5>
+		<div class="row float-end">
+			<div class="col-auto">
+				<label for="numDecimals" class="form-label">Decimals:</label>
+			</div>
+			<div class="col-auto">
+				<select class="form-select form-select-sm" id="numDecimals" @bind="numDecimals">
+					<option value="N0">0</option>
+					<option value="N1">1</option>
+					<option value="N2">2</option>
+					<option value="N3">3</option>
+					<option value="N4">4</option>
+					<option value="N5">5</option>
+					<option value="N6">6</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="card-body">
+		<div class="row">
+			<div class="col-md-4 col-sm-12">
+				<label for="unitPrice" class="form-label">Unit Price:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="number" min="@MinValue" step="@Step" class="form-control" id="unitPrice" placeholder="Enter unit price"
+						value="@unitPrice.ToString(numDecimals)" @onchange="(e)=>{unitPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-12">
+				<label for="numUnits" class="form-label">Num Units:</label>
+				<div class="input-group input-group-sm">
+					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to buy" @bind="numUnits" />
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-12">
+				<label for="txFee" class="form-label">Tx Fee:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="number" min="@MinValue" step="@Step" class="form-control" id="txFee" placeholder="Transaction fee"
+						value="@txFee.ToString(numDecimals)" @onchange="(e)=>{txFee=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
+				</div>
+			</div>
+		</div>
+		<div class="row mt-2">
+			<div class="col-md-4 col-sm-12">
+				<label for="totalCost" class="form-label">Total Cost:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="text" class="form-control" id="totalCost" disabled value="@(TotalCost.ToString(numDecimals))"/>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-12">
+				<label for="effectiveUnitPrice" class="form-label">Effective Unit Price:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="text" class="form-control" id="effectiveUnitPrice" disabled value="@(EffectiveUnitPrice.ToString(numDecimals))"/>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-12">
+				<label for="breakEven" class="form-label">Break-even:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">%</span>
+					<input type="text" class="form-control" id="breakEven" disabled value="@(BreakEven.ToString("N2"))"/>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	private string numDecimals { get; set; } = "N2";
+	private decimal unitPrice { get; set; } = 100m;
+	private decimal numUnits { get; set; } = 10m;
+	private decimal txFee { get; set; } = 5.00m;
+	private decimal TotalCost => unitPrice * numUnits + txFee;
+	private decimal EffectiveUnitPrice => numUnits > 0 ? TotalCost/numUnits : 0;
+	private decimal BreakEven => unitPrice > 0 && numUnits > 0 ? (TotalCost/numUnits/unitPrice-1)*100.00m : 0;
+	private decimal MinValue => numDecimals switch
+	{
+		"N0" => 1m,
+		"N1" => 0.1m,
+		"N2" => 0.01m,
+		"N3" => 0.001m,
+		"N4" => 0.0001m,
+		"N5" => 0.00001m,
+		"N6" => 0.000001m,
+		_ => 0.01m,
+	};
+	private decimal Step => MinValue;
+}

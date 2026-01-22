@@ -6,6 +6,7 @@ public class PortfolioUIGlobals : UIGlobals
 {
 	public const string ROUTE_PORTFOLIO_MARKETS = $"{ROUTE_BASE}/markets";
 	public const string ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE = $"{ROUTE_BASE}/tool_calc_buy_sell";
+	public const string ROUTE_PORTFOLIO_TOOL_PRICE_RUN = $"{ROUTE_BASE}/tool_price_run";
 
 	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO = $"{ROUTE_BASE}/my_portfolio";
 	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS = $"{ROUTE_BASE}/my_portfolio/{{PortfolioId}}";
