@@ -165,8 +165,7 @@ jobs:
 
   PublishDockerImagesLinuxBuild:
     if: |
-      needs.Release.outputs.RESULT == 'SUCCESS' &&
-      github.ref == 'refs/heads/dev'
+      needs.Release.outputs.RESULT == 'SUCCESS'
     needs: [Release]
     runs-on: ubuntu-latest
     strategy:
