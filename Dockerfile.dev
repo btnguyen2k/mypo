@@ -63,8 +63,8 @@ ENV INIT_DB=true
 ENV API__BaseUrl=http://localhost:8080
 
 # Set database type to InMemory for demo purposes
-ENV Databases__Application__Type=InMemory
 ENV Databases__Identity__Type=InMemory
+ENV Databases__Portfolio__Type=InMemory
 
 # Set the ASP.NET Core environment to Development
 ENV ASPNETCORE_ENVIRONMENT=Development

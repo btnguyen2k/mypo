@@ -54,15 +54,12 @@ USER appuser
 # Enable Swagger UI
 ENV ENABLE_SWAGGER_UI=true
 
-# Initialize the database
-ENV INIT_DB=true
-
 # API base URL setting for Blazor Server mode
 ENV API__BaseUrl=http://localhost:8080
 
 # Set database type to InMemory for demo purposes
-ENV Databases__Application__Type=InMemory
 ENV Databases__Identity__Type=InMemory
+ENV Databases__Portfolio__Type=InMemory
 
 # Default port for dotnet application
 EXPOSE 8080
