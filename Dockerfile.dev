@@ -2,11 +2,12 @@
 ## Sample build command:
 ##     docker build --rm -t mypo:dev -f Dockerfile.dev .
 
-ARG DOTNETVERSION=8.0
+ARG DOTNETVERSION_BUILD=8.0
+ARG DOTNETVERSION_RUN=10.0
 ARG BASEIMAGE=alpine
 
 # Use --platform=$BUILDPLATFORM in order to correctly pull the base image for the build platform.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION-$BASEIMAGE AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION_BUILD-$BASEIMAGE AS build
 
 COPY . /source
 WORKDIR /source
