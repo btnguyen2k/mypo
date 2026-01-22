@@ -77,7 +77,7 @@ public partial class PortfolioController
 		var portfolioRec = new PortfolioRec
 		{
 			// Id = Guid.NewGuid().ToString(),
-			ParentId = parentId,
+			ParentId = string.IsNullOrEmpty(parentId) ? null : parentId,
 			Name = req.Name.Trim(),
 			Description = req.Description?.Trim(),
 			Currency = req.Currency.ToUpper().Trim(),
