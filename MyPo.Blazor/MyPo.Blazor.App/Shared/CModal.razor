@@ -89,7 +89,7 @@ Modal dialog with a button to close:
     }
     private string cssClassShow = string.Empty;
     private string display = "none";
-    private string? hidden = "true";
+    @* private string? hidden = "true"; *@
     private string? modal = null;
     private string cssClassCentered { get => centered ? "modal-dialog-centered" : string.Empty; }
     private bool showBackdrop = false;
@@ -134,7 +134,7 @@ Modal dialog with a button to close:
     {
         cssClassShow = "show";
         display = "block";
-        hidden = null;
+        @* hidden = null; *@
         modal = "true";
         showBackdrop = true;
         StateHasChanged();
@@ -144,7 +144,7 @@ Modal dialog with a button to close:
     {
         cssClassShow = string.Empty;
         display = "none";
-        hidden = "true";
+        @* hidden = "true"; *@
         modal = null;
         showBackdrop = false;
         StateHasChanged();

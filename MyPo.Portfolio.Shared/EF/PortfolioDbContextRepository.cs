@@ -239,7 +239,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Tax for {txType} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
+				TxDesc = $"Transaction Tax for {txType} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
 			};
 			_ = await CreateRoiRecAsync(taxRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
@@ -258,7 +258,7 @@ public sealed class PortfolioDbContextRepository : DbContext, IPortfolioReposito
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Fee for {txType} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
+				TxDesc = $"Transaction Fee for {txType} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
 			};
 			_ = await CreateRoiRecAsync(feeRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");

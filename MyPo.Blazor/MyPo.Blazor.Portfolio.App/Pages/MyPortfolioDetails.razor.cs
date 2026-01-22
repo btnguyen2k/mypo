@@ -31,8 +31,7 @@ public partial class MyPortfolioDetails : BasePage
 		}
 
 		var myPortfolioMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
-		PortfolioRecResp portfolio = default!;
-		if (!myPortfolioMap.TryGetValue(id, out portfolio))
+		if (!myPortfolioMap.TryGetValue(id, out var portfolio))
 		{
 			ShowAlert("danger", $"Portfolio '{id}' not found.");
 			return null;
