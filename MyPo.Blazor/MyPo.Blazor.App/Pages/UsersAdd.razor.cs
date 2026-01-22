@@ -2,6 +2,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Shared.Api;
 using MyPo.Shared.Identity;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 
 namespace MyPo.Blazor.App.Pages;
 
@@ -22,6 +23,10 @@ public partial class UsersAdd
 
 	private IEnumerable<ClaimResp>? ClaimList { get; set; }
 	private IDictionary<string, bool> ClaimSelectedMap { get; set; } = new Dictionary<string, bool>();
+
+	[Inject]
+	private IConfiguration AppConfig { get; set; } = default!;
+	private bool DisabledLocalAuth { get; set; } = false;
 
 	private void ShowAlert(string type, string message)
 	{
@@ -58,6 +63,12 @@ public partial class UsersAdd
 			ClaimList = result.Data;
 		}
 		return result;
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		DisabledLocalAuth = AppConfig.GetValue<bool>(MyPo.Shared.Globals.CONF_AUTH_DISABLED_LOCAL_AUTH);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -126,7 +137,7 @@ public partial class UsersAdd
 			ShowAlert("warning", "Email is required.");
 			return;
 		}
-		if (string.IsNullOrWhiteSpace(UserPassword))
+		if (!DisabledLocalAuth && string.IsNullOrWhiteSpace(UserPassword))
 		{
 			ShowAlert("warning", "Password is required.");
 			return;
