@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace MyPo.Blazor.App.Pages;
 
@@ -30,9 +31,13 @@ public partial class Profile
 	private string PasswordAlertType { get; set; } = "info";
 	private string PasswordAlertMessage { get; set; } = string.Empty;
 	private bool DisableChangePassword { get; set; } = false;
+	private bool DisabledLocalAuth { get; set; } = false;
 
 	[Inject]
 	private ILogger<Profile> Logger { get; set; } = default!;
+
+	[Inject]
+	private IConfiguration AppConfig { get; set; } = default!;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -42,6 +47,8 @@ public partial class Profile
 		GivenName = User?.GivenName ?? string.Empty;
 		FamilyName = User?.FamilyName ?? string.Empty;
 		NewEmail = User?.Email ?? string.Empty;
+
+		DisabledLocalAuth = AppConfig.GetValue<bool>(MyPo.Shared.Globals.CONF_AUTH_DISABLED_LOCAL_AUTH);
 
 		// FIXME: NOT TO USE THIS IN PRODUCTION!
 		// for demo purpose: automatically fill the password field
