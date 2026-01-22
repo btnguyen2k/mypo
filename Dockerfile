@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG DOTNETVERSION_BUILD=8.0
-ARG DOTNETVERSION_RUN=10.0
+ARG DOTNETVERBUILD=8.0
+ARG DOTNETVERRUN=10.0
 ARG BASEIMAGE=alpine
 
 # Use --platform=$BUILDPLATFORM in order to correctly pull the base image for the build platform.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION_BUILD-$BASEIMAGE AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERBUILD-$BASEIMAGE AS build
 
 COPY . /source
 WORKDIR /source
@@ -24,7 +24,7 @@ RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
 # If you need to enable globalization and time zones:
 # https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 
-FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERRUN-$BASEIMAGE AS final
 WORKDIR /app
 
 RUN apk add --no-cache tzdata
@@ -64,6 +64,9 @@ ENV Databases__Portfolio__Type=InMemory
 
 # Default port for dotnet application
 EXPOSE 8080
+
+# Roll forward to latest major version of .NET installed in the container
+ENV DOTNET_ROLL_FORWARD=LatestMajor
 
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]

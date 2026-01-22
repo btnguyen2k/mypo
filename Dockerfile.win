@@ -54,5 +54,8 @@ ENV ASPNETCORE_ENVIRONMENT=Development
 # # Default port for dotnet application
 EXPOSE 8080
 
+# Roll forward to latest major version of .NET installed in the container
+ENV DOTNET_ROLL_FORWARD=LatestMajor
+
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]
