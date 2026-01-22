@@ -47,20 +47,23 @@
 							<input type="email" class="form-control" id="userEmail" placeholder="Email" @bind-value="UserEmail">
 							<label for="userEmail">Email (must be unique) (*)</label>
 						</div>
-						<div class="row">
-							<div class="col-sm-6">
-								<div class="form-floating mb-2">
-									<input type="password" class="form-control" id="userPassword" placeholder="Password" @bind-value="UserPassword">
-									<label for="userPassword">Password (*)</label>
+						@if(!DisabledLocalAuth)
+						{
+							<div class="row">
+								<div class="col-sm-6">
+									<div class="form-floating mb-2">
+										<input type="password" class="form-control" id="userPassword" placeholder="Password" @bind-value="UserPassword">
+										<label for="userPassword">Password (*)</label>
+									</div>
+								</div>
+								<div class="col-sm-6">
+									<div class="form-floating mb-2">
+										<input type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm Password" @bind-value="UserConfirmPassword">
+										<label for="userConfirmPassword">Confirm Password (*)</label>
+									</div>
 								</div>
 							</div>
-							<div class="col-sm-6">
-								<div class="form-floating mb-2">
-									<input type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm Password" @bind-value="UserConfirmPassword">
-									<label for="userConfirmPassword">Confirm Password (*)</label>
-								</div>
-							</div>
-						</div>
+						}
 						<hr />
 						<div class="row">
 							<div class="col-sm-6">

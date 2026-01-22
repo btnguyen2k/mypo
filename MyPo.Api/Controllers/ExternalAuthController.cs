@@ -107,7 +107,13 @@ public class ExternalAuthController : ApiBaseController
 
 			// create user account if needed
 			var user = await EnsureUserAccountAsync(identityRepository, lookupNormalizer, extProfileResult);
-			if (user is null) return ResponseNoData(500, "Failed to create user account.");
+			if (user is null)
+			{
+				var autoCreateUsers = _conf.GetValue<bool>(Shared.Globals.CONF_AUTH_AUTO_CREATE_USERS);
+				return autoCreateUsers
+					? ResponseNoData(500, "Failed to create user account.")
+					: ResponseNoData(401, "User account does not exist.");
+			}
 
 			// login user
 			var resp = _authenticatorAsync != null
@@ -136,6 +142,12 @@ public class ExternalAuthController : ApiBaseController
 	{
 		var user = await identityRepository.GetUserByEmailAsync(extProfile.Email!);
 		if (user is not null) return user;
+
+		var autoCreateUsers = _conf.GetValue<bool>(Shared.Globals.CONF_AUTH_AUTO_CREATE_USERS);
+		if (!autoCreateUsers)
+		{
+			return null;
+		}
 
 		// create user account
 		var username = extProfile.Email!;

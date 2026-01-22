@@ -17,7 +17,7 @@
 	@if (ShowReturnLinks)
 	{
 		<CAlert type="info">
-			Return to <a href="@UIGlobals.ROUTE_HOME">Home</a> or <a href="@UIGlobals.ROUTE_LOGIN">Login</a> page.
+			Return to <a href="javascript:;" @onclick="() => ForceLoad(UIGlobals.ROUTE_HOME)">Home</a> or <a href="javascript:;" @onclick="() => ForceLoad(UIGlobals.ROUTE_LOGIN)">Login</a> page.
 		</CAlert>
 	}
 </div>

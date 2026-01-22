@@ -1,0 +1,22 @@
+@using MyPo.Blazor.App.Shared
+
+@inherits BaseComponent
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+	<CAlert type="danger">
+		@ErrorMessage
+	</CAlert>
+}
+else if (UseVietstockChart)
+{
+	<div class="container" style="height:550px; width:100%;">
+		<iframe id="vietstock-frame-chart"
+			src="https://stockchart.vietstock.vn/?stockcode=@(Symbol)&isIframe=1"
+			style="width: 100%; height:100%;" scrolling="no" frameborder="0"></iframe>
+	</div>
+}
+
+@code {
+
+}

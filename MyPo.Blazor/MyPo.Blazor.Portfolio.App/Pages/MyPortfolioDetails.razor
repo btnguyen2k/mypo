@@ -1,0 +1,94 @@
+﻿@using MyPo.Blazor.App.Layout
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Identity
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+	<li class="breadcrumb-item">
+        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+	<Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+			<div class="card border-top-primary border-top-3 mb-4">
+                <div class="card-body">
+					<CAlert @ref="@Alert" />
+					@if (!HideUI)
+					{
+						<nav>
+							<div class="nav nav-tabs" id="nav-tab" role="tablist">
+								<button class="nav-link @(ActiveTab == TabIdHoldings ? "active" : "")"
+									@onclick="(()=>SwitchTab(TabIdHoldings))"
+									id="@TabIdHoldings"
+									data-coreui-toggle="tab" data-coreui-target="#nav-holdings"
+									type="button" role="tab" aria-controls="nav-holdings" aria-selected="true">Holdings</button>
+								<button class="nav-link @(ActiveTab == TabIdTransactions ? "active" : "")"
+									@onclick="(()=>SwitchTab(TabIdTransactions))"
+									id="@TabIdTransactions"
+									data-coreui-toggle="tab" data-coreui-target="#nav-transactions"
+									type="button" role="tab" aria-controls="nav-transactions" aria-selected="false">Buys/Sells</button>
+								<button class="nav-link @(ActiveTab == TabIdRoi ? "active" : "")"
+									@onclick="(()=>SwitchTab(TabIdRoi))"
+									id="@TabIdRoi"
+									data-coreui-toggle="tab" data-coreui-target="#nav-roi"
+									type="button" role="tab" aria-controls="nav-roi" aria-selected="false">Investments and Returns</button>
+							</div>
+						</nav>
+						<div class="tab-content" id="nav-tabContent">
+							<div class="tab-pane fade @(ActiveTab == TabIdHoldings ? "show active" : "")" id="nav-holdings" role="tabpanel" aria-labelledby="@TabIdHoldings" tabindex="0">
+								<CPortfolioAssets
+									PortfolioId="@(SelectedPortfolio?.Id)"
+									Assets="@(Assets)"
+									Markets="@(Markets)"
+								/>
+							</div>
+							<div class="tab-pane fade @(ActiveTab == TabIdTransactions ? "show active" : "")" id="nav-transactions" role="tabpanel" aria-labelledby="@TabIdTransactions" tabindex="0">
+								<CPortfolioTransactions
+									PortfolioId="@(SelectedPortfolio?.Id)"
+									Transactions="@(Transactions)"
+									Markets="@(Markets)" />
+							</div>
+							<div class="tab-pane fade @(ActiveTab == TabIdRoi ? "show active" : "")" id="nav-roi" role="tabpanel" aria-labelledby="@TabIdRoi" tabindex="0">
+								<CPortfolioRoi
+									PortfolioId="@(SelectedPortfolio?.Id)"
+									RoiRecords="@(RoiRecords)" />
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+    </Authorized>
+</AuthorizeView>
+
+<!-- Plugins and scripts required by this page-->
+<!-- Popperjs -->
+<script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha256-BRqBN7dYgABqtY9Hd4ynE+1slnEw+roEPFzQ7TRRfcg=" crossorigin="anonymous"></script>
+<!-- Tempus Dominus JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
+
+<!-- Tempus Dominus Styles -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
+
+@code {
+    private const string PAGE_TITLE = "My Portfolio";
+}

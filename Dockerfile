@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG DOTNETVERSION=8.0
+ARG DOTNETVERBUILD=8.0
+ARG DOTNETVERRUN=10.0
 ARG BASEIMAGE=alpine
 
 # Use --platform=$BUILDPLATFORM in order to correctly pull the base image for the build platform.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION-$BASEIMAGE AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNETVERBUILD-$BASEIMAGE AS build
 
 COPY . /source
 WORKDIR /source
@@ -23,8 +24,12 @@ RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
 # If you need to enable globalization and time zones:
 # https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 
-FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION-$BASEIMAGE AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERRUN-$BASEIMAGE AS final
 WORKDIR /app
+
+RUN apk add --no-cache tzdata
+# Change the time zone as needed.
+ENV TZ="Etc/UTC"
 
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
@@ -50,18 +55,18 @@ USER appuser
 # Enable Swagger UI
 ENV ENABLE_SWAGGER_UI=true
 
-# Initialize the database
-ENV INIT_DB=true
-
 # API base URL setting for Blazor Server mode
 ENV API__BaseUrl=http://localhost:8080
 
 # Set database type to InMemory for demo purposes
-ENV Databases__Application__Type=InMemory
 ENV Databases__Identity__Type=InMemory
+ENV Databases__Portfolio__Type=InMemory
 
 # Default port for dotnet application
 EXPOSE 8080
+
+# Roll forward to latest major version of .NET installed in the container
+ENV DOTNET_ROLL_FORWARD=LatestMajor
 
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]

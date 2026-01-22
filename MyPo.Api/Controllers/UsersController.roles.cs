@@ -17,11 +17,10 @@ public partial class UsersController
 	[Authorize(Policy = BuiltinPolicies.POLICY_NAME_ADMIN_ROLE_OR_USER_MANAGER)]
 	public async Task<ActionResult<ApiResp<IEnumerable<RoleResp>>>> GetAllRoles()
 	{
-		var roles = IdentityRepository.AllRolesAsync();
+		var roles = await IdentityRepository.GetAllRolesAsync(RoleFetchOptions.FETCH_ALL);
 		var result = new List<RoleResp>();
-		await foreach (var role in roles)
+		foreach (var role in roles)
 		{
-			role.Claims ??= await IdentityRepository.GetClaimsAsync(role);
 			result.Add(RoleResp.BuildFromRole(role));
 		}
 		return ResponseOk(result);
@@ -36,7 +35,7 @@ public partial class UsersController
 	[Authorize(Policy = BuiltinPolicies.POLICY_NAME_ADMIN_ROLE_OR_USER_MANAGER)]
 	public async Task<ActionResult<ApiResp<RoleResp>>> GetRole([FromRoute] string id)
 	{
-		var role = await IdentityRepository.GetRoleByIDAsync(id, RoleFetchOptions.DEFAULT.FetchClaims());
+		var role = await IdentityRepository.GetRoleByIDAsync(id, RoleFetchOptions.FETCH_ALL);
 		if (role == null)
 		{
 			return ResponseNoData(404, $"Role '{id}' not found.");

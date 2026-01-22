@@ -20,8 +20,8 @@
     <ProjectReference Include="..\MyPo.Blazor.Client\MyPo.Blazor.Client.csproj" />
     <ProjectReference Include="..\MyPo.Blazor.App\MyPo.Blazor.App.csproj" />
     <ProjectReference Include="..\..\MyPo.Libs\MyPo.Libs.csproj" />
-    <ProjectReference Include="..\MyPo.Blazor.Demo.App\MyPo.Blazor.Demo.App.csproj" />
-    <ProjectReference Include="..\..\MyPo.Demo.Api\MyPo.Demo.Api.csproj" />
+    <ProjectReference Include="..\..\MyPo.Portfolio.Api\MyPo.Portfolio.Api.csproj" />
+    <ProjectReference Include="..\MyPo.Blazor.Portfolio.App\MyPo.Blazor.Portfolio.App.csproj" />
   </ItemGroup>
 
   <!-- Prevents duplicated files from other projects from being copied to the output directory -->

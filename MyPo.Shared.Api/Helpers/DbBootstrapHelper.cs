@@ -37,6 +37,7 @@ public enum DbType
 	INMEMORY, MEMORY,
 	SQLITE,
 	SQLSERVER,
+	PGSQL, POSTGRESQL
 }
 
 public static class DbBootstrapHelper
@@ -69,7 +70,7 @@ public static class DbBootstrapHelper
 				case DbType.INMEMORY or DbType.MEMORY:
 					options.UseInMemoryDatabase(confKeyBase);
 					break;
-				case DbType.SQLITE or DbType.SQLSERVER:
+				case DbType.SQLITE or DbType.SQLSERVER or DbType.PGSQL or DbType.POSTGRESQL:
 					if (string.IsNullOrWhiteSpace(dbConf.ConnectionString))
 					{
 						throw new InvalidDataException($"No connection string name found at key {confKeyBase}:ConnectionString in the configurations.");
@@ -78,10 +79,12 @@ public static class DbBootstrapHelper
 					{
 						throw new InvalidDataException($"No connection string {dbConf.ConnectionString} defined in the ConnectionStrings section in the configurations.");
 					}
-					if (dbConf.Type == DbType.SQLITE)
-						options.UseSqlite(connStr);
-					else if (dbConf.Type == DbType.SQLSERVER)
-						options.UseSqlServer(connStr);
+					if (dbConf.Type == DbType.PGSQL || dbConf.Type == DbType.POSTGRESQL)
+						options.UseNpgsql(connStr);
+					//if (dbConf.Type == DbType.SQLITE)
+					//	options.UseSqlite(connStr);
+					//else if (dbConf.Type == DbType.SQLSERVER)
+					//	options.UseSqlServer(connStr);
 					break;
 				default:
 					throw new InvalidDataException($"Invalid value at key {confKeyBase}:Type in the configurations: '{dbConf.Type}'");

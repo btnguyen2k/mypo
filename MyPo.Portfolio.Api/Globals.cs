@@ -1,0 +1,22 @@
+using MyPo.Portfolio.Shared.Models;
+
+namespace MyPo.Portfolio.Api;
+
+public sealed class Globals
+{
+	private sealed class MarketDefComparer : IComparer<MarketDef>
+	{
+		public static readonly MarketDefComparer Instance = new();
+		public int Compare(MarketDef? x, MarketDef? y)
+		{
+			if (x == null && y == null) return 0;
+			if (x == null) return -1;
+			if (y == null) return 1;
+			var cmpCountry = string.Compare(x.Country, y.Country, StringComparison.OrdinalIgnoreCase);
+			return cmpCountry != 0 ? cmpCountry : string.Compare(x.Code, y.Code, StringComparison.OrdinalIgnoreCase);
+		}
+	}
+
+	public static readonly ISet<MarketDef> Markets = new SortedSet<MarketDef>(MarketDefComparer.Instance);
+	public static readonly Dictionary<string, MarketDef> MarketsMap = [];
+}

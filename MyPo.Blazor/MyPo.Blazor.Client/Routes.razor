@@ -1,7 +1,7 @@
 ﻿@using MyPo.Blazor.App.Shared
 
 <CascadingAuthenticationState>
-    <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(MyPo.Blazor.App._Imports).Assembly, typeof(MyPo.Blazor.Demo.App._Imports).Assembly }">
+    <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(MyPo.Blazor.App._Imports).Assembly, typeof(MyPo.Blazor.Portfolio.App._Imports).Assembly }">
         <Found Context="routeData">
             <!--<RouteView RouteData="routeData" DefaultLayout="typeof(MyPo.Blazor.App.Layout.MainLayout)" />-->
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MyPo.Blazor.App.Layout.MainLayout)">
