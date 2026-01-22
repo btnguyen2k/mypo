@@ -1,0 +1,49 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+@if (!string.IsNullOrEmpty(AlertMessage))
+{
+	<CAlert type="@AlertType">
+		@AlertMessage
+	</CAlert>
+}
+
+<div class="container mt-3">
+	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+		<tbody>
+			@foreach (var roiRec in RoiRecords??[])
+			{
+				<tr>
+					<td class="text-center w-auto">
+						@(roiRec.Status==RoiRec.STATUS_FINAL?"✔":" ")
+					</td>
+					<td class="text-center w-auto">
+						@(roiRec.TxTime.ToString("yyyy-MM-dd HH:mm"))
+					</td>
+					<td class="text-center w-auto">
+						<CBadgeTxType Text="@(roiRec.TxType)" />
+					</td>
+					<td class="text-center w-auto">
+						@(roiRec.RefItemType??"-") / @(roiRec.RefItemCode??"-")
+					</td>
+					<td class="text-end w-auto">
+                        @(PortfolioUtils.FormatValueWithScale(roiRec.TxValue, roiRec.Market?.PriceScale??1))
+					</td>
+					<td class="text-center w-auto">
+						@(roiRec.Market?.Currency??"-")
+					</td>
+					<td class="w-auto">
+						@(roiRec.TxDesc)
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@code {
+
+}

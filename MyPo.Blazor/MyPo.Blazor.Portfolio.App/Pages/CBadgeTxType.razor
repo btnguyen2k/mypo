@@ -1,0 +1,23 @@
+<span class="badge rounded-pill me-1 @BadgeColorClass()">@Text</span>
+@code {
+	[Parameter]
+	public string Text { get; set; } = "-";
+
+	private string BadgeColorClass()
+	{
+		var txt = Text?.Trim().ToUpper() ?? "-";
+		switch (txt)
+		{
+			case "BUY":
+				return "text-bg-success text-light";
+			case "SELL":
+				return "text-bg-danger text-light";
+			case "FEE":
+				return "text-bg-warning text-dark";
+			case "TAX":
+				return "text-bg-info text-dark";
+			default:
+				return "text-bg-light";
+		}
+	}
+}

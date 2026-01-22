@@ -1,21 +1,10 @@
-# My Awesome Application release notes
+# My Portfolio Tracker release notes
 
-## yyyy-MM-dd - v0.1.0
+## 2026-01-22 - v0.1.0
 
-### Changed
+### Added/Refactoring/Deprecation
 
-- Change: any change to existing functions
-
-### Added/Refactoring
-
-- Feature: new features
-- Added: new functions.
-- etc
-
-### Fixed/Improvement
-
-- Fix: Bug #123
-
-### Others
-
-- Docs: documentation updates
+- (Feat) Manage invesment portfolio.
+- (Feat) Record buy/sell transactions.
+- (Feat) Manage portfolio assets.
+- (Feat) Manage ROI records.

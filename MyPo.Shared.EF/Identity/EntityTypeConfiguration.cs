@@ -11,7 +11,7 @@ sealed class RoleEntityTypeConfiguration : IEntityTypeConfiguration<MyPoRole>
 {
 	public void Configure(EntityTypeBuilder<MyPoRole> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}roles");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}roles");
 		builder.Property(t => t.Id).HasColumnName("role_id");
 		builder.Property(t => t.Name).HasColumnName("role_name");
 		builder.Property(t => t.NormalizedName).HasColumnName("normalized_name");
@@ -26,7 +26,7 @@ sealed class IdentityRoleClaimEntityTypeConfiguration : IEntityTypeConfiguration
 {
 	public void Configure(EntityTypeBuilder<IdentityRoleClaim<string>> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}role_claims");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}role_claims");
 		//builder.Property(t => t.Id).HasColumnName("rc_id");
 		builder.Property(t => t.RoleId).HasColumnName("role_id");
 		builder.Property(t => t.ClaimType).HasColumnName("claim_type");
@@ -46,7 +46,7 @@ sealed class IdentityUserEntityTypeConfiguration : IEntityTypeConfiguration<MyPo
 {
 	public void Configure(EntityTypeBuilder<MyPoUser> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}users");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}users");
 		builder.Property(t => t.Id).HasColumnName("uid");
 		builder.Property(t => t.UserName).HasColumnName("uname");
 		builder.Property(t => t.NormalizedUserName).HasColumnName("normalized_name");
@@ -88,7 +88,7 @@ sealed class IdentityUserClaimEntityTypeConfiguration : IEntityTypeConfiguration
 {
 	public void Configure(EntityTypeBuilder<IdentityUserClaim<string>> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}user_claims");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}user_claims");
 		//builder.Property(t => t.Id).HasColumnName("uc_id");
 		builder.Property(t => t.UserId).HasColumnName("user_id");
 		builder.Property(t => t.ClaimType).HasColumnName("claim_type");
@@ -108,7 +108,7 @@ sealed class IdentityUserLoginEntityTypeConfiguration : IEntityTypeConfiguration
 {
 	public void Configure(EntityTypeBuilder<IdentityUserLogin<string>> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}user_logins");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}user_logins");
 		builder.Property(t => t.LoginProvider).HasColumnName("login_provider");
 		builder.Property(t => t.ProviderKey).HasColumnName("provider_key");
 		builder.Property(t => t.ProviderDisplayName).HasColumnName("provider_display_name");
@@ -120,7 +120,7 @@ sealed class IdentityUserRoleEntityTypeConfiguration : IEntityTypeConfiguration<
 {
 	public void Configure(EntityTypeBuilder<IdentityUserRole<string>> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}user_roles");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}user_roles");
 		builder.Property(t => t.UserId).HasColumnName("user_id");
 		builder.Property(t => t.RoleId).HasColumnName("role_id");
 	}
@@ -130,7 +130,7 @@ sealed class IdentityUserTokenEntityTypeConfiguration : IEntityTypeConfiguration
 {
 	public void Configure(EntityTypeBuilder<IdentityUserToken<string>> builder)
 	{
-		builder.ToTable($"{Globals.TABLE_PREFIX}user_tokens");
+		builder.ToTable($"{Globals.TABLE_PREFIX_IDENTITY}user_tokens");
 		builder.Property(t => t.UserId).HasColumnName("user_id");
 		builder.Property(t => t.LoginProvider).HasColumnName("login_provider");
 		builder.Property(t => t.Name).HasColumnName("token_name");

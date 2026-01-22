@@ -18,9 +18,9 @@ updates:
       - "/MyPo.Blazor/MyPo.Blazor"
       - "/MyPo.Blazor/MyPo.Blazor.App"
       - "/MyPo.Blazor/MyPo.Blazor.Client"
-      - "/MyPo.Demo.Shared"
-      - "/MyPo.Demo.Api"
-      - "/MyPo.Blazor/MyPo.Blazor.Demo.App"
+      - "/MyPo.Portfolio.Shared"
+      - "/MyPo.Portfolio.Api"
+      - "/MyPo.Blazor/MyPo.Blazor.Portfolio.App"
     schedule:
       interval: "weekly"
       day: "saturday"

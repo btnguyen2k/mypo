@@ -1,0 +1,90 @@
+﻿@using MyPo.Blazor.App.Shared;
+@using MyPo.Blazor.Portfolio.App.Shared;
+@using MyPo.Blazor.App.Layout;
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MARKETS)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView>
+    <Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">@PAGE_TITLE</h4>
+                </div>
+                <div class="card-body">
+					<CAlert @ref="@Alert" />
+                    @if (MarketsList != null && !HideUI)
+                    {
+                        <table class="table table-sm table-bordered border-primary table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-center">Name</th>
+									<th scope="col" class="text-center">Country</th>
+									<th scope="col" class="text-center">Currency</th>
+									<th scope="col" class="text-center">Trading Hours</th>
+									<th scope="col" class="text-center">Mon</th>
+									<th scope="col" class="text-center">Tue</th>
+									<th scope="col" class="text-center">Wed</th>
+									<th scope="col" class="text-center">Thu</th>
+									<th scope="col" class="text-center">Fri</th>
+									<th scope="col" class="text-center">Sat</th>
+									<th scope="col" class="text-center">Sun</th>
+                                </tr>
+                            </thead>
+							@if (MarketsList.Count() == 0)
+							{
+								<tbody>
+									<tr>
+										<td colspan="11" class="text-center">No data found.</td>
+									</tr>
+								</tbody>
+							}
+							else
+							{
+								<tbody>
+									@foreach (var item in MarketsList)
+									{
+										<tr>
+											<td>@item.Code - @item.Name</td>
+											<td class="text-center">@item.Country</td>
+											<td class="text-center">@item.Currency - @item.CurrencySymbol (@item.PriceScale)</td>
+											<td class="text-center">@item.OpenHour - @item.CloseHour</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Monday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Tuesday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Wednesday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Thursday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Friday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Saturday")>=0 ? "✅" : "-")</td>
+											<td class="text-center">@(item.TradingDays.IndexOf("Sunday")>=0 ? "✅" : "-")</td>
+										</tr>
+									}
+								</tbody>
+							}
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "Markets";
+}

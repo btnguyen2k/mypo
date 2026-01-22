@@ -6,15 +6,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using MyPo.Shared.Api;
+using System.Reflection;
+using MyPo.Shared.Global;
 
 namespace MyPo.Api.Bootstrap;
 
 sealed class IdentityInitializer(
-	IConfiguration appConfig,
 	IServiceProvider serviceProvider,
 	ILogger<IdentityInitializer> logger,
 	IWebHostEnvironment environment) : BackgroundService
 {
+	private const string SEEDING_DATA_FILE = "Resources.seeding.json";
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Initializing identity data...");
@@ -33,11 +35,29 @@ sealed class IdentityInitializer(
 			var nameNormalizer = scope.ServiceProvider.GetRequiredService<ILookupNormalizer>()
 				?? throw new InvalidOperationException("LookupNormalizer service is not registered.");
 
-			await SeedRoles(dbContext, nameNormalizer, cancellationToken);
+			var assembly = Assembly.GetExecutingAssembly();
+			var resourceName = $"{assembly.GetName().Name}.{SEEDING_DATA_FILE}";
+			var availableResources = assembly.GetManifestResourceNames();
+            if (Array.IndexOf(availableResources, resourceName) == -1)
+            {
+				return;
+            }
 
-			var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<MyPoUser>>();
-			var identityOptions = scope.ServiceProvider.GetRequiredService<IOptions<IdentityOptions>>()?.Value!;
-			await SeedUsers(dbContext, nameNormalizer, identityOptions, passwordHasher, cancellationToken);
+			logger.LogInformation("Found seeding data '{resourceName}', creating seeding data...", resourceName);
+
+			using (var stream = assembly.GetManifestResourceStream(resourceName))
+			{
+				var config = new ConfigurationBuilder()
+					.AddJsonStream(stream!)
+					.AddEnvironmentVariables()
+					.Build();
+
+				await SeedRoles(dbContext, config, nameNormalizer, cancellationToken);
+
+				var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<MyPoUser>>();
+				var identityOptions = scope.ServiceProvider.GetRequiredService<IOptions<IdentityOptions>>()?.Value!;
+				await SeedUsers(dbContext, config, nameNormalizer, identityOptions, passwordHasher, cancellationToken);
+			}
 		}
 	}
 
@@ -49,10 +69,10 @@ sealed class IdentityInitializer(
 		public IEnumerable<string>? Claims { get; set; }
 	}
 
-	private async Task SeedRoles(IIdentityRepository dbContext, ILookupNormalizer lookupNormalizer, CancellationToken cancellationToken)
+	private async Task SeedRoles(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding roles...");
-		var seedRoles = appConfig.GetSection("SeedingData:Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
+		var seedRoles = config.GetSection("SeedingData:Identity:Roles").Get<IEnumerable<SeedingRole>>() ?? [];
 		foreach (var r in seedRoles)
 		{
 			if (string.IsNullOrEmpty(r.Name))
@@ -70,6 +90,7 @@ sealed class IdentityInitializer(
 			role.NormalizedName = lookupNormalizer.NormalizeName(role.Name);
 
 			// create the role
+			logger.LogInformation("-- Creating role '{roleName}'...", role.Name);
 			var result = await dbContext.CreateIfNotExistsAsync(role, cancellationToken: cancellationToken);
 			if (result != IdentityResult.Success)
 			{
@@ -79,16 +100,19 @@ sealed class IdentityInitializer(
 				?? throw new InvalidOperationException($"Role '{role.Name}' is not found after creation.");
 
 			// add claims to the role
-			var seedClaims = r.Claims?.Select(IdentityClaim.CreateFrom).Where(c => c != null && BuiltinClaims.ClaimExists((IdentityClaim)c!)) ?? [];
+			var seedClaims = r.Claims?.Select(IdentityClaim.CreateFrom).Where(c => c != null && GlobalRegistry.ClaimExists((IdentityClaim)c!)) ?? [];
+			logger.LogInformation("-- Adding {count} claims to role '{roleName}'...", seedClaims.Count(), role.Name);
 			foreach (var c in seedClaims)
 			{
 				var iclaim = (IdentityClaim)c!;
+				logger.LogInformation("---- Adding claim '{claimType}:{claimValue}' to role '{roleName}'...", iclaim.Type, iclaim.Value, role.Name);
 				var resultClaim = await dbContext.AddClaimIfNotExistsAsync(role, new Claim(iclaim.Type, iclaim.Value), cancellationToken: cancellationToken);
 				if (resultClaim != IdentityResult.Success)
 				{
 					throw new InvalidOperationException(resultClaim.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} claims to role '{roleName}'.", seedClaims.Count(), role.Name);
 		}
 	}
 
@@ -103,10 +127,10 @@ sealed class IdentityInitializer(
 		public IEnumerable<string>? Claims { get; set; }
 	}
 
-	private async Task SeedUsers(IIdentityRepository dbContext, ILookupNormalizer lookupNormalizer, IdentityOptions identityOptions, IPasswordHasher<MyPoUser> passwordHasher, CancellationToken cancellationToken)
+	private async Task SeedUsers(IIdentityRepository dbContext, IConfiguration config, ILookupNormalizer lookupNormalizer, IdentityOptions identityOptions, IPasswordHasher<MyPoUser> passwordHasher, CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Seeding user accounts...");
-		var seedUsers = appConfig.GetSection("SeedingData:Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
+		var seedUsers = config.GetSection("SeedingData:Identity:Users").Get<IEnumerable<SeedingUser>>() ?? [];
 		foreach (var u in seedUsers)
 		{
 			if (string.IsNullOrEmpty(u.UserName) || string.IsNullOrEmpty(u.Email))
@@ -156,26 +180,32 @@ sealed class IdentityInitializer(
 
 			// add roles to the user
 			var userRoles = u.Roles?.Where(r => !string.IsNullOrEmpty(r)).Select(r => dbContext.GetRoleByNameAsync(r).Result).Where(r => r != null) ?? [];
+			logger.LogInformation("-- Adding {count} roles to user '{userName}'...", userRoles.Count(), user.UserName);
 			foreach (var r in userRoles)
 			{
+				logger.LogInformation("---- Adding role '{roleName}' to user '{userName}'...", r!.Name, user.UserName);
 				var resultRole = await dbContext.AddToRoleIfNotExistsAsync(user, r!, cancellationToken: cancellationToken);
 				if (resultRole != IdentityResult.Success)
 				{
 					throw new InvalidOperationException(resultRole.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} roles to user '{userName}'.", userRoles.Count(), user.UserName);
 
 			// add claims to the user
-			var seedClaims = u.Claims?.Select(IdentityClaim.CreateFrom).Where(c => c != null && BuiltinClaims.ClaimExists((IdentityClaim)c!)) ?? [];
+			var seedClaims = u.Claims?.Select(IdentityClaim.CreateFrom).Where(c => c != null && GlobalRegistry.ClaimExists((IdentityClaim)c!)) ?? [];
+			logger.LogInformation("-- Adding {count} claims to user '{userName}'...", seedClaims.Count(), user.UserName);
 			foreach (var c in seedClaims)
 			{
 				var iclaim = (IdentityClaim)c!;
+				logger.LogInformation("---- Adding claim '{claimType}:{claimValue}' to user '{userName}'...", iclaim.Type, iclaim.Value, user.UserName);
 				var resultClaim = await dbContext.AddClaimIfNotExistsAsync(user, new Claim(iclaim.Type, iclaim.Value), cancellationToken: cancellationToken);
 				if (resultClaim != IdentityResult.Success)
 				{
 					throw new InvalidOperationException(resultClaim.ToString());
 				}
 			}
+			logger.LogInformation("-- Added {count} claims to user '{userName}'.", seedClaims.Count(), user.UserName);
 		}
 	}
 }

@@ -1,0 +1,221 @@
+﻿@using MyPo.Blazor.App.Shared;
+@using MyPo.Blazor.Portfolio.App.Shared;
+@using MyPo.Blazor.App.Layout;
+@using MyPo.Portfolio.Shared.Identity;
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView>
+    <Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-primary border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">My Portfolios</h4>
+                </div>
+                <div class="card-body">
+					<CAlert @ref="@Alert" />
+					@if (!HideUI)
+					{
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<ChildContent Context="context1">
+								<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
+							</ChildContent>
+						</AuthorizeView>
+					}
+                    @if (!HideUI)
+                    {
+                        <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+									<th scope="col" class="text-center">&nbsp;</th>
+                                    <th scope="col" class="text-center">Currency</th>
+                                    <th scope="col" class="text-center">Name</th>
+									<th scope="col" class="text-center">Investment</th>
+									<th scope="col" class="text-center">Return</th>
+									<th scope="col" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+							@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
+							{
+								<tbody>
+									<tr>
+										<td colspan="6" class="text-center">No data found.</td>
+									</tr>
+								</tbody>
+							}
+							else
+							{
+								<tbody>
+									@foreach (var item in MyActivePortfolioList)
+									{
+										<tr>
+											<td class="text-center"><BIcon icon="diagram-2" /></td>
+											<td class="text-center">@item.Currency</td>
+											<td>
+												@item.Name
+												<br/>
+												<span class="small">@item.Description</span>
+											</td>
+											<td>-</td>
+											<td>-</td>
+											<td class="text-center">
+												<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
+													<CIcon icon="cil-info" />
+												</button>
+												<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(item.Id))">
+													<CIcon icon="cil-pencil" />
+												</button>
+												<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(item.Id))">
+													<CIcon icon="cil-x" />
+												</button>
+											</td>
+										</tr>
+										@foreach (var child in item.Children??[])
+										{
+											<tr>
+												<td class="text-center">&nbsp;@*↳*@</td>
+												<td class="text-center">@child.Currency</td>
+												<td>
+													@child.Name
+													<br/>
+													<span class="small">@child.Description</span>
+												</td>
+												<td>-</td>
+												<td>-</td>
+												<td class="text-center">
+													<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(child.Id))">
+														<CIcon icon="cil-info" />
+													</button>
+													<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(child.Id))">
+														<CIcon icon="cil-pencil" />
+													</button>
+													<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(child.Id))">
+														<CIcon icon="cil-x" />
+													</button>
+												</td>
+											</tr>
+										}
+									}
+								</tbody>
+							}
+                        </table>
+                    }
+					@if (!HideUI)
+					{
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<ChildContent Context="context2">
+								<button class="btn btn-primary btn-sm float-end" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
+							</ChildContent>
+						</AuthorizeView>
+					}
+                </div>
+            </div>
+
+			@if (!HideUI && MyInactivePortfolioList != null && MyInactivePortfolioList.Count() > 0)
+			{
+				<div class="card border-top-secondary border-top-3 mb-4">
+					<div class="card-header">
+						<h4 class="card-title">My Inactive Portfolios</h4>
+					</div>
+					<div class="card-body">
+						<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+							<thead>
+								<tr>
+									<th scope="col" class="text-center">&nbsp;</th>
+									<th scope="col" class="text-center">Currency</th>
+									<th scope="col" class="text-center">Name</th>
+									<th scope="col" class="text-center">Investment</th>
+									<th scope="col" class="text-center">Return</th>
+									<th scope="col" class="text-center">Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var item in MyInactivePortfolioList)
+								{
+									<tr>
+										<td class="text-center"><BIcon icon="diagram-2" /></td>
+										<td class="text-center">@item.Currency</td>
+										<td>
+											@item.Name
+											<br/>
+											<span class="small">@item.Description</span>
+										</td>
+										<td>-</td>
+										<td>-</td>
+										<td class="text-center">
+											<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
+												<CIcon icon="cil-info" />
+											</button>
+											<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(item.Id))">
+												<CIcon icon="cil-pencil" />
+											</button>
+											<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(item.Id))">
+												<CIcon icon="cil-x" />
+											</button>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			}
+        </div>
+
+		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio" centered="false" type="danger" size="large">
+			<div class="card">
+				<div class="card-body">
+					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio?</span></CAlert>
+					<form>
+						<div class="row">
+							<div class="col-8">
+								<div class="form-floating mb-1">
+									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name)">
+									<label for="pName">Name</label>
+								</div>
+							</div>
+							<div class="col-4">
+								<div class="form-floating mb-1">
+									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency)">
+									<label for="pCurrency">Currency</label>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12">
+								<div class="form-floating mb-1">
+									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description)</textarea>
+									<label for="pDesc">Description</label>
+								</div>
+							</div>
+						</div>
+					</form>
+					<hr />
+					<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteClose()"><CIcon icon="x-circle" /> Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button>
+				</div>
+			</div>
+		</CModal>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "My Portfolio";
+}

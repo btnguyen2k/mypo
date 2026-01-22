@@ -24,4 +24,9 @@ public abstract class LoginExternalBase : BaseComponent
 			return value;
 		}) ?? [];
 	}
+
+	protected void ForceLoad(string url)
+	{
+		NavigationManager.NavigateTo(url, forceLoad: true);
+	}
 }
