@@ -3,7 +3,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets;
 
-@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE)]
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_PRICE_RUN)]
 @inherits BasePage
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
@@ -25,12 +25,11 @@
     <Authorized>
 		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
-			<WidgetBuyCalculator />
-			<WidgetSellCalculator />
+			<WidgetPriceRun />
         </div>
 	</Authorized>
 </AuthorizeView>
 
 @code {
-    private const string PAGE_TITLE = "Buy/Sell Calculator";
+    private const string PAGE_TITLE = "Price Run";
 }

@@ -2,3 +2,4 @@
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Refactor) page Buy/Sell calculator.
+- (Feat) Add tool Price Run.

@@ -19,15 +19,6 @@ public class MenuBootstrapper
 			Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MARKETS,
 			Priority = 100,
 		});
-		Sidebar.AddOrReplaceEntry(new Sidebar.SidebarItem
-		{
-			Id = "buy_sell_calc",
-			Label = "Buy/Sell Calculator",
-			Icon = "cil-calculator",
-			Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE,
-			Priority = 101,
-		});
-
 		Sidebar.AddOrReplaceEntry(new Sidebar.SidebarSection
 		{
 			Id = "portfolio",
@@ -43,20 +34,27 @@ public class MenuBootstrapper
 				}
 			],
 		});
-		// Sidebar.AddOrReplaceEntry(new Sidebar.SidebarSection
-		// {
-		// 	Id = "tools",
-		// 	Label = "Tools",
-		// 	Priority = 201,
-		// 	Items = [
-		// 		new Sidebar.SidebarItem
-		// 		{
-		// 			Id = "buy_sell_calc",
-		// 			Label = "Buy/Sell Calculator",
-		// 			Icon = "cil-calculator",
-		// 			Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE,
-		// 		}
-		// 	],
-		// });
+		Sidebar.AddOrReplaceEntry(new Sidebar.SidebarSection
+		{
+			Id = "tools",
+			Label = "Tools",
+			Priority = 201,
+			Items = [
+				new Sidebar.SidebarItem
+				{
+					Id = "tool_buy_sell_calc",
+					Label = "Buy/Sell Calculator",
+					Icon = "cil-calculator",
+					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE,
+				},
+				new Sidebar.SidebarItem
+				{
+					Id = "tool_price_run",
+					Label = "Price Run",
+					Icon = "cil-running",
+					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_PRICE_RUN,
+				}
+			],
+		});
 	}
 }
