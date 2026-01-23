@@ -1,6 +1,6 @@
-<div class="card border-top-info border-top-3 mb-4">
+<div class="card border-top-success border-top-3 mb-4">
 	<div class="card-header align-items-center">
-		<h5 class="card-title float-start">Buy With Fee</h5>
+		<h5 class="card-title float-start">Sell With Fee</h5>
 		<div class="row float-end">
 			<div class="col-auto">
 				<label for="numDecimals" class="form-label">Decimals:</label>
@@ -23,7 +23,7 @@
 			<div class="col-md-4 col-sm-12">
 				<label for="numUnits" class="form-label">Num Units:</label>
 				<div class="input-group input-group-sm">
-					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to buy" @bind="numUnits" />
+					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to sell" @bind="numUnits" />
 				</div>
 			</div>
 			<div class="col-md-4 col-sm-12">
@@ -45,10 +45,10 @@
 		</div>
 		<div class="row mt-2">
 			<div class="col-md-4 col-sm-12">
-				<label for="totalCost" class="form-label">Total Cost:</label>
+				<label for="totalReturn" class="form-label">Total Return:</label>
 				<div class="input-group input-group-sm">
 					<span class="input-group-text">💵</span>
-					<input type="text" class="form-control fw-medium" id="totalCost" disabled value="@(TotalCost.ToString(numDecimals))"/>
+					<input type="text" class="form-control fw-medium" id="totalReturn" disabled value="@(TotalReturn.ToString(numDecimals))"/>
 				</div>
 			</div>
 			<div class="col-md-4 col-sm-12">
@@ -68,13 +68,7 @@
 		</div>
 		<hr />
 		<div class="row mt-2">
-			<div class="col-md-3 col-sm-12">
-				<label for="owningUnits" class="form-label">Owning Units:</label>
-				<div class="input-group input-group-sm">
-					<input type="number" min="1" step="1" class="form-control" id="owningUnits" placeholder="Current Owning Units" @bind="owningUnits" />
-				</div>
-			</div>
-			<div class="col-md-3 col-sm-12">
+			<div class="col-md-6 col-sm-12">
 				<label for="owningAvgPrice" class="form-label">Avg. Owning Price:</label>
 				<div class="input-group input-group-sm">
 					<span class="input-group-text">💵</span>
@@ -82,18 +76,11 @@
 						value="@owningAvgPrice.ToString(numDecimals)" @onchange="(e)=>{owningAvgPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
 				</div>
 			</div>
-			<div class="col-md-3 col-sm-12">
-				<label for="newOwningUnits" class="form-label">New Owning Units:</label>
+			<div class="col-md-6 col-sm-12">
+				<label for="pnl" class="form-label">P/L:</label>
 				<div class="input-group input-group-sm">
 					<span class="input-group-text">💵</span>
-					<input type="text" class="form-control" id="newOwningUnits" disabled value="@(newOwningUnits)"/>
-				</div>
-			</div>
-			<div class="col-md-3 col-sm-12">
-				<label for="newAvgUnitPrice" class="form-label">New Avg. Unit Price:</label>
-				<div class="input-group input-group-sm">
-					<span class="input-group-text">💵</span>
-					<input type="text" class="form-control fw-bolder" id="newAvgUnitPrice" disabled value="@(newAvgUnitPrice.ToString(numDecimals))"/>
+					<input type="text" class="form-control fw-bolder @(pnl>=0?"text-success":"text-danger")" id="pnl" disabled value="@(pnl.ToString(numDecimals))"/>
 				</div>
 			</div>
 		</div>
@@ -102,16 +89,14 @@
 
 @code {
 	private string numDecimals { get; set; } = "N2";
-	private decimal numUnits { get; set; } = 10m;
-	private decimal unitPrice { get; set; } = 100m;
+	private decimal numUnits { get; set; } = 5m;
+	private decimal unitPrice { get; set; } = 120m;
 	private decimal txFee { get; set; } = 5.00m;
-	private decimal TotalCost => unitPrice * numUnits + txFee;
-	private decimal EffectiveUnitPrice => numUnits > 0 ? TotalCost/numUnits : 0;
-	private decimal BreakEven => unitPrice > 0 && numUnits > 0 ? (TotalCost/numUnits/unitPrice-1)*100.00m : 0;
-	private decimal owningUnits { get; set; } = 5m;
+	private decimal TotalReturn => unitPrice * numUnits - txFee;
+	private decimal EffectiveUnitPrice => numUnits > 0 ? TotalReturn/numUnits : 0;
+	private decimal BreakEven => unitPrice > 0 && numUnits > 0 ? (TotalReturn/numUnits/unitPrice-1)*100.00m : 0;
 	private decimal owningAvgPrice { get; set; } = 80m;
-	private decimal newOwningUnits => owningUnits + numUnits;
-	private decimal newAvgUnitPrice => newOwningUnits > 0 ? (owningUnits * owningAvgPrice + TotalCost) / newOwningUnits : 0;
+	private decimal pnl => (EffectiveUnitPrice - owningAvgPrice) * numUnits;
 	private decimal MinValue => numDecimals switch
 	{
 		"N0" => 1m,
