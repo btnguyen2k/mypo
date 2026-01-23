@@ -1,7 +1,7 @@
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
-
+@using MyPo.Portfolio.Shared.Identity
 
 @inherits CBase
 
@@ -11,8 +11,11 @@
 		<CAlert type="@AlertType">
 			@AlertMessage
 		</CAlert>
+
 	}
-	<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
+	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+		<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
+	</AuthorizeView>
 	<button class="btn @(SelectedTransactionsMap.Count>0?"btn-success":"btn-outline-secondary") btn-sm mb-3"
 		disabled="@(SelectedTransactionsMap.Count==0)" @onclick="()=>BtnClickSettleTxMultiple()"><CIcon icon="cil-check" /> Settle Transactions</button>
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">

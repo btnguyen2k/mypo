@@ -13,6 +13,18 @@ public sealed class RoiRec : Entity<string>
 	public const string TX_TYPE_BUY = "BUY";
 	public const string TX_TYPE_SELL = "SELL";
 
+	public static readonly List<string> TxTypes =
+	[
+		TX_TYPE_CASHIN,
+		TX_TYPE_CASHOUT,
+		TX_TYPE_DIVIDEND,
+		TX_TYPE_INTEREST,
+		TX_TYPE_FEE,
+		TX_TYPE_TAX,
+		TX_TYPE_BUY,
+		TX_TYPE_SELL,
+	];
+
 	public const string STATUS_NEW = "NEW";
 	public const string STATUS_FINAL = "FINAL";
 	public const string STATUS_ARCHIVED = "ARCHIVED";

@@ -34,7 +34,7 @@
 					@if (!HideUI)
 					{
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="context1">
+							<ChildContent Context="ctx_add_portfolio">
 								<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
 							</ChildContent>
 						</AuthorizeView>

@@ -70,7 +70,8 @@
 							<div class="tab-pane fade @(ActiveTab == TabIdRoi ? "show active" : "")" id="nav-roi" role="tabpanel" aria-labelledby="@TabIdRoi" tabindex="0">
 								<CPortfolioRoi
 									PortfolioId="@(SelectedPortfolio?.Id)"
-									RoiRecords="@(RoiRecords)" />
+									RoiRecords="@(RoiRecords)"
+									Markets="@(Markets)" />
 							</div>
 						</div>
 					}

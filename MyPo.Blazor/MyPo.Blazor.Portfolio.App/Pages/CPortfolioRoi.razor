@@ -1,17 +1,16 @@
 ﻿@using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
 @using MyPo.Portfolio.Shared.Models
 
 @inherits CBase
 
-@if (!string.IsNullOrEmpty(AlertMessage))
-{
-	<CAlert type="@AlertType">
-		@AlertMessage
-	</CAlert>
-}
+<CAlert @ref="@Alert" />
 
 <div class="container mt-3">
+	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+		<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAddRecord"><CIcon icon="cil-plus" /> New Record</button>
+	</AuthorizeView>
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 		<tbody>
 			@foreach (var roiRec in RoiRecords??[])
@@ -43,6 +42,118 @@
 		</tbody>
 	</table>
 </div>
+
+
+<CModal @ref="@ModalDialogAddRecord" title="Add Record" centered="false" type="primary" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			<CAlert @ref="@Alert" />
+			<form>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recType" aria-label="Record Type" @bind="Rec.TxType">
+								@foreach (var rt in RoiRec.TxTypes)
+								{
+									<option value="@rt">@rt</option>
+								}
+							</select>
+							<label for="recType">Record Type (*):</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recMarket" aria-label="Market" @bind="Rec.RefMarketId">
+								<option></option>
+								@foreach (var m in Markets ?? [])
+								{
+									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+								}
+							</select>
+							<label for="recMarket">Market:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div>
+							<label for="txTime">Transaction Time:</label>
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true" />
+								<span class="input-group-text"><CIcon icon="calendar"/></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="refItemType" aria-label="Item Type" @bind="Rec.RefItemType">
+								@foreach (var it in TransactionRec.ItemTypes)
+								{
+									<option value="@it">@it</option>
+								}
+							</select>
+							<label for="refItemType">Item Type:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Rec.RefItemCode" />
+							<label for="refItemCode">Item Code:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Rec.TxValue" />
+							<label for="txValue">Tx Value (*):</label>
+						</div>
+					</div>
+					@*
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" />
+							<label for="txQuantity">Quantity (*):</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx" />
+							<label for="txFeeTx">Transaction Fee:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax" />
+							<label for="txFeeTax">Tax:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther" />
+							<label for="txFeeOther">Other Fee:</label>
+						</div>
+					</div>
+					*@
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="recDesc" aria-label="Notes/Description" @bind="Rec.TxDesc" />
+							<label for="recDesc">Notes/Description:</label>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickAddRecordClose()"><CIcon icon="x-circle" /> Cancel</button>
+			@*
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
+			*@
+		</div>
+	</div>
+</CModal>
 
 @code {
 
