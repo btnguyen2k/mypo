@@ -21,17 +21,17 @@
 	<div class="card-body">
 		<div class="row">
 			<div class="col-md-4 col-sm-12">
-				<label for="unitPrice" class="form-label">Unit Price:</label>
-				<div class="input-group input-group-sm">
-					<span class="input-group-text">💵</span>
-					<input type="number" min="@MinValue" step="@Step" class="form-control" id="unitPrice" placeholder="Enter unit price"
-						value="@unitPrice.ToString(numDecimals)" @onchange="(e)=>{unitPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-12">
 				<label for="numUnits" class="form-label">Num Units:</label>
 				<div class="input-group input-group-sm">
 					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to buy" @bind="numUnits" />
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-12">
+				<label for="unitPrice" class="form-label">Unit Price:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="number" min="@MinValue" step="@Step" class="form-control" id="unitPrice" placeholder="Unit price"
+						value="@unitPrice.ToString(numDecimals)" @onchange="(e)=>{unitPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
 				</div>
 			</div>
 			<div class="col-md-4 col-sm-12">
@@ -66,17 +66,51 @@
 				</div>
 			</div>
 		</div>
+		<div class="row mt-2">
+			<div class="col-md-3 col-sm-12">
+				<label for="owningUnits" class="form-label">Owning Units:</label>
+				<div class="input-group input-group-sm">
+					<input type="number" min="1" step="1" class="form-control" id="owningUnits" placeholder="Current Owning Units" @bind="owningUnits" />
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-12">
+				<label for="owningAvgPrice" class="form-label">Avg. Unit Price:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="number" min="@MinValue" step="@Step" class="form-control" id="owningAvgPrice" placeholder="Average Price of Owning Units"
+						value="@owningAvgPrice.ToString(numDecimals)" @onchange="(e)=>{owningAvgPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-12">
+				<label for="newOwningUnits" class="form-label">New Owning Units:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="text" class="form-control" id="newOwningUnits" disabled value="@(newOwningUnits)"/>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-12">
+				<label for="newAvgUnitPrice" class="form-label">New Avg. Unit Price:</label>
+				<div class="input-group input-group-sm">
+					<span class="input-group-text">💵</span>
+					<input type="text" class="form-control" id="newAvgUnitPrice" disabled value="@(newAvgUnitPrice.ToString(numDecimals))"/>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 
 @code {
 	private string numDecimals { get; set; } = "N2";
-	private decimal unitPrice { get; set; } = 100m;
 	private decimal numUnits { get; set; } = 10m;
+	private decimal unitPrice { get; set; } = 100m;
 	private decimal txFee { get; set; } = 5.00m;
 	private decimal TotalCost => unitPrice * numUnits + txFee;
 	private decimal EffectiveUnitPrice => numUnits > 0 ? TotalCost/numUnits : 0;
 	private decimal BreakEven => unitPrice > 0 && numUnits > 0 ? (TotalCost/numUnits/unitPrice-1)*100.00m : 0;
+	private decimal owningUnits { get; set; } = 5m;
+	private decimal owningAvgPrice { get; set; } = 80m;
+	private decimal newOwningUnits => owningUnits + numUnits;
+	private decimal newAvgUnitPrice => newOwningUnits > 0 ? (owningUnits * owningAvgPrice + TotalCost) / newOwningUnits : 0;
 	private decimal MinValue => numDecimals switch
 	{
 		"N0" => 1m,
