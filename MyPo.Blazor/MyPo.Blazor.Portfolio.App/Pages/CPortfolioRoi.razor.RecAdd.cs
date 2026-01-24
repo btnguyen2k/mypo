@@ -1,4 +1,6 @@
+using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
+using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
@@ -33,5 +35,34 @@ public partial class CPortfolioRoi
 	{
 		ModalDialogAddRecord.Close();
 		CloseAlert();
+	}
+
+	private async void BtnClickAddRecordSave()
+	{
+		ShowAlert("info", "Saving ROI record...");
+		if (!ValidateRoiRec())
+		{
+			return;
+		}
+
+		Rec.PortfolioId = PortfolioId;
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var resp = await apiClient.CreateRoiRecAsync(Rec, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (resp.Status != 200)
+		{
+			ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");
+			return;
+		}
+		ShowAlert("success", "ROI record added successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"ROI record '{resp.Data.Id}' added successfully.";
+		var passAlertType = "success";
+		await Task.Delay(500);
+		ModalDialogAddRecord.Close();
+		CloseAlert();
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
+			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
+			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
+		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
 	}
 }

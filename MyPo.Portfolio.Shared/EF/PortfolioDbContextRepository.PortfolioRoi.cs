@@ -7,10 +7,24 @@ public sealed partial class PortfolioDbContextRepository
 {
 	private DbSet<RoiRec> RoiRecStore { get; set; }
 
+	/// <inheritdoc />
 	public async ValueTask<RoiRec?> CreateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
 	{
 		var entry = await RoiRecStore.AddAsync(roiRec, cancellationToken);
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<RoiRec?> GetRoiRecByIdAsync(string roiRecId, CancellationToken cancellationToken = default)
+	{
+		return await RoiRecStore.AsNoTracking().FirstOrDefaultAsync(rr => rr.Id == roiRecId, cancellationToken);
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<bool> DeleteRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	{
+		RoiRecStore.Remove(roiRec);
+		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 
 	/// <inheritdoc />

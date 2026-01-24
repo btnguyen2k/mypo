@@ -8,8 +8,8 @@ public struct CreateOrUpdateRoiRecReq
 	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Id { get; set; }
 
-	[JsonPropertyName("status")]
-	public string Status { get; set; }
+	[JsonPropertyName("status"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Status { get; set; }
 
 	[JsonPropertyName("portfolio_id")]
 	public string PortfolioId { get; set; }

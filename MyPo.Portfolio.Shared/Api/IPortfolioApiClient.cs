@@ -18,6 +18,7 @@ public interface IPortfolioApiClient : IApiClient
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID = "/api/my_portfolio/{id}/asset/{aid}";
 
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS = "/api/my_portfolio/{id}/roi_recs";
+	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_REC_ID = "/api/my_portfolio/{id}/roi_rec/{rid}";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_PNL = "/api/my_portfolio/{id}/pnl";
 
 	/// <summary>
@@ -155,6 +156,29 @@ public interface IPortfolioApiClient : IApiClient
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	public Task<ApiResp<AssetResp>> UpdateMyPortfolioAssetAsync(string portfolioId, string assetId, CreateOrUpdateAssetReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS"/> to create a new ROI record for a given portfolio.
+	/// </summary>
+	/// <param name="req"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<RoiRecResp>> CreateRoiRecAsync(CreateOrUpdateRoiRecReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_REC_ID"/> to delete an existing ROI record.
+	/// </summary>
+	/// <param name="portfolioId"></param>
+	/// <param name="rid"></param>
+	/// <param name="authToken"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="requestHttpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<RoiRecResp>> DeleteRoiRecAsync(string portfolioId, string rid, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Calls the API <see cref="API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ROI_RECS"/> to get ROI records for a given portfolio.

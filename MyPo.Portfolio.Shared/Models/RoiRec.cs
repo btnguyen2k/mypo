@@ -13,8 +13,8 @@ public sealed class RoiRec : Entity<string>
 	public const string TX_TYPE_BUY = "BUY";
 	public const string TX_TYPE_SELL = "SELL";
 
-	public static readonly List<string> TxTypes =
-	[
+	public static readonly ISet<string> TxTypes = new HashSet<string>
+	{
 		TX_TYPE_CASHIN,
 		TX_TYPE_CASHOUT,
 		TX_TYPE_DIVIDEND,
@@ -23,11 +23,17 @@ public sealed class RoiRec : Entity<string>
 		TX_TYPE_TAX,
 		TX_TYPE_BUY,
 		TX_TYPE_SELL,
-	];
+	};
 
 	public const string STATUS_NEW = "NEW";
 	public const string STATUS_FINAL = "FINAL";
 	public const string STATUS_ARCHIVED = "ARCHIVED";
+
+	public static readonly ISet<string> ImmutableStatuses = new HashSet<string>
+	{
+		STATUS_FINAL,
+		STATUS_ARCHIVED,
+	};
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
