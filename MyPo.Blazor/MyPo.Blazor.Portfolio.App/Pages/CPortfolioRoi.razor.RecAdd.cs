@@ -39,7 +39,7 @@ public partial class CPortfolioRoi
 
 	private async void BtnClickAddRecordSave()
 	{
-		ShowAlert("info", "Adding ROI record...");
+		ModalDialogAddRecord.ShowAlert("info", "Adding ROI record...");
 		if (!ValidateRoiRec())
 		{
 			return;
@@ -50,19 +50,18 @@ public partial class CPortfolioRoi
 		var resp = await apiClient.CreateMyPortfolioRoiRecAsync(Rec, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");
+			ModalDialogAddRecord.ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");
 			return;
 		}
-		ShowAlert("success", "ROI record added successfully. Navigating to portfolio page...");
+		ModalDialogAddRecord.ShowAlert("success", "ROI record added successfully. Navigating to portfolio page...");
 		var passAlertMessage = $"ROI record '{resp.Data.Id}' added successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogAddRecord.Close();
-		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+		NavigationManager.NavigateTo(nextUrl);
 	}
 }

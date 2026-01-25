@@ -67,7 +67,7 @@
 <CModal @ref="@ModalDialogAddRecord" title="Add Record" centered="false" type="primary" size="extra-large">
 	<div class="card">
 		<div class="card-body">
-			<CAlert @ref="@Alert" />
+			<CAlert @ref="@ModalDialogAddRecord.Alert" />
 			<form>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
@@ -154,7 +154,7 @@
 					This record is in status '@Rec.Status', only notes/description can be updated.
 				</CAlert>
 			}
-			<CAlert @ref="@Alert" />
+			<CAlert @ref="@ModalDialogUpdateRecord.Alert" />
 			<form>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
@@ -249,7 +249,7 @@
 			}
 			else
 			{
-				<CAlert @ref="@Alert" />
+				<CAlert @ref="@ModalDialogDeleteRecord.Alert" />
 				<form>
 					<div class="row mb-3 align-items-center">
 						<div class="col-4">
