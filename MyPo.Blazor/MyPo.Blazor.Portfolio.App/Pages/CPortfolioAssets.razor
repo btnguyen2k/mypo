@@ -4,16 +4,10 @@
 
 @inherits CBase
 
-@if (!string.IsNullOrEmpty(AlertMessage))
-{
-	<CAlert type="@AlertType">
-		@AlertMessage
-	</CAlert>
-}
-
 @* <NavigationLock ConfirmExternalNavigation="false" OnBeforeInternalNavigation="()=>StopRefreshQuotesBackground()" /> *@
 
 <div class="container mt-3">
+	<CAlert @ref="@Alert" />
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 		<thead>
 			<tr>
@@ -105,12 +99,7 @@
 <CModal @ref="@ModalDialogAssetInfo" title="Asset Details" centered="false" type="info" size="extra-large">
 	<div class="card mb-2">
 		<div class="card-body">
-			@if (!string.IsNullOrEmpty(AlertMessage))
-			{
-				<CAlert type="@AlertType">
-					@AlertMessage
-				</CAlert>
-			}
+			<CAlert @ref="@Alert" />
 			<table class="table @*table-bordered*@ border-secondary align-middle">
 				<tbody>
 					<tr>

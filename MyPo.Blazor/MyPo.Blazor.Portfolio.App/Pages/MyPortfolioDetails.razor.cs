@@ -95,7 +95,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		var (alertType, alertMessage) = GetPassedMessageFromQuery();
 		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-			ShowAlert(alertType, alertMessage, autoCloseAfterMs: 5000);
+			ShowAlert(alertType, alertMessage, autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
 		else
 			CloseAlert();
 	}
@@ -146,6 +146,7 @@ public partial class MyPortfolioDetails : BasePage
 
 	private async void SwitchTab(string tab)
 	{
+		CloseAlert();
 		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
 			"import",
 			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"

@@ -5,9 +5,8 @@
 
 @inherits CBase
 
-<CAlert @ref="@Alert" />
-
 <div class="container mt-3">
+	<CAlert @ref="@Alert" />
 	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 		<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAddRecord"><CIcon icon="cil-plus" /> New Record</button>
 	</AuthorizeView>

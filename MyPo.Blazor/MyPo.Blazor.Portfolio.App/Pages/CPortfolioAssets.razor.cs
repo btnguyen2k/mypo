@@ -138,7 +138,7 @@ public partial class CPortfolioAssets : CBase
 
 		ShowAlert("info", "Updating asset tags...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.UpdateMyPortfolioAssetAsync(req.PortfolioId, req.Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.UpdateMyPortfolioAssetAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
 			ShowAlert("danger", resp.Message!);
@@ -148,7 +148,7 @@ public partial class CPortfolioAssets : CBase
 
 		var passAlertMessage = $"{SelectedAsset!.Value.ItemCode}'s tags updated successfully.";
 		var passAlertType = "success";
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{id}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
