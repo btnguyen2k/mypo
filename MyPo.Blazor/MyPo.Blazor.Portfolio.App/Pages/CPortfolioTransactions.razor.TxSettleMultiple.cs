@@ -13,13 +13,17 @@ public partial class CPortfolioTransactions
 	private void PrepareSettleTxMultiple()
 	{
 		var keys = SelectedTransactionsMap.Keys.ToArray();
-		foreach (var key in keys)
+		foreach (var key in keys.Where(k => TransactionsMap.TryGetValue(k, out var tx) && tx.IsSettled))
 		{
-			if (TransactionsMap.TryGetValue(key, out var tx) && tx.IsSettled)
-			{
-				SelectedTransactionsMap.Remove(key);
-			}
+			SelectedTransactionsMap.Remove(key);
 		}
+		// foreach (var key in keys)
+		// {
+		// 	if (TransactionsMap.TryGetValue(key, out var tx) && tx.IsSettled)
+		// 	{
+		// 		SelectedTransactionsMap.Remove(key);
+		// 	}
+		// }
 	}
 
 	private void BtnClickSettleTxMultiple()

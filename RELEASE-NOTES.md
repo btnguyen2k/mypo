@@ -1,5 +1,12 @@
 # My Portfolio Tracker release notes
 
+## 2026-01-25 - v0.2.1
+
+### Fixed/Improvements
+
+- (Patch) Fix release workflow.
+- (Patch) Fix High & Medium CodeQL items.
+
 ## 2026-01-25 - v0.2.0
 
 ### Added/Refactoring/Deprecation

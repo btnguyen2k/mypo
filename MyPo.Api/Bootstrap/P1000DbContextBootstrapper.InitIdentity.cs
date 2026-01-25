@@ -147,18 +147,18 @@ sealed class IdentityInitializer(
 			if (user == null)
 			{
 				var generatedPassword = RandomPasswordGenerator.GenerateRandomPassword(identityOptions?.Password);
-				logger.LogWarning("User '{user}' does not exist. Creating one with email '{email}' and a random password: {password}", u.UserName, u.Email, generatedPassword);
-				logger.LogWarning("PLEASE REMEMBER THIS PASSWORD AS IT WILL NOT BE DISPLAYED AGAIN!");
+				// logger.LogWarning("User '{user}' does not exist. Creating one with email '{email}' and a random password: {password}", u.UserName, u.Email, generatedPassword);
+				// logger.LogWarning("PLEASE REMEMBER THIS PASSWORD AS IT WILL NOT BE DISPLAYED AGAIN!");
 
-				// FIXME: NOT TO USE THIS IN PRODUCTION!
-				// for demo purpose: store the generated password in environment variables
-				// if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
-				if (environment.IsDevelopment())
-				{
-					logger.LogCritical("Storing the generated password in environment variables for demo purpose. DO NOT USE THIS IN PRODUCTION!");
-					Environment.SetEnvironmentVariable($"USER_SECRET_I_{id}", generatedPassword);
-					logger.LogCritical("User secret for '{id}': {secret}", $"USER_SECRET_I_{id}", generatedPassword);
-				}
+				// // FIXME: NOT TO USE THIS IN PRODUCTION!
+				// // for demo purpose: store the generated password in environment variables
+				// // if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+				// if (environment.IsDevelopment())
+				// {
+				// 	logger.LogCritical("Storing the generated password in environment variables for demo purpose. DO NOT USE THIS IN PRODUCTION!");
+				// 	Environment.SetEnvironmentVariable($"USER_SECRET_I_{id}", generatedPassword);
+				// 	logger.LogCritical("User secret for '{id}': {secret}", $"USER_SECRET_I_{id}", generatedPassword);
+				// }
 
 				user = new MyPoUser
 				{

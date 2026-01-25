@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api;
@@ -18,5 +19,5 @@ public sealed class Globals
 	}
 
 	public static readonly ISet<MarketDef> Markets = new SortedSet<MarketDef>(MarketDefComparer.Instance);
-	public static readonly Dictionary<string, MarketDef> MarketsMap = [];
+	public static readonly ConcurrentDictionary<string, MarketDef> MarketsMap = [];
 }

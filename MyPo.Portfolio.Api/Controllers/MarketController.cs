@@ -58,13 +58,17 @@ public partial class MarketsController : ApiBaseController
 		}
 		var result = new Dictionary<string, Quote>();
 		var quotes = await YFService.GetQuotesAsync([.. yfSymbolMap.Keys]) ?? [];
-		foreach (var quote in quotes)
+		foreach (var quote in quotes.Where(q => yfSymbolMap.TryGetValue(q.Symbol??string.Empty, out _)))
 		{
-			if (yfSymbolMap.TryGetValue(quote.Symbol??string.Empty, out var originalCodeMarketId))
-			{
-				result[originalCodeMarketId] = quote;
-			}
+			result[yfSymbolMap[quote.Symbol??string.Empty]] = quote;
 		}
+		// foreach (var quote in quotes)
+		// {
+		// 	if (yfSymbolMap.TryGetValue(quote.Symbol??string.Empty, out var originalCodeMarketId))
+		// 	{
+		// 		result[originalCodeMarketId] = quote;
+		// 	}
+		// }
 		return ResponseOk(result);
 	}
 }
