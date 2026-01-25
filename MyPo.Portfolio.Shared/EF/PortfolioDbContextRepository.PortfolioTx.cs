@@ -133,8 +133,8 @@ public sealed partial class PortfolioDbContextRepository
 			RefItemCode = tx.ItemCode,
 			RefMarketId = tx.MarketId,
 			TxDesc = txType == TransactionRec.TXTYPE_SELL
-				? $"Sold {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}"
-				: $"Bought {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
+				? $"Sold {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price}"
+				: $"Bought {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price}",
 		};
 		_ = await CreateRoiRecAsync(roiRec, cancellationToken)
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
@@ -152,7 +152,7 @@ public sealed partial class PortfolioDbContextRepository
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Tax for {txType} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
+				TxDesc = $"Tax for {txType} {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price}",
 			};
 			_ = await CreateRoiRecAsync(taxRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
@@ -171,7 +171,7 @@ public sealed partial class PortfolioDbContextRepository
 				RefItemType = tx.ItemType,
 				RefItemCode = tx.ItemCode,
 				RefMarketId = tx.MarketId,
-				TxDesc = $"Transaction Fee for {txType} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price} {market?.CurrencySymbol??"-"}",
+				TxDesc = $"Fee for {txType} {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price}",
 			};
 			_ = await CreateRoiRecAsync(feeRoiRec, cancellationToken)
 				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");

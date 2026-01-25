@@ -72,9 +72,8 @@ public partial class CPortfolioTransactions
 		{
 			ModalDialogSettleTxMultiple.ShowAlert("success", $"All {numTxTotal} selected transaction(s) settled successfully. Navigating to portfolio page...");
 		}
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogSettleTxMultiple.Close();
-		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
