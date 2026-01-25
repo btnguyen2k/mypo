@@ -21,6 +21,18 @@ public sealed partial class PortfolioDbContextRepository
 	}
 
 	/// <inheritdoc />
+	public async ValueTask<RoiRec?> UpdateRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
+	{
+		var existingEntry = await RoiRecStore.FindAsync([roiRec.Id], cancellationToken);
+		if (existingEntry == null)
+		{
+			return null;
+		}
+		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(roiRec));
+		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
+	}
+
+	/// <inheritdoc />
 	public async ValueTask<bool> DeleteRoiRecAsync(RoiRec roiRec, CancellationToken cancellationToken = default)
 	{
 		RoiRecStore.Remove(roiRec);

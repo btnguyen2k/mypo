@@ -39,7 +39,7 @@ public partial class CPortfolioRoi
 
 	private async void BtnClickAddRecordSave()
 	{
-		ShowAlert("info", "Saving ROI record...");
+		ShowAlert("info", "Adding ROI record...");
 		if (!ValidateRoiRec())
 		{
 			return;
@@ -47,7 +47,7 @@ public partial class CPortfolioRoi
 
 		Rec.PortfolioId = PortfolioId;
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.CreateRoiRecAsync(Rec, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.CreateMyPortfolioRoiRecAsync(Rec, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
 			ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");

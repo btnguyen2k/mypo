@@ -37,8 +37,9 @@ public partial class CPortfolioRoi
 
 	private async void BtnClickDeleteRecordConfirm()
 	{
+		ShowAlert("info", "Deleting ROI record...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.DeleteRoiRecAsync(Rec.PortfolioId, RecId, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.DeleteMyPortfolioRoiRecAsync(Rec.PortfolioId, RecId, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
 			ShowAlert("danger", resp.Message ?? $"Error deleting ROI record '{RecId}'.");
