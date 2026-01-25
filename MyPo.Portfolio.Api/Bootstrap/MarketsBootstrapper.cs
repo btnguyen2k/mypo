@@ -32,9 +32,8 @@ public class MarketsBootstrapper
 
 			Globals.Markets.Clear();
 			Globals.MarketsMap.Clear();
-			foreach (var marketData in marketsData.GetChildren())
+			foreach (var marketDef in marketsData.GetChildren().Select(marketData => MarketDef.Build(marketData.Key, marketData)))
 			{
-				var marketDef = MarketDef.Build(marketData.Key, marketData);
 				Globals.Markets.Add(marketDef);
 				Globals.MarketsMap[marketDef.Id.ToUpper()] = marketDef;
 			}

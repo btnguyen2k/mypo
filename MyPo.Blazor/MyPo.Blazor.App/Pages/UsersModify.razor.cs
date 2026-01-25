@@ -78,10 +78,10 @@ public partial class UsersModify
 			{
 				return;
 			}
-			UserName = SelectedUser?.Username ?? string.Empty;
-			UserEmail = SelectedUser?.Email ?? string.Empty;
-			UserFamilyName = SelectedUser?.FamilyName ?? string.Empty;
-			UserGivenName = SelectedUser?.GivenName ?? string.Empty;
+			UserName = SelectedUser.Value.Username ?? string.Empty;
+			UserEmail = SelectedUser.Value.Email ?? string.Empty;
+			UserFamilyName = SelectedUser.Value.FamilyName ?? string.Empty;
+			UserGivenName = SelectedUser.Value.GivenName ?? string.Empty;
 
 			var roleResult = await LoadAllRolesAsync(await GetAuthTokenAsync());
 			if (roleResult.Status != 200)
@@ -103,9 +103,9 @@ public partial class UsersModify
 				ShowAlert("danger", claimResult.Message!);
 				return;
 			}
-			if (SelectedUser?.Claims != null)
+			if (SelectedUser!.Value.Claims != null)
 			{
-				foreach (var claim in SelectedUser?.Claims!)
+				foreach (var claim in SelectedUser.Value.Claims)
 				{
 					ClaimSelectedMap.Add($"{claim.ClaimType}:{claim.ClaimValue}", true);
 				}
