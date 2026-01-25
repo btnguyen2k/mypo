@@ -69,9 +69,9 @@ public partial class RolesModify
 				return;
 			}
 			ClaimSelectedMap.Clear();
-			if (SelectedRole?.Claims != null)
+			if (SelectedRole!.Value.Claims != null)
 			{
-				foreach (var claim in SelectedRole?.Claims!)
+				foreach (var claim in SelectedRole!.Value.Claims)
 				{
 					ClaimSelectedMap.Add($"{claim.ClaimType}:{claim.ClaimValue}", true);
 				}

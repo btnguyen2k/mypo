@@ -85,7 +85,11 @@ public sealed class SampleJwtAuthenticator(
 			var user = await FetchUserFirstNonEmpty(identityRepo, req.Id, req.Name, req.Email);
 			if (user == null)
 			{
-				logger.LogError("Authentication failed - user not found. Id: {id} / Username: {username} / Email: {email}", req.Id, req.Name, req.Email);
+				logger.LogError("Authentication failed - user not found. Id: {id} / Username: {username} / Email: {email}",
+					req.Id?.Replace(Environment.NewLine, "", StringComparison.Ordinal) ?? "",
+					req.Name?.Replace(Environment.NewLine, "", StringComparison.Ordinal) ?? "",
+					req.Email?.Replace(Environment.NewLine, "", StringComparison.Ordinal) ?? ""
+				);
 				return AuthResp.AuthFailed;
 			}
 			var pwdHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<MyPoUser>>();
@@ -148,7 +152,7 @@ public sealed class SampleJwtAuthenticator(
 				if (user == null)
 				{
 					var ustr = FirstNonEmpty(claimUserId, claimUserName, claimUserEmail);
-					logger.LogError("AuthToken refreshing failed: user '{user}' not found.", ustr);
+					logger.LogError("AuthToken refreshing failed: user '{user}' not found.", ustr?.Substring(0, Math.Min(ustr.Length, 4)));
 					return AuthResp.New(403, "User not found.");
 				}
 				if (!ignoreTokenSecurityCheck)
