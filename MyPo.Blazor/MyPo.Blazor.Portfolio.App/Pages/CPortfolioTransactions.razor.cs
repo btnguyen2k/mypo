@@ -28,6 +28,7 @@ public partial class CPortfolioTransactions : CBase
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
+		await base.OnAfterRenderAsync(firstRender);
 		if (firstRender)
 		{
 			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>("import", $"./_content/{typeof(CPortfolioTransactions).Assembly.GetName().Name!}/js/datetime-picker.js").AsTask());

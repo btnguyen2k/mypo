@@ -69,43 +69,33 @@ Modal dialog with a button to close:
     [Parameter]
     public RenderFragment ChildContent { get; set; } = default!;
 
-    private string cssClassSize
-    {
-        get
-        {
-            return size switch
-            {
-                "sm" => "modal-sm",
-                "small" => "modal-sm",
-                "lg" => "modal-lg",
-                "large" => "modal-lg",
-                "xl" => "modal-xl",
-                "extra" => "modal-xl",
-                "extra-large" => "modal-xl",
-                "extra large" => "modal-xl",
-                _ => string.Empty
-            };
-        }
-    }
+    private string cssClassSize => size switch
+		{
+			"sm" => "modal-sm",
+			"small" => "modal-sm",
+			"lg" => "modal-lg",
+			"large" => "modal-lg",
+			"xl" => "modal-xl",
+			"extra" => "modal-xl",
+			"extra-large" => "modal-xl",
+			"extra large" => "modal-xl",
+			_ => string.Empty
+		};
+
     private string cssClassShow = string.Empty;
     private string display = "none";
-    private string? hidden = "true";
     private string? modal = null;
     private string cssClassCentered { get => centered ? "modal-dialog-centered" : string.Empty; }
     private bool showBackdrop = false;
-    private string icon
-    {
-        get => type.ToLower() switch
+    private string icon => type.ToLower() switch
         {
             "warning" => "bi-exclamation-triangle",
             "danger" => "bi-x-circle-fill",
             "success" => "bi-check-circle",
             _ => "bi-info-circle"
         };
-    }
-    private string iconClass
-    {
-        get => type.ToLower() switch
+
+    private string iconClass => type.ToLower() switch
         {
             "warning" => "text-warning",
             "danger" => "text-danger",
@@ -114,7 +104,20 @@ Modal dialog with a button to close:
             "secondary" => "text-secondary",
             _ => "text-info"
         };
-    }
+
+	public CAlert Alert { get; set; } = default!;
+
+	public void ShowAlert(string message, string type = "info", int autoCloseAfterMs = 0)
+	{
+		Alert.Show(message, type, autoCloseAfterMs);
+		StateHasChanged();
+	}
+
+	public void CloseAlert()
+	{
+		Alert.Hide();
+		StateHasChanged();
+	}
 
     // public CModal SetTitle(string title)
     // {
@@ -134,7 +137,6 @@ Modal dialog with a button to close:
     {
         cssClassShow = "show";
         display = "block";
-        hidden = null;
         modal = "true";
         showBackdrop = true;
         StateHasChanged();
@@ -144,7 +146,6 @@ Modal dialog with a button to close:
     {
         cssClassShow = string.Empty;
         display = "none";
-        hidden = "true";
         modal = null;
         showBackdrop = false;
         StateHasChanged();

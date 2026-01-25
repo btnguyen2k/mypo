@@ -1,6 +1,6 @@
 namespace MyPo.Portfolio.Shared.Models;
 
-public interface IPortfolioRepository
+public partial interface IPortfolioRepository
 {
 	/// <summary>
 	/// Gets portfolio records owned by a user.
@@ -75,16 +75,4 @@ public interface IPortfolioRepository
 	/// Upserts an asset record.
 	/// </summary>
 	public ValueTask<Asset?> UpdateAssetAsync(Asset asset, CancellationToken cancellationToken = default);
-
-	/*----------------------------------------------------------------------*/
-
-	/// <summary>
-	/// Gets ROI summary for a portfolio.
-	/// </summary>
-	public ValueTask<PnlSummary> GetRoiSummaryForPortfolioAsync(string portfolioId, CancellationToken cancellationToken = default);
-
-	/// <summary>
-	/// Gets ROI records for a portfolio.
-	/// </summary>
-	public ValueTask<IEnumerable<RoiRec>> GetRoiRecsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
 }

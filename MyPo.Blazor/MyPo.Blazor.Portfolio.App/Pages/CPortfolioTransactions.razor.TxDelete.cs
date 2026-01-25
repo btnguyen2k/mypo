@@ -37,23 +37,23 @@ public partial class CPortfolioTransactions
 
 	private async void BtnClickDeleteTxConfirm()
 	{
+		ModalDialogDeleteTx.ShowAlert("info", "Deleting transaction...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.DeleteTransactionAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.DeleteMyPortfolioTxAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message ?? $"Error deleting transaction '{TxId}'.");
+			ModalDialogDeleteTx.ShowAlert("danger", resp.Message ?? $"Error deleting transaction '{TxId}'.");
 			return;
 		}
-		ShowAlert("success", "Transaction deleted successfully. Navigating to portfolio page...");
+		ModalDialogDeleteTx.ShowAlert("success", "Transaction deleted successfully. Navigating to portfolio page...");
 		var passAlertMessage = $"Transaction '{TxId}' deleted successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogDeleteTx.Close();
-		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+		NavigationManager.NavigateTo(nextUrl);
 	}
 }

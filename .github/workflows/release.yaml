@@ -121,7 +121,7 @@ jobs:
       - name: Cleanup file .semrelease/this_release
         run: |
           RESULT='${{ needs.ReleaseDryRun.outputs.RESULT }}'
-          if [ "${RESULT}" == "SUCCESS" && -f .semrelease/this_release ]; then
+          if [ "${RESULT}" = "SUCCESS" ] && [ -f .semrelease/this_release ]; then
             VERSION='${{ needs.ReleaseDryRun.outputs.VERSION }}'
             echo "🕘 Cleaning up file .semrelease/this_release..."
             echo "# This file has been cleaned up post-releasing version ${VERSION}." > .semrelease/this_release
@@ -165,8 +165,7 @@ jobs:
 
   PublishDockerImagesLinuxBuild:
     if: |
-      needs.Release.outputs.RESULT == 'SUCCESS' &&
-      github.ref == 'refs/heads/dev'
+      needs.Release.outputs.RESULT == 'SUCCESS'
     needs: [Release]
     runs-on: ubuntu-latest
     strategy:
@@ -216,7 +215,7 @@ jobs:
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
       - name: Upload digest
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -231,7 +230,7 @@ jobs:
       VERSION: ${{ needs.PublishDockerImagesLinuxBuild.outputs.VERSION }}
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests
           pattern: digests-*

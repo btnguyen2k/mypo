@@ -22,9 +22,21 @@
 							<a class="nav-link" href="@item.Url">@item.Label</a>
 						</li>
 					}
+					if (entry is Sidebar.SidebarSection && entry.Id=="tools")
+					{
+						var section = (Sidebar.SidebarSection)entry;
+						@foreach (var subItem in section.Items)
+						{
+							if (subItem is Sidebar.SidebarItem)
+							{
+								var item = (Sidebar.SidebarItem)subItem;
+								<li class="nav-item">
+									<a class="nav-link" href="@item.Url">@item.Label</a>
+								</li>
+							}
+						}
+					}
 				}
-                @* <li class="nav-item"><a class="nav-link" href="@UIGlobals.ROUTE_IDENTITY_USERS">Users</a></li> *@
-                @* <li class="nav-item"><a class="nav-link" href="@UIGlobals.ROUTE_IDENTITY_ROLES">Roles</a></li> *@
             </ul>
             <ul class="header-nav ms-auto">
                 <li class="nav-item">

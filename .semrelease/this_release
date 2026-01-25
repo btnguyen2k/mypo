@@ -1,4 +1,7 @@
-- (Feat) Manage invesment portfolio.
-- (Feat) Record buy/sell transactions.
-- (Feat) Manage portfolio assets.
-- (Feat) Manage ROI records.
+# This file has been cleaned up post-releasing version 2.0.1.
+# Generate its content quickly using the following command:
+#   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+- (Refactor) page Buy/Sell calculator.
+- (Feat) Add tool Price Run.
+- (Impr) Add flow "Add and Open" when creating new portfolio.
+- (Feat) Manually add/update/delete ROI records.

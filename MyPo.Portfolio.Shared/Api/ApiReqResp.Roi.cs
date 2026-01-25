@@ -3,6 +3,42 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
 
+public struct CreateOrUpdateRoiRecReq
+{
+	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Id { get; set; }
+
+	[JsonPropertyName("status"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Status { get; set; }
+
+	[JsonPropertyName("portfolio_id")]
+	public string PortfolioId { get; set; }
+
+	[JsonPropertyName("tx_type")]
+	public string TxType { get; set; }
+
+	[JsonPropertyName("tx_time")]
+	public DateTimeOffset TxTime { get; set; }
+
+	[JsonPropertyName("tx_value")]
+	public decimal TxValue { get; set; }
+
+	[JsonPropertyName("tx_desc"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? TxDesc { get; set; }
+
+	[JsonPropertyName("ref_tx_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RefTxId { get; set; }
+
+	[JsonPropertyName("ref_item_code"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RefItemType { get; set; }
+
+	[JsonPropertyName("ref_item_type"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RefItemCode { get; set; }
+
+	[JsonPropertyName("ref_market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RefMarketId { get; set; }
+}
+
 public struct RoiRecResp
 {
 	public static RoiRecResp BuildFrom(RoiRec r, MarketDef? market = null)

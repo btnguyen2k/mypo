@@ -1,18 +1,15 @@
-@using MyPo.Blazor.App.Shared
+﻿@using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
-
+@using MyPo.Portfolio.Shared.Identity
 
 @inherits CBase
 
 <div class="container mt-3">
-	@if (!string.IsNullOrEmpty(AlertMessage))
-	{
-		<CAlert type="@AlertType">
-			@AlertMessage
-		</CAlert>
-	}
-	<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
+	<CAlert @ref="@Alert" />
+	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+		<button class="btn btn-primary btn-sm mb-3" @onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
+	</AuthorizeView>
 	<button class="btn @(SelectedTransactionsMap.Count>0?"btn-success":"btn-outline-secondary") btn-sm mb-3"
 		disabled="@(SelectedTransactionsMap.Count==0)" @onclick="()=>BtnClickSettleTxMultiple()"><CIcon icon="cil-check" /> Settle Transactions</button>
 	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
@@ -84,15 +81,10 @@
 <CModal @ref="@ModalDialogSettleTxMultiple" title="Settle Transactions" centered="false" type="info" size="large">
 	<div class="card">
 		<div class="card-body">
-			@if (!string.IsNullOrEmpty(AlertMessage))
-			{
-				<CAlert type="@AlertType">
-					@AlertMessage
-				</CAlert>
-			}
+			<CAlert @ref="@ModalDialogSettleTxMultiple.Alert" />
 		</div>
 		<div class="card-footer">
-			<button type="button" class="btn btn-secondary" @onclick="()=>ModalDialogSettleTxMultiple.Close()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickSettleTxMultipleClose()"><CIcon icon="x-circle" /> Cancel</button>
 			<button type="button" class="btn btn-success" @onclick="()=>BtnClickSettleTxMultipleConfirm()"><CIcon icon="check" /> Settle</button>
 		</div>
 	</div>
@@ -103,18 +95,13 @@
 		<div class="card-body">
 			@if (Tx.IsSettled)
 			{
-				<CAlert type="warning">
+				<CAlert Type="warning">
 					This transaction has been settled and cannot be deleted.
 				</CAlert>
 			}
 			else
 			{
-				@if (!string.IsNullOrEmpty(AlertMessage))
-				{
-					<CAlert type="@AlertType">
-						@AlertMessage
-					</CAlert>
-				}
+				<CAlert @ref="@ModalDialogDeleteTx.Alert" />
 				<form>
 					<div class="row mb-3 align-items-center">
 						<div class="col-4">
@@ -223,12 +210,7 @@
 					This transaction has been settled, only notes can be updated.
 				</CAlert>
 			}
-			@if (!string.IsNullOrEmpty(AlertMessage))
-			{
-				<CAlert type="@AlertType">
-					@AlertMessage
-				</CAlert>
-			}
+			<CAlert @ref="@ModalDialogUpdateTx.Alert" />
 			<form>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
@@ -335,12 +317,7 @@
 <CModal @ref="@ModalDialogAddTx" title="Record A New Transaction" centered="false" type="primary" size="extra-large">
 	<div class="card">
 		<div class="card-body">
-			@if (!string.IsNullOrEmpty(AlertMessage))
-			{
-				<CAlert type="@AlertType">
-					@AlertMessage
-				</CAlert>
-			}
+			<CAlert @ref="@ModalDialogAddTx.Alert" />
 			<form>
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
