@@ -89,9 +89,9 @@ public partial class UsersModify
 				ShowAlert("danger", roleResult.Message!);
 				return;
 			}
-			if (SelectedUser?.Roles != null)
+			if (SelectedUser!.Value.Roles != null)
 			{
-				foreach (var role in SelectedUser?.Roles!)
+				foreach (var role in SelectedUser.Value.Roles)
 				{
 					RoleSelectedMap.Add(role.Id, true);
 				}
