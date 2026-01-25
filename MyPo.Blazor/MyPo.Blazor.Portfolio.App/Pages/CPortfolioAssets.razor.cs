@@ -136,22 +136,23 @@ public partial class CPortfolioAssets : CBase
 			Tags = AssetTags,
 		};
 
-		ShowAlert("info", "Updating asset tags...");
+		ModalDialogAssetInfo.ShowAlert("info", "Updating asset tags...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.UpdateMyPortfolioAssetAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message!);
+			ModalDialogAssetInfo.ShowAlert("danger", resp.Message!);
 			return;
 		}
-		ShowAlert("success", "Asset tags updated successfully.");
-
+		ModalDialogAssetInfo.ShowAlert("success", "Asset tags updated successfully.");
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
+		ModalDialogAssetInfo.Close();
 		var passAlertMessage = $"{SelectedAsset!.Value.ItemCode}'s tags updated successfully.";
 		var passAlertType = "success";
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+		NavigationManager.NavigateTo(nextUrl);
 	}
 }
