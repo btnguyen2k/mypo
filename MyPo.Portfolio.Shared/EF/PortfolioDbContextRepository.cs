@@ -10,7 +10,7 @@ namespace MyPo.Portfolio.Shared.EF;
 public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolioRepository
 {
 	private readonly ICacheFacade<IPortfolioRepository>? cache;
-	private ILogger<PortfolioDbContextRepository>? logger;
+	private readonly ILogger<PortfolioDbContextRepository>? logger;
 
 	public PortfolioDbContextRepository(
 		DbContextOptions<PortfolioDbContextRepository> options,

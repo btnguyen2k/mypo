@@ -13,12 +13,12 @@ public partial class CPortfolioAssets : CBase
 	[Parameter]
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
-	private decimal TotalCost => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a => a.AveragePrice*(decimal)a.Quantity) ?? 0;
+	private decimal TotalCost => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a => a.AveragePrice*a.Quantity) ?? 0;
 	private decimal TotalMarketValue => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a =>
 	{
 		if (LatestPricesMap.TryGetValue(a.Id, out var latestPrice))
 		{
-			return latestPrice * (decimal)a.Quantity;
+			return latestPrice * a.Quantity;
 		}
 		return 0;
 	}) ?? 0;
@@ -41,7 +41,7 @@ public partial class CPortfolioAssets : CBase
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
 
-	private bool StopRefreshQuotes = false;
+	private bool StopRefreshQuotes { get; set; } = false;
 
 	protected override void Dispose(bool disposing)
 	{
@@ -76,7 +76,7 @@ public partial class CPortfolioAssets : CBase
 						var latestPrice = (decimal)(quote.RegularMarketPrice ?? 0);
 						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
 						LatestPricesMap[asset.Id] = latestPrice;
-						var unsettledPnL = (latestPrice - asset.AveragePrice) * (decimal)asset.Quantity;
+						var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;
 						UnsettledPnLMap[asset.Id] = unsettledPnL;
 						UnsettledPnLPercentMap[asset.Id] = PortfolioUtils.CalculatePercentageChange(
 							asset.AveragePrice,
@@ -105,7 +105,7 @@ public partial class CPortfolioAssets : CBase
 			var myPortfolios = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
 			Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
 
-			var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+			var symbolsList = Assets.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
 		}
 	}
@@ -115,8 +115,8 @@ public partial class CPortfolioAssets : CBase
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
 		if (SelectedAsset != null)
 		{
-			SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset!.Value.MarketId).ToModel() ?? null;
-			AssetTags = SelectedAsset?.Tags ?? string.Empty;
+			SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.Value.MarketId).ToModel() ?? null;
+			AssetTags = SelectedAsset.Value.Tags ?? string.Empty;
 			ModalDialogAssetInfo.Open();
 			await Task.CompletedTask;
 		}

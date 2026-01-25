@@ -106,7 +106,7 @@ public sealed partial class PortfolioDbContextRepository
 		{
 			existingAsset.AveragePrice = 0.0m; // reset average price if quantity is zero
 		}
-		var _ = await UpdateAssetAsync(existingAsset, cancellationToken)
+		_ = await UpdateAssetAsync(existingAsset, cancellationToken)
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update owning asset.");
 	}
 
@@ -218,8 +218,9 @@ public sealed partial class PortfolioDbContextRepository
 		}
 		catch (Exception e)
 		{
+			logger?.LogError(e, "SettleTx - (Tx: {txid}) Failed to settle transaction.", tx.Id);
 			await transaction.RollbackAsync(cancellationToken);
-			throw e;
+			throw;
 		}
 	}
 }
