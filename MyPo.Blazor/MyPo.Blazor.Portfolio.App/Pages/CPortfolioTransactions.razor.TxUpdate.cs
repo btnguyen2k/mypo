@@ -40,19 +40,20 @@ public partial class CPortfolioTransactions
 
 	private async void BtnClickUpdateTxSave()
 	{
+		ModalDialogUpdateTx.ShowAlert("info", "Saving transaction...");
 		if (!ValidateTx())
 		{
 			return;
 		}
 
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.UpdateTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.UpdateMyPortfolioTxAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message ?? $"Error updating transaction '{TxId}'.");
+			ModalDialogUpdateTx.ShowAlert("danger", resp.Message ?? $"Error updating transaction '{TxId}'.");
 			return;
 		}
-		ShowAlert("success", "Transaction updated successfully. Navigating to portfolio page...");
+		ModalDialogUpdateTx.ShowAlert("success", "Transaction updated successfully. Navigating to portfolio page...");
 		var passAlertMessage = $"Transaction '{TxId}' updated successfully.";
 		var passAlertType = "success";
 		await Task.Delay(500);
@@ -67,6 +68,7 @@ public partial class CPortfolioTransactions
 
 	private async void BtnClickUpdateTxSettle()
 	{
+		ModalDialogUpdateTx.ShowAlert("info", "Settling transaction...");
 		if (!ValidateTx())
 		{
 			return;
@@ -74,27 +76,26 @@ public partial class CPortfolioTransactions
 
 		if (Tx.IsSettled)
 		{
-			ShowAlert("warning", "Transaction has already been settled.");
+			ModalDialogUpdateTx.ShowAlert("warning", "Transaction has already been settled.");
 			return;
 		}
 
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.SettleTransactionAsync(TxId, Tx, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.SettleMyPortfolioTxAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message ?? $"Error settling transaction '{TxId}'.");
+			ModalDialogUpdateTx.ShowAlert("danger", resp.Message ?? $"Error settling transaction '{TxId}'.");
 			return;
 		}
-		ShowAlert("success", "Transaction settled successfully. Navigating to portfolio page...");
+		ModalDialogUpdateTx.ShowAlert("success", "Transaction settled successfully. Navigating to portfolio page...");
 		var passAlertMessage = $"Transaction '{TxId}' settled successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogUpdateTx.Close();
-		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+		NavigationManager.NavigateTo(nextUrl);
 	}
 }

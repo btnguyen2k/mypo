@@ -68,6 +68,7 @@ public partial class CPortfolioTransactions
 
 	private async void BtnClickAddTxSave()
 	{
+		ModalDialogAddTx.ShowAlert("info", "Adding transaction...");
 		if (!ValidateTx())
 		{
 			return;
@@ -75,22 +76,21 @@ public partial class CPortfolioTransactions
 
 		Tx.PortfolioId = PortfolioId;
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.CreateTransactionAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.CreateMyPortfolioTxAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ShowAlert("danger", resp.Message ?? "Failed to add transaction.");
+			ModalDialogAddTx.ShowAlert("danger", resp.Message ?? "Failed to add transaction.");
 			return;
 		}
-		ShowAlert("success", "Transaction added successfully. Navigating to portfolio page...");
+		ModalDialogAddTx.ShowAlert("success", "Transaction added successfully. Navigating to portfolio page...");
 		var passAlertMessage = $"Transaction '{resp.Data.Id}' added successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogAddTx.Close();
-		CloseAlert();
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl, forceLoad: false);
+		NavigationManager.NavigateTo(nextUrl);
 	}
 }

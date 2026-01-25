@@ -11,6 +11,8 @@ public partial class PortfolioController
 	/// <summary>
 	/// Gets current user's portfolio assets.
 	/// </summary>
+	/// <param name="id">ID of the portfolio to get assets from.</param>
+	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS)]
 	public async ValueTask<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioAssets([FromRoute] string id)
 	{
@@ -38,9 +40,16 @@ public partial class PortfolioController
 		return ResponseOk(result);
 	}
 
+	/// <summary>
+	/// Updates an asset in current user's portfolio (only asset tags can be updated!).
+	/// </summary>
+	/// <param name="id">ID of the portfolio to update asset in.</param>
+	/// <param name="aid">ID of the asset to update.</param>
+	/// <param name="req">Request body containing updated asset details.</param>
+	/// <returns></returns>
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<AssetResp>>> UpdateAssetFromPortfolio([FromRoute] string id, [FromRoute] string aid, [FromBody] CreateOrUpdateAssetReq req)
+	public async ValueTask<ActionResult<ApiResp<AssetResp>>> UpdateMyPortfolioAsset([FromRoute] string id, [FromRoute] string aid, [FromBody] CreateOrUpdateAssetReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)

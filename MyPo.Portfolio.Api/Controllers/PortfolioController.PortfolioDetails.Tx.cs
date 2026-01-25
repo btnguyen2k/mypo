@@ -12,6 +12,8 @@ public partial class PortfolioController
 	/// <summary>
 	/// Gets current user's portfolio transactions.
 	/// </summary>
+	/// <param name="id">ID of the portfolio.</param>
+	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	public async ValueTask<ActionResult<ApiResp<IEnumerable<TransactionRecResp>>>> GetMyPortfolioTransactions([FromRoute] string id)
 	{
@@ -84,9 +86,15 @@ public partial class PortfolioController
 		return (reqTx, null);
 	}
 
+	/// <summary>
+	/// Creates a new transaction record and Adds it to current user's portfolio.
+	/// </summary>
+	/// <param name="id">ID of the portfolio to add transaction record to.</param>
+	/// <param name="req">Details of the transaction record to add.</param>
+	/// <returns></returns>
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TRANSACTIONS)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> AddTransactionToPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> AddTransactionToMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -132,9 +140,16 @@ public partial class PortfolioController
 		return ResponseOk(TransactionRecResp.BuildFrom(tx));
 	}
 
+	/// <summary>
+	/// Updates an existing transaction record from current user's portfolio.
+	/// </summary>
+	/// <param name="id">ID of the portfolio.</param>
+	/// <param name="txid">ID of the transaction record.</param>
+	/// <param name="req">Details of the transaction record to update.</param>
+	/// <returns></returns>
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> UpdateTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> UpdateMyPortfolioTransaction([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -188,9 +203,15 @@ public partial class PortfolioController
 		return ResponseOk(TransactionRecResp.BuildFrom(existingTx));
 	}
 
+	/// <summary>
+	/// Deletes an existing transaction record from current user's portfolio.
+	/// </summary>
+	/// <param name="id">ID of the portfolio.</param>
+	/// <param name="txid">ID of the transaction record.</param>
+	/// <returns></returns>
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> DeleteTransactionFromPortfolio([FromRoute] string id, [FromRoute] string txid)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> DeleteMyPortfolioTransaction([FromRoute] string id, [FromRoute] string txid)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -227,9 +248,16 @@ public partial class PortfolioController
 		}
 	}
 
+	/// <summary>
+	/// Settles an existing transaction record from current user's portfolio.
+	/// </summary>
+	/// <param name="id">ID of the portfolio.</param>
+	/// <param name="txid">ID of the transaction record.</param>
+	/// <param name="req">Details of the transaction record to settle.</param>
+	/// <returns></returns>
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLE_TX_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> SettleTransactionInPortfolio([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
+	public async ValueTask<ActionResult<ApiResp<TransactionRecResp>>> SettleMyPortfolioTransaction([FromRoute] string id, [FromRoute] string txid, [FromBody] CreateOrUpdateTransactionRecReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)

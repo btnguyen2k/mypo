@@ -53,6 +53,7 @@ public partial class UsersController
 	/// <param name="passwordValidator"></param>
 	/// <param name="passwordHasher"></param>
 	/// <param name="userManager"></param>
+	/// <param name="appConfig"></param>
 	/// <returns></returns>
 	/// <response code="200">User created successfully.</response>
 	/// <response code="400">Input validation failed (e.g. user already exists).</response>

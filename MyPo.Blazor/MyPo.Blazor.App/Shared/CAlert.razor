@@ -39,7 +39,6 @@ Sample usage:
 		{
 			builder.AddContent(0, alertMessage);
 		};
-		@* isVisible = true; *@
 		StateHasChanged();
 		if (autoCloseAfterMs > 0)
 		{
@@ -64,13 +63,10 @@ Sample usage:
 		this.Type = string.Empty;
 		this.ChildContent = builder => { };
 		this.autoCloseTimestamp = null;
-		@* isVisible = false; *@
 		StateHasChanged();
 	}
 
-    private string icon
-    {
-        get => Type.ToLower() switch
+    private string icon => Type.ToLower() switch
         {
             "warning" => "bi-exclamation-triangle",
             "danger" => "x-circle-fill",
@@ -78,10 +74,7 @@ Sample usage:
 			"wait" or "waiting" => "bi-hourglass-split",
             _ => "bi-info-circle"
         };
-    }
-    private string iconClass
-    {
-        get => Type.ToLower() switch
+    private string iconClass => Type.ToLower() switch
         {
             "warning" => "flex-shrink-0 me-2 text-warning",
             "danger" => "flex-shrink-0 me-2 text-danger",
@@ -90,10 +83,7 @@ Sample usage:
             "secondary" => "flex-shrink-0 me-2 text-secondary",
             _ => "flex-shrink-0 me-2 text-info"
         };
-    }
-    private string alertClass
-    {
-        get => Type.ToLower() switch
+    private string alertClass => Type.ToLower() switch
         {
             "warning" => "alert-warning" + (isVisible ? " show" : " d-none"),
             "danger" => "alert-danger" + (isVisible ? " show" : " d-none"),
@@ -102,5 +92,4 @@ Sample usage:
             "secondary" => "alert-secondary" + (isVisible ? " show" : " d-none"),
             _ => "alert-info" + (isVisible ? " show" : " d-none"),
         };
-    }
 }
