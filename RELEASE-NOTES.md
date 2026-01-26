@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-01-26 - v0.2.2
+
+### Fixed/Improvements
+
+- (Patch) Fix Docker build.
+
 ## 2026-01-25 - v0.2.1
 
 ### Fixed/Improvements

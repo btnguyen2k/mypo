@@ -9,6 +9,9 @@
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 
     <UserSecretsId>fa9f8b33-d379-4187-8cbb-604ddcb434e6</UserSecretsId>
+
+     <!-- Force inclusion of Blazor framework files -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <ItemGroup>
