@@ -7,6 +7,9 @@
     <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+
+    <!-- Force inclusion of Blazor framework files -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <ItemGroup>

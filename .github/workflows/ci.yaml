@@ -111,6 +111,13 @@ jobs:
             echo "❌ Health check failed with status code $STATUS_CODE"
             exit 1
           fi
+          STATUS_OUTPUT=$(curl http://localhost:1234/_framework/blazor.web.js)
+          echo "ℹ️ Blazor check output: $STATUS_OUTPUT"
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:1234/_framework/blazor.web.js)
+          if [ "$STATUS_CODE" -ne 200 ]; then
+            echo "❌ Blazor check failed with status code $STATUS_CODE"
+            exit 1
+          fi
 
   # TestDockerfileWindows:
   #   needs: BuildAndTest
