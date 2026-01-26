@@ -10,8 +10,9 @@ public partial class MyPortfolioAdd : BasePage
 {
 	private string ParentPortfolioId { get; set; } = string.Empty;
 	private string Name { get; set; } = string.Empty;
-	private string Description { get; set; } = string.Empty;
 	private string Currency { get; set; } = string.Empty;
+	private string Description { get; set; } = string.Empty;
+	private string Viewers { get; set; } = string.Empty;
 
 	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
 
@@ -46,12 +47,18 @@ public partial class MyPortfolioAdd : BasePage
 			return;
 		}
 
+		var viewers = new HashSet<string>(Viewers?.Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
+
 		var req = new CreateOrUpdatePortfolioRecReq
 		{
 			Name = Name.Trim(),
 			Description = Description.Trim(),
 			Currency = Currency.ToUpper().Trim(),
 			ParentId = ParentPortfolioId,
+			Metadata = new()
+			{
+				Viewers = viewers,
+			},
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.CreatePortfolioAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);

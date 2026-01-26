@@ -83,6 +83,7 @@ public partial class PortfolioController
 			Currency = req.Currency.ToUpper().Trim(),
 			OwnerUserId = currentUser.Id,
 			IsActive = true,
+			Metadata = req.Metadata,
 		};
 		var result = await PortfolioRepository.CreatePortfolioAsync(portfolioRec);
 		if (result == null)

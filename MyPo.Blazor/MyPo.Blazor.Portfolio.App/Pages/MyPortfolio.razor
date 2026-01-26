@@ -117,14 +117,6 @@
 							}
                         </table>
                     }
-					@if (!HideUI)
-					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="context2">
-								<button class="btn btn-primary btn-sm float-end" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
-							</ChildContent>
-						</AuthorizeView>
-					}
                 </div>
             </div>
 
