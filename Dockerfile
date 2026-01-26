@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG DOTNETVERBUILD=8.0
-ARG DOTNETVERRUN=10.0
+ARG DOTNETVERRUN=8.0
 ARG BASEIMAGE=alpine
 
 # Use --platform=$BUILDPLATFORM in order to correctly pull the base image for the build platform.
@@ -16,8 +16,9 @@ ARG TARGETPLATFORM
 
 # Build the application.
 RUN echo "Running on $BUILDPLATFORM, building for $TARGETPLATFORM ($TARGETARCH)"
-RUN dotnet restore -a $TARGETARCH
-RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
+# RUN dotnet restore -a $TARGETARCH
+# RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
+RUN dotnet publish -a $TARGETARCH --property:PublishDir=/app MyPo.Blazor/MyPo.Blazor/MyPo.Blazor.csproj
 
 ################################################################################
 
@@ -25,6 +26,7 @@ RUN dotnet publish -a $TARGETARCH --no-restore --property:PublishDir=/app
 # https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERRUN-$BASEIMAGE AS final
+# FROM mcr.microsoft.com/dotnet/sdk:$DOTNETVERRUN-$BASEIMAGE AS final
 WORKDIR /app
 
 RUN apk add --no-cache tzdata
