@@ -71,7 +71,7 @@ public partial class MyPortfolioAdd : BasePage
 		ShowAlert("success", "Portfolio created successfully. Navigating to my portfolio page...");
 		var passAlertMessage = $"Portfolio '{req.Name}' created successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}";
 		if (openAfterCreate)
 		{

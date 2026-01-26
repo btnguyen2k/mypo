@@ -140,6 +140,7 @@ public partial class PortfolioController
 		existingPortfolio.Description = req.Description?.Trim() ?? string.Empty;
 		existingPortfolio.Currency = req.Currency.ToUpper().Trim();
 		existingPortfolio.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
+		existingPortfolio.Metadata = req.Metadata;
 
 		existingPortfolio = await PortfolioRepository.UpdatePortfolioAsync(existingPortfolio);
 		if (existingPortfolio == null)
