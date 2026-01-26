@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
@@ -34,5 +35,13 @@ public sealed class PortfolioRec : Entity<string>
 
 	public bool IsActive { get; set; } = true;
 
+	public PortfolioMetadata? Metadata { get; set; }
+
 	public override string ToString() => Name ?? string.Empty;
+}
+
+public sealed class PortfolioMetadata
+{
+	[JsonPropertyName("viewers"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public ISet<string>? Viewers { get; set; }
 }
