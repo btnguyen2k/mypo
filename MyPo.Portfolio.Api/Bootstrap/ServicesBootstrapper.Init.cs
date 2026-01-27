@@ -14,20 +14,19 @@ sealed class YFinanceInitializer(
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Initializing YFinance client...");
-
-		using (var scope = serviceProvider.CreateScope())
-		{
-			var yahooFinanceService = scope.ServiceProvider.GetRequiredService<IYahooFinanceService>();
-			try
+		await Task.Run(async () => {
+			using (var scope = serviceProvider.CreateScope())
 			{
-				await yahooFinanceService.GetQuoteAsync("AAPL", cancellationToken);
+				var yahooFinanceService = scope.ServiceProvider.GetRequiredService<IYahooFinanceService>();
+				try
+				{
+					await yahooFinanceService.GetQuoteAsync("AAPL", cancellationToken);
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Error initializing YFinance client: {Message}", ex.Message);
+				}
 			}
-			catch (Exception ex)
-			{
-				logger.LogError(ex, "Error initializing YFinance client: {Message}", ex.Message);
-			}
-		}
-
-		await Task.CompletedTask;
+		}, cancellationToken);
 	}
 }
