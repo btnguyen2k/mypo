@@ -55,6 +55,12 @@ public partial class MyPortfolioModify : BasePage
 			SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 			if (SelectedPortfolio == null)
 			{
+				ShowAlert("danger", "Portfolio not found.");
+				return;
+			}
+			if (SelectedPortfolio.OwnerUserId != CurrentUser?.Id)
+			{
+				ShowAlert("danger", "You do not have permission to modify this portfolio.");
 				return;
 			}
 			ParentPortfolioId = SelectedPortfolio.ParentId ?? string.Empty;
@@ -96,7 +102,7 @@ public partial class MyPortfolioModify : BasePage
 		}
 
 		var metadata = SelectedPortfolio!.Metadata ?? new();
-		metadata.Viewers = new HashSet<string>(Viewers?.Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
+		metadata.Viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
 
 		var req = new CreateOrUpdatePortfolioRecReq
 		{

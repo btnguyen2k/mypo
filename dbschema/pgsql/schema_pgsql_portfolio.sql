@@ -23,7 +23,7 @@ CREATE TABLE mypo_portfolio (
 CREATE INDEX idx_mypo_portfolio_owner_id ON mypo_portfolio (owner_id);
 CREATE INDEX idx_mypo_portfolio_parent_id ON mypo_portfolio (parent_id);
 CREATE INDEX idx_mypo_portfolio_portfolio_metadata ON mypo_portfolio USING GIN (portfolio_metadata);
-CREATE INDEX idx_mypo_portfolio_portfolio_metadata_viewers ON mypo_portfolio ((portfolio_metadata->>'viewers'));
+CREATE INDEX idx_mypo_portfolio_portfolio_metadata_viewers ON mypo_portfolio ((portfolio_metadata->'viewers'));
 
 CREATE TABLE mypo_transactions (
     tx_id varchar(48) NOT NULL,

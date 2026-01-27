@@ -25,7 +25,8 @@ public partial class PortfolioController
 		}
 
 		var result = new List<PortfolioRecResp>();
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		// var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserAsync(currentUser);
 		foreach (var portfolio in myPortfolioList)
 		{
 			result.Add(PortfolioRecResp.BuildFrom(portfolio));

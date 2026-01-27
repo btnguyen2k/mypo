@@ -1,5 +1,6 @@
 ﻿using MyPo.Portfolio.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using MyPo.Shared.Identity;
 
 namespace MyPo.Portfolio.Shared.EF;
 
@@ -14,6 +15,20 @@ public sealed partial class PortfolioDbContextRepository
 			.Where(pr => pr.OwnerUserId == userId)
 			.OrderBy(pr => pr.Name)
 			.ToListAsync(cancellationToken);
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserAsync(MyPoUser user, CancellationToken cancellationToken = default)
+	{
+		var ownedPortfolios = await PortfolioRecStore.AsNoTracking()
+			.Where(pr => pr.OwnerUserId == user.Id)
+			.OrderBy(pr => pr.Name)
+			.ToListAsync(cancellationToken);
+		var viewerPortfolios = await PortfolioRecStore.AsNoTracking()
+			.Where(pr => Microsoft.EntityFrameworkCore.EF.Functions.JsonContains(pr.Metadata!.Viewers!, $"\"{user.Email}\""))
+			.OrderBy(pr => pr.Name)
+			.ToListAsync(cancellationToken);
+		return ownedPortfolios.Concat(viewerPortfolios).DistinctBy(pr => pr.Id);
 	}
 
 	/// <inheritdoc />

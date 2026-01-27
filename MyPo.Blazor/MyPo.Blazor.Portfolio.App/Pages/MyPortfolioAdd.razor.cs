@@ -47,7 +47,7 @@ public partial class MyPortfolioAdd : BasePage
 			return;
 		}
 
-		var viewers = new HashSet<string>(Viewers?.Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
+		var viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
 
 		var req = new CreateOrUpdatePortfolioRecReq
 		{

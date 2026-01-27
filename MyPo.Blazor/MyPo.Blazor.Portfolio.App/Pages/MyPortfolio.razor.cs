@@ -70,6 +70,16 @@ public partial class MyPortfolio : BasePage
 	private void BtnClickDelete(string pid)
 	{
 		SelectedPortfolio = MyPortfolioMap?[pid];
+		if (SelectedPortfolio == null)
+		{
+			ShowAlert("danger", "Selected portfolio not found.");
+			return;
+		}
+		if (SelectedPortfolio.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You are not authorized to delete this portfolio.");
+			return;
+		}
 		ModalDialogDelete.Open();
 	}
 
