@@ -56,6 +56,11 @@ public partial class CPortfolioTransactions
 
 	private void BtnClickAddTx()
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to add transactions to this portfolio.");
+			return;
+		}
 		PrepareAddTx();
 		ModalDialogAddTx.Open();
 	}
@@ -63,7 +68,7 @@ public partial class CPortfolioTransactions
 	private void BtnClickAddTxClose()
 	{
 		ModalDialogAddTx.Close();
-		CloseAlert();
+		ModalDialogAddTx.CloseAlert();
 	}
 
 	private async void BtnClickAddTxSave()

@@ -25,7 +25,8 @@ public partial class PortfolioController
 		}
 
 		var result = new List<PortfolioRecResp>();
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		// var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserAsync(currentUser);
 		foreach (var portfolio in myPortfolioList)
 		{
 			result.Add(PortfolioRecResp.BuildFrom(portfolio));
@@ -83,6 +84,7 @@ public partial class PortfolioController
 			Currency = req.Currency.ToUpper().Trim(),
 			OwnerUserId = currentUser.Id,
 			IsActive = true,
+			Metadata = req.Metadata,
 		};
 		var result = await PortfolioRepository.CreatePortfolioAsync(portfolioRec);
 		if (result == null)
@@ -139,6 +141,7 @@ public partial class PortfolioController
 		existingPortfolio.Description = req.Description?.Trim() ?? string.Empty;
 		existingPortfolio.Currency = req.Currency.ToUpper().Trim();
 		existingPortfolio.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
+		existingPortfolio.Metadata = req.Metadata;
 
 		existingPortfolio = await PortfolioRepository.UpdatePortfolioAsync(existingPortfolio);
 		if (existingPortfolio == null)

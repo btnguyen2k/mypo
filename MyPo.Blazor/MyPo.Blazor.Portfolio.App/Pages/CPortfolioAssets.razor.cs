@@ -37,7 +37,9 @@ public partial class CPortfolioAssets : CBase
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
-	private PortfolioRecResp? Portfolio { get; set; }
+
+	[Parameter]
+	public PortfolioRecResp? Portfolio { get; set; }
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
 
@@ -99,12 +101,11 @@ public partial class CPortfolioAssets : CBase
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
-		if (firstRender && Assets != null && Markets != null && !string.IsNullOrEmpty(PortfolioId))
+		if (firstRender && Assets != null && Markets != null && !string.IsNullOrEmpty(PortfolioId) && Portfolio != null)
 		{
-			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var myPortfolios = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
-
+			// var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			// var myPortfolios = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			// Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
 			var symbolsList = Assets.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
 		}

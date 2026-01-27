@@ -44,12 +44,12 @@
                         <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
                             <thead>
                                 <tr>
-									<th scope="col" class="text-center">&nbsp;</th>
-                                    <th scope="col" class="text-center">Currency</th>
+									<th scope="col" class="text-center w-auto">&nbsp;</th>
+                                    <th scope="col" class="text-center w-auto">Currency</th>
                                     <th scope="col" class="text-center">Name</th>
-									<th scope="col" class="text-center">Investment</th>
-									<th scope="col" class="text-center">Return</th>
-									<th scope="col" class="text-center">Actions</th>
+									<th scope="col" class="text-center w-auto">Investment</th>
+									<th scope="col" class="text-center w-auto">Return</th>
+									<th scope="col" class="text-center w-auto">Actions</th>
                                 </tr>
                             </thead>
 							@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
@@ -66,23 +66,27 @@
 									@foreach (var item in MyActivePortfolioList)
 									{
 										<tr>
-											<td class="text-center"><BIcon icon="diagram-2" /></td>
-											<td class="text-center">@item.Currency</td>
+											<td class="text-center w-auto"><BIcon icon="diagram-2" /></td>
+											<td class="text-center w-auto">@item.Currency</td>
 											<td>
 												<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(item.Id))">@item.Name</button>
 												<br/>
 												<span class="small">@item.Description</span>
 											</td>
-											<td>-</td>
-											<td>-</td>
-											<td class="text-center">
+											<td class="text-center w-auto">-</td>
+											<td class="text-center w-auto">-</td>
+											<td class="text-center w-auto">
 												<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
 													<CIcon icon="cil-info" />
 												</button>
-												<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(item.Id))">
+												<button class="btn btn-sm @(item.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+														disabled="@(item.OwnerUserId!=CurrentUser?.Id)"
+														@onclick="(()=>BtnClickModify(item.Id))">
 													<CIcon icon="cil-pencil" />
 												</button>
-												<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(item.Id))">
+												<button class="btn btn-sm @(item.OwnerUserId==CurrentUser?.Id?"btn-outline-danger":"btn-outline-secondary")"
+														disabled="@(item.OwnerUserId!=CurrentUser?.Id)"
+														@onclick="(()=>BtnClickDelete(item.Id))">
 													<CIcon icon="cil-x" />
 												</button>
 											</td>
@@ -90,16 +94,16 @@
 										@foreach (var child in item.Children??[])
 										{
 											<tr>
-												<td class="text-center">&nbsp;@*↳*@</td>
-												<td class="text-center">@child.Currency</td>
+												<td class="text-center w-auto">&nbsp;@*↳*@</td>
+												<td class="text-center w-auto">@child.Currency</td>
 												<td>
 													@child.Name
 													<br/>
 													<span class="small">@child.Description</span>
 												</td>
-												<td>-</td>
-												<td>-</td>
-												<td class="text-center">
+												<td class="text-center w-auto">-</td>
+												<td class="text-center w-auto">-</td>
+												<td class="text-center w-auto">
 													<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(child.Id))">
 														<CIcon icon="cil-info" />
 													</button>
@@ -117,14 +121,6 @@
 							}
                         </table>
                     }
-					@if (!HideUI)
-					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="context2">
-								<button class="btn btn-primary btn-sm float-end" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
-							</ChildContent>
-						</AuthorizeView>
-					}
                 </div>
             </div>
 
@@ -138,28 +134,28 @@
 						<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
 							<thead>
 								<tr>
-									<th scope="col" class="text-center">&nbsp;</th>
-									<th scope="col" class="text-center">Currency</th>
+									<th scope="col" class="text-center w-auto">&nbsp;</th>
+									<th scope="col" class="text-center w-auto">Currency</th>
 									<th scope="col" class="text-center">Name</th>
-									<th scope="col" class="text-center">Investment</th>
-									<th scope="col" class="text-center">Return</th>
-									<th scope="col" class="text-center">Actions</th>
+									<th scope="col" class="text-center w-auto">Investment</th>
+									<th scope="col" class="text-center w-auto">Return</th>
+									<th scope="col" class="text-center w-auto">Actions</th>
 								</tr>
 							</thead>
 							<tbody>
 								@foreach (var item in MyInactivePortfolioList)
 								{
 									<tr>
-										<td class="text-center"><BIcon icon="diagram-2" /></td>
-										<td class="text-center">@item.Currency</td>
+										<td class="text-center w-auto"><BIcon icon="diagram-2" /></td>
+										<td class="text-center w-auto">@item.Currency</td>
 										<td>
 											@item.Name
 											<br/>
 											<span class="small">@item.Description</span>
 										</td>
-										<td>-</td>
-										<td>-</td>
-										<td class="text-center">
+										<td class="text-center w-auto">-</td>
+										<td class="text-center w-auto">-</td>
+										<td class="text-center w-auto">
 											<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
 												<CIcon icon="cil-info" />
 											</button>

@@ -125,7 +125,7 @@ public partial class UsersController
 		var uniqueClaims = (req.Claims?.Distinct() ?? []).Select(c => new Claim(c.Type, c.Value)).ToList();
 		if (uniqueClaims.Count > 0)
 		{
-			var invalidClaim = uniqueClaims.Where(c => !BuiltinClaims.ALL_CLAIMS.Contains(c, ClaimEqualityComparer.INSTANCE)).First();
+			var invalidClaim = uniqueClaims.Where(c => !BuiltinClaims.ALL_CLAIMS.Contains(c, ClaimEqualityComparer.INSTANCE)).FirstOrDefault();
 			if (invalidClaim != null)
 			{
 				return ResponseNoData(400, $"Claim '{invalidClaim.Type}:{invalidClaim.Value}' is not valid.");
@@ -136,7 +136,7 @@ public partial class UsersController
 		var uniqueRoles = (req.Roles?.Distinct() ?? []).Select(r => new KeyValuePair<string, MyPoRole?>(r, IdentityRepository.GetRoleByIDAsync(r).Result)).ToList();
 		if (uniqueRoles.Count > 0)
 		{
-			var invalidRole = uniqueRoles.Where(r => r.Value == null).First();
+			var invalidRole = uniqueRoles.Where(r => r.Value == null).FirstOrDefault();
 			if (invalidRole.Value != null)
 			{
 				return ResponseNoData(400, $"Role '{invalidRole.Key}' does not exist.");
@@ -239,7 +239,7 @@ public partial class UsersController
 		var uniqueClaimsNew = (req.Claims?.Distinct() ?? []).Select(c => new Claim(c.Type, c.Value)).ToList();
 		if (uniqueClaimsNew.Count > 0)
 		{
-			var invalidClaim = uniqueClaimsNew.Where(c => !BuiltinClaims.ALL_CLAIMS.Contains(c, ClaimEqualityComparer.INSTANCE)).First();
+			var invalidClaim = uniqueClaimsNew.Where(c => !BuiltinClaims.ALL_CLAIMS.Contains(c, ClaimEqualityComparer.INSTANCE)).FirstOrDefault();
 			if (invalidClaim != null)
 			{
 				return ResponseNoData(400, $"Claim '{invalidClaim.Type}:{invalidClaim.Value}' is not valid.");
@@ -250,7 +250,7 @@ public partial class UsersController
 		var uniqueRolesNew = (req.Roles?.Distinct() ?? []).Select(r => new KeyValuePair<string, MyPoRole?>(r, IdentityRepository.GetRoleByIDAsync(r).Result)).ToList();
 		if (uniqueRolesNew.Count > 0)
 		{
-			var invalidRole = uniqueRolesNew.Where(r => r.Value == null).First();
+			var invalidRole = uniqueRolesNew.Where(r => r.Value == null).FirstOrDefault();
 			if (invalidRole.Value != null)
 			{
 				return ResponseNoData(400, $"Role '{invalidRole.Key}' does not exist.");

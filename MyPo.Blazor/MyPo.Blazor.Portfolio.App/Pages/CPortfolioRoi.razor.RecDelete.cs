@@ -17,6 +17,11 @@ public partial class CPortfolioRoi
 
 	private void BtnClickDeleteRecord(string rid)
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to delete ROI records from this portfolio.");
+			return;
+		}
 		RoiRecResp? selectedRec = RoiRecordsMap.TryGetValue(rid, out var rec) ? rec : null;
 		if (selectedRec != null)
 		{
@@ -32,7 +37,7 @@ public partial class CPortfolioRoi
 	private void BtnClickDeleteRecordClose()
 	{
 		ModalDialogDeleteRecord.Close();
-		CloseAlert();
+		ModalDialogDeleteRecord.CloseAlert();
 	}
 
 	private async void BtnClickDeleteRecordConfirm()

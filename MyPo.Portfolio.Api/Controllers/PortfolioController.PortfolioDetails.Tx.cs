@@ -25,10 +25,10 @@ public partial class PortfolioController
 		}
 
 		// validate portfolio, must be current user's portfolio
-		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
+		var existingPortfolio = await GetPortfolioIfAccessible(currentUser, id);
 		if (existingPortfolio == null)
 		{
-			return ResponseNoData(404, "Portfolio not found.");
+			return ResponseNoData(404, "Portfolio not found or not accessible.");
 		}
 
 		var txList = await PortfolioRepository.GetTransactionsByPortfolioIdAsync(id);

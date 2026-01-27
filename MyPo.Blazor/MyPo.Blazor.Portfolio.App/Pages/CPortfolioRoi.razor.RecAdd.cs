@@ -27,6 +27,11 @@ public partial class CPortfolioRoi
 
 	private void BtnClickAddRecord()
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to add ROI records to this portfolio.");
+			return;
+		}
 		PrepareAddRecord();
 		ModalDialogAddRecord.Open();
 	}
@@ -34,7 +39,7 @@ public partial class CPortfolioRoi
 	private void BtnClickAddRecordClose()
 	{
 		ModalDialogAddRecord.Close();
-		CloseAlert();
+		ModalDialogAddRecord.CloseAlert();
 	}
 
 	private async void BtnClickAddRecordSave()

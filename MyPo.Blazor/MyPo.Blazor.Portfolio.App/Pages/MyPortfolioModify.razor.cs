@@ -10,16 +10,16 @@ public partial class MyPortfolioModify : BasePage
 {
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
+	private PortfolioRecResp? SelectedPortfolio { get; set; }
 
 	private string ParentPortfolioId { get; set; } = string.Empty;
 	private string Name { get; set; } = string.Empty;
 	private string Description { get; set; } = string.Empty;
 	private string Currency { get; set; } = string.Empty;
 	private bool IsActive { get; set; } = true;
+	private string Viewers { get; set; } = string.Empty;
 
 	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
-	// private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
-	// private PortfolioRecResp? SelectedPortfolio { get; set; }
 
 	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -52,16 +52,23 @@ public partial class MyPortfolioModify : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-			var portfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
-			if (portfolio == null)
+			SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
+			if (SelectedPortfolio == null)
 			{
+				ShowAlert("danger", "Portfolio not found.");
 				return;
 			}
-			ParentPortfolioId = portfolio.ParentId ?? string.Empty;
-			Name = portfolio.Name;
-			Description = portfolio.Description ?? string.Empty;
-			Currency = portfolio.Currency;
-			IsActive = portfolio.IsActive;
+			if (SelectedPortfolio.OwnerUserId != CurrentUser?.Id)
+			{
+				ShowAlert("danger", "You do not have permission to modify this portfolio.");
+				return;
+			}
+			ParentPortfolioId = SelectedPortfolio.ParentId ?? string.Empty;
+			Name = SelectedPortfolio.Name;
+			Description = SelectedPortfolio.Description ?? string.Empty;
+			Currency = SelectedPortfolio.Currency;
+			IsActive = SelectedPortfolio.IsActive;
+			Viewers = string.Join(", ", SelectedPortfolio.Metadata?.Viewers?.ToList() ?? []);
 
 			HideUI = false;
 			CloseAlert();
@@ -94,6 +101,9 @@ public partial class MyPortfolioModify : BasePage
 			return;
 		}
 
+		var metadata = SelectedPortfolio!.Metadata ?? new();
+		metadata.Viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
+
 		var req = new CreateOrUpdatePortfolioRecReq
 		{
 			Id = PortfolioId,
@@ -102,6 +112,7 @@ public partial class MyPortfolioModify : BasePage
 			Currency = Currency.ToUpper().Trim(),
 			ParentId = ParentPortfolioId,
 			IsActive = IsActive,
+			Metadata = metadata,
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.UpdateMyPortfolioAsync(PortfolioId, req, await GetAuthTokenAsync(), ApiBaseUrl);
@@ -114,7 +125,7 @@ public partial class MyPortfolioModify : BasePage
 		ShowAlert("success", "Portfolio updated successfully. Navigating to my portfolio page...");
 		var passAlertMessage = $"Portfolio '{req.Name}' updated successfully.";
 		var passAlertType = "success";
-		await Task.Delay(500);
+		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}");
 	}
 }

@@ -1,3 +1,5 @@
 # This file has been cleaned up post-releasing version 0.2.2.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+- (Feat) Portfolio's owner can manage who have view access to the Portfolio.
+- (Patch) Add AU/US/VN generic stock markets for tiemzone and currency purposes.

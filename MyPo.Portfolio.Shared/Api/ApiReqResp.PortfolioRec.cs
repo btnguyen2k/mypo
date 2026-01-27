@@ -21,6 +21,9 @@ public struct CreateOrUpdatePortfolioRecReq
 
 	[JsonPropertyName("is_active")]
 	public bool IsActive { get; set; }
+
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public PortfolioMetadata? Metadata { get; set; }
 }
 
 public sealed class PortfolioRecResp
@@ -36,8 +39,7 @@ public sealed class PortfolioRecResp
 			Currency = pr.Currency,
 			OwnerUserId = pr.OwnerUserId,
 			IsActive = pr.IsActive,
-			CreatedAt = pr.CreatedAt,
-			UpdatedAt = pr.UpdatedAt,
+			Metadata = pr.Metadata,
 		};
 	}
 
@@ -62,11 +64,8 @@ public sealed class PortfolioRecResp
 	[JsonPropertyName("is_active")]
 	public bool IsActive { get; set; }
 
-	[JsonPropertyName("created_at")]
-	public DateTimeOffset CreatedAt { get; set; }
-
-	[JsonPropertyName("updated_at")]
-	public DateTimeOffset UpdatedAt { get; set; }
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public PortfolioMetadata? Metadata { get; set; }
 
 	[JsonIgnore]
 	public SortedSet<PortfolioRecResp>? Children { get; set; }

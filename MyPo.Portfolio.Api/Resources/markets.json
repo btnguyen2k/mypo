@@ -1,4 +1,18 @@
 {
+  "us-ny": {
+    "code": "USNY",
+    "name": "US Stock Market (for timezone and currency purposes)",
+    "country": "USA",
+    "currency": "USD",
+    "currency_symbol": "$",
+    "price_scale": 1,
+    "timezone": "America/New_York",
+    "trading_hours": {
+      "open": "09:30",
+      "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
   "us-nasdaq": {
     "code": "NASDAQ",
     "name": "NASDAQ Stock Market",
@@ -27,6 +41,20 @@
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
+  "au-syd": {
+    "code": "AUSYD",
+    "name": "AU Stock Market (for timezone and currency purposes)",
+    "country": "Australia",
+    "currency": "AUD",
+    "currency_symbol": "A$",
+    "price_scale": 1,
+    "timezone": "Australia/Sydney",
+    "trading_hours": {
+      "open": "10:00",
+      "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
   "au-asx": {
     "code": "ASX",
     "name": "Australian Securities Exchange",
@@ -38,6 +66,20 @@
     "trading_hours": {
       "open": "10:00",
       "close": "16:00"
+    },
+    "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
+  },
+  "vn-vn": {
+    "code": "VNVN",
+    "name": "VN Stock Market (for timezone and currency purposes)",
+    "country": "Vietnam",
+    "currency": "VND",
+    "currency_symbol": "₫",
+    "price_scale": 1000,
+    "timezone": "Asia/Ho_Chi_Minh",
+    "trading_hours": {
+      "open": "09:00",
+      "close": "15:00"
     },
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },

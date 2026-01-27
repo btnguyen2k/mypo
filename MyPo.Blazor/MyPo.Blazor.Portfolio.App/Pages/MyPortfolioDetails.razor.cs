@@ -26,7 +26,7 @@ public partial class MyPortfolioDetails : BasePage
 		var apiRespPortfolio = await apiClient.GetMyPortfolioAsync(authToken, ApiBaseUrl);
 		if (apiRespPortfolio.Status != 200)
 		{
-			ShowAlert("danger", apiRespPortfolio.Message ?? $"Portfolio '{id}' not found.");
+			ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
 			return null;
 		}
 
