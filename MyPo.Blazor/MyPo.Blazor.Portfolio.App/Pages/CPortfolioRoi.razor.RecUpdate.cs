@@ -19,6 +19,11 @@ public partial class CPortfolioRoi
 
 	private void BtnClickUpdateRecord(string rid)
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to update ROI records in this portfolio.");
+			return;
+		}
 		RoiRecResp? selectedRec = RoiRecordsMap.TryGetValue(rid, out var rec) ? rec : null;
 		if (selectedRec != null)
 		{
@@ -34,7 +39,7 @@ public partial class CPortfolioRoi
 	private void BtnClickUpdateRecordClose()
 	{
 		ModalDialogUpdateRecord.Close();
-		CloseAlert();
+		ModalDialogUpdateRecord.CloseAlert();
 	}
 
 	private async void BtnClickUpdateRecordSave()

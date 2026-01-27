@@ -12,6 +12,8 @@ public partial class CPortfolioRoi : CBase
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
+	[Parameter]
+	public PortfolioRecResp? Portfolio { get; set; }
 
 	[Parameter]
 	public IEnumerable<RoiRecResp>? RoiRecords { get; set; }
@@ -38,15 +40,15 @@ public partial class CPortfolioRoi : CBase
         	await module.InvokeAsync<string>("InitDatetimePickers");
 		}
 
-		if (firstRender && !string.IsNullOrEmpty(PortfolioId) && RoiRecords != null)
-		{
-			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var pnlSummary = await apiClient.GetMyPortfolioPnlSummaryAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (pnlSummary.Status != 200)
-			{
-				ShowAlert("danger", pnlSummary.Message ?? "Failed to load portfolio PnL summary.");
-			}
-		}
+		// if (firstRender && !string.IsNullOrEmpty(PortfolioId) && Portfolio != null && RoiRecords != null)
+		// {
+		// 	var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		// 	var pnlSummary = await apiClient.GetMyPortfolioPnlSummaryAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
+		// 	if (pnlSummary.Status != 200)
+		// 	{
+		// 		ShowAlert("danger", pnlSummary.Message ?? "Failed to load portfolio PnL summary.");
+		// 	}
+		// }
 	}
 
 	private bool ValidateRoiRec()

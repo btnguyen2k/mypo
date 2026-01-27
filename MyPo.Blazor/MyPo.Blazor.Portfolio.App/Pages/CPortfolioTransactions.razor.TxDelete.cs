@@ -17,6 +17,11 @@ public partial class CPortfolioTransactions
 
 	private void BtnClickDeleteTx(string tid)
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to delete transactions from this portfolio.");
+			return;
+		}
 		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
 		if (selectedTx != null)
 		{
@@ -32,7 +37,7 @@ public partial class CPortfolioTransactions
 	private void BtnClickDeleteTxClose()
 	{
 		ModalDialogDeleteTx.Close();
-		CloseAlert();
+		ModalDialogDeleteTx.CloseAlert();
 	}
 
 	private async void BtnClickDeleteTxConfirm()

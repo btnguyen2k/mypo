@@ -23,11 +23,11 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		// validate portfolio, must be current user's portfolio
-		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
+		// validate portfolio
+		var existingPortfolio = await GetPortfolioIfAccessible(currentUser, id);
 		if (existingPortfolio == null)
 		{
-			return ResponseNoData(404, "Portfolio not found.");
+			return ResponseNoData(404, "Portfolio not found or not accessible.");
 		}
 
 		var assetList = await PortfolioRepository.GetAssetsByPortfolioIdAsync(id);

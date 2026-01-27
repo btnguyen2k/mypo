@@ -1,5 +1,15 @@
 # My Portfolio Tracker release notes
 
+## 2026-01-27 - v0.3.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Portfolio owner can manage who have view access to the Portfolio.
+
+### Fixed/Improvements
+
+- (Patch) Add AU/US/VN generic stock markets for timezone and currency purposes.
+
 ## 2026-01-26 - v0.2.2
 
 ### Fixed/Improvements

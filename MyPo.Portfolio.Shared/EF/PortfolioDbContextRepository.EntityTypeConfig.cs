@@ -2,6 +2,7 @@
 using MyPo.Shared.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace MyPo.Portfolio.Shared.EF;
 sealed class PortfolioRecEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioRec, string>
@@ -17,6 +18,12 @@ sealed class PortfolioRecEntityTypeConfiguration : GenericEntityTypeConfiguratio
 		builder.Property(p => p.Currency).HasColumnName("portfolio_currency").HasMaxLength(8);
 		builder.Property(p => p.OwnerUserId).HasColumnName("owner_id").HasMaxLength(48);
 		builder.Property(p => p.IsActive).HasColumnName("is_active");
+		builder.Property(p => p.Metadata).HasColumnName("portfolio_metadata")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+				v => JsonSerializer.Deserialize<PortfolioMetadata>(v, (JsonSerializerOptions?)null)
+			)
+			.HasColumnType("jsonb");
 		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
 		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
 		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();

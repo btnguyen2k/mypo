@@ -2,7 +2,7 @@ using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
-public class TransactionRec : Entity<string>
+public sealed class TransactionRec : Entity<string>
 {
 	public const string TXTYPE_BUY = "BUY";
 	public const string TXTYPE_SELL = "SELL";
@@ -26,6 +26,5 @@ public class TransactionRec : Entity<string>
 	public string? MarketId { get; set; }
 	public string? Notes { get; set; }
 	public bool IsSettled { get; set; } = false;
-
 	public decimal TotalFee => FeeTx + FeeTax + FeeOther;
 }

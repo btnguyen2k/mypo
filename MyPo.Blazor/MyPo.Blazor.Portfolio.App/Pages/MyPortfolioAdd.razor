@@ -37,34 +37,51 @@
 					@if (!HideUI)
 					{
 						<form>
-							<div class="form-floating mb-2">
-								<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
-									<option value="@(string.Empty)">-</option>
-									@foreach (var p in MyPortfolioTree??[])
-									{
-										<option value="@p.Id">@p.Name</option>
-									}
-								</select>
-								<label for="pParentId">Parent Portfolio:</label>
-							</div>
 							<div class="row mb-2">
-								<div class="col-md-8 col-sm-12">
+								<div class="col-md-4 col-sm-12 mb-2">
+									<div class="form-floating">
+										<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
+											<option value="@(string.Empty)">-</option>
+											@foreach (var p in MyPortfolioTree??[])
+											{
+												<option value="@p.Id">@p.Name</option>
+											}
+										</select>
+										<label for="pParentId">Parent Portfolio:</label>
+									</div>
+								</div>
+								<div class="col-md-4 col-sm-12">
 									<div class="form-floating">
 										<input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
-										<label for="pName">Name (*)</label>
+										<label for="pName">Name: (*)</label>
 									</div>
 								</div>
 								<div class="col-md-4 col-sm-12">
 									<div class="form-floating">
 										<input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
-										<label for="pCurrency">Currency (*)</label>
+										<label for="pCurrency">Currency: (*)</label>
 									</div>
 								</div>
 							</div>
-							<div class="form-floating mb-2">
-								<textarea type="text" class="form-control" id="pDesc" placeholder="Description" style="height: 100px;"
-									@bind-value:event="oninput" @bind-value="Description"></textarea>
-								<label for="pDesc">Description</label>
+							<div class="row mb-2">
+								<div class="col-12">
+									<div class="form-floating mb-2">
+										<textarea type="text" class="form-control" id="pDesc" placeholder="Description" style="height: 80px;"
+											@bind="Description"></textarea>
+											@* @bind-value:event="oninput" @bind-value="Description"></textarea> *@
+										<label for="pDesc">Description:</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mb-2">
+								<div class="col-12">
+									<div class="form-floating mb-2">
+										<textarea type="text" class="form-control" id="pViewers" placeholder="Comma-separated list of emails" style="height: 80px;"
+											@bind="Viewers"></textarea>
+											@* @bind-value:event="oninput" @bind-value="Description"></textarea> *@
+										<label for="pViewers">People who can view my portfolio:</label>
+									</div>
+								</div>
 							</div>
 						</form>
 					}

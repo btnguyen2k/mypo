@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.WebUtilities;
+using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.App.Shared;
 
@@ -7,23 +8,25 @@ namespace MyPo.Blazor.App.Shared;
 /// </summary>
 public abstract class BasePage : BaseComponent
 {
-	protected const int ALERT_AUTO_CLOSE_MS = 15000;
-
-	protected string AlertMessage { get; set; } = string.Empty;
-	protected string AlertType { get; set; } = "info";
-	// protected bool AlertHasChanged {get; set; } = false;
-	// protected DateTimeOffset? AlertAutoCloseTimestamp { get; set; } = null;
 	protected bool HideUI { get; set; } = false;
 
+	protected UserResp? CurrentUser { get; set; }
+
+	/// <inheritdoc />
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		var userResp = await ApiClient.GetMyInfoAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+		CurrentUser = userResp.Status == 200 ? userResp.Data : null;
+	}
+
+	protected const int ALERT_AUTO_CLOSE_MS = 15000;
 	protected CAlert? Alert { get; set; } = null;
 
 	protected void CloseAlert()
 	{
 		if (Alert == null) return;
 		Alert.Hide();
-		// AlertMessage = string.Empty;
-		// AlertHasChanged = false;
-		// AlertAutoCloseTimestamp = null;
 		StateHasChanged();
 	}
 
@@ -31,29 +34,6 @@ public abstract class BasePage : BaseComponent
 	{
 		if (Alert == null) return;
 		Alert.Show(type, message, autoCloseAfterMs);
-		// var oldAlertType = AlertType;
-		// var oldAlertMessage = AlertMessage;
-		// AlertType = type;
-		// AlertMessage = message;
-		// if (autoCloseAfterMs > 0)
-		// {
-		// 	AlertAutoCloseTimestamp = DateTimeOffset.Now.AddMilliseconds(autoCloseAfterMs);
-		// 	Task.Run(async () =>
-		// 	{
-		// 		await Task.Delay(autoCloseAfterMs);
-		// 		if (AlertAutoCloseTimestamp != null && AlertAutoCloseTimestamp.Value <= DateTimeOffset.Now)
-		// 		{
-		// 			CloseAlert();
-		// 		}
-		// 	});
-		// }
-		// else
-		// {
-		// 	AlertAutoCloseTimestamp = null;
-		// }
-		// AlertHasChanged = !String.IsNullOrEmpty(oldAlertMessage)
-		// 	&& (String.Compare(oldAlertMessage, message, MyPo.Shared.Globals.StringComparison) != 0
-		// 		|| String.Compare(oldAlertType, type, MyPo.Shared.Globals.StringComparison) != 0);
 		StateHasChanged();
 	}
 
