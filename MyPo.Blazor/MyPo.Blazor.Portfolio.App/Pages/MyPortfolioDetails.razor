@@ -19,7 +19,7 @@
     </li>
 </SectionContent>
 
-<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+<AuthorizeView>
 	<Authorizing>
         <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
     </Authorizing>
@@ -56,6 +56,7 @@
 						<div class="tab-content" id="nav-tabContent">
 							<div class="tab-pane fade @(ActiveTab == TabIdHoldings ? "show active" : "")" id="nav-holdings" role="tabpanel" aria-labelledby="@TabIdHoldings" tabindex="0">
 								<CPortfolioAssets
+									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									Assets="@(Assets)"
 									Markets="@(Markets)"
@@ -63,12 +64,14 @@
 							</div>
 							<div class="tab-pane fade @(ActiveTab == TabIdTransactions ? "show active" : "")" id="nav-transactions" role="tabpanel" aria-labelledby="@TabIdTransactions" tabindex="0">
 								<CPortfolioTransactions
+									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									Transactions="@(Transactions)"
 									Markets="@(Markets)" />
 							</div>
 							<div class="tab-pane fade @(ActiveTab == TabIdRoi ? "show active" : "")" id="nav-roi" role="tabpanel" aria-labelledby="@TabIdRoi" tabindex="0">
 								<CPortfolioRoi
+									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									RoiRecords="@(RoiRecords)"
 									Markets="@(Markets)" />

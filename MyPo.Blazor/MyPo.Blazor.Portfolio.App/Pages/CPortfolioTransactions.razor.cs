@@ -18,6 +18,8 @@ public partial class CPortfolioTransactions : CBase
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
+	[Parameter]
+	public PortfolioRecResp? Portfolio { get; set; }
 
 	private CreateOrUpdateTransactionRecReq Tx = default!;
 	private string TxTime { get; set; } = string.Empty;

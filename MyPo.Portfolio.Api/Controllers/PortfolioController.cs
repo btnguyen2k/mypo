@@ -67,4 +67,14 @@ public partial class PortfolioController : ApiBaseController
 			? portfolioRec
 			: null;
 	}
+
+	private async ValueTask<PortfolioRec?> GetPortfolioIfAccessible(MyPoUser user, string portfolioId)
+	{
+		var portfolioRec = await PortfolioRepository.GetPortfolioByIdAsync(portfolioId);
+		return portfolioRec != null
+			&& (portfolioRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+				|| (portfolioRec.Metadata?.Viewers?.Contains(user.Email, StringComparer.OrdinalIgnoreCase)??false))
+			? portfolioRec
+			: null;
+	}
 }

@@ -20,6 +20,11 @@ public partial class CPortfolioTransactions
 
 	private void BtnClickUpdateTx(string tid)
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to update transactions in this portfolio.");
+			return;
+		}
 		TransactionRecResp? selectedTx = TransactionsMap.TryGetValue(tid, out var tx) ? tx : null;
 		if (selectedTx != null)
 		{
@@ -35,7 +40,7 @@ public partial class CPortfolioTransactions
 	private void BtnClickUpdateTxClose()
 	{
 		ModalDialogUpdateTx.Close();
-		CloseAlert();
+		ModalDialogUpdateTx.CloseAlert();
 	}
 
 	private async void BtnClickUpdateTxSave()

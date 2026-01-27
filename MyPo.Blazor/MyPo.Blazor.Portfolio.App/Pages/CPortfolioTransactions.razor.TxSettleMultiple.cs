@@ -17,17 +17,15 @@ public partial class CPortfolioTransactions
 		{
 			SelectedTransactionsMap.Remove(key);
 		}
-		// foreach (var key in keys)
-		// {
-		// 	if (TransactionsMap.TryGetValue(key, out var tx) && tx.IsSettled)
-		// 	{
-		// 		SelectedTransactionsMap.Remove(key);
-		// 	}
-		// }
 	}
 
 	private void BtnClickSettleTxMultiple()
 	{
+		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
+		{
+			ShowAlert("danger", "You do not have permission to add transactions to this portfolio.");
+			return;
+		}
 		PrepareSettleTxMultiple();
 		ModalDialogSettleTxMultiple.Open();
 		if (SelectedTransactionsMap.Count == 0)
