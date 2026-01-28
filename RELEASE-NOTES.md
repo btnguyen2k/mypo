@@ -1,5 +1,12 @@
 # My Portfolio Tracker release notes
 
+## 2026-01-28 - v0.3.1
+
+### Fixed/Improvements
+
+- (Patch) MyPortfolio page: UI/UX improvement.
+- (Patch) MyPortfolio/AddTx+UpdateTx+DeleteTx pagex: UI/UX improvement.
+
 ## 2026-01-27 - v0.3.0
 
 ### Added/Refactoring/Deprecation
