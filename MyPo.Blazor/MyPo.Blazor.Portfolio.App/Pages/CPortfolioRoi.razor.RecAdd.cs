@@ -45,7 +45,7 @@ public partial class CPortfolioRoi
 	private async void BtnClickAddRecordSave()
 	{
 		ModalDialogAddRecord.ShowAlert("info", "Adding ROI record...");
-		if (!ValidateRoiRec())
+		if (!ValidateRoiRec(ModalDialogAddRecord))
 		{
 			return;
 		}

@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class CPortfolioTransactions : CBase
 {
 	public const string TX_DATETIME_FORMAT = "dd-MMM-yyyy HH:mm";
+	public const string TX_DATETIME_FORMAT_2 = "dd-MM-yyyy HH:mm";
+	public const string TX_DATETIME_FORMAT_3 = "dd-MMMM-yyyy HH:mm";
 
 	[Parameter]
 	public IEnumerable<TransactionRecResp>? Transactions { get; set; }
@@ -40,25 +44,43 @@ public partial class CPortfolioTransactions : CBase
 		}
 	}
 
-	private bool ValidateTx()
+	private bool ValidateTx(CModal? form = null)
 	{
-		// validate transaction type, must be either BUY or SELL
+		// validate transaction type
 		Tx.Type = Tx.Type.ToUpper().Trim();
-		if (!Tx.IsSettled && (Tx.Type != "BUY" && Tx.Type != "SELL"))
+		if (!Tx.IsSettled && !TransactionRec.TxTypes.Contains(Tx.Type))
 		{
-			ShowAlert("danger", $"Transaction type must be either 'BUY' or 'SELL', currently '{Tx.Type}'.");
+			var (alertType, alertMsg) = ("danger", $"Transaction type must be one of {string.Join(", ", TransactionRec.TxTypes)}, currently '{Tx.Type}'.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate time
-		try
+		Exception? exPartTime = null;
+		foreach (var format in new[] { TX_DATETIME_FORMAT, TX_DATETIME_FORMAT_2, TX_DATETIME_FORMAT_3 })
 		{
-			var time = DateTimeOffset.ParseExact(TxTime, TX_DATETIME_FORMAT, System.Globalization.CultureInfo.InvariantCulture);
-			Tx.Time = time;
+			try
+			{
+				var time = DateTimeOffset.ParseExact(TxTime, format, System.Globalization.CultureInfo.InvariantCulture);
+				Tx.Time = time;
+				exPartTime = null;
+				break;
+			}
+			catch (Exception e)
+			{
+				exPartTime = e;
+			}
 		}
-		catch (Exception e)
+		if (exPartTime != null)
 		{
-			ShowAlert("danger", $"Invalid transaction time: {e.Message}");
+			var (alertType, alertMsg) = ("danger", $"Invalid transaction time: {exPartTime.Message}");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
@@ -66,7 +88,11 @@ public partial class CPortfolioTransactions : CBase
 		Tx.ItemType = Tx.ItemType.ToUpper().Trim();
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemType))
 		{
-			ShowAlert("danger", "Item type must not be empty.");
+			var (alertType, alertMsg) = ("danger", "Item type must not be empty.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
@@ -74,23 +100,36 @@ public partial class CPortfolioTransactions : CBase
 		Tx.ItemCode = Tx.ItemCode.ToUpper().Trim();
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemCode))
 		{
-			ShowAlert("danger", "Item code must not be empty.");
+			var (alertType, alertMsg) = ("danger", "Item code must not be empty.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate price, must be positive
 		if (!Tx.IsSettled && Tx.Price <= 0.00m)
 		{
-			ShowAlert("danger", "Price must be a positive value.");
+			var (alertType, alertMsg) = ("danger", "Price must be a positive value.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate quantity, must be positive
 		if (!Tx.IsSettled && Tx.Quantity <= 0)
 		{
-			ShowAlert("danger", "Quantity must be a positive value.");
+			var (alertType, alertMsg) = ("danger", "Quantity must be a positive value.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
+
 		return true;
 	}
 
