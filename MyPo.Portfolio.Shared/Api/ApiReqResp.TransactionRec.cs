@@ -45,6 +45,12 @@ public struct CreateOrUpdateTransactionRecReq
 
 	[JsonPropertyName("is_settled")]
 	public bool IsSettled { get; set; }
+
+	[JsonIgnore]
+	public readonly decimal TxValue => Price * Quantity;
+
+	[JsonIgnore]
+	public readonly decimal TotalFees => FeeTx??0 + FeeTax??0 + FeeOther??0;
 }
 
 public struct TransactionRecResp

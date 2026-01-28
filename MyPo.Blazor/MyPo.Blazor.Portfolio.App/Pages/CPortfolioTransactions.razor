@@ -2,6 +2,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
 
 @inherits CBase
 
@@ -236,7 +237,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type" disabled="@Tx.IsSettled">
+							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes">
 								<option value="BUY">BUY</option>
 								<option value="SELL">SELL</option>
 							</select>
@@ -268,7 +269,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-3">
 						<div class="form-floating">
-							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType" disabled="@Tx.IsSettled">
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes">
 								<option value="STOCK">Stock</option>
 							</select>
 							<label for="txType">Item Type (*):</label>
@@ -276,7 +277,7 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" disabled="@Tx.IsSettled" />
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
 							<label for="txItemCode">Item Code (*):</label>
 						</div>
 					</div>
@@ -288,7 +289,7 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" disabled="@Tx.IsSettled" />
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
 							<label for="txQuantity">Quantity (*):</label>
 						</div>
 					</div>
@@ -323,11 +324,11 @@
 				</div>
 			</form>
 			<span class="small text-muted">
-				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
-				Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TransactionRec.TXTYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
 		</div>
 		<div class="card-footer">
@@ -350,7 +351,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type">
+							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type" @bind:after="AutoGenTxNotes">
 								<option value="BUY">BUY</option>
 								<option value="SELL">SELL</option>
 							</select>
@@ -382,7 +383,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-3">
 						<div class="form-floating">
-							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType">
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType" @bind:after="AutoGenTxNotes">
 								<option value="STOCK">Stock</option>
 							</select>
 							<label for="txType">Item Type (*):</label>
@@ -390,7 +391,7 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" />
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" @bind:after="AutoGenTxNotes" />
 							<label for="txItemCode">Item Code (*):</label>
 						</div>
 					</div>
@@ -402,7 +403,7 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" />
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" @bind:after="AutoGenTxNotes" />
 							<label for="txQuantity">Quantity (*):</label>
 						</div>
 					</div>
@@ -437,11 +438,11 @@
 				</div>
 			</form>
 			<span class="small text-muted">
-				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
-				Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TransactionRec.TXTYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
 		</div>
 		<div class="card-footer">
