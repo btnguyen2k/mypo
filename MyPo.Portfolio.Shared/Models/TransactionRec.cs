@@ -6,6 +6,7 @@ public sealed class TransactionRec : Entity<string>
 {
 	public const string TXTYPE_BUY = "BUY";
 	public const string TXTYPE_SELL = "SELL";
+	public static readonly List<string> TxTypes = [ TXTYPE_BUY, TXTYPE_SELL ];
 
 	public const string ITEM_TYPE_STOCK = "STOCK";
 
