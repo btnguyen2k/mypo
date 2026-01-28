@@ -15,6 +15,7 @@ public partial class CPortfolioTransactions : CBase
 
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
+	private MarketDefResp? Market => Markets?.FirstOrDefault(m => m.Id == Tx.MarketId);
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
