@@ -46,7 +46,7 @@ public partial class CPortfolioTransactions
 	private async void BtnClickUpdateTxSave()
 	{
 		ModalDialogUpdateTx.ShowAlert("info", "Saving transaction...");
-		if (!ValidateTx())
+		if (!ValidateTx(ModalDialogUpdateTx))
 		{
 			return;
 		}

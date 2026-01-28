@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
@@ -9,6 +9,8 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class CPortfolioRoi : CBase
 {
 	public const string TX_DATETIME_FORMAT = "dd-MMM-yyyy HH:mm";
+	public const string TX_DATETIME_FORMAT_2 = "dd-MM-yyyy HH:mm";
+	public const string TX_DATETIME_FORMAT_3 = "dd-MMMM-yyyy HH:mm";
 
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
@@ -51,32 +53,54 @@ public partial class CPortfolioRoi : CBase
 		// }
 	}
 
-	private bool ValidateRoiRec()
+	private bool ValidateRoiRec(CModal? form = null)
 	{
 		// validate transaction type
 		Rec.TxType = Rec.TxType.ToUpper().Trim();
 		if (!RoiRec.TxTypes.Contains(Rec.TxType))
 		{
-			ShowAlert("danger", $"Invalid transaction type: {Rec.TxType}");
+			var (alertType, alertMsg) = ("danger", $"Transaction type must be one of {string.Join(", ", RoiRec.TxTypes)}, currently '{Rec.TxType}'.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate time
-		try
+		Exception? exPartTime = null;
+		foreach (var format in new[] { TX_DATETIME_FORMAT, TX_DATETIME_FORMAT_2, TX_DATETIME_FORMAT_3 })
 		{
-			var time = DateTimeOffset.ParseExact(TxTime, TX_DATETIME_FORMAT, System.Globalization.CultureInfo.InvariantCulture);
-			Rec.TxTime = time;
+			try
+			{
+				var time = DateTimeOffset.ParseExact(TxTime, format, System.Globalization.CultureInfo.InvariantCulture);
+				Rec.TxTime = time;
+				exPartTime = null;
+				break;
+			}
+			catch (Exception e)
+			{
+				exPartTime = e;
+			}
 		}
-		catch (Exception e)
+		if (exPartTime != null)
 		{
-			ShowAlert("danger", $"Invalid transaction time: {e.Message}");
+			var (alertType, alertMsg) = ("danger", $"Invalid transaction time: {exPartTime.Message}");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate value, must be positive
 		if (Rec.TxValue <= 0.00m)
 		{
-			ShowAlert("danger", "Transaction value must be a positive value.");
+			var (alertType, alertMsg) = ("danger", "Transaction value must be a positive value.");
+			if (form != null)
+				form.ShowAlert(alertType, alertMsg);
+			else
+				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
