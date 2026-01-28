@@ -206,6 +206,13 @@
 						</div>
 					</div>
 				</form>
+				<span class="small text-muted">
+					Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+					/
+					Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+					/
+					Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				</span>
 			}
 		</div>
 		<div class="card-footer">
@@ -315,6 +322,13 @@
 					</div>
 				</div>
 			</form>
+			<span class="small text-muted">
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+				/
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				/
+				Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+			</span>
 		</div>
 		<div class="card-footer">
 			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickUpdateTxClose()"><CIcon icon="x-circle" /> Cancel</button>
@@ -422,6 +436,13 @@
 					</div>
 				</div>
 			</form>
+			<span class="small text-muted">
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+				/
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				/
+				Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+			</span>
 		</div>
 		<div class="card-footer">
 			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickAddTxClose()"><CIcon icon="x-circle" /> Cancel</button>

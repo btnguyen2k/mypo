@@ -97,7 +97,7 @@
 												<td class="text-center w-auto">&nbsp;@*↳*@</td>
 												<td class="text-center w-auto">@child.Currency</td>
 												<td>
-													@child.Name
+													<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(child.Id))">@child.Name</button>
 													<br/>
 													<span class="small">@child.Description</span>
 												</td>
