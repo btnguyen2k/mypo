@@ -130,16 +130,17 @@
 	<div class="tab-content mt-2" id="nav-tabContent">
 		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
 			<WidgetBuyCalculator
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lpb)?lpb:0)"
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lpb)?lpb:100)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				OwningUnits="@(SelectedAsset?.Quantity??0)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
 		</div>
 		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
 			<WidgetSellCalculator
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lps)?lps:0)"
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lps)?lps:80)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
-				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
+				NumUnits="@(SelectedAsset?.Quantity??10)"
+				OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
 		</div>
 	</div>
 </CModal>

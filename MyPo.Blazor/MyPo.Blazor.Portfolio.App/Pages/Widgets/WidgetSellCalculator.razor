@@ -23,7 +23,7 @@
 			<div class="col-md-4 col-sm-12">
 				<label for="numUnits" class="form-label">Num Units:</label>
 				<div class="input-group input-group-sm">
-					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to sell" @bind="numUnits" />
+					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to sell" @bind="NumUnits" />
 				</div>
 			</div>
 			<div class="col-md-4 col-sm-12">
@@ -89,20 +89,22 @@
 
 @code {
 	private string numDecimals { get; set; } = "N2";
-	private decimal numUnits { get; set; } = 5m;
+
+	[Parameter]
+	public decimal NumUnits { get; set; } = 5m;
 
 	[Parameter]
 	public decimal UnitPrice { get; set; } = 120m;
 
 	[Parameter]
 	public decimal TxFee { get; set; } = 5.00m;
-	private decimal TotalReturn => UnitPrice * numUnits - TxFee;
-	private decimal EffectiveUnitPrice => numUnits > 0 ? TotalReturn/numUnits : 0;
-	private decimal BreakEven => UnitPrice > 0 && numUnits > 0 ? (TotalReturn/numUnits/UnitPrice-1)*100.00m : 0;
+	private decimal TotalReturn => UnitPrice * NumUnits - TxFee;
+	private decimal EffectiveUnitPrice => NumUnits > 0 ? TotalReturn/NumUnits : 0;
+	private decimal BreakEven => UnitPrice > 0 && NumUnits > 0 ? (TotalReturn/NumUnits/UnitPrice-1)*100.00m : 0;
 
 	[Parameter]
 	public decimal OwningAvgPrice { get; set; } = 80m;
-	private decimal pnl => (EffectiveUnitPrice - OwningAvgPrice) * numUnits;
+	private decimal pnl => (EffectiveUnitPrice - OwningAvgPrice) * NumUnits;
 	private decimal MinValue => numDecimals switch
 	{
 		"N0" => 1m,
