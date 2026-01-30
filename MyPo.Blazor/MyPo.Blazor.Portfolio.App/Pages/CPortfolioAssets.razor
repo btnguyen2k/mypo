@@ -1,5 +1,6 @@
 ﻿@using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
 @using MyPo.Portfolio.Shared.Api
 
 @inherits CBase
@@ -25,19 +26,19 @@
 								<td class="fs-5 fw-semibold">
 									Total Cost:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1))
+									@(TotalCost<=0?"-":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
 									Market Value:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1))
+									@(TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
 									Unsettled P/L:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1))
+									@(TotalCost<=0||TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1))
 									(@(
-										TotalCost>0
+										TotalCost>0&&TotalMarketValue>0
 											? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
 											: "-"
 									))
@@ -98,6 +99,11 @@
 								</table>
 							</div>
 						</div>
+						<div class="card-footer">
+							<button class="btn btn-link text-light" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
+								<BIcon icon="calculator" />
+							</button>
+						</div>
 					</div>
 				</div>
 			}
@@ -108,11 +114,42 @@
 	</div>
 </div>
 
+<CModal @ref="@ModalDialogBuySellAssetCalculator" title="Asset Buy/Sell Calculator" centered="false" type="secondary" size="extra-large">
+	<nav>
+		<div class="nav nav-tabs" id="nav-tab" role="tablist">
+			<button class="nav-link active"
+				id="tabBuyCalc"
+				data-coreui-toggle="tab" data-coreui-target="#nav-buy-calc"
+				type="button" role="tab" aria-controls="nav-buy-calc" aria-selected="true">Buy</button>
+			<button class="nav-link"
+				id="tabSellCalc"
+				data-coreui-toggle="tab" data-coreui-target="#nav-sell-calc"
+				type="button" role="tab" aria-controls="nav-sell-calc" aria-selected="false">Sells</button>
+		</div>
+	</nav>
+	<div class="tab-content mt-2" id="nav-tabContent">
+		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
+			<WidgetBuyCalculator
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lpb)?lpb:0)"
+				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
+				OwningUnits="@(SelectedAsset?.Quantity??0)"
+				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
+		</div>
+		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
+			<WidgetSellCalculator
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lps)?lps:0)"
+				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
+				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
+		</div>
+	</div>
+</CModal>
+
+@*
 <CModal @ref="@ModalDialogAssetInfo" title="Asset Details" centered="false" type="info" size="extra-large">
 	<div class="card mb-2">
 		<div class="card-body">
 			<CAlert @ref="@ModalDialogAssetInfo.Alert" />
-			<table class="table @*table-bordered*@ border-secondary align-middle">
+			<table class="table table-bordered border-secondary align-middle">
 				<tbody>
 					<tr>
 						<td class="text-center w-auto">@(SelectedAsset?.ItemType)</td>
@@ -153,6 +190,7 @@
 		<span style="font-size: small">@warningMsg</span>
 	</div>
 </CModal>
+*@
 
 @code {
 	private string AssetCardBackground(AssetResp asset)
