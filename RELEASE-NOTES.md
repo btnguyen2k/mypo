@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-01-31 - v0.4.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Rework MyPortfolio/Assets view.
+- (Feat) Rework MyPortfolio/ROI view.
+
+### Fixed/Improvements
+
+- (Patch) UI fixes and improvements.
+
 ## 2026-01-28 - v0.3.2
 
 ### Fixed/Improvements
