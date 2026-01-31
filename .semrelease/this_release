@@ -4,3 +4,4 @@
 - (Patch) UI fixes and improvements.
 - (Feat) Rework MyPortfolio/Assets view.
 - (Feat) Rework MyPortfolio/ROI view.
+- (Feat) Add value format and quantity format to market metadata.

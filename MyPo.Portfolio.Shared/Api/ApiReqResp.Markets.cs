@@ -17,6 +17,8 @@ public struct MarketDefResp
 			Currency = md.Currency,
 			CurrencySymbol = md.CurrencySymbol,
 			PriceScale = md.PriceScale,
+			ValueFormat = md.ValueFormat,
+			QuantityFormat = md.QuantityFormat,
 			TimeZone = md.TimeZone,
 			OpenHour = md.OpenHour.ToString(TIMEONLY_FORMAT),
 			CloseHour = md.CloseHour.ToString(TIMEONLY_FORMAT),
@@ -44,6 +46,12 @@ public struct MarketDefResp
 	[JsonPropertyName("price_scale")]
 	public decimal PriceScale { get; set; }
 
+	[JsonPropertyName("value_format")]
+	public string ValueFormat { get; set; }
+
+	[JsonPropertyName("quantity_format")]
+	public string QuantityFormat { get; set; }
+
 	[JsonPropertyName("timezone")]
 	public string TimeZone { get; set; }
 
@@ -67,6 +75,8 @@ public struct MarketDefResp
 			Currency = this.Currency,
 			CurrencySymbol = this.CurrencySymbol,
 			PriceScale = this.PriceScale,
+			ValueFormat = this.ValueFormat,
+			QuantityFormat = this.QuantityFormat,
 			TimeZone = this.TimeZone,
 			OpenHour = TimeOnly.ParseExact(this.OpenHour, TIMEONLY_FORMAT),
 			CloseHour = TimeOnly.ParseExact(this.CloseHour, TIMEONLY_FORMAT),
