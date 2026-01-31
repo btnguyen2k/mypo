@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -21,8 +23,12 @@ public partial class CPortfolioRoi : CBase
 	public IEnumerable<RoiRecResp>? RoiRecords { get; set; }
 	private Dictionary<string, RoiRecResp> RoiRecordsMap => RoiRecords?.ToDictionary(r => r.Id, r => r) ?? [];
 
+	private PnlSummaryResp? PnlSummary { get; set; }
+
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
+
+	private MarketDefResp? DefaultMarket => RoiRecords?.FirstOrDefault(a => a.Market!=null).Market;
 
 	private CreateOrUpdateRoiRecReq Rec = default!;
 	private string TxTime { get; set; } = string.Empty;
@@ -42,15 +48,16 @@ public partial class CPortfolioRoi : CBase
         	await module.InvokeAsync<string>("InitDatetimePickers");
 		}
 
-		// if (firstRender && !string.IsNullOrEmpty(PortfolioId) && Portfolio != null && RoiRecords != null)
-		// {
-		// 	var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		// 	var pnlSummary = await apiClient.GetMyPortfolioPnlSummaryAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
-		// 	if (pnlSummary.Status != 200)
-		// 	{
-		// 		ShowAlert("danger", pnlSummary.Message ?? "Failed to load portfolio PnL summary.");
-		// 	}
-		// }
+		if (firstRender && !string.IsNullOrEmpty(PortfolioId) && Portfolio != null && RoiRecords != null)
+		{
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var pnlSummaryResp = await apiClient.GetMyPortfolioPnlSummaryAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (pnlSummaryResp.Status != 200)
+				ShowAlert("danger", pnlSummaryResp.Message ?? "Failed to load portfolio PnL summary.");
+			else
+				PnlSummary = pnlSummaryResp.Data;
+			StateHasChanged();
+		}
 	}
 
 	private bool ValidateRoiRec(CModal? form = null)

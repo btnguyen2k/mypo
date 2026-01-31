@@ -42,6 +42,7 @@ public partial class CPortfolioAssets : CBase
 	public PortfolioRecResp? Portfolio { get; set; }
 
 	private CModal ModalDialogAssetInfo { get; set; } = default!;
+	private CModal ModalDialogBuySellAssetCalculator { get; set; } = default!;
 
 	private bool StopRefreshQuotes { get; set; } = false;
 
@@ -108,6 +109,16 @@ public partial class CPortfolioAssets : CBase
 			// Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
 			var symbolsList = Assets.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
+		}
+	}
+
+	private void BtnClickAssetBuySellCalculator(string assetId)
+	{
+		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
+		if (SelectedAsset != null)
+		{
+			// SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.Value.MarketId).ToModel() ?? null;
+			ModalDialogBuySellAssetCalculator.Open();
 		}
 	}
 

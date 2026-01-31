@@ -48,9 +48,11 @@ public sealed partial class PortfolioDbContextRepository
 			TotalBuyValue = 0.0m,
 			TotalSellValue = 0.0m,
 			TotalDividends = 0.0m,
+			TotalTax = 0.0m,
 			TotalFees = 0.0m,
 			TotalCashIn = 0.0m,
 			TotalCashOut = 0.0m,
+			TotalInterest = 0.0m,
 		};
 		var rows = await RoiRecStore.AsNoTracking()
 			.Where(rr => rr.PortfolioId == portfolioId)
@@ -74,6 +76,12 @@ public sealed partial class PortfolioDbContextRepository
 					break;
 				case RoiRec.TX_TYPE_DIVIDEND:
 					roiSummary.TotalDividends = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_TAX:
+					roiSummary.TotalTax = row.TotalValue;
+					break;
+				case RoiRec.TX_TYPE_INTEREST:
+					roiSummary.TotalInterest = row.TotalValue;
 					break;
 				case RoiRec.TX_TYPE_FEE:
 					roiSummary.TotalFees = row.TotalValue;

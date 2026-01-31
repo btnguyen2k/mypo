@@ -6,73 +6,305 @@
 @inherits CBase
 
 <div class="container mt-3">
-	<CAlert @ref="@Alert" />
-	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-		<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-primary":"btn-outline-secondary") btn-sm mb-3"
-			disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
-			@onclick="()=>BtnClickAddRecord()"><CIcon icon="cil-plus" /> New Record</button>
-	</AuthorizeView>
-	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
-		<thead>
-			<tr>
-				<th scope="col" class="text-center w-auto">✔</th>
-				<th scope="col" class="text-center w-auto">Tx Time</th>
-				<th scope="col" class="text-center w-auto">Tx Type</th>
-				<th scope="col" class="text-center w-auto">Ref Item</th>
-				<th scope="col" class="text-center w-auto">Tx Value</th>
-				<th scope="col" class="text-center w-auto">Currency</th>
-				<th scope="col" class="text-begin w-auto">Description</th>
-				<th scope="col" class="text-center w-auto">Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var roiRec in RoiRecords??[])
-			{
+	@if (RoiRecords == null || RoiRecords.Count() == 0)
+	{
+		<CAlert Type="warning">
+			No records found. Settle transactions to update ROI records.
+		</CAlert>
+	}
+	else
+	{
+		<CAlert @ref="@Alert" />
+		@if (PnlSummary != null)
+		{
+			<div class="row mb-2">
+				<div class="col-12">
+					<div class="card text-bg-light">
+						<div class="card-header">
+    						<h6>Investments & Returns Report</h6>
+  						</div>
+  						<div class="card-body">
+							<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										A. Capital Flows
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Total Cash In (1)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashIn, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Total Cash Out (2)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashOut, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Net Capital Contributed (3=1-2)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetCapitalContributed, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										B. Investment Activity
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Total Buy (4)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalBuyValue, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Total Sell (5)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalSellValue, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										C. Returns (Income & Gains)
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Dividends (6)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalDividends, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Interest (7)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalInterest, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Total Income (8=6+7)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalIncome, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										D. Trading Performance
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Realized Capital Gains (9=5-4)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.RealizedCapitalGains, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										E. Costs & Taxes
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Fees (10)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalFees, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start">
+										Tax (11)
+									</td>
+									<td class="text-end">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Total Costs (12=10+11)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCosts, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										F. Returns Summary
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Gross Returns (13=8+9)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.GrossReturns, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Net Returns (14=13-12)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetReturns, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										G. Performance Metrics
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Net Profit / Loss (15=14)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										ROI (%) (16=15/3)
+									</td>
+									<td class="text-end fw-semibold">
+										@(PnlSummary.Value.ROI.ToString("N2")+"%")
+									</td>
+								</tr>
+
+								<tr>
+									<td class="text-start fs-5 fw-semibold" colspan="2">
+										H. Wallet Reconciliation
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Total "In"
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyIn, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Total "Out"
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyOut, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+								<tr>
+									<td class="text-start fw-semibold">
+										Calculated Closing Balance
+									</td>
+									<td class="text-end fw-semibold">
+										@(PortfolioUtils.FormatValueWithScale(
+											PnlSummary.Value.TotalCashIn
+											-PnlSummary.Value.TotalCashOut
+											-PnlSummary.Value.TotalBuyValue
+											+PnlSummary.Value.TotalSellValue
+											+PnlSummary.Value.TotalDividends
+											+PnlSummary.Value.TotalInterest
+											-PnlSummary.Value.TotalFees
+											-PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1))
+									</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		}
+		<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+			<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-primary":"btn-outline-secondary") btn-sm mb-3"
+				disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+				@onclick="()=>BtnClickAddRecord()"><CIcon icon="cil-plus" /> New Record</button>
+		</AuthorizeView>
+		<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+			<thead>
 				<tr>
-					<td class="text-center w-auto">
-						@(roiRec.Status==RoiRec.STATUS_FINAL?"✔":" ")
-					</td>
-					<td class="text-center w-auto">
-						@(roiRec.TxTime.ToString("yyyy-MM-dd HH:mm"))
-					</td>
-					<td class="text-center w-auto">
-						<CBadgeTxType Text="@(roiRec.TxType)" />
-					</td>
-					<td class="text-center w-auto">
-						@(roiRec.RefItemType??"-") / @(roiRec.RefItemCode??"-")
-					</td>
-					<td class="text-end w-auto">
-                        @(PortfolioUtils.FormatValueWithScale(roiRec.TxValue, roiRec.Market?.PriceScale??1))
-					</td>
-					<td class="text-center w-auto">
-						@(roiRec.Market?.Currency??"-")
-					</td>
-					<td class="w-auto">
-						@(roiRec.TxDesc)
-					</td>
-					<td class="text-center">
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<Authorized>
-								<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
-										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
-										title="Update record" @onclick="(()=>BtnClickUpdateRecord(roiRec.Id))">
-									<CIcon icon="cil-pencil" />
-								</button>
-								<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || RoiRec.ImmutableStatuses.Contains(roiRec.Status)?"btn-outline-secondary":"btn-outline-danger")"
-										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || RoiRec.ImmutableStatuses.Contains(roiRec.Status))"
-										title="Delete record" @onclick="(()=>BtnClickDeleteRecord(roiRec.Id))">
-									<CIcon icon="cil-x" />
-								</button>
-							</Authorized>
-							<NotAuthorized>
-								<span>-</span>
-							</NotAuthorized>
-						</AuthorizeView>
-					</td>
+					<th scope="col" class="text-center w-auto">✔</th>
+					<th scope="col" class="text-center w-auto">Tx Time</th>
+					<th scope="col" class="text-center w-auto">Tx Type</th>
+					<th scope="col" class="text-center w-auto">Ref Item</th>
+					<th scope="col" class="text-center w-auto">Tx Value</th>
+					<th scope="col" class="text-center w-auto">Currency</th>
+					<th scope="col" class="text-begin w-auto">Description</th>
+					<th scope="col" class="text-center w-auto">Actions</th>
 				</tr>
-			}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				@foreach (var roiRec in RoiRecords??[])
+				{
+					<tr>
+						<td class="text-center w-auto">
+							@(roiRec.Status==RoiRec.STATUS_FINAL?"✔":" ")
+						</td>
+						<td class="text-center w-auto">
+							@(roiRec.TxTime.ToString("yyyy-MM-dd HH:mm"))
+						</td>
+						<td class="text-center w-auto">
+							<CBadgeTxType Text="@(roiRec.TxType)" />
+						</td>
+						<td class="text-center w-auto">
+							@(roiRec.RefItemType??"-") / @(roiRec.RefItemCode??"-")
+						</td>
+						<td class="text-end w-auto">
+							@(PortfolioUtils.FormatValueWithScale(roiRec.TxValue, roiRec.Market?.PriceScale??1))
+						</td>
+						<td class="text-center w-auto">
+							@(roiRec.Market?.Currency??"-")
+						</td>
+						<td class="w-auto">
+							@(roiRec.TxDesc)
+						</td>
+						<td class="text-center">
+							<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+								<Authorized>
+									<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+											disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+											title="Update record" @onclick="(()=>BtnClickUpdateRecord(roiRec.Id))">
+										<CIcon icon="cil-pencil" />
+									</button>
+									<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || RoiRec.ImmutableStatuses.Contains(roiRec.Status)?"btn-outline-secondary":"btn-outline-danger")"
+											disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || RoiRec.ImmutableStatuses.Contains(roiRec.Status))"
+											title="Delete record" @onclick="(()=>BtnClickDeleteRecord(roiRec.Id))">
+										<CIcon icon="cil-x" />
+									</button>
+								</Authorized>
+								<NotAuthorized>
+									<span>-</span>
+								</NotAuthorized>
+							</AuthorizeView>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
 </div>
 
 <CModal @ref="@ModalDialogAddRecord" title="Add Record" centered="false" type="primary" size="extra-large">

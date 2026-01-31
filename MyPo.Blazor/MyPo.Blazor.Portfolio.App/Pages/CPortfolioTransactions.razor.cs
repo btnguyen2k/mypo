@@ -133,6 +133,14 @@ public partial class CPortfolioTransactions : CBase
 		return true;
 	}
 
+	private void AutoGenTxNotes()
+	{
+		if (TransactionRec.TxTypes.Contains(Tx.Type) && Tx.ItemType==TransactionRec.ITEM_TYPE_STOCK && !string.IsNullOrWhiteSpace(Tx.ItemCode))
+		{
+			Tx.Notes = $"{(Tx.Type==TransactionRec.TXTYPE_BUY?"Bought":"Sold")} {Tx.Quantity} {Tx.ItemCode.Trim().ToUpper()} share(s).";
+		}
+	}
+
 	private void TxCheckboxClicked(string txid)
 	{
 		if (!SelectedTransactionsMap.Remove(txid))
