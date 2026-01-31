@@ -1,6 +1,6 @@
 <div class="card border-top-info border-top-3 mb-4">
 	<div class="card-header align-items-center">
-		<h5 class="card-title float-start">Buy With Fee</h5>
+		<h5 class="card-title float-start">Buy With Fee @(!string.IsNullOrEmpty(ItemCode)?$"/ {ItemCode}":"")</h5>
 		<div class="row float-end">
 			<div class="col-auto">
 				<label for="numDecimals" class="form-label">Decimals:</label>
@@ -102,6 +102,9 @@
 
 @code {
 	private string numDecimals { get; set; } = "N2";
+
+	[Parameter]
+	public string ItemCode { get; set; } = string.Empty;
 
 	private decimal numUnits { get; set; } = 10m;
 

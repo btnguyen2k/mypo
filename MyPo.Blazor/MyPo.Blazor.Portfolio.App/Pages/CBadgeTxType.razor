@@ -6,18 +6,15 @@
 	private string BadgeColorClass()
 	{
 		var txt = Text?.Trim().ToUpper() ?? "-";
-		switch (txt)
+		return (txt) switch
 		{
-			case "BUY":
-				return "text-bg-success text-light";
-			case "SELL":
-				return "text-bg-danger text-light";
-			case "FEE":
-				return "text-bg-warning text-dark";
-			case "TAX":
-				return "text-bg-info text-dark";
-			default:
-				return "text-bg-light";
-		}
+			"BUY" => "bg-success text-light",
+			"SELL" => "bg-danger text-light",
+			"FEE" => "bg-warning text-dark",
+			"TAX" => "bg-info text-dark",
+			"CASHIN" or "INTEREST" => "bg-primary",
+			"CASHOUT" => "bg-secondary",
+			_ => "bg-dark text-light",
+		};
 	}
 }

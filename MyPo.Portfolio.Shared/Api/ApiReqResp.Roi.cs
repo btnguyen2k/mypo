@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.Identity.Client;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
@@ -104,9 +105,11 @@ public struct PnlSummaryResp
 			TotalBuyValue = pnl.TotalBuyValue,
 			TotalSellValue = pnl.TotalSellValue,
 			TotalDividends = pnl.TotalDividends,
+			TotalTax = pnl.TotalTax,
 			TotalFees = pnl.TotalFees,
 			TotalCashIn = pnl.TotalCashIn,
-			TotalCashOut = pnl.TotalCashOut
+			TotalCashOut = pnl.TotalCashOut,
+			TotalInterest = pnl.TotalInterest,
 		};
 	}
 
@@ -122,6 +125,9 @@ public struct PnlSummaryResp
 	[JsonPropertyName("total_dividends")]
 	public decimal TotalDividends { get; set; }
 
+	[JsonPropertyName("total_tax")]
+	public decimal TotalTax { get; set; }
+
 	[JsonPropertyName("total_fees")]
 	public decimal TotalFees { get; set; }
 
@@ -131,6 +137,21 @@ public struct PnlSummaryResp
 	[JsonPropertyName("total_cash_out")]
 	public decimal TotalCashOut { get; set; }
 
+	[JsonPropertyName("total_interest")]
+	public decimal TotalInterest { get; set; }
+
+	public readonly decimal TotalMoneyIn => TotalSellValue + TotalCashIn + TotalDividends + TotalInterest;
+	public readonly decimal TotalMoneyOut => TotalBuyValue + TotalCashOut + TotalTax + TotalFees;
+
+	public readonly decimal NetCapitalContributed => TotalCashIn - TotalCashOut;
+	public readonly decimal TotalIncome => TotalDividends + TotalInterest;
+	public readonly decimal TotalCosts => TotalTax + TotalFees;
+	public readonly decimal RealizedCapitalGains => TotalSellValue - TotalBuyValue;
+	public readonly decimal GrossReturns => TotalIncome + RealizedCapitalGains;
+	public readonly decimal NetReturns => GrossReturns - TotalCosts;
+	public readonly decimal NetPnL => NetReturns;
+	public readonly decimal ROI => NetCapitalContributed != 0 ? (NetPnL / NetCapitalContributed * 100) : 0;
+
 	public readonly PnlSummary ToModel()
 	{
 		return new PnlSummary()
@@ -139,9 +160,11 @@ public struct PnlSummaryResp
 			TotalBuyValue = this.TotalBuyValue,
 			TotalSellValue = this.TotalSellValue,
 			TotalDividends = this.TotalDividends,
+			TotalTax = this.TotalTax,
 			TotalFees = this.TotalFees,
 			TotalCashIn = this.TotalCashIn,
-			TotalCashOut = this.TotalCashOut
+			TotalCashOut = this.TotalCashOut,
+			TotalInterest = this.TotalInterest,
 		};
 	}
 }
