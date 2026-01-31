@@ -28,6 +28,32 @@ public static class PortfolioUtils
         return rootPortfolios;
     }
 
+	public static decimal EstimateTxFee(MarketDef? market)
+	{
+		return EstimateTxFee(0, market);
+	}
+
+	public static decimal EstimateTxFee(MarketDefResp? market)
+	{
+		return EstimateTxFee(0, market);
+	}
+
+	public static decimal EstimateTxFee(decimal txValue, MarketDefResp? market)
+	{
+		return EstimateTxFee(txValue, market?.ToModel());
+	}
+
+	public static decimal EstimateTxFee(decimal txValue, MarketDef? market)
+	{
+		return (market?.Country) switch
+		{
+			"VN" => txValue * 0.15m/100, // 0.15% for Vietnam market
+			"AU" => txValue <= 1000m ? 5.0m : (txValue <= 3000m ? 10.0m : (txValue <= 10000m ? 19.95m : (txValue <= 25000m ? 29.95m : txValue*0.12m/100))), // https://www.commsec.com.au/support/rates-and-fees.html
+			"US" => Math.Max(5.0m, txValue*0.12m/100), // https://www.commsec.com.au/support/rates-and-fees.html
+			_ => 0,
+		};
+	}
+
 	public static string FormatValueWithScale(double value, decimal scale = 1, string? format = null)
 	{
 		return FormatValueWithScale((decimal)value, scale, format);
