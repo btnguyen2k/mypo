@@ -1,0 +1,349 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+<div class="container mt-3">
+	<CAlert @ref="@Alert" />
+	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+		<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-primary":"btn-outline-secondary") btn-sm mb-3"
+			disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+			@onclick="()=>BtnClickAddRecord()"><CIcon icon="cil-plus" /> New Record</button>
+	</AuthorizeView>
+	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+		<thead>
+			<tr>
+				<th scope="col" class="text-center w-auto">✔</th>
+				<th scope="col" class="text-center w-auto">Tx Time</th>
+				<th scope="col" class="text-center w-auto">Tx Type</th>
+				<th scope="col" class="text-center w-auto">Ref Item</th>
+				<th scope="col" class="text-center w-auto">Tx Value</th>
+				<th scope="col" class="text-center w-auto">Currency</th>
+				<th scope="col" class="text-begin w-auto">Description</th>
+				<th scope="col" class="text-center w-auto">Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@if (TxSettlements==null || TxSettlements.Count()==0)
+			{
+				<tr>
+					<td colspan="8" class="text-center">No data found. Settle buy/sell transactions to update this list.</td>
+				</tr>
+			}
+			@foreach (var tx in TxSettlements??[])
+			{
+				<tr>
+					<td class="text-center w-auto">
+						@(tx.Status==TxSettlementEntity.STATUS_FINAL?"✔":" ")
+					</td>
+					<td class="text-center w-auto">
+						@(tx.TxTime.ToString("yyyy-MM-dd HH:mm"))
+					</td>
+					<td class="text-center w-auto">
+						<CBadgeTxType Text="@(tx.TxType)" />
+					</td>
+					<td class="text-center w-auto">
+						@(tx.RefItemType??"-") / @(tx.RefItemCode??"-")
+					</td>
+					<td class="text-end w-auto">
+						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1))
+					</td>
+					<td class="text-center w-auto">
+						@(tx.Market?.Currency??"-")
+					</td>
+					<td class="w-auto">
+						@(tx.TxDesc)
+					</td>
+					<td class="text-center">
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<Authorized>
+								<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+										title="Update record" @onclick="(()=>BtnClickUpdateRecord(tx.Id))">
+									<CIcon icon="cil-pencil" />
+								</button>
+								<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status)?"btn-outline-secondary":"btn-outline-danger")"
+										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status))"
+										title="Delete record" @onclick="(()=>BtnClickDeleteRecord(tx.Id))">
+									<CIcon icon="cil-x" />
+								</button>
+							</Authorized>
+							<NotAuthorized>
+								<span>-</span>
+							</NotAuthorized>
+						</AuthorizeView>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+<CModal @ref="@ModalDialogAddRecord" title="Add Record" centered="false" type="primary" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			<CAlert @ref="@ModalDialogAddRecord.Alert" />
+			<form>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType">
+								@foreach (var rt in TxSettlementEntity.TxTypes)
+								{
+									<option value="@rt">@rt</option>
+								}
+							</select>
+							<label for="recType">Record Type (*):</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recMarket" aria-label="Market" @bind="Tx.RefMarketId">
+								<option></option>
+								@foreach (var m in Markets ?? [])
+								{
+									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+								}
+							</select>
+							<label for="recMarket">Market:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div>
+							<label for="txTime">Transaction Time:</label>
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true" />
+								<span class="input-group-text"><CIcon icon="calendar"/></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="refItemType" aria-label="Item Type" @bind="Tx.RefItemType">
+								@foreach (var it in TxBuySellEntity.ItemTypes)
+								{
+									<option value="@it">@it</option>
+								}
+							</select>
+							<label for="refItemType">Item Type:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode" />
+							<label for="refItemCode">Item Code:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue" />
+							<label for="txValue">Tx Value (*):</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="recDesc" aria-label="Notes/Description" @bind="Tx.TxDesc" />
+							<label for="recDesc">Notes/Description:</label>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickAddRecordClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickAddRecordSave()"><CIcon icon="save" /> Save</button>
+		</div>
+	</div>
+</CModal>
+
+<CModal @ref="@ModalDialogUpdateRecord" title="Update Record" centered="false" type="primary" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			@if (TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty))
+			{
+				<CAlert type="warning">
+					This record is in status '@Tx.Status', only notes/description can be updated.
+				</CAlert>
+			}
+			<CAlert @ref="@ModalDialogUpdateRecord.Alert" />
+			<form>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType"
+									disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)">
+								@foreach (var rt in TxSettlementEntity.TxTypes)
+								{
+									<option value="@rt">@rt</option>
+								}
+							</select>
+							<label for="recType">Record Type (*):</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="recMarket" aria-label="Market" @bind="Tx.RefMarketId"
+									disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)">
+								<option></option>
+								@foreach (var m in Markets ?? [])
+								{
+									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+								}
+							</select>
+							<label for="recMarket">Market:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div>
+							<label for="txTime">Transaction Time:</label>
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true"
+									disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)" />
+								<span class="input-group-text"><CIcon icon="calendar"/></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="refItemType" aria-label="Item Type" @bind="Tx.RefItemType"
+									disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)">
+								@foreach (var it in TxBuySellEntity.ItemTypes)
+								{
+									<option value="@it">@it</option>
+								}
+							</select>
+							<label for="refItemType">Item Type:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode"
+								disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)" />
+							<label for="refItemCode">Item Code:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue"
+								disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)" />
+							<label for="txValue">Tx Value (*):</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="recDesc" aria-label="Notes/Description" @bind="Tx.TxDesc" />
+							<label for="recDesc">Notes/Description:</label>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickUpdateRecordClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickUpdateRecordSave()"><CIcon icon="save" /> Save</button>
+		</div>
+	</div>
+</CModal>
+
+<CModal @ref="@ModalDialogDeleteRecord" title="Delete Record" centered="false" type="danger" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			@if (TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty))
+			{
+				<CAlert type="warning">
+					This record is in status '@Tx.Status' and cannot be deleted.
+				</CAlert>
+			}
+			else
+			{
+				<CAlert @ref="@ModalDialogDeleteRecord.Alert" />
+				<form>
+					<div class="row mb-3 align-items-center">
+						<div class="col-4">
+							<div class="form-floating">
+								<select class="form-select" id="recType" aria-label="Record Type" value="@Tx.TxType" disabled>
+									@foreach (var rt in TxSettlementEntity.TxTypes)
+									{
+										<option value="@rt">@rt</option>
+									}
+								</select>
+								<label for="recType">Record Type (*):</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<select class="form-select" id="recMarket" aria-label="Market" value="@Tx.RefMarketId" disabled>
+									<option></option>
+									@foreach (var m in Markets ?? [])
+									{
+										<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+									}
+								</select>
+								<label for="recMarket">Market:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div>
+								<label for="txTime">Transaction Time:</label>
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" value="@TxTime" disabled />
+									<span class="input-group-text"><CIcon icon="calendar"/></span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3 align-items-center">
+						<div class="col-4">
+							<div class="form-floating">
+								<select class="form-select" id="refItemType" aria-label="Item Type" value="@Tx.RefItemType" disabled>
+									@foreach (var it in TxBuySellEntity.ItemTypes)
+									{
+										<option value="@it">@it</option>
+									}
+								</select>
+								<label for="refItemType">Item Type:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" value="@Tx.RefItemCode" disabled />
+								<label for="refItemCode">Item Code:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" value="@Tx.TxValue" disabled />
+								<label for="txValue">Tx Value (*):</label>
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3 align-items-center">
+						<div class="col-12">
+							<div class="form-floating">
+								<input type="text" class="form-control" id="recDesc" aria-label="Notes/Description" value="@Tx.TxDesc" disabled />
+								<label for="recDesc">Notes/Description:</label>
+							</div>
+						</div>
+					</div>
+				</form>
+			}
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteRecordClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteRecordConfirm()"><CIcon icon="trash" /> Delete</button>
+		</div>
+	</div>
+</CModal>
+
+@code {
+}

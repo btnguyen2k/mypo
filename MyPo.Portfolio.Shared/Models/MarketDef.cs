@@ -18,6 +18,9 @@ public sealed class MarketDef
 
 	public decimal PriceScale { get; set; } = 1;
 
+	public string ValueFormat { get; set; } = string.Empty;
+	public string QuantityFormat { get; set; } = string.Empty;
+
 	public string TimeZone { get; set; } = string.Empty;
 	public TimeZoneInfo TZ => TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
 
@@ -49,6 +52,8 @@ public sealed class MarketDef
 		marketDef.TZ.GetUtcOffset(DateTimeOffset.Now); // validate time zone
 		marketDef.CurrencySymbol = data.GetSection("currency_symbol").Value ?? string.Empty;
 		marketDef.PriceScale = data.GetValue<decimal?>("price_scale") ?? 1;
+		marketDef.ValueFormat = data.GetValue<string?>("value_format") ?? string.Empty;
+		marketDef.QuantityFormat = data.GetValue<string?>("quantity_format") ?? string.Empty;
 		return marketDef;
 	}
 }

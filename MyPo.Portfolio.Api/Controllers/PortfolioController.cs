@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -60,7 +60,7 @@ public partial class PortfolioController : ApiBaseController
 		return (null, currentUser);
 	}
 
-	private async ValueTask<PortfolioRec?> GetPortfolioIfOwnedByUser(MyPoUser user, string portfolioId)
+	private async ValueTask<PortfolioEntity?> GetPortfolioIfOwnedByUser(MyPoUser user, string portfolioId)
 	{
 		var portfolioRec = await PortfolioRepository.GetPortfolioByIdAsync(portfolioId);
 		return portfolioRec != null && portfolioRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
@@ -68,7 +68,7 @@ public partial class PortfolioController : ApiBaseController
 			: null;
 	}
 
-	private async ValueTask<PortfolioRec?> GetPortfolioIfAccessible(MyPoUser user, string portfolioId)
+	private async ValueTask<PortfolioEntity?> GetPortfolioIfAccessible(MyPoUser user, string portfolioId)
 	{
 		var portfolioRec = await PortfolioRepository.GetPortfolioByIdAsync(portfolioId);
 		return portfolioRec != null

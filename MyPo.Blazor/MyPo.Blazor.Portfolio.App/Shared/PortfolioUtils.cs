@@ -1,4 +1,4 @@
-using Finance.Net.Models.Yahoo;
+﻿using Finance.Net.Models.Yahoo;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
@@ -6,17 +6,17 @@ namespace MyPo.Blazor.Portfolio.App.Shared;
 
 public static class PortfolioUtils
 {
-    public static IEnumerable<PortfolioRecResp> BuildPortfolioTree(IEnumerable<PortfolioRecResp> PortfolioList)
+    public static IEnumerable<PortfolioResp> BuildPortfolioTree(IEnumerable<PortfolioResp> PortfolioList)
     {
         var portfolioSorted = PortfolioList.OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
         var portfolioDict = portfolioSorted.ToDictionary(p => p.Id);
-        var rootPortfolios = new List<PortfolioRecResp>();
+        var rootPortfolios = new List<PortfolioResp>();
 
         foreach (var portfolio in portfolioSorted)
         {
             if (!string.IsNullOrEmpty(portfolio.ParentId) && portfolioDict.TryGetValue(portfolio.ParentId, out var parentPortfolio))
             {
-                parentPortfolio.Children ??= new SortedSet<PortfolioRecResp>(Comparer<PortfolioRecResp>.Create((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal)));
+                parentPortfolio.Children ??= new SortedSet<PortfolioResp>(Comparer<PortfolioResp>.Create((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal)));
                 parentPortfolio.Children.Add(portfolio);
             }
             else
@@ -102,7 +102,7 @@ public static class PortfolioUtils
 		return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
 	}
 
-	public static decimal CalculatePnL(Asset asset, MarketDef? market, Quote quote)
+	public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, Quote quote)
 	{
 		if (market == null)
 		{

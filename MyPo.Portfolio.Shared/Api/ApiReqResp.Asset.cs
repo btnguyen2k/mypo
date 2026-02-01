@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
@@ -32,7 +32,7 @@ public struct CreateOrUpdateAssetReq
 
 public struct AssetResp
 {
-	public static AssetResp BuildFrom(Asset a, MarketDef? market = null)
+	public static AssetResp BuildFrom(AssetEntity a, MarketDef? market = null)
 	{
 		var aResp = new AssetResp()
 		{
@@ -76,9 +76,9 @@ public struct AssetResp
 	public string? Tags { get; set; }
 	public readonly IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
 
-	public readonly Asset ToModel()
+	public readonly AssetEntity ToModel()
 	{
-		return new Asset()
+		return new AssetEntity()
 		{
 			Id = this.Id,
 			PortfolioId = this.PortfolioId,

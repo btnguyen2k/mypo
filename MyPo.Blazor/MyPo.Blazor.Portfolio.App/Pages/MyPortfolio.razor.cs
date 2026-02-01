@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -9,11 +9,11 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolio : BasePage
 {
 	private CModal ModalDialogDelete { get; set; } = default!;
-	private IEnumerable<PortfolioRecResp>? MyActivePortfolioList { get; set; }
-	private IEnumerable<PortfolioRecResp>? MyInactivePortfolioList { get; set; }
+	private IEnumerable<PortfolioResp>? MyActivePortfolioList { get; set; }
+	private IEnumerable<PortfolioResp>? MyInactivePortfolioList { get; set; }
 
-	private Dictionary<string, PortfolioRecResp>? MyPortfolioMap { get; set; }
-	private PortfolioRecResp? SelectedPortfolio { get; set; }
+	private Dictionary<string, PortfolioResp>? MyPortfolioMap { get; set; }
+	private PortfolioResp? SelectedPortfolio { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -23,7 +23,7 @@ public partial class MyPortfolio : BasePage
 			HideUI = true;
 			ShowAlert("info", "Loading portfolio...");
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var result = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
 			if (result.Status == 200)
 			{
 				HideUI = false;

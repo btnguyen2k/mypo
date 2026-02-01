@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Text.Json;
 
 namespace MyPo.Portfolio.Shared.EF;
-sealed class PortfolioRecEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioRec, string>
+sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<PortfolioRec> builder)
+	public override void Configure(EntityTypeBuilder<PortfolioEntity> builder)
 	{
 		base.Configure(builder);
 		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio"); // change table name if needed
@@ -30,12 +30,12 @@ sealed class PortfolioRecEntityTypeConfiguration : GenericEntityTypeConfiguratio
 	}
 }
 
-sealed class TransactionRecEntityTypeConfiguration : GenericEntityTypeConfiguration<TransactionRec, string>
+sealed class TxBuySellEntityTypeConfiguration : GenericEntityTypeConfiguration<TxBuySellEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<TransactionRec> builder)
+	public override void Configure(EntityTypeBuilder<TxBuySellEntity> builder)
 	{
 		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}transactions"); // change table name if needed
+		builder.ToTable($"{Globals.TABLE_PREFIX}buys_sells"); // change table name if needed
 		builder.Property(p => p.Id).HasColumnName("tx_id").HasMaxLength(48);
 		builder.Property(p => p.PortfolioId).HasColumnName("portfolio_id").HasMaxLength(48);
 		builder.Property(p => p.Type).HasColumnName("tx_type").HasMaxLength(4);
@@ -56,9 +56,9 @@ sealed class TransactionRecEntityTypeConfiguration : GenericEntityTypeConfigurat
 	}
 }
 
-sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset, string>
+sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<AssetEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<Asset> builder)
+	public override void Configure(EntityTypeBuilder<AssetEntity> builder)
 	{
 		base.Configure(builder);
 		builder.ToTable($"{Globals.TABLE_PREFIX}ownings"); // change table name if needed
@@ -76,13 +76,13 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
 	}
 }
 
-sealed class RoiRecEntityTypeConfiguration : GenericEntityTypeConfiguration<RoiRec, string>
+sealed class TxSettlementEntityTypeConfiguration : GenericEntityTypeConfiguration<TxSettlementEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<RoiRec> builder)
+	public override void Configure(EntityTypeBuilder<TxSettlementEntity> builder)
 	{
 		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}roi"); // change table name if needed
-		builder.Property(p => p.Id).HasColumnName("roi_id").HasMaxLength(48);
+		builder.ToTable($"{Globals.TABLE_PREFIX}settlements"); // change table name if needed
+		builder.Property(p => p.Id).HasColumnName("tx_id").HasMaxLength(48);
 		builder.Property(p => p.Status).HasColumnName("tx_status").HasMaxLength(8);
 		builder.Property(p => p.PortfolioId).HasColumnName("portfolio_id").HasMaxLength(48);
 		builder.Property(p => p.TxType).HasColumnName("tx_type").HasMaxLength(8);
