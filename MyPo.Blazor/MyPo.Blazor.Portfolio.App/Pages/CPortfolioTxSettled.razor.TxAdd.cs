@@ -11,17 +11,17 @@ public partial class CPortfolioTxSettled
 
 	private void PrepareAddRecord()
 	{
-		Rec = new CreateOrUpdateTxSettlementReq()
+		Tx = new CreateOrUpdateTxSettlementReq()
 		{
-			PortfolioId = PortfolioId,
+			PortfolioId = Portfolio?.Id ?? string.Empty,
 			TxType = string.Empty,
 			TxTime = DateTimeOffset.Now,
 			RefItemType = string.Empty,
 			RefItemCode = string.Empty,
 			RefMarketId = string.Empty,
 		};
-		TxTime = Rec.TxTime.ToString(TX_DATETIME_FORMAT);
-		RecId = string.Empty;
+		TxTime = Tx.TxTime.ToString(TX_DATETIME_FORMAT);
+		TxId = string.Empty;
 		CloseAlert();
 	}
 
@@ -45,14 +45,14 @@ public partial class CPortfolioTxSettled
 	private async void BtnClickAddRecordSave()
 	{
 		ModalDialogAddRecord.ShowAlert("info", "Adding ROI record...");
-		if (!ValidateRoiRec(ModalDialogAddRecord))
+		if (!ValidateTx(ModalDialogAddRecord))
 		{
 			return;
 		}
 
-		Rec.PortfolioId = PortfolioId;
+		Tx.PortfolioId = Portfolio?.Id ?? string.Empty;
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.CreateMyPortfolioTxSettlementAsync(Rec, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.CreateMyPortfolioTxSettlementAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
 			ModalDialogAddRecord.ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");
@@ -63,7 +63,7 @@ public partial class CPortfolioTxSettled
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogAddRecord.Close();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio?.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";

@@ -35,7 +35,7 @@
 									Total Cash In (1)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashIn, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashIn, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -43,7 +43,7 @@
 									Total Cash Out (2)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashOut, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCashOut, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -51,7 +51,7 @@
 									Net Capital Contributed (3=1-2)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetCapitalContributed, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetCapitalContributed, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -65,7 +65,7 @@
 									Total Buy (4)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalBuyValue, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalBuyValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -73,7 +73,7 @@
 									Total Sell (5)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalSellValue, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalSellValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -87,7 +87,7 @@
 									Dividends (6)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalDividends, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalDividends, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -95,7 +95,7 @@
 									Interest (7)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalInterest, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalInterest, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -103,7 +103,7 @@
 									Total Income (8=6+7)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalIncome, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalIncome, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -117,7 +117,7 @@
 									Realized Capital Gains (9=5-4)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.RealizedCapitalGains, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.RealizedCapitalGains, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -131,7 +131,7 @@
 									Fees (10)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalFees, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalFees, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -139,7 +139,7 @@
 									Tax (11)
 								</td>
 								<td class="text-end">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -147,7 +147,7 @@
 									Total Costs (12=10+11)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCosts, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalCosts, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -161,7 +161,7 @@
 									Gross Returns (13=8+9)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.GrossReturns, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.GrossReturns, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -169,7 +169,7 @@
 									Net Returns (14=13-12)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetReturns, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetReturns, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 
@@ -183,7 +183,7 @@
 									Net Profit / Loss (15=14)
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -221,7 +221,7 @@
 									Total "In"
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyIn, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyIn, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -229,7 +229,7 @@
 									Total "Out"
 								</td>
 								<td class="text-end fw-semibold">
-									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyOut, DefaultMarket?.PriceScale??1))
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalMoneyOut, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -245,7 +245,7 @@
 										+PnlSummary.Value.TotalDividends
 										+PnlSummary.Value.TotalInterest
 										-PnlSummary.Value.TotalFees
-										-PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1))
+										-PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 						</table>

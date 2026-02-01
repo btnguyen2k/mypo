@@ -17,7 +17,7 @@ public partial class CPortfolioSummary : CBase
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
 
-	private MarketDefResp? DefaultMarket => TxSettlements?.FirstOrDefault(a => a.Market!=null).Market;
+	private MarketDefResp? DefaultMarket => Markets?.FirstOrDefault(m => m.Id == Portfolio?.Metadata?.DefaultMarketId);
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

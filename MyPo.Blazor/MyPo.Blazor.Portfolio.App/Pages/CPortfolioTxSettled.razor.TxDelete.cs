@@ -22,7 +22,7 @@ public partial class CPortfolioTxSettled
 			ShowAlert("danger", "You do not have permission to delete ROI records from this portfolio.");
 			return;
 		}
-		TxSettlementResp? selectedRec = RoiRecordsMap.TryGetValue(rid, out var rec) ? rec : null;
+		TxSettlementResp? selectedRec = TxSettlementsMap.TryGetValue(rid, out var rec) ? rec : null;
 		if (selectedRec != null)
 		{
 			PrepareDeleteRecord(selectedRec.Value);
@@ -44,18 +44,18 @@ public partial class CPortfolioTxSettled
 	{
 		ModalDialogDeleteRecord.ShowAlert("info", "Deleting ROI record...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var resp = await apiClient.DeleteMyPortfolioTxSettlementAsync(Rec.PortfolioId, RecId, await GetAuthTokenAsync(), ApiBaseUrl);
+		var resp = await apiClient.DeleteMyPortfolioTxSettlementAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ModalDialogDeleteRecord.ShowAlert("danger", resp.Message ?? $"Error deleting ROI record '{RecId}'.");
+			ModalDialogDeleteRecord.ShowAlert("danger", resp.Message ?? $"Error deleting ROI record '{TxId}'.");
 			return;
 		}
 		ModalDialogDeleteRecord.ShowAlert("success", "ROI record deleted successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"ROI record '{RecId}' deleted successfully.";
+		var passAlertMessage = $"ROI record '{TxId}' deleted successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogDeleteRecord.Close();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio?.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
