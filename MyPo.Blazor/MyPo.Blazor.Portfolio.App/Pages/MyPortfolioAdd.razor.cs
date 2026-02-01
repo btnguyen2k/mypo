@@ -1,4 +1,4 @@
-using MyPo.Blazor.Portfolio.App.Shared;
+﻿using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ public partial class MyPortfolioAdd : BasePage
 	private string Description { get; set; } = string.Empty;
 	private string Viewers { get; set; } = string.Empty;
 
-	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
+	private IEnumerable<PortfolioResp> MyPortfolioTree = [];
 
 	private void BtnClickCancel()
 	{
@@ -49,7 +49,7 @@ public partial class MyPortfolioAdd : BasePage
 
 		var viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
 
-		var req = new CreateOrUpdatePortfolioRecReq
+		var req = new CreateOrUpdatePortfolioReq
 		{
 			Name = Name.Trim(),
 			Description = Description.Trim(),
@@ -93,7 +93,7 @@ public partial class MyPortfolioAdd : BasePage
 			HideUI = true;
 			ShowAlert("info", "Loading portfolio...");
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var result = await apiClient.GetMyPortfolioAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
 			if (result.Status == 200)
 			{
 				var allPortfolios = result.Data ?? [];

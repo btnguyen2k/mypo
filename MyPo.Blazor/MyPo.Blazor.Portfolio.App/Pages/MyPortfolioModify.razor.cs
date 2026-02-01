@@ -1,4 +1,4 @@
-using MyPo.Blazor.Portfolio.App.Shared;
+﻿using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +10,7 @@ public partial class MyPortfolioModify : BasePage
 {
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
-	private PortfolioRecResp? SelectedPortfolio { get; set; }
+	private PortfolioResp? SelectedPortfolio { get; set; }
 
 	private string ParentPortfolioId { get; set; } = string.Empty;
 	private string Name { get; set; } = string.Empty;
@@ -19,15 +19,15 @@ public partial class MyPortfolioModify : BasePage
 	private bool IsActive { get; set; } = true;
 	private string Viewers { get; set; } = string.Empty;
 
-	private IEnumerable<PortfolioRecResp> MyPortfolioTree = [];
+	private IEnumerable<PortfolioResp> MyPortfolioTree = [];
 
-	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
+	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
 		HideUI = true;
 		var errorMsg = $"Portfolio '{id}' not found.";
 		ShowAlert("info", "Loading portfolio, please wait...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var result = await apiClient.GetMyPortfolioAsync(authToken, ApiBaseUrl);
+		var result = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
 		if (result.Status != 200)
 		{
 			errorMsg = result.Message ?? "Error loading portfolio.";
@@ -104,7 +104,7 @@ public partial class MyPortfolioModify : BasePage
 		var metadata = SelectedPortfolio!.Metadata ?? new();
 		metadata.Viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
 
-		var req = new CreateOrUpdatePortfolioRecReq
+		var req = new CreateOrUpdatePortfolioReq
 		{
 			Id = PortfolioId,
 			Name = Name.Trim(),

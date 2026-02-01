@@ -36,25 +36,39 @@
 					{
 						<nav>
 							<div class="nav nav-tabs" id="nav-tab" role="tablist">
-								<button class="nav-link @(ActiveTab == TabIdHoldings ? "active" : "")"
-									@onclick="(()=>SwitchTab(TabIdHoldings))"
-									id="@TabIdHoldings"
-									data-coreui-toggle="tab" data-coreui-target="#nav-holdings"
-									type="button" role="tab" aria-controls="nav-holdings" aria-selected="true">Holdings</button>
-								<button class="nav-link @(ActiveTab == TabIdTransactions ? "active" : "")"
-									@onclick="(()=>SwitchTab(TabIdTransactions))"
-									id="@TabIdTransactions"
-									data-coreui-toggle="tab" data-coreui-target="#nav-transactions"
-									type="button" role="tab" aria-controls="nav-transactions" aria-selected="false">Buys/Sells</button>
-								<button class="nav-link @(ActiveTab == TabIdRoi ? "active" : "")"
-									@onclick="(()=>SwitchTab(TabIdRoi))"
-									id="@TabIdRoi"
-									data-coreui-toggle="tab" data-coreui-target="#nav-roi"
-									type="button" role="tab" aria-controls="nav-roi" aria-selected="false">Investments and Returns</button>
+								<button class="nav-link @(ActiveTab==TabIdSummary?"active":"")"
+									@onclick="(()=>SwitchTab(TabIdSummary))" id="@TabIdSummary"
+									data-coreui-toggle="tab" data-coreui-target="#@(TabIdSummary)-content"
+									type="button" role="tab" aria-controls="@(TabIdSummary)-content"
+									aria-selected="@(ActiveTab==TabIdSummary?"true":"false")">Summary</button>
+								<button class="nav-link @(ActiveTab==TabIdPositions?"active":"")"
+									@onclick="(()=>SwitchTab(TabIdPositions))" id="@TabIdPositions"
+									data-coreui-toggle="tab" data-coreui-target="#@(TabIdPositions)-content"
+									type="button" role="tab" aria-controls="@(TabIdPositions)-content"
+									aria-selected="@(ActiveTab==TabIdPositions?"true":"false")">Positions</button>
+								<button class="nav-link @(ActiveTab==TabIdTxBuysSells?"active":"")"
+									@onclick="(()=>SwitchTab(TabIdTxBuysSells))" id="@TabIdTxBuysSells"
+									data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxBuysSells)-content"
+									type="button" role="tab" aria-controls="@(TabIdTxBuysSells)-content"
+									aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Buys/Sells</button>
+								<button class="nav-link @(ActiveTab==TabIdTxSettled?"active":"")"
+									@onclick="(()=>SwitchTab(TabIdTxSettled))" id="@TabIdTxSettled"
+									data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxSettled)-content"
+									type="button" role="tab" aria-controls="@(TabIdTxSettled)-content"
+									aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Settlements</button>
 							</div>
 						</nav>
 						<div class="tab-content" id="nav-tabContent">
-							<div class="tab-pane fade @(ActiveTab == TabIdHoldings ? "show active" : "")" id="nav-holdings" role="tabpanel" aria-labelledby="@TabIdHoldings" tabindex="0">
+							<div class="tab-pane fade @(ActiveTab==TabIdSummary?"show active":"")"
+									id="@(TabIdSummary)-content" role="tabpanel" aria-labelledby="@TabIdSummary" tabindex="0">
+								<CPortfolioSummary
+									Portfolio="@(SelectedPortfolio)"
+									PortfolioId="@(SelectedPortfolio?.Id)"
+									RoiRecords="@(RoiRecords)"
+									Markets="@(Markets)" />
+							</div>
+							<div class="tab-pane fade @(ActiveTab==TabIdPositions?"show active":"")"
+									id="@(TabIdPositions)-content" role="tabpanel" aria-labelledby="@TabIdPositions" tabindex="0">
 								<CPortfolioAssets
 									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
@@ -62,15 +76,17 @@
 									Markets="@(Markets)"
 								/>
 							</div>
-							<div class="tab-pane fade @(ActiveTab == TabIdTransactions ? "show active" : "")" id="nav-transactions" role="tabpanel" aria-labelledby="@TabIdTransactions" tabindex="0">
-								<CPortfolioTransactions
+							<div class="tab-pane fade @(ActiveTab==TabIdTxBuysSells?"show active":"")"
+									id="@(TabIdTxBuysSells)-content" role="tabpanel" aria-labelledby="@TabIdTxBuysSells" tabindex="0">
+								<CPortfolioTxBuysSells
 									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									Transactions="@(Transactions)"
 									Markets="@(Markets)" />
 							</div>
-							<div class="tab-pane fade @(ActiveTab == TabIdRoi ? "show active" : "")" id="nav-roi" role="tabpanel" aria-labelledby="@TabIdRoi" tabindex="0">
-								<CPortfolioRoi
+							<div class="tab-pane fade @(ActiveTab==TabIdTxSettled?"show active":"")"
+									id="@(TabIdTxSettled)-content" role="tabpanel" aria-labelledby="@TabIdTxSettled" tabindex="0">
+								<CPortfolioTxSettled
 									Portfolio="@(SelectedPortfolio)"
 									PortfolioId="@(SelectedPortfolio?.Id)"
 									RoiRecords="@(RoiRecords)"

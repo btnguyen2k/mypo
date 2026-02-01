@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Identity;
@@ -15,7 +15,7 @@ public partial class PortfolioController
 	/// <returns></returns>
 	/// <remarks>The user is identified by the auth token.</remarks>
 	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO)]
-	public async ValueTask<ActionResult<ApiResp<List<PortfolioRecResp>>>> GetMyPortfolio()
+	public async ValueTask<ActionResult<ApiResp<List<PortfolioResp>>>> GetMyPortfolios()
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -24,12 +24,11 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		var result = new List<PortfolioRecResp>();
-		// var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserAsync(currentUser);
+		var result = new List<PortfolioResp>();
+		var myPortfolioList = await PortfolioRepository.GetPortfoliosByUserAsync(currentUser);
 		foreach (var portfolio in myPortfolioList)
 		{
-			result.Add(PortfolioRecResp.BuildFrom(portfolio));
+			result.Add(PortfolioResp.BuildFrom(portfolio));
 		}
 		return ResponseOk(result);
 	}
@@ -42,7 +41,7 @@ public partial class PortfolioController
 	/// <remarks>The user is identified by the auth token.</remarks>
 	[HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> CreatePortfolio([FromBody] CreateOrUpdatePortfolioRecReq req)
+	public async ValueTask<ActionResult<ApiResp<PortfolioResp>>> CreatePortfolio([FromBody] CreateOrUpdatePortfolioReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -75,7 +74,7 @@ public partial class PortfolioController
 		}
 
 		// Create new portfolio record
-		var portfolioRec = new PortfolioRec
+		var portfolioRec = new PortfolioEntity
 		{
 			// Id = Guid.NewGuid().ToString(),
 			ParentId = string.IsNullOrEmpty(parentId) ? null : parentId,
@@ -91,12 +90,12 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(500, "Failed to create new portfolio.");
 		}
-		return ResponseOk(PortfolioRecResp.BuildFrom(result));
+		return ResponseOk(PortfolioResp.BuildFrom(result));
 	}
 
 	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioRecReq req)
+	public async ValueTask<ActionResult<ApiResp<PortfolioResp>>> UpdateMyPortfolio([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioReq req)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -148,12 +147,12 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(500, $"Failed to update portfolio '{id}'.");
 		}
-		return ResponseOk(PortfolioRecResp.BuildFrom(existingPortfolio));
+		return ResponseOk(PortfolioResp.BuildFrom(existingPortfolio));
 	}
 
 	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
-	public async ValueTask<ActionResult<ApiResp<PortfolioRecResp>>> DeleteMyPortfolio([FromRoute] string id)
+	public async ValueTask<ActionResult<ApiResp<PortfolioResp>>> DeleteMyPortfolio([FromRoute] string id)
 	{
 		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
 		if (authErrorResult != null)
@@ -162,7 +161,7 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		var myPortfolioList = await PortfolioRepository.GetPortfolioByUserIdAsync(currentUser.Id);
+		var myPortfolioList = await PortfolioRepository.GetPortfoliosByUserIdAsync(currentUser.Id);
 		var existingPortfolio = myPortfolioList.FirstOrDefault(p => p.Id == id);
 		if (existingPortfolio == null)
 		{
@@ -180,6 +179,6 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(500, $"Failed to delete portfolio '{id}'.");
 		}
-		return ResponseOk(PortfolioRecResp.BuildFrom(existingPortfolio));
+		return ResponseOk(PortfolioResp.BuildFrom(existingPortfolio));
 	}
 }
