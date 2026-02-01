@@ -150,6 +150,22 @@ public struct PnlSummaryResp
 	public readonly decimal NetReturns => GrossReturns - TotalCosts;
 	public readonly decimal NetPnL => NetReturns;
 	public readonly decimal ROIvsTotalBuy => TotalBuyValue > 0  ? (NetPnL / TotalBuyValue * 100) : 0;
+	public readonly decimal UnsettledROIvsTotalBuy(decimal unsettledPnL)
+	{
+		return TotalBuyValue > 0 ? (unsettledPnL / TotalBuyValue * 100) : 0;
+	}
+
+	public readonly decimal UnsettledROIvsPeakCapital(decimal unsettledPnL, IEnumerable<TxSettlementResp> records)
+	{
+		var peakCapital = PeakCapital(records);
+		return peakCapital > 0 ? (unsettledPnL / peakCapital * 100) : 0;
+	}
+
+	public readonly decimal UnsettledROIvsAverageCapital(decimal unsettledPnL, IEnumerable<TxSettlementResp> records)
+	{
+		var averageCapital = AverageCapital(records);
+		return averageCapital > 0 ? (unsettledPnL / averageCapital * 100) : 0;
+	}
 
 	public readonly decimal ROIvsPeakCapital(IEnumerable<TxSettlementResp> records)
 	{

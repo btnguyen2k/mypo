@@ -13,9 +13,9 @@ public partial class MyPortfolioDetails : BasePage
 	private PortfolioResp? SelectedPortfolio { get; set; }
 
 	private IEnumerable<MarketDefResp>? Markets { get; set; }
-	private IEnumerable<TxBuySellResp>? Transactions { get; set; }
+	private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
 	private IEnumerable<AssetResp>? Assets { get; set; }
-	private IEnumerable<TxSettlementResp>? RoiRecords { get; set; }
+	private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
 
 	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -37,14 +37,14 @@ public partial class MyPortfolioDetails : BasePage
 			return null;
 		}
 
-		ShowAlert("info", "Loading portfolio transactions, please wait...");
+		ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
 		var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
 		if (apiRespTx.Status != 200)
 		{
-			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio transactions.");
+			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio buy/sell transactions.");
 			return null;
 		}
-		Transactions = apiRespTx.Data ?? [];
+		TxBuySells = apiRespTx.Data ?? [];
 
 		ShowAlert("info", "Loading portfolio assets, please wait...");
 		var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
@@ -55,14 +55,14 @@ public partial class MyPortfolioDetails : BasePage
 		}
 		Assets = apiRespAssets.Data ?? [];
 
-		ShowAlert("info", "Loading portfolio ROI records, please wait...");
+		ShowAlert("info", "Loading portfolio settlement records, please wait...");
 		var apiRespRoiRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
 		if (apiRespRoiRecs.Status != 200)
 		{
-			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio ROI records.");
+			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio settlement records.");
 			return null;
 		}
-		RoiRecords = apiRespRoiRecs.Data ?? [];
+		TxSettlements = apiRespRoiRecs.Data ?? [];
 
 		return portfolio;
 	}
