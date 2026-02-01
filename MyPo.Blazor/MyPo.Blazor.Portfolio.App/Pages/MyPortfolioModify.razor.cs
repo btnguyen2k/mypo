@@ -18,8 +18,17 @@ public partial class MyPortfolioModify : BasePage
 	private string Currency { get; set; } = string.Empty;
 	private bool IsActive { get; set; } = true;
 	private string Viewers { get; set; } = string.Empty;
+	private string DefaultMarketId { get; set; } = string.Empty;
+
+	private IEnumerable<MarketDefResp> AllMarkets { get; set; } = [];
 
 	private IEnumerable<PortfolioResp> MyPortfolioTree = [];
+
+	private void DefaultMarketChanged()
+	{
+		var market = AllMarkets.FirstOrDefault(m => m.Id == DefaultMarketId);
+		Currency = market?.Currency ?? string.Empty;
+	}
 
 	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -52,6 +61,20 @@ public partial class MyPortfolioModify : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
+
+			ShowAlert("info", "Loading market info...");
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (marketResult.Status == 200)
+			{
+				AllMarkets = marketResult.Data ?? [];
+			}
+			else
+			{
+				ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
+				return;
+			}
+
 			SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 			if (SelectedPortfolio == null)
 			{
@@ -69,6 +92,7 @@ public partial class MyPortfolioModify : BasePage
 			Currency = SelectedPortfolio.Currency;
 			IsActive = SelectedPortfolio.IsActive;
 			Viewers = string.Join(", ", SelectedPortfolio.Metadata?.Viewers?.ToList() ?? []);
+			DefaultMarketId = SelectedPortfolio.Metadata?.DefaultMarketId ?? string.Empty;
 
 			HideUI = false;
 			CloseAlert();
@@ -83,7 +107,7 @@ public partial class MyPortfolioModify : BasePage
 	private async Task BtnClickSave()
 	{
 		HideUI = true;
-		ShowAlert("info", "Please wait...");
+		ShowAlert("info", "Saving portfolio...");
 
 		// Validate name
 		if (string.IsNullOrWhiteSpace(Name))
@@ -103,6 +127,7 @@ public partial class MyPortfolioModify : BasePage
 
 		var metadata = SelectedPortfolio!.Metadata ?? new();
 		metadata.Viewers = new HashSet<string>(Viewers?.ToLower().Split([',',';','\t','\n', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? []);
+		metadata.DefaultMarketId = DefaultMarketId;
 
 		var req = new CreateOrUpdatePortfolioReq
 		{

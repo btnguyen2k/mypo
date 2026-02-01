@@ -1,6 +1,6 @@
 {
   "us-ny": {
-    "code": "USNY",
+    "code": "*USNY",
     "name": "US Stock Market (for timezone and currency purposes)",
     "country": "USA",
     "currency": "USD",
@@ -48,7 +48,7 @@
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
   "au-syd": {
-    "code": "AUSYD",
+    "code": "*AUSYD",
     "name": "AU Stock Market (for timezone and currency purposes)",
     "country": "Australia",
     "currency": "AUD",
@@ -80,7 +80,7 @@
     "trading_days": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ]
   },
   "vn-vn": {
-    "code": "VNVN",
+    "code": "*VNVN",
     "name": "VN Stock Market (for timezone and currency purposes)",
     "country": "Vietnam",
     "currency": "VND",

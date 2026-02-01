@@ -13,8 +13,17 @@ public partial class MyPortfolioAdd : BasePage
 	private string Currency { get; set; } = string.Empty;
 	private string Description { get; set; } = string.Empty;
 	private string Viewers { get; set; } = string.Empty;
+	private string DefaultMarketId { get; set; } = string.Empty;
+
+	private IEnumerable<MarketDefResp> AllMarkets { get; set; } = [];
 
 	private IEnumerable<PortfolioResp> MyPortfolioTree = [];
+
+	private void DefaultMarketChanged()
+	{
+		var market = AllMarkets.FirstOrDefault(m => m.Id == DefaultMarketId);
+		Currency = market?.Currency ?? string.Empty;
+	}
 
 	private void BtnClickCancel()
 	{
@@ -29,7 +38,7 @@ public partial class MyPortfolioAdd : BasePage
 	private async Task BtnClickSave(bool openAfterCreate = false)
 	{
 		HideUI = true;
-		ShowAlert("info", "Please wait...");
+		ShowAlert("info", "Saving portfolio...");
 
 		// Validate name
 		if (string.IsNullOrWhiteSpace(Name))
@@ -58,6 +67,7 @@ public partial class MyPortfolioAdd : BasePage
 			Metadata = new()
 			{
 				Viewers = viewers,
+				DefaultMarketId = DefaultMarketId,
 			},
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
@@ -91,20 +101,35 @@ public partial class MyPortfolioAdd : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-			ShowAlert("info", "Loading portfolio...");
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			if (result.Status == 200)
+
+			ShowAlert("info", "Loading market info...");
+			var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (marketResult.Status == 200)
 			{
-				var allPortfolios = result.Data ?? [];
-				MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
-				HideUI = false;
-				CloseAlert();
+				AllMarkets = marketResult.Data ?? [];
 			}
 			else
 			{
-				ShowAlert("danger", result.Message ?? "Unknown error");
+				ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
+				return;
 			}
+
+			ShowAlert("info", "Loading portfolio...");
+			var portfolioResult = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (portfolioResult.Status == 200)
+			{
+				var allPortfolios = portfolioResult.Data ?? [];
+				MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+			}
+			else
+			{
+				ShowAlert("danger", portfolioResult.Message ?? "Error loading portfolio.");
+				return;
+			}
+
+			HideUI = false;
+			CloseAlert();
 		}
 	}
 }

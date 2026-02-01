@@ -4,3 +4,4 @@
 - (Patch) Fix ROI calculation.
 - (Refactor) Redesign MyPortfolio Details page.
 - (Feat) Add value format and quantity format to market metadata.
+- (Feat) Add default market info to portfolio metadata.

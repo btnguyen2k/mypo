@@ -44,4 +44,7 @@ public sealed class PortfolioMetadata
 {
 	[JsonPropertyName("viewers"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public ISet<string>? Viewers { get; set; }
+
+	[JsonPropertyName("default_market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? DefaultMarketId { get; set; }
 }
