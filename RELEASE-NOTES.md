@@ -1,5 +1,17 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-01 - v0.5.0
+
+### Added/Refactoring/Deprecation
+
+- (Refactor) Redesign MyPortfolio Details page.
+- (Feat) Add value format and quantity format to market metadata.
+- (Feat) Add default market info to portfolio metadata.
+
+### Fixed/Improvements
+
+- (Patch) Fix ROI calculation.
+
 ## 2026-01-31 - v0.4.0
 
 ### Added/Refactoring/Deprecation
