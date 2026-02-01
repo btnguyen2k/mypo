@@ -1,36 +1,36 @@
-using MyPo.Shared.Identity;
+﻿using MyPo.Shared.Identity;
 
 namespace MyPo.Portfolio.Shared.Models;
 
 public partial interface IPortfolioRepository
 {
 	/// <summary>
-	/// Gets portfolio records owned by a user.
+	/// Gets <see cref="PortfolioEntity" /> records owned by a user.
 	/// </summary>
-	public ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+	public ValueTask<IEnumerable<PortfolioEntity>> GetPortfoliosByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Gets portfolio records accessible by a user (as owner or viewer).
+	/// Gets <see cref="PortfolioEntity" /> records accessible by a user (as owner or viewer).
 	/// </summary>
-	public ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserAsync(MyPoUser user, CancellationToken cancellationToken = default);
+	public ValueTask<IEnumerable<PortfolioEntity>> GetPortfoliosByUserAsync(MyPoUser user, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Creates a new portfolio record.
+	/// Creates a new <see cref="PortfolioEntity" /> record.
 	/// </summary>
-	public ValueTask<PortfolioRec?> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+	public ValueTask<PortfolioEntity?> CreatePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Gets a portfolio record by its ID.
+	/// Gets a <see cref="PortfolioEntity" /> record by its ID.
 	/// </summary>
-	public ValueTask<PortfolioRec?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default);
+	public ValueTask<PortfolioEntity?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Updates an existing portfolio record.
+	/// Updates an existing <see cref="PortfolioEntity" /> record.
 	/// </summary>
-	public ValueTask<PortfolioRec?> UpdatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+	public ValueTask<PortfolioEntity?> UpdatePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Deletes an existing portfolio record.
+	/// Deletes an existing <see cref="PortfolioEntity" /> record.
 	/// </summary>
-	public ValueTask<bool> DeletePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default);
+	public ValueTask<bool> DeletePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default);
 }

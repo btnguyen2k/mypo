@@ -10,20 +10,20 @@ public partial class MyPortfolioDetails : BasePage
 {
 	[Parameter]
 	public string PortfolioId { get; set; } = string.Empty;
-	private PortfolioRecResp? SelectedPortfolio { get; set; }
+	private PortfolioResp? SelectedPortfolio { get; set; }
 
 	private IEnumerable<MarketDefResp>? Markets { get; set; }
-	private IEnumerable<TransactionRecResp>? Transactions { get; set; }
+	private IEnumerable<TxBuySellResp>? Transactions { get; set; }
 	private IEnumerable<AssetResp>? Assets { get; set; }
-	private IEnumerable<RoiRecResp>? RoiRecords { get; set; }
+	private IEnumerable<TxSettlementResp>? RoiRecords { get; set; }
 
-	private async Task<PortfolioRecResp?> LoadPortfolioAsync(string id, string authToken)
+	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
 		HideUI = true;
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 
 		ShowAlert("info", "Loading portfolio, please wait...");
-		var apiRespPortfolio = await apiClient.GetMyPortfolioAsync(authToken, ApiBaseUrl);
+		var apiRespPortfolio = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
 		if (apiRespPortfolio.Status != 200)
 		{
 			ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
@@ -38,7 +38,7 @@ public partial class MyPortfolioDetails : BasePage
 		}
 
 		ShowAlert("info", "Loading portfolio transactions, please wait...");
-		var apiRespTx = await apiClient.GetMyPortfolioTransactionsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
 		if (apiRespTx.Status != 200)
 		{
 			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio transactions.");
@@ -56,7 +56,7 @@ public partial class MyPortfolioDetails : BasePage
 		Assets = apiRespAssets.Data ?? [];
 
 		ShowAlert("info", "Loading portfolio ROI records, please wait...");
-		var apiRespRoiRecs = await apiClient.GetMyPortfolioRoiRecsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		var apiRespRoiRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
 		if (apiRespRoiRecs.Status != 200)
 		{
 			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio ROI records.");
@@ -125,10 +125,11 @@ public partial class MyPortfolioDetails : BasePage
 		}
 	}
 
-	private string ActiveTab { get; set; } = TabIdHoldings;
-	private const string TabIdHoldings = "nav-holdings-tab";
-	private const string TabIdTransactions = "nav-tx-tab";
-	private const string TabIdRoi = "nav-roi-tab";
+	private string ActiveTab { get; set; } = TabIdSummary;
+	private const string TabIdSummary = "nav-summary-tab";
+	private const string TabIdPositions = "nav-positions-tab";
+	private const string TabIdTxBuysSells = "nav-txbuyssells-tab";
+	private const string TabIdTxSettled = "nav-txsettled-tab";
 
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;
@@ -141,7 +142,7 @@ public partial class MyPortfolioDetails : BasePage
 			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
 		);
 		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
-		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdHoldings : savedTab;
+		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
 	}
 
 	private async void SwitchTab(string tab)

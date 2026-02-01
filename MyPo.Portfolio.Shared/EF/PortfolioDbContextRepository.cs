@@ -33,10 +33,10 @@ public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolio
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
-		new PortfolioRecEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioRec>());
-		new TransactionRecEntityTypeConfiguration().Configure(modelBuilder.Entity<TransactionRec>());
-		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<Asset>());
-		new RoiRecEntityTypeConfiguration().Configure(modelBuilder.Entity<RoiRec>());
+		new PortfolioEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioEntity>());
+		new TxBuySellEntityTypeConfiguration().Configure(modelBuilder.Entity<TxBuySellEntity>());
+		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<AssetEntity>());
+		new TxSettlementEntityTypeConfiguration().Configure(modelBuilder.Entity<TxSettlementEntity>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>

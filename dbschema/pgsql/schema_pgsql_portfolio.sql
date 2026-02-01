@@ -1,7 +1,7 @@
 -- Database: PostgreSQL (min version 15)
 
-DROP TABLE IF EXISTS mypo_transactions;
-DROP TABLE IF EXISTS mypo_roi;
+DROP TABLE IF EXISTS mypo_buys_sells;
+DROP TABLE IF EXISTS mypo_settlements;
 DROP TABLE IF EXISTS mypo_ownings;
 DROP TABLE IF EXISTS mypo_portfolio;
 
@@ -25,7 +25,7 @@ CREATE INDEX idx_mypo_portfolio_parent_id ON mypo_portfolio (parent_id);
 CREATE INDEX idx_mypo_portfolio_portfolio_metadata ON mypo_portfolio USING GIN (portfolio_metadata);
 CREATE INDEX idx_mypo_portfolio_portfolio_metadata_viewers ON mypo_portfolio ((portfolio_metadata->'viewers'));
 
-CREATE TABLE mypo_transactions (
+CREATE TABLE mypo_buys_sells (
     tx_id varchar(48) NOT NULL,
     portfolio_id varchar(48) NOT NULL,
     tx_type varchar(8) NOT NULL,
@@ -43,11 +43,11 @@ CREATE TABLE mypo_transactions (
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     concurrency_stamp varchar(48) NULL,
-    CONSTRAINT pk_mypo_transactions PRIMARY KEY (tx_id),
-    CONSTRAINT fk_mypo_transactions_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
+    CONSTRAINT pk_mypo_buys_sells PRIMARY KEY (tx_id),
+    CONSTRAINT fk_mypo_buys_sells_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
 );
-CREATE INDEX idx_mypo_transactions_portfolio_id ON mypo_transactions (portfolio_id);
-CREATE INDEX idx_mypo_transactions_tx_time ON mypo_transactions (tx_time);
+CREATE INDEX idx_mypo_buys_sells_portfolio_id ON mypo_buys_sells (portfolio_id);
+CREATE INDEX idx_mypo_buys_sells_tx_time ON mypo_buys_sells (tx_time);
 
 CREATE TABLE mypo_ownings (
     owning_id varchar(48) NOT NULL,
@@ -67,8 +67,8 @@ CREATE TABLE mypo_ownings (
 CREATE INDEX idx_mypo_ownings_portfolio_id ON mypo_ownings (portfolio_id);
 CREATE UNIQUE INDEX uidx_mypo_ownings_portfolio_item ON mypo_ownings (portfolio_id, item_type, item_code, market_id);
 
-CREATE TABLE mypo_roi (
-    roi_id varchar(48) NOT NULL,
+CREATE TABLE mypo_settlements (
+    tx_id varchar(48) NOT NULL,
     tx_status varchar(8) NOT NULL DEFAULT 'NEW',
     portfolio_id varchar(48) NOT NULL,
     tx_type varchar(8) NOT NULL,
@@ -82,11 +82,11 @@ CREATE TABLE mypo_roi (
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     concurrency_stamp varchar(48) NULL,
-    CONSTRAINT pk_mypo_roi PRIMARY KEY (roi_id),
-    CONSTRAINT fk_mypo_roi_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
+    CONSTRAINT pk_mypo_settlements PRIMARY KEY (tx_id),
+    CONSTRAINT fk_mypo_settlements_portfolio_id_mypo_portfolio_id FOREIGN KEY (portfolio_id) REFERENCES mypo_portfolio (portfolio_id) ON DELETE CASCADE
 );
-CREATE INDEX idx_mypo_roi_portfolio_id ON mypo_roi (portfolio_id);
-CREATE INDEX idx_mypo_roi_portfolio_id_tx_time ON mypo_roi (portfolio_id, tx_time);
-CREATE INDEX idx_mypo_roi_portfolio_id_tx_type ON mypo_roi (portfolio_id, tx_type);
--- CREATE INDEX idx_mypo_roi_tx_time ON mypo_roi (tx_time);
--- CREATE INDEX idx_mypo_roi_tx_type ON mypo_roi (tx_type);
+CREATE INDEX idx_mypo_settlements_portfolio_id ON mypo_settlements (portfolio_id);
+CREATE INDEX idx_mypo_settlements_portfolio_id_tx_time ON mypo_settlements (portfolio_id, tx_time);
+CREATE INDEX idx_mypo_settlements_portfolio_id_tx_type ON mypo_settlements (portfolio_id, tx_type);
+-- CREATE INDEX idx_mypo_settlements_tx_time ON mypo_roi (tx_time);
+-- CREATE INDEX idx_mypo_settlements_tx_type ON mypo_roi (tx_type);

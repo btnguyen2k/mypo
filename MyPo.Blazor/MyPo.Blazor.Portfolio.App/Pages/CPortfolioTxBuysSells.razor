@@ -1,0 +1,456 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+<div class="container mt-3">
+	<CAlert @ref="@Alert" />
+	<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+		<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-primary":"btn-outline-secondary") btn-sm mb-3"
+			disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+			@onclick="()=>BtnClickAddTx()"><CIcon icon="cil-plus" /> Add Transaction</button>
+		<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id && SelectedTransactionsMap.Count>0?"btn-success":"btn-outline-secondary") btn-sm mb-3"
+			disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || SelectedTransactionsMap.Count==0)"
+			@onclick="()=>BtnClickSettleTxMultiple()"><CIcon icon="cil-check" /> Settle Transactions</button>
+	</AuthorizeView>
+	<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
+		<thead>
+			<tr>
+				<th rowspan="2" scope="col" class="text-center align-middle">&nbsp;</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Type</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Time</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Item</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Quantity</th>
+  				<th rowspan="2" scope="col" class="text-center align-middle">Price</th>
+  				<th colspan="3" scope="col" class="text-center align-middle">Cost</th>
+  				<!-- <th scope="col" class="text-center align-middle">1</th> -->
+  				<!-- <th scope="col" class="text-center align-middle">2</th> -->
+  				<th rowspan="2" scope="col" class="text-center align-middle">Actions</th>
+			</tr>
+			<tr>
+				<th scope="col" class="text-center align-middle">Tx Fee</th>
+				<th scope="col" class="text-center align-middle">Tax</th>
+				<th scope="col" class="text-center align-middle">Other</th>
+			</tr>
+		</thead>
+		<tbody>
+			@if (Transactions == null || Transactions.Count() == 0)
+			{
+				<tr>
+					<td colspan="10" class="text-center">No data found.</td>
+				</tr>
+			}
+			else
+			{
+				@foreach (var tx in Transactions)
+				{
+					<tr>
+						<td class="text-center w-auto">
+							@(tx.IsSettled?"✅":"")@if(!tx.IsSettled)
+							{
+								<input class="form-check-input" type="checkbox"
+									disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+									@checked="@(SelectedTransactionsMap.ContainsKey(tx.Id))"
+									@onchange="()=>TxCheckboxClicked(tx.Id)"
+								/>
+							}
+						</td>
+						<td class="text-center w-auto">
+							<CBadgeTxType Text="@tx.Type" />
+						</td>
+						<td class="text-center w-auto">@(tx.Time.ToString(TX_DATETIME_FORMAT))</td>
+						<td class="text-start">@(tx.ItemType) - @(tx.ItemCode) (@(tx.MarketId??"-") / @(tx.Market?.CurrencySymbol??"-"))</td>
+						<td class="text-end w-auto">@(tx.Quantity.ToString("N2"))</td>
+						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1))</td>
+						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1))</td>
+						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1))</td>
+						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1))</td>
+						<td class="text-center">
+							<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+								<Authorized>
+									<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+											disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+											title="Update transaction" @onclick="(()=>BtnClickUpdateTx(tx.Id))">
+										<CIcon icon="cil-pencil" />
+									</button>
+									<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled?"btn-outline-secondary":"btn-outline-danger")"
+											disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled)" title="Delete transaction" @onclick="(()=>BtnClickDeleteTx(tx.Id))">
+										<CIcon icon="cil-x" />
+									</button>
+								</Authorized>
+								<NotAuthorized>
+									<span>-</span>
+								</NotAuthorized>
+							</AuthorizeView>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+</div>
+
+<CModal @ref="@ModalDialogSettleTxMultiple" title="Settle Transactions" centered="false" type="info" size="large">
+	<div class="card">
+		<div class="card-body">
+			<CAlert @ref="@ModalDialogSettleTxMultiple.Alert" />
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickSettleTxMultipleClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-success" @onclick="()=>BtnClickSettleTxMultipleConfirm()"><CIcon icon="check" /> Settle</button>
+		</div>
+	</div>
+</CModal>
+
+<CModal @ref="@ModalDialogDeleteTx" title="Delete Transaction" centered="false" type="danger" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			@if (Tx.IsSettled)
+			{
+				<CAlert Type="warning">
+					This transaction has been settled and cannot be deleted.
+				</CAlert>
+			}
+			else
+			{
+				<CAlert @ref="@ModalDialogDeleteTx.Alert" />
+				<form>
+					<div class="row mb-3 align-items-center">
+						<div class="col-4">
+							<div class="form-floating">
+								<select class="form-select" id="txType" aria-label="Buy/Sell" value="@Tx.Type" disabled>
+									<option value="BUY">BUY</option>
+									<option value="SELL">SELL</option>
+								</select>
+								<label for="txType">Buy/Sell (*):</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<select class="form-select" id="txMarket" aria-label="Market" value="@Tx.MarketId" disabled>
+									<option value=""></option>
+									@foreach (var m in Markets ?? [])
+									{
+										<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+									}
+								</select>
+								<label for="txMarket">Market:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div>
+								<label for="txTime">Transaction Time:</label>
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" value="@TxTime" disabled />
+									<span class="input-group-text"><CIcon icon="calendar"/></span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3 align-items-center">
+						<div class="col-3">
+							<div class="form-floating">
+								<select class="form-select" id="txItemType" aria-label="Item Type" value="@Tx.ItemType" disabled>
+									<option value="STOCK">Stock</option>
+								</select>
+								<label for="txType">Item Type (*):</label>
+							</div>
+						</div>
+						<div class="col-3">
+							<div class="form-floating">
+								<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" value="@Tx.ItemCode" disabled />
+								<label for="txItemCode">Item Code (*):</label>
+							</div>
+						</div>
+						<div class="col-3">
+							<div class="form-floating">
+								<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" value="@Tx.Price" disabled />
+								<label for="txPrice">Price (*):</label>
+							</div>
+						</div>
+						<div class="col-3">
+							<div class="form-floating">
+								<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" value="@Tx.Quantity" disabled />
+								<label for="txQuantity">Quantity (*):</label>
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3 align-items-center">
+						<div class="col-4">
+							<div class="form-floating">
+								<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" value="@Tx.FeeTx" disabled />
+								<label for="txFeeTx">Transaction Fee:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" value="@Tx.FeeTax" disabled />
+								<label for="txFeeTax">Tax:</label>
+							</div>
+						</div>
+						<div class="col-4">
+							<div class="form-floating">
+								<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" value="@Tx.FeeOther" disabled />
+								<label for="txFeeOther">Other Fee:</label>
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3 align-items-center">
+						<div class="col-12">
+							<div class="form-floating">
+								<input type="text" class="form-control" id="txNotes" aria-label="Notes" value="@Tx.Notes" disabled />
+								<label for="txNotes">Notes:</label>
+							</div>
+						</div>
+					</div>
+				</form>
+				<span class="small text-muted">
+					Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+					/
+					Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+					/
+					Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+				</span>
+			}
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteTxClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteTxConfirm()"><CIcon icon="trash" /> Delete</button>
+		</div>
+	</div>
+</CModal>
+
+<CModal @ref="@ModalDialogUpdateTx" title="Update Transaction" centered="false" type="primary" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			@if (Tx.IsSettled)
+			{
+				<CAlert type="warning">
+					This transaction has been settled, only notes can be updated.
+				</CAlert>
+			}
+			<CAlert @ref="@ModalDialogUpdateTx.Alert" />
+			<form>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes">
+								<option value="BUY">BUY</option>
+								<option value="SELL">SELL</option>
+							</select>
+							<label for="txType">Buy/Sell (*):</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="txMarket" aria-label="Market" @bind="Tx.MarketId" disabled="@Tx.IsSettled">
+								<option value=""></option>
+								@foreach (var m in Markets ?? [])
+								{
+									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+								}
+							</select>
+							<label for="txMarket">Market:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div>
+							<label for="txTime">Transaction Time:</label>
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true" disabled="@Tx.IsSettled" />
+								<span class="input-group-text"><CIcon icon="calendar"/></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-3">
+						<div class="form-floating">
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes">
+								<option value="STOCK">Stock</option>
+							</select>
+							<label for="txType">Item Type (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
+							<label for="txItemCode">Item Code (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" @bind="Tx.Price" disabled="@Tx.IsSettled" />
+							<label for="txPrice">Price (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
+							<label for="txQuantity">Quantity (*):</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx" disabled="@Tx.IsSettled" />
+							<label for="txFeeTx">Transaction Fee:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax" disabled="@Tx.IsSettled" />
+							<label for="txFeeTax">Tax:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther" disabled="@Tx.IsSettled" />
+							<label for="txFeeOther">Other Fee:</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txNotes" aria-label="Notes" @bind="Tx.Notes" />
+							<label for="txNotes">Notes:</label>
+						</div>
+					</div>
+				</div>
+			</form>
+			<span class="small text-muted">
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
+				/
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				/
+				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
+			</span>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickUpdateTxClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickUpdateTxSave()"><CIcon icon="save" /> Save</button>
+			@if (!Tx.IsSettled)
+			{
+				<span></span>
+				<button type="button" class="btn btn-success float-end" @onclick="()=>BtnClickUpdateTxSettle()"><CIcon icon="check-circle" /> Settle</button>
+			}
+		</div>
+	</div>
+</CModal>
+
+<CModal @ref="@ModalDialogAddTx" title="Record A New Transaction" centered="false" type="primary" size="extra-large">
+	<div class="card">
+		<div class="card-body">
+			<CAlert @ref="@ModalDialogAddTx.Alert" />
+			<form>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="txType" aria-label="Buy/Sell" @bind="Tx.Type" @bind:after="AutoGenTxNotes">
+								<option value="BUY">BUY</option>
+								<option value="SELL">SELL</option>
+							</select>
+							<label for="txType">Buy/Sell (*):</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<select class="form-select" id="txMarket" aria-label="Market" @bind="Tx.MarketId">
+								<option value=""></option>
+								@foreach (var m in Markets ?? [])
+								{
+									<option value="@m.Id">@m.Code (@m.Name - @m.Country)</option>
+								}
+							</select>
+							<label for="txMarket">Market:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div>
+							<label for="txTime">Transaction Time:</label>
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control" id="txTime" placeholder="Transaction Time" @bind="TxTime" data-datetime-picker="true" />
+								<span class="input-group-text"><CIcon icon="calendar"/></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-3">
+						<div class="form-floating">
+							<select class="form-select" id="txItemType" aria-label="Item Type" @bind="Tx.ItemType" @bind:after="AutoGenTxNotes">
+								<option value="STOCK">Stock</option>
+							</select>
+							<label for="txType">Item Type (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txItemCode" aria-label="Item Code" @bind="Tx.ItemCode" @bind:after="AutoGenTxNotes" />
+							<label for="txItemCode">Item Code (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" @bind="Tx.Price" />
+							<label for="txPrice">Price (*):</label>
+						</div>
+					</div>
+					<div class="col-3">
+						<div class="form-floating">
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" @bind:after="AutoGenTxNotes" />
+							<label for="txQuantity">Quantity (*):</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx" />
+							<label for="txFeeTx">Transaction Fee:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax" />
+							<label for="txFeeTax">Tax:</label>
+						</div>
+					</div>
+					<div class="col-4">
+						<div class="form-floating">
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther" />
+							<label for="txFeeOther">Other Fee:</label>
+						</div>
+					</div>
+				</div>
+				<div class="row mb-3 align-items-center">
+					<div class="col-12">
+						<div class="form-floating">
+							<input type="text" class="form-control" id="txNotes" aria-label="Notes" @bind="Tx.Notes" />
+							<label for="txNotes">Notes:</label>
+						</div>
+					</div>
+				</div>
+			</form>
+			<span class="small text-muted">
+				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
+				/
+				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				/
+				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
+			</span>
+		</div>
+		<div class="card-footer">
+			<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickAddTxClose()"><CIcon icon="x-circle" /> Cancel</button>
+			<button type="button" class="btn btn-primary" @onclick="()=>BtnClickAddTxSave()"><CIcon icon="save" /> Save</button>
+		</div>
+	</div>
+</CModal>
+
+@code {
+}

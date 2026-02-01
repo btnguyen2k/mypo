@@ -38,7 +38,7 @@
 					{
 						<form>
 							<div class="row mb-2 align-items-center">
-								<div class="col-md-4 col-sm-12 mb-2">
+								<div class="col-md-5 col-sm-12 mb-2">
 									<div class="form-floating">
 										<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
 											<option value="@(string.Empty)">-</option>
@@ -53,22 +53,36 @@
 										<label for="pParentId">Parent Portfolio:</label>
 									</div>
 								</div>
-								<div class="col-md-3 col-sm-12">
+								<div class="col-md-5 col-sm-12 mb-2">
 									<div class="form-floating">
-										<input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
-										<label for="pName">Name: (*)</label>
-									</div>
-								</div>
-								<div class="col-md-3 col-sm-12">
-									<div class="form-floating">
-										<input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
-										<label for="pCurrency">Currency: (*)</label>
+										<select class="form-select" id="pDefaultMarketId" aria-label="Default Market" @bind="DefaultMarketId" @bind:after="DefaultMarketChanged">
+											<option value="@(string.Empty)">-</option>
+											@foreach (var m in AllMarkets)
+											{
+												<option value="@m.Id">@m.Code - @m.Name</option>
+											}
+										</select>
+										<label for="pDefaultMarketId">Default Market:</label>
 									</div>
 								</div>
 								<div class="col-md-2 col-sm-12">
 									<div class="form-check">
 										<input type="checkbox" class="form-check-input" id="pIsActive" @bind="IsActive" />
 										<label class="form-check-label" for="pIsActive">Active</label>
+									</div>
+								</div>
+							</div>
+							<div class="row mb-2 align-items-center">
+								<div class="col-md-6 col-sm-12">
+									<div class="form-floating">
+										<input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
+										<label for="pName">Name: (*)</label>
+									</div>
+								</div>
+								<div class="col-md-6 col-sm-12">
+									<div class="form-floating">
+										<input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
+										<label for="pCurrency">Currency: (*)</label>
 									</div>
 								</div>
 							</div>

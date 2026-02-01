@@ -6,25 +6,25 @@ namespace MyPo.Portfolio.Shared.EF;
 
 public sealed partial class PortfolioDbContextRepository
 {
-	private DbSet<PortfolioRec> PortfolioRecStore { get; set; }
+	private DbSet<PortfolioEntity> PortfolioStore { get; set; }
 
 	/// <inheritdoc />
-	public async ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+	public async ValueTask<IEnumerable<PortfolioEntity>> GetPortfoliosByUserIdAsync(string userId, CancellationToken cancellationToken = default)
 	{
-		return await PortfolioRecStore.AsNoTracking()
+		return await PortfolioStore.AsNoTracking()
 			.Where(pr => pr.OwnerUserId == userId)
 			.OrderBy(pr => pr.Name)
 			.ToListAsync(cancellationToken);
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<IEnumerable<PortfolioRec>> GetPortfolioByUserAsync(MyPoUser user, CancellationToken cancellationToken = default)
+	public async ValueTask<IEnumerable<PortfolioEntity>> GetPortfoliosByUserAsync(MyPoUser user, CancellationToken cancellationToken = default)
 	{
-		var ownedPortfolios = await PortfolioRecStore.AsNoTracking()
+		var ownedPortfolios = await PortfolioStore.AsNoTracking()
 			.Where(pr => pr.OwnerUserId == user.Id)
 			.OrderBy(pr => pr.Name)
 			.ToListAsync(cancellationToken);
-		var viewerPortfolios = await PortfolioRecStore.AsNoTracking()
+		var viewerPortfolios = await PortfolioStore.AsNoTracking()
 			.Where(pr => Microsoft.EntityFrameworkCore.EF.Functions.JsonContains(pr.Metadata!.Viewers!, $"\"{user.Email}\""))
 			.OrderBy(pr => pr.Name)
 			.ToListAsync(cancellationToken);
@@ -32,34 +32,34 @@ public sealed partial class PortfolioDbContextRepository
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<PortfolioRec?> CreatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	public async ValueTask<PortfolioEntity?> CreatePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default)
 	{
-		var entry = await PortfolioRecStore.AddAsync(portfolioRec, cancellationToken);
+		var entry = await PortfolioStore.AddAsync(portfolio, cancellationToken);
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<PortfolioRec?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+	public async ValueTask<PortfolioEntity?> GetPortfolioByIdAsync(string portfolioId, CancellationToken cancellationToken = default)
 	{
-		return await PortfolioRecStore.AsNoTracking().FirstOrDefaultAsync(pr => pr.Id == portfolioId, cancellationToken);
+		return await PortfolioStore.AsNoTracking().FirstOrDefaultAsync(pr => pr.Id == portfolioId, cancellationToken);
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<PortfolioRec?> UpdatePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	public async ValueTask<PortfolioEntity?> UpdatePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default)
 	{
-		var existingEntry = await PortfolioRecStore.FindAsync([portfolioRec.Id], cancellationToken);
+		var existingEntry = await PortfolioStore.FindAsync([portfolio.Id], cancellationToken);
 		if (existingEntry == null)
 		{
 			return null;
 		}
-		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(portfolioRec));
+		Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(portfolio));
 		return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<bool> DeletePortfolioAsync(PortfolioRec portfolioRec, CancellationToken cancellationToken = default)
+	public async ValueTask<bool> DeletePortfolioAsync(PortfolioEntity portfolio, CancellationToken cancellationToken = default)
 	{
-		PortfolioRecStore.Remove(portfolioRec);
+		PortfolioStore.Remove(portfolio);
 		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 }
