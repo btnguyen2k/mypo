@@ -63,8 +63,7 @@
 									id="@(TabIdSummary)-content" role="tabpanel" aria-labelledby="@TabIdSummary" tabindex="0">
 								<CPortfolioSummary
 									Portfolio="@(SelectedPortfolio)"
-									PortfolioId="@(SelectedPortfolio?.Id)"
-									RoiRecords="@(RoiRecords)"
+									TxSettlements="@(RoiRecords)"
 									Markets="@(Markets)" />
 							</div>
 							<div class="tab-pane fade @(ActiveTab==TabIdPositions?"show active":"")"

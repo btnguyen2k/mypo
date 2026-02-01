@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
@@ -181,42 +182,56 @@ public struct PnlSummaryResp
 		return peakCapital;
 	}
 
+	public readonly decimal ROIvsAverageCapital(IEnumerable<TxSettlementResp> records)
+	{
+		var averageCapital = AverageCapital(records);
+		return averageCapital > 0 ? (NetPnL / averageCapital * 100) : 0;
+	}
+
 	public readonly decimal AverageCapital(IEnumerable<TxSettlementResp> records)
 	{
-		return 0;
-		// var startDate = "0000-00-00";
-		// var count = 0;
-		// var totalCount = 0;
-		// decimal totalCapital = 0;
-		// decimal cumulativeCapital = 0;
-		// foreach (var record in records.OrderBy(r => r.TxTime))
-		// {
-		// 	var recDate = record.TxTime.ToUniversalTime().ToString("yyyy-MM-dd");
-		// 	if (startDate == "0000-00-00")
-		// 	{
-		// 		startDate = recDate;
-		// 	}
-		// 	else if (recDate != startDate)
-		// 	{
-		// 		totalCapital += cumulativeCapital*count;
-		// 		count++;
-		// 		startDate = recDate;
-		// 	}
+		var startDate = "0000-00-00";
+		var totalDays = 0;
+		decimal totalCapital = 0;
+		decimal cumulativeCapital = 0;
+		var recordsList = records
+			.Where(r => r.TxType==TxSettlementEntity.TX_TYPE_BUY||r.TxType==TxSettlementEntity.TX_TYPE_SELL)
+			.OrderBy(r => r.TxTime)
+			.ToList();
+		var filteredList = recordsList.Append(new TxSettlementResp
+			{
+				TxTime = recordsList.Max(r => r.TxTime).AddDays(1),
+				TxType = "END",
+				TxValue = 0
+			});
+		foreach (var tx in filteredList)
+		{
+			var recDate = tx.TxTime.ToUniversalTime().ToString("yyyy-MM-dd");
+			Console.WriteLine($"[DEBUG] Processing transaction ID: {tx.Id}, Date: {recDate}, Type: {tx.TxType}, Value: {tx.TxValue}");
+			if (startDate == "0000-00-00")
+			{
+				startDate = recDate;
+			}
+			else if (recDate != startDate)
+			{
+				var daysDiff = (DateTime.Parse(recDate) - DateTime.Parse(startDate)).Days;
 
-
-		// 	if (record.TxType == RoiRec.TX_TYPE_BUY)
-		// 	{
-		// 		cumulativeCapital += record.TxValue;
-		// 	}
-		// 	else if (record.TxType == RoiRec.TX_TYPE_SELL)
-		// 	{
-		// 		cumulativeCapital -= record.TxValue;
-		// 	}
-		// 	cumulativeCapital = cumulativeCapital > 0 ? cumulativeCapital : 0;
-		// 	totalCapital += cumulativeCapital;
-		// 	count++;
-		// }
-		// return count > 0 ? (totalCapital / count) : 0;
+				totalCapital += cumulativeCapital*daysDiff;
+				totalDays += daysDiff;
+				Console.WriteLine($"[DEBUG] Start date: {startDate}, End date: {recDate}, Cumulative capital: {cumulativeCapital}, NumDays: {daysDiff}, Total capital: {totalCapital}, Total Days: {totalDays}");
+				startDate = recDate;
+			}
+			if (tx.TxType == TxSettlementEntity.TX_TYPE_BUY)
+			{
+				cumulativeCapital += tx.TxValue;
+			}
+			else if (tx.TxType == TxSettlementEntity.TX_TYPE_SELL)
+			{
+				cumulativeCapital -= tx.TxValue;
+			}
+			cumulativeCapital = cumulativeCapital > 0 ? cumulativeCapital : 0;
+		}
+		return totalDays > 0 ? (totalCapital / totalDays) : 0;
 	}
 
 	public readonly PnlSummary ToModel()
