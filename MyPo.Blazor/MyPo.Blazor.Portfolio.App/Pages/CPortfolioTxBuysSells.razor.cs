@@ -39,15 +39,15 @@ public partial class CPortfolioTxBuysSells : CBase
 		}
 	}
 
-	private bool ValidateTx(CModal? form = null)
+	private bool ValidateTx(CModal? activeForm = null)
 	{
 		// validate transaction type
 		Tx.Type = Tx.Type.ToUpper().Trim();
 		if (!Tx.IsSettled && !TxBuySellEntity.TxTypes.Contains(Tx.Type))
 		{
 			var (alertType, alertMsg) = ("danger", $"Transaction type must be one of {string.Join(", ", TxBuySellEntity.TxTypes)}, currently '{Tx.Type}'.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -58,8 +58,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (parsedDatetime == null)
 		{
 			var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -71,8 +71,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemType))
 		{
 			var (alertType, alertMsg) = ("danger", "Item type must not be empty.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -83,8 +83,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemCode))
 		{
 			var (alertType, alertMsg) = ("danger", "Item code must not be empty.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -94,8 +94,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && Tx.Price <= 0.00m)
 		{
 			var (alertType, alertMsg) = ("danger", "Price must be a positive value.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -105,8 +105,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && Tx.Quantity <= 0)
 		{
 			var (alertType, alertMsg) = ("danger", "Quantity must be a positive value.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;

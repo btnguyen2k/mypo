@@ -13,14 +13,14 @@ public partial class CPortfolioTxSettled
 	{
 		Tx = new CreateOrUpdateTxSettlementReq()
 		{
-			PortfolioId = Portfolio?.Id ?? string.Empty,
+			PortfolioId = Portfolio!.Id,
 			TxType = string.Empty,
 			TxTime = DateTimeOffset.Now,
 			RefItemType = string.Empty,
 			RefItemCode = string.Empty,
 			RefMarketId = string.Empty,
 		};
-		TxTime = Tx.TxTime.ToString(TX_DATETIME_FORMAT);
+		TxTime = Tx.TxTime.ToString(PortfolioUtils.DEFAULT_DATETIME_PICKER_FORMAT);
 		TxId = string.Empty;
 		CloseAlert();
 	}
@@ -63,7 +63,7 @@ public partial class CPortfolioTxSettled
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogAddRecord.Close();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio?.Id, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio!.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
