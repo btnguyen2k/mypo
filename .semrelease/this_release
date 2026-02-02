@@ -3,3 +3,5 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Patch) Add Unsettled P/L to portfolio summary page.
 - (Patch) Redesign portfolio asset page.
+- (Patch) UI fix portfolio buys/sells page.
+- (Patch) UI fix portfolio settlements page.
