@@ -71,8 +71,7 @@
 									id="@(TabIdPositions)-content" role="tabpanel" aria-labelledby="@TabIdPositions" tabindex="0">
 								<CPortfolioAssets
 									Portfolio="@(SelectedPortfolio)"
-									PortfolioId="@(SelectedPortfolio?.Id)"
-									Assets="@(Assets)"
+									Assets="@(Assets?.OrderBy(a=>a.ItemCode))"
 									Markets="@(Markets)"
 								/>
 							</div>

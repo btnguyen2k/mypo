@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
-using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -13,6 +12,7 @@ public partial class CPortfolioAssets : CBase
 	[Parameter]
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private Dictionary<string, AssetResp> AssetsMap => Assets?.ToDictionary(t => t.Id, t => t) ?? [];
+	private AssetResp? SelectedAsset;
 	private decimal TotalCost => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a => a.AveragePrice*a.Quantity) ?? 0;
 	private decimal TotalMarketValue => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a =>
 	{
@@ -22,26 +22,21 @@ public partial class CPortfolioAssets : CBase
 		}
 		return 0;
 	}) ?? 0;
-	private MarketDefResp? DefaultMarket => Assets?.FirstOrDefault(a => a.Market!=null).Market;
 	private Dictionary<string, Quote> QuotesMap = []; // map {asset-id --> quote}
 	private readonly Dictionary<string, decimal> LatestPricesMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLPercentMap = [];
 
-	private AssetResp? SelectedAsset;
-	private MarketDef? SelectedMarket;
 	private string AssetTags = string.Empty;
 
 	[Parameter]
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
 
 	[Parameter]
-	public string PortfolioId { get; set; } = string.Empty;
-
-	[Parameter]
 	public PortfolioResp? Portfolio { get; set; }
+	private MarketDefResp? DefaultMarket => Markets?.FirstOrDefault(m => m.Id == Portfolio?.Metadata?.DefaultMarketId);
 
-	private CModal ModalDialogAssetInfo { get; set; } = default!;
+	private CModal ModalDialogAssetUpdateTags { get; set; } = default!;
 	private CModal ModalDialogBuySellAssetCalculator { get; set; } = default!;
 
 	private bool StopRefreshQuotes { get; set; } = false;
@@ -102,14 +97,24 @@ public partial class CPortfolioAssets : CBase
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
-		if (firstRender && Assets != null && Markets != null && !string.IsNullOrEmpty(PortfolioId) && Portfolio != null)
+		if (firstRender && Assets != null && Markets != null && Portfolio != null)
 		{
-			// var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			// var myPortfolios = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			// Portfolio = myPortfolios.Data?.FirstOrDefault(p => p.Id == PortfolioId) ?? null;
 			var symbolsList = Assets.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
 		}
+	}
+
+	private int MarketStatus(AssetResp? asset)
+	{
+		return asset == null || asset.Quantity <= 0
+			? 0
+			: LatestPricesMap.TryGetValue(asset.Id, out var lp)
+				? lp == asset.AveragePrice
+					? 0
+					: lp > asset.AveragePrice
+						? 1
+						: -1
+				: 0;
 	}
 
 	private void BtnClickAssetBuySellCalculator(string assetId)
@@ -117,51 +122,50 @@ public partial class CPortfolioAssets : CBase
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
 		if (SelectedAsset != null)
 		{
-			// SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.Value.MarketId).ToModel() ?? null;
 			ModalDialogBuySellAssetCalculator.Open();
 		}
 	}
 
-	private async void BtnClickAssetInfo(string assetId)
+	private void BtnClickAssetUpdateTags(string assetId)
 	{
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
-		if (SelectedAsset != null)
+		if (SelectedAsset == null)
 		{
-			SelectedMarket = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.Value.MarketId).ToModel() ?? null;
-			AssetTags = SelectedAsset.Value.Tags ?? string.Empty;
-			ModalDialogAssetInfo.Open();
-			await Task.CompletedTask;
+			ShowAlert("danger", "Asset not found.");
+			return;
 		}
+		AssetTags = SelectedAsset.Tags ?? string.Empty;
+		ModalDialogAssetUpdateTags.Open();
 	}
 
-	private async void BtnClickUpdateAssetTags()
+	private async void BtnClickAssetUpdateTagsConfirmed()
 	{
 		var req = new CreateOrUpdateAssetReq()
 		{
-			Id = SelectedAsset!.Value.Id,
-			PortfolioId = SelectedAsset!.Value.PortfolioId,
-			ItemType = SelectedAsset!.Value.ItemType,
-			ItemCode = SelectedAsset!.Value.ItemCode,
-			Quantity = SelectedAsset!.Value.Quantity,
-			AveragePrice = SelectedAsset!.Value.AveragePrice,
-			MarketId = SelectedAsset!.Value.MarketId,
+			Id = SelectedAsset!.Id,
+			PortfolioId = SelectedAsset!.PortfolioId,
+			ItemType = SelectedAsset!.ItemType,
+			ItemCode = SelectedAsset!.ItemCode,
+			Quantity = SelectedAsset!.Quantity,
+			AveragePrice = SelectedAsset!.AveragePrice,
+			MarketId = SelectedAsset!.MarketId,
 			Tags = AssetTags,
 		};
 
-		ModalDialogAssetInfo.ShowAlert("info", "Updating asset tags...");
+		ModalDialogAssetUpdateTags.ShowAlert("info", "Updating asset tags...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.UpdateMyPortfolioAssetAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ModalDialogAssetInfo.ShowAlert("danger", resp.Message!);
+			ModalDialogAssetUpdateTags.ShowAlert("danger", resp.Message ?? "Error updating asset tags.");
 			return;
 		}
-		ModalDialogAssetInfo.ShowAlert("success", "Asset tags updated successfully.");
+		ModalDialogAssetUpdateTags.ShowAlert("success", "Asset tags updated successfully.");
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
-		ModalDialogAssetInfo.Close();
-		var passAlertMessage = $"{SelectedAsset!.Value.ItemCode}'s tags updated successfully.";
+		ModalDialogAssetUpdateTags.Close();
+		var passAlertMessage = $"{SelectedAsset!.ItemCode}'s tags updated successfully.";
 		var passAlertType = "success";
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio?.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";

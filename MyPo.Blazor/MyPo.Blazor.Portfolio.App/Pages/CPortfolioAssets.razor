@@ -2,6 +2,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets
 @using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Models
 
 @inherits CBase
 
@@ -21,7 +22,7 @@
 			<div class="col-12">
 				<div class="card text-bg-light">
 					<div class="card-body">
-						<table class="table table-sm table-borderless">
+						<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
 							<tr>
 								<td class="fs-5 fw-semibold">
 									Total Cost:
@@ -49,64 +50,57 @@
 				</div>
 			</div>
 		</div>
+
 		<div class="row mb-2">
-			@foreach (var asset in Assets)
-			{
-				<div class="card-group col-xl-3 col-lg-4 col-md-6 col-sm-6 col-xs-12">
-					<div class="card mb-2 text-white @(AssetCardBackground(asset))">
-						<div class="card-body pb-0 d-flex justify-content-between align-items-start">
-							<div>
-								<div class="fs-5 fw-semibold">
+			<div class="col-12">
+				<table class="table table-sm table-bordered table-striped table-hover">
+					<tbody>
+						@foreach (var asset in Assets)
+						{
+							<tr>
+								<td class="text-start w-auto">
+									<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
 									@(asset.ItemCode)
-									<span class="fs-6 fw-normal">
-										@(asset.Market?.CurrencySymbol??"")
-										@(LatestPricesMap.TryGetValue(asset.Id, out var lp)?PortfolioUtils.FormatValueWithScale(lp, asset.Market?.PriceScale??1):"⌛")
-										@if (asset.Quantity>0)
-										{
-											@(" (")
-											@if (UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp))
-											{
-												@(plp.ToString("N2")+"%")
-												<CIcon icon="@(plp>=0?"arrow-top":"arrow-bottom")" />
-											}
-											else
-											{
-												@("-")
-											}
-											@(")")
-										}
+								</td>
+								<td class="text-end w-auto">
+									@(asset.Market?.CurrencySymbol??"")
+									@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+								</td>
+								<td class="text-end w-auto">
+									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
+								</td>
+								<td class="text-end w-auto">
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var p1)&&p1>=0?"text-success":"text-danger"))">
+										@(LatestPricesMap.TryGetValue(asset.Id, out var q1)
+											? $"{PortfolioUtils.FormatValueWithScale(q1, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+											: "-"
+										)
 									</span>
-								</div>
-								<table class="table table-sm table-borderless">
-									<tr>
-										<td>Position</td>
-										<td class="text-end">@(asset.Quantity.ToString("N2"))</td>
-									</tr>
-									@if (asset.Quantity>0){
-										<tr>
-											<td>Avg. Price</td>
-											<td class="text-end">@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1))</td>
-										</tr>
-										<tr>
-											<td>Unsettled P/L</td>
-											<td class="text-end">
-												@(UnsettledPnLMap.TryGetValue(asset.Id, out var pl)
-													? PortfolioUtils.FormatValueWithScale(pl, asset.Market?.PriceScale??1)
-													: "-")
-											</td>
-										</tr>
+								</td>
+								<td class="text-end w-auto">
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var p2)&&p2>=0?"text-success":"text-danger"))">
+										@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp)?plp.ToString("N2")+"%":"-")
+									</span>
+								</td>
+								<td class="text-start w-auto">
+									@foreach (var tag in asset.TagsList)
+									{
+										<CRandomBadge Text="@tag" />
 									}
-								</table>
-							</div>
-						</div>
-						<div class="card-footer">
-							<button class="btn btn-link text-light" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
-								<BIcon icon="calculator" />
-							</button>
-						</div>
-					</div>
-				</div>
-			}
+								</td>
+								<td class="text-center w-auto">
+									<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
+										<BIcon icon="calculator" />
+									</button>
+									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
+										<BIcon icon="pencil" />
+									</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	}
 	<div class="alert alert-warning" role="alert">
@@ -147,45 +141,120 @@
 	</div>
 </CModal>
 
-@*
-<CModal @ref="@ModalDialogAssetInfo" title="Asset Details" centered="false" type="info" size="extra-large">
+<CModal @ref="@ModalDialogAssetUpdateTags" title="Asset Info" centered="false" type="info" size="extra-large">
 	<div class="card mb-2">
 		<div class="card-body">
-			<CAlert @ref="@ModalDialogAssetInfo.Alert" />
-			<table class="table table-bordered border-secondary align-middle">
-				<tbody>
-					<tr>
-						<td class="text-center w-auto">@(SelectedAsset?.ItemType)</td>
-						<td class="text-center w-auto">@(SelectedAsset?.ItemCode)</td>
-						<td class="text-center w-auto">@(SelectedMarket==null?"-":SelectedMarket.Id.ToUpper()+(SelectedMarket.IsCurrentlyOpen()?" (Market Open)":" (Market Close)"))</td>
-						<td class="text-center w-auto">@(SelectedAsset?.Market?.Currency??"-")</td>
-						<td class="text-center w-auto">
-							@(SelectedAsset?.Quantity.ToString("N2"))
-							@@
-							@(PortfolioUtils.FormatValueWithScale(SelectedAsset?.AveragePrice??0, SelectedAsset?.Market?.PriceScale??1))
-							/
-							<span class="@(UnsettledPnLMap.TryGetValue(SelectedAsset?.Id??"", out var p0)&&p0>=0?"text-success":"text-danger")">
-								@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var q0)
-									? $"{PortfolioUtils.FormatValueWithScale(q0, SelectedAsset?.Market?.PriceScale??1)}"
-									: "-"
-								)
-								(@(UnsettledPnLPercentMap.TryGetValue(SelectedAsset?.Id??"", out var plp)?plp.ToString("N2")+"%":"-"))
-							</span>
-
-						</td>
-						<td class="col-3">
-							<div class="input-group input-group-sm">
-								<span class="input-group-text">Tags:</span>
-								<input type="text" class="form-control" @bind="AssetTags" placeholder="Comma separated, e.g. ETF, Divident,..."/>
-								<button class="btn btn-outline-primary" type="button" @onclick="()=>BtnClickUpdateAssetTags()">Update</button>
-							</div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			@if (SelectedAsset?.ItemType == "STOCK")
+			<CAlert @ref="@ModalDialogAssetUpdateTags.Alert" />
+			@if (SelectedAsset != null)
 			{
-				<CStockChart Market="@SelectedAsset?.Market?.ToModel()" Symbol="@SelectedAsset?.ItemCode" />
+				<div class="row card-group">
+					<div class="col-md-6 col-sm-12">
+						<div class="card mb-2 border-top-info border-top-3">
+							<div class="card-body">
+    							<h5 class="card-title">@(SelectedAsset.ItemCode)</h5>
+								<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+									<tr>
+										<td>
+											Type:
+										</td>
+										<td class="text-end">
+											@(SelectedAsset.ItemType)
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Status:
+										</td>
+										<td class="text-end">
+											@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Market Open" : "Market Closed") ?? "-")
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Average Price:
+										</td>
+										<td class="text-end">
+											@(SelectedAsset.Market?.CurrencySymbol??"")
+											@(PortfolioUtils.FormatValueWithScale(SelectedAsset.AveragePrice, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Total Cost:
+										</td>
+										<td class="text-end">
+											@(SelectedAsset.Market?.CurrencySymbol??"")
+											@(PortfolioUtils.FormatValueWithScale(SelectedAsset.TotalCost, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+										</td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-sm-12">
+						<div class="card mb-2 @(new List<string>(["border-top-danger", "border-top-info", "border-top-success"])[MarketStatus(SelectedAsset)+1]) border-top-3">
+							<div class="card-body">
+    							<h5 class="card-title">Performance</h5>
+								<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+									<tr>
+										<td>
+											Market:
+										</td>
+										<td class="text-end">
+											@(SelectedAsset.Market?.Country??"-") / @(SelectedAsset.Market?.Code??"-")
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Position:
+										</td>
+										<td class="text-end">
+											@(SelectedAsset.Quantity.ToString(SelectedAsset.Market?.QuantityFormat??"N2"))
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Market Price:
+										</td>
+										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+											@(SelectedAsset.Market?.CurrencySymbol??"")
+											@(LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lpInfo)
+												? $"{PortfolioUtils.FormatValueWithScale(lpInfo, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+												: "-"
+											)
+											(@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var pnlpInfo)?pnlpInfo.ToString("N2")+"%":"-"))
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Market Value:
+										</td>
+										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+											@(SelectedAsset.Quantity<=0
+												? "-"
+												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
+												  PortfolioUtils.FormatValueWithScale(
+													LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lpInfo2)
+														? lpInfo2 * SelectedAsset.Quantity
+														: 0,
+													SelectedAsset.Market?.PriceScale??1,
+													SelectedAsset.Market?.ValueFormat??""
+												  )
+											)
+										</td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="input-group input-group-sm">
+						<span class="input-group-text">Tags:</span>
+						<input type="text" class="form-control" @bind="AssetTags" placeholder="Comma separated, e.g. ETF, Divident,..."/>
+						<button class="btn btn-outline-primary" type="button" @onclick="()=>BtnClickAssetUpdateTagsConfirmed()">Update</button>
+					</div>
+				</div>
 			}
 		</div>
 	</div>
@@ -193,22 +262,8 @@
 		<span style="font-size: small">@warningMsg</span>
 	</div>
 </CModal>
-*@
 
 @code {
-	private string AssetCardBackground(AssetResp asset)
-	{
-		if (asset.Quantity <= 0)
-		{
-			return "bg-secondary";
-		}
-		if (UnsettledPnLMap.TryGetValue(asset.Id, out var pnl))
-		{
-			return pnl >= 0 ? "bg-success" : "bg-danger";
-		}
-		return "bg-primary";
-	}
-
 	private string warningMsg = "Stock chart and data are provided by third-party services. " +
 		"The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
 		"Users should verify the data independently before making any investment decisions.";

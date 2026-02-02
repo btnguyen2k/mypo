@@ -30,7 +30,7 @@ public struct CreateOrUpdateAssetReq
 	public string? Tags { get; set; }
 }
 
-public struct AssetResp
+public sealed class AssetResp
 {
 	public static AssetResp BuildFrom(AssetEntity a, MarketDef? market = null)
 	{
@@ -50,16 +50,16 @@ public struct AssetResp
 	}
 
 	[JsonPropertyName("id")]
-	public string Id { get; set; }
+	public string Id { get; set; } = default!;
 
 	[JsonPropertyName("portfolio_id")]
-	public string PortfolioId { get; set; }
+	public string PortfolioId { get; set; } = default!;
 
 	[JsonPropertyName("item_type")]
-	public string ItemType { get; set; }
+	public string ItemType { get; set; } = default!;
 
 	[JsonPropertyName("item_code")]
-	public string ItemCode { get; set; }
+	public string ItemCode { get; set; } = default!;
 
 	[JsonPropertyName("quantity")]
 	public decimal Quantity { get; set; }
@@ -74,9 +74,14 @@ public struct AssetResp
 
 	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Tags { get; set; }
-	public readonly IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
 
-	public readonly AssetEntity ToModel()
+	[JsonIgnore]
+	public IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+
+	[JsonIgnore]
+	public decimal TotalCost => AveragePrice * Quantity;
+
+	public AssetEntity ToModel()
 	{
 		return new AssetEntity()
 		{
