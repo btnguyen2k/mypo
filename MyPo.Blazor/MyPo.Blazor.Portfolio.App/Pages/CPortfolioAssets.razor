@@ -27,17 +27,17 @@
 								<td class="fs-5 fw-semibold">
 									Total Cost:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(TotalCost<=0?"-":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1))
+									@(TotalCost<=0?"-":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
 									Market Value:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1))
+									@(TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
 									Unsettled P/L:
 									@(DefaultMarket?.CurrencySymbol??"")
-									@(TotalCost<=0||TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1))
+									@(TotalCost<=0||TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 									(@(
 										TotalCost>0&&TotalMarketValue>0
 											? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
@@ -54,6 +54,17 @@
 		<div class="row mb-2">
 			<div class="col-12">
 				<table class="table table-sm table-bordered table-striped table-hover">
+					<thead>
+						<tr>
+							<th scope="col" class="text-center w-auto">Item</th>
+							<th scope="col" class="text-center w-auto">Avg. Price</th>
+							<th scope="col" class="text-center w-auto">Units</th>
+							<th scope="col" class="text-center w-auto">Market Price</th>
+							<th scope="col" class="text-center w-auto">Unsettled P/L %</th>
+							<th scope="col" class="text-center w-auto">Tags</th>
+							<th scope="col" class="text-center w-auto">Actions</th>
+						</tr>
+					</thead>
 					<tbody>
 						@foreach (var asset in Assets)
 						{
@@ -70,16 +81,19 @@
 									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
 								</td>
 								<td class="text-end w-auto">
-									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var p1)&&p1>=0?"text-success":"text-danger"))">
-										@(LatestPricesMap.TryGetValue(asset.Id, out var q1)
-											? $"{PortfolioUtils.FormatValueWithScale(q1, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1346)&&upnl1346>=0?"text-success":"text-danger"))">
+										@(asset.Market?.CurrencySymbol??"")
+										@(LatestPricesMap.TryGetValue(asset.Id, out var lp0762)
+											? $"{PortfolioUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
 											: "-"
 										)
 									</span>
 								</td>
 								<td class="text-end w-auto">
-									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var p2)&&p2>=0?"text-success":"text-danger"))">
-										@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var plp)?plp.ToString("N2")+"%":"-")
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2272)&&upnl2272>=0?"text-success":"text-danger"))">
+										@(asset.Market?.CurrencySymbol??"")
+										@(PortfolioUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+										(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"-"))
 									</span>
 								</td>
 								<td class="text-start w-auto">
@@ -125,7 +139,7 @@
 		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
 			<WidgetBuyCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lpb)?lpb:100)"
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				OwningUnits="@(SelectedAsset?.Quantity??0)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
@@ -133,7 +147,7 @@
 		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
 			<WidgetSellCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lps)?lps:80)"
+				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				NumUnits="@(SelectedAsset?.Quantity??10)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
@@ -163,10 +177,10 @@
 									</tr>
 									<tr>
 										<td>
-											Status:
+											Position:
 										</td>
 										<td class="text-end">
-											@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Market Open" : "Market Closed") ?? "-")
+											@(SelectedAsset.Quantity.ToString(SelectedAsset.Market?.QuantityFormat??"N2"))
 										</td>
 									</tr>
 									<tr>
@@ -202,14 +216,29 @@
 										</td>
 										<td class="text-end">
 											@(SelectedAsset.Market?.Country??"-") / @(SelectedAsset.Market?.Code??"-")
+											(@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Open" : "Closed") ?? "-"))
 										</td>
 									</tr>
+									@*
 									<tr>
 										<td>
-											Position:
+											Status:
 										</td>
 										<td class="text-end">
-											@(SelectedAsset.Quantity.ToString(SelectedAsset.Market?.QuantityFormat??"N2"))
+											@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Market Open" : "Market Closed") ?? "-")
+										</td>
+									</tr>
+									*@
+									<tr>
+										<td>
+											Unsettled P/L:
+										</td>
+										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+											@(SelectedAsset.Market?.CurrencySymbol??"")
+											@(UnsettledPnLMap.TryGetValue(SelectedAsset.Id, out var upnl2520)
+												? $"{PortfolioUtils.FormatValueWithScale(upnl2520, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+												: "-"
+											)
 										</td>
 									</tr>
 									<tr>
@@ -218,11 +247,11 @@
 										</td>
 										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lpInfo)
-												? $"{PortfolioUtils.FormatValueWithScale(lpInfo, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+											@(LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
+												? $"{PortfolioUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
 												: "-"
 											)
-											(@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var pnlpInfo)?pnlpInfo.ToString("N2")+"%":"-"))
+											(@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var upnl0763)?upnl0763.ToString("N2")+"%":"-"))
 										</td>
 									</tr>
 									<tr>
@@ -234,8 +263,8 @@
 												? "-"
 												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
 												  PortfolioUtils.FormatValueWithScale(
-													LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lpInfo2)
-														? lpInfo2 * SelectedAsset.Quantity
+													LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
+														? lp7317 * SelectedAsset.Quantity
 														: 0,
 													SelectedAsset.Market?.PriceScale??1,
 													SelectedAsset.Market?.ValueFormat??""
