@@ -62,16 +62,16 @@
 							<div class="tab-pane fade @(ActiveTab==TabIdSummary?"show active":"")"
 									id="@(TabIdSummary)-content" role="tabpanel" aria-labelledby="@TabIdSummary" tabindex="0">
 								<CPortfolioSummary
+									Assets="@(Assets)"
 									Portfolio="@(SelectedPortfolio)"
-									TxSettlements="@(RoiRecords)"
+									TxSettlements="@(TxSettlements)"
 									Markets="@(Markets)" />
 							</div>
 							<div class="tab-pane fade @(ActiveTab==TabIdPositions?"show active":"")"
 									id="@(TabIdPositions)-content" role="tabpanel" aria-labelledby="@TabIdPositions" tabindex="0">
 								<CPortfolioAssets
 									Portfolio="@(SelectedPortfolio)"
-									PortfolioId="@(SelectedPortfolio?.Id)"
-									Assets="@(Assets)"
+									Assets="@(Assets?.OrderBy(a=>a.ItemCode))"
 									Markets="@(Markets)"
 								/>
 							</div>
@@ -79,15 +79,14 @@
 									id="@(TabIdTxBuysSells)-content" role="tabpanel" aria-labelledby="@TabIdTxBuysSells" tabindex="0">
 								<CPortfolioTxBuysSells
 									Portfolio="@(SelectedPortfolio)"
-									PortfolioId="@(SelectedPortfolio?.Id)"
-									Transactions="@(Transactions)"
+									Transactions="@(TxBuySells)"
 									Markets="@(Markets)" />
 							</div>
 							<div class="tab-pane fade @(ActiveTab==TabIdTxSettled?"show active":"")"
 									id="@(TabIdTxSettled)-content" role="tabpanel" aria-labelledby="@TabIdTxSettled" tabindex="0">
 								<CPortfolioTxSettled
 									Portfolio="@(SelectedPortfolio)"
-									TxSettlements="@(RoiRecords)"
+									TxSettlements="@(TxSettlements)"
 									Markets="@(Markets)" />
 							</div>
 						</div>

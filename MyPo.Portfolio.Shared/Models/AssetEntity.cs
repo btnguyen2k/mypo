@@ -4,6 +4,8 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public sealed class AssetEntity : Entity<string>
 {
+	public const string ASSET_TYPE_STOCK = "STOCK";
+
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
 	public string PortfolioId { get; set; } = default!;

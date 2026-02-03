@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -14,6 +16,31 @@ public partial class MyPortfolio : BasePage
 
 	private Dictionary<string, PortfolioResp>? MyPortfolioMap { get; set; }
 	private PortfolioResp? SelectedPortfolio { get; set; }
+	private Dictionary<string, PnlSummaryResp> PortfolioPnlSummaryMap { get; set; } = [];
+
+	[Inject]
+	private ILogger<MyPortfolio>? Logger { get; set; }
+
+	private async void FetchPortfolioPnlSummaryInBackground()
+	{
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		foreach (var portfolio in MyPortfolioMap!.Values)
+		{
+			await Task.Run(async () =>
+			{
+				var result = await apiClient.GetMyPortfolioPnlSummaryAsync(portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+				if (result.Status == 200)
+				{
+					PortfolioPnlSummaryMap[portfolio.Id] = result.Data;
+				}
+				else
+				{
+					Logger?.LogWarning("Failed to fetch PnL summary for portfolio {PortfolioId}: {ErrorMessage}", portfolio.Id, result.Message);
+				}
+				StateHasChanged();
+			});
+		}
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -42,6 +69,7 @@ public partial class MyPortfolio : BasePage
 				{
 					CloseAlert();
 				}
+				await Task.Run(FetchPortfolioPnlSummaryInBackground);
 			}
 			else
 			{

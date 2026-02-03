@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
+using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
@@ -8,10 +9,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class CPortfolioTxBuysSells : CBase
 {
-	public const string TX_DATETIME_FORMAT = "dd-MMM-yyyy HH:mm";
-	public const string TX_DATETIME_FORMAT_2 = "dd-MM-yyyy HH:mm";
-	public const string TX_DATETIME_FORMAT_3 = "dd-MMMM-yyyy HH:mm";
-
 	[Parameter]
 	public IEnumerable<TxBuySellResp>? Transactions { get; set; }
 	private Dictionary<string, TxBuySellResp> TransactionsMap => Transactions?.ToDictionary(t => t.Id, t => t) ?? [];
@@ -21,8 +18,6 @@ public partial class CPortfolioTxBuysSells : CBase
 	public IEnumerable<MarketDefResp>? Markets { get; set; }
 	private MarketDefResp? Market => Markets?.FirstOrDefault(m => m.Id == Tx.MarketId);
 
-	[Parameter]
-	public string PortfolioId { get; set; } = string.Empty;
 	[Parameter]
 	public PortfolioResp? Portfolio { get; set; }
 
@@ -44,53 +39,40 @@ public partial class CPortfolioTxBuysSells : CBase
 		}
 	}
 
-	private bool ValidateTx(CModal? form = null)
+	private bool ValidateTx(CModal? activeForm = null)
 	{
 		// validate transaction type
 		Tx.Type = Tx.Type.ToUpper().Trim();
 		if (!Tx.IsSettled && !TxBuySellEntity.TxTypes.Contains(Tx.Type))
 		{
 			var (alertType, alertMsg) = ("danger", $"Transaction type must be one of {string.Join(", ", TxBuySellEntity.TxTypes)}, currently '{Tx.Type}'.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
 		}
 
 		// validate time
-		Exception? exPartTime = null;
-		foreach (var format in new[] { TX_DATETIME_FORMAT, TX_DATETIME_FORMAT_2, TX_DATETIME_FORMAT_3 })
+		var parsedDatetime = PortfolioUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
+		if (parsedDatetime == null)
 		{
-			try
-			{
-				var time = DateTimeOffset.ParseExact(TxTime, format, System.Globalization.CultureInfo.InvariantCulture);
-				Tx.Time = time;
-				exPartTime = null;
-				break;
-			}
-			catch (Exception e)
-			{
-				exPartTime = e;
-			}
-		}
-		if (exPartTime != null)
-		{
-			var (alertType, alertMsg) = ("danger", $"Invalid transaction time: {exPartTime.Message}");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
 		}
+		Tx.Time = parsedDatetime.Value;
 
 		// validate item, must not be empty
 		Tx.ItemType = Tx.ItemType.ToUpper().Trim();
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemType))
 		{
 			var (alertType, alertMsg) = ("danger", "Item type must not be empty.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -101,8 +83,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && string.IsNullOrEmpty(Tx.ItemCode))
 		{
 			var (alertType, alertMsg) = ("danger", "Item code must not be empty.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -112,8 +94,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && Tx.Price <= 0.00m)
 		{
 			var (alertType, alertMsg) = ("danger", "Price must be a positive value.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;
@@ -123,8 +105,8 @@ public partial class CPortfolioTxBuysSells : CBase
 		if (!Tx.IsSettled && Tx.Quantity <= 0)
 		{
 			var (alertType, alertMsg) = ("danger", "Quantity must be a positive value.");
-			if (form != null)
-				form.ShowAlert(alertType, alertMsg);
+			if (activeForm != null)
+				activeForm.ShowAlert(alertType, alertMsg);
 			else
 				ShowAlert(alertType, alertMsg);
 			return false;

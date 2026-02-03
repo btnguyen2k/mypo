@@ -28,6 +28,45 @@ public static class PortfolioUtils
         return rootPortfolios;
     }
 
+	public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";
+	public static readonly List<string> DATETIME_PICKER_FORMATS =
+	[
+		DEFAULT_DATETIME_PICKER_FORMAT,
+		"dd-MM-yyyy HH:mm",
+		"dd-MMMM-yyyy HH:mm",
+		"dd/MM/yyyy HH:mm",
+		"dd/MMM/yyyy HH:mm",
+	];
+
+	/// <summary>
+	/// Parse DateTime from datetime picker string, trying multiple formats.
+	/// </summary>
+	/// <param name="dateTimeStr"></param>
+	/// <returns>return null if parsing error</returns>
+	public static DateTime? ParseDateTimeFromDateTimePicker(string dateTimeStr)
+	{
+		dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
+		foreach (var format in DATETIME_PICKER_FORMATS)
+		{
+			if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+			{
+				return dt;
+			}
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// Parse DateTimeOffset from datetime picker string, trying multiple formats.
+	/// </summary>
+	/// <param name="dateTimeStr"></param>
+	/// <returns>return null if parsing error</returns>
+	public static DateTimeOffset? ParseDateTimeOffsetFromDateTimePicker(string dateTimeStr)
+	{
+		var dt = ParseDateTimeFromDateTimePicker(dateTimeStr);
+		return dt != null ? new DateTimeOffset(dt.Value) : null;
+	}
+
 	public static decimal EstimateTxFee(MarketDef? market)
 	{
 		return EstimateTxFee(0, market);
