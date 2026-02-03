@@ -13,7 +13,7 @@ public partial class CPortfolioTxBuysSells
 	private void PrepareUpdateTx(TxBuySellResp tx)
 	{
 		Tx = NewTxReqFrom(tx);
-		TxTime = Tx.Time.ToString(TX_DATETIME_FORMAT);
+		TxTime = Tx.Time.ToString(PortfolioUtils.DEFAULT_DATETIME_PICKER_FORMAT);
 		TxId = tx.Id;
 		CloseAlert();
 	}
@@ -64,7 +64,7 @@ public partial class CPortfolioTxBuysSells
 		await Task.Delay(500);
 		ModalDialogUpdateTx.Close();
 		CloseAlert();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio!.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";
@@ -97,7 +97,7 @@ public partial class CPortfolioTxBuysSells
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogUpdateTx.Close();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio!.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";

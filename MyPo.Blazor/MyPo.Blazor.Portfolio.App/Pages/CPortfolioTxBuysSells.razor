@@ -61,7 +61,7 @@
 						<td class="text-center w-auto">
 							<CBadgeTxType Text="@tx.Type" />
 						</td>
-						<td class="text-center w-auto">@(tx.Time.ToString(TX_DATETIME_FORMAT))</td>
+						<td class="text-center w-auto">@(tx.Time.ToString(PortfolioUtils.DEFAULT_DATETIME_PICKER_FORMAT))</td>
 						<td class="text-start">@(tx.ItemType) - @(tx.ItemCode) (@(tx.MarketId??"-") / @(tx.Market?.CurrencySymbol??"-"))</td>
 						<td class="text-end w-auto">@(tx.Quantity.ToString("N2"))</td>
 						<td class="text-end w-auto">@(PortfolioUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1))</td>

@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Api;
@@ -151,6 +150,22 @@ public struct PnlSummaryResp
 	public readonly decimal NetReturns => GrossReturns - TotalCosts;
 	public readonly decimal NetPnL => NetReturns;
 	public readonly decimal ROIvsTotalBuy => TotalBuyValue > 0  ? (NetPnL / TotalBuyValue * 100) : 0;
+	public readonly decimal UnsettledROIvsTotalBuy(decimal unsettledPnL)
+	{
+		return TotalBuyValue > 0 ? (unsettledPnL / TotalBuyValue * 100) : 0;
+	}
+
+	public readonly decimal UnsettledROIvsPeakCapital(decimal unsettledPnL, IEnumerable<TxSettlementResp> records)
+	{
+		var peakCapital = PeakCapital(records);
+		return peakCapital > 0 ? (unsettledPnL / peakCapital * 100) : 0;
+	}
+
+	public readonly decimal UnsettledROIvsAverageCapital(decimal unsettledPnL, IEnumerable<TxSettlementResp> records)
+	{
+		var averageCapital = AverageCapital(records);
+		return averageCapital > 0 ? (unsettledPnL / averageCapital * 100) : 0;
+	}
 
 	public readonly decimal ROIvsPeakCapital(IEnumerable<TxSettlementResp> records)
 	{
@@ -200,14 +215,13 @@ public struct PnlSummaryResp
 			.ToList();
 		var filteredList = recordsList.Append(new TxSettlementResp
 			{
-				TxTime = recordsList.Max(r => r.TxTime).AddDays(1),
+				TxTime = recordsList.Count>0?recordsList.Max(r => r.TxTime).AddDays(1):DateTimeOffset.UtcNow,
 				TxType = "END",
 				TxValue = 0
 			});
 		foreach (var tx in filteredList)
 		{
 			var recDate = tx.TxTime.ToUniversalTime().ToString("yyyy-MM-dd");
-			Console.WriteLine($"[DEBUG] Processing transaction ID: {tx.Id}, Date: {recDate}, Type: {tx.TxType}, Value: {tx.TxValue}");
 			if (startDate == "0000-00-00")
 			{
 				startDate = recDate;
@@ -218,7 +232,6 @@ public struct PnlSummaryResp
 
 				totalCapital += cumulativeCapital*daysDiff;
 				totalDays += daysDiff;
-				Console.WriteLine($"[DEBUG] Start date: {startDate}, End date: {recDate}, Cumulative capital: {cumulativeCapital}, NumDays: {daysDiff}, Total capital: {totalCapital}, Total Days: {totalDays}");
 				startDate = recDate;
 			}
 			if (tx.TxType == TxSettlementEntity.TX_TYPE_BUY)

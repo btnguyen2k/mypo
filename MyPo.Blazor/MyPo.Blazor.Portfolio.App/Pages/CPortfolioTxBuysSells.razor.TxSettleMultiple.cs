@@ -41,7 +41,7 @@ public partial class CPortfolioTxBuysSells
 	private void BtnClickSettleTxMultipleClose()
 	{
 		ModalDialogSettleTxMultiple.Close();
-		CloseAlert();
+		ModalDialogSettleTxMultiple.CloseAlert();
 	}
 
 	private async void BtnClickSettleTxMultipleConfirm()
@@ -76,7 +76,7 @@ public partial class CPortfolioTxBuysSells
 		}
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogSettleTxMultiple.Close();
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", PortfolioId, StringComparison.OrdinalIgnoreCase)}"
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", Portfolio!.Id, StringComparison.OrdinalIgnoreCase)}"
 			+ $"?{BasePage.QUERY_PARM_REFRESH}=true"
 			+ $"&{BasePage.QUERY_PARM_ALERT_MESSAGE}={passAlertMessage}"
 			+ $"&{BasePage.QUERY_PARM_ALERT_TYPE}={passAlertType}";

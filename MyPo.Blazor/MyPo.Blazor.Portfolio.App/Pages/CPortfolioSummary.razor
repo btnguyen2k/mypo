@@ -7,7 +7,7 @@
 
 <div class="container mt-3">
 	<CAlert @ref="@Alert" />
-	@if (PnlSummary == null)
+	@if (PnlSummary==null || TxSettlements==null || TxSettlements.Count()==0)
 	{
 		<CAlert Type="warning">
 			PnL Summary data is not available for this portfolio.
@@ -180,7 +180,7 @@
 							</tr>
 							<tr>
 								<td class="text-start fw-semibold">
-									Net Profit / Loss (15=14)
+									Net P/L (15=14)
 								</td>
 								<td class="text-end fw-semibold">
 									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
@@ -208,6 +208,38 @@
 								</td>
 								<td class="text-end fw-semibold">
 									@(PnlSummary.Value.ROIvsAverageCapital(TxSettlements??[]).ToString("N2")+"%")
+								</td>
+							</tr>
+							<tr>
+								<td class="text-start fw-semibold text-danger">
+									Unsettled P/L (* @PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+								</td>
+								<td class="text-end fw-semibold text-danger">
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL+TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+								</td>
+							</tr>
+							<tr>
+								<td class="text-start fw-semibold text-danger">
+									Unsettled ROI (vs Total Buy)
+								</td>
+								<td class="text-end fw-semibold text-danger">
+									@(PnlSummary.Value.UnsettledROIvsTotalBuy(PnlSummary.Value.NetPnL+TotalMarketValue).ToString("N2")+"%")
+								</td>
+							</tr>
+							<tr>
+								<td class="text-start fw-semibold text-danger">
+									Unsettled ROI (vs Peak Capital)
+								</td>
+								<td class="text-end fw-semibold text-danger">
+									@(PnlSummary.Value.UnsettledROIvsPeakCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
+								</td>
+							</tr>
+							<tr>
+								<td class="text-start fw-semibold text-danger">
+									Unsettled ROI (vs Average Capital)
+								</td>
+								<td class="text-end fw-semibold text-danger">
+									@(PnlSummary.Value.UnsettledROIvsAverageCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
 								</td>
 							</tr>
 

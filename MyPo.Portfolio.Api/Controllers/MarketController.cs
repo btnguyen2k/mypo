@@ -12,12 +12,11 @@ namespace MyPo.Portfolio.Api.Controllers;
 [Authorize]
 public partial class MarketsController : ApiBaseController
 {
-	private readonly IYahooFinanceService YFService = default!;
+	private readonly IServiceProvider services;
 
-	public MarketsController(IYahooFinanceService yahooFinanceService)
+	public MarketsController(IServiceProvider services)
 	{
-		ArgumentNullException.ThrowIfNull(yahooFinanceService, nameof(yahooFinanceService));
-		this.YFService = yahooFinanceService;
+		this.services = services;
 	}
 
 	private static string BuildYFSymbol(string code, MarketDef market)
@@ -56,19 +55,24 @@ public partial class MarketsController : ApiBaseController
 				yfSymbolMap[symbol] = codeMarketIdPair;
 			}
 		}
-		var result = new Dictionary<string, Quote>();
-		var quotes = await YFService.GetQuotesAsync([.. yfSymbolMap.Keys]) ?? [];
-		foreach (var quote in quotes.Where(q => yfSymbolMap.TryGetValue(q.Symbol??string.Empty, out _)))
+
+		using (var scope = services.CreateScope())
 		{
-			result[yfSymbolMap[quote.Symbol??string.Empty]] = quote;
+			var YFService = scope.ServiceProvider.GetRequiredService<IYahooFinanceService>();
+			var result = new Dictionary<string, Quote>();
+			var quotes = await YFService.GetQuotesAsync([.. yfSymbolMap.Keys]) ?? [];
+			foreach (var quote in quotes.Where(q => yfSymbolMap.TryGetValue(q.Symbol??string.Empty, out _)))
+			{
+				result[yfSymbolMap[quote.Symbol??string.Empty]] = quote;
+			}
+			// foreach (var quote in quotes)
+			// {
+			// 	if (yfSymbolMap.TryGetValue(quote.Symbol??string.Empty, out var originalCodeMarketId))
+			// 	{
+			// 		result[originalCodeMarketId] = quote;
+			// 	}
+			// }
+			return ResponseOk(result);
 		}
-		// foreach (var quote in quotes)
-		// {
-		// 	if (yfSymbolMap.TryGetValue(quote.Symbol??string.Empty, out var originalCodeMarketId))
-		// 	{
-		// 		result[originalCodeMarketId] = quote;
-		// 	}
-		// }
-		return ResponseOk(result);
 	}
 }
