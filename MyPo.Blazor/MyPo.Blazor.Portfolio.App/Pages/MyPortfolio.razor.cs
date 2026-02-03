@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyPo.Blazor.App.Shared;
@@ -20,6 +19,8 @@ public partial class MyPortfolio : BasePage
 
 	[Inject]
 	private ILogger<MyPortfolio>? Logger { get; set; }
+
+	private readonly List<MarketDefResp> Markets = [];
 
 	private async void FetchPortfolioPnlSummaryInBackground()
 	{
@@ -48,13 +49,23 @@ public partial class MyPortfolio : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-			ShowAlert("info", "Loading portfolio...");
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			if (result.Status == 200)
+
+			ShowAlert("info", "Loading market info...");
+			var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (marketResult.Status != 200)
+			{
+				ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
+				return;
+			}
+			Markets.AddRange(marketResult.Data ?? []);
+
+			ShowAlert("info", "Loading portfolio...");
+			var resultPortfolio = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+			if (resultPortfolio.Status == 200)
 			{
 				HideUI = false;
-				var allPortfolios = result.Data ?? [];
+				var allPortfolios = resultPortfolio.Data ?? [];
 				MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
 				var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
 				MyActivePortfolioList = portfolioTree.Where(p => p.IsActive);
@@ -73,9 +84,14 @@ public partial class MyPortfolio : BasePage
 			}
 			else
 			{
-				ShowAlert("danger", result.Message ?? "Unknown error");
+				ShowAlert("danger", resultPortfolio.Message ?? "Error loading portfolios.");
 			}
 		}
+	}
+
+	private MarketDefResp? DefaultMarket(PortfolioResp portfolio)
+	{
+		return Markets.FirstOrDefault(m => m.Id.Equals(portfolio.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickAdd()

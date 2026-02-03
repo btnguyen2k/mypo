@@ -38,17 +38,17 @@
 								<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
 							</ChildContent>
 						</AuthorizeView>
-					}
-                    @if (!HideUI)
-                    {
                         <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
                             <thead>
                                 <tr>
 									<th scope="col" class="text-center w-auto">&nbsp;</th>
                                     <th scope="col" class="text-center w-auto">Currency</th>
                                     <th scope="col" class="text-center">Name</th>
-									<th scope="col" class="text-center w-auto">Investment</th>
-									<th scope="col" class="text-center w-auto">Return</th>
+									<th scope="col" class="text-center w-auto">Capital</th>
+									<th scope="col" class="text-center w-auto">Income</th>
+									<th scope="col" class="text-center w-auto">Costs</th>
+									<th scope="col" class="text-center w-auto">Buy</th>
+									<th scope="col" class="text-center w-auto">Sell</th>
 									<th scope="col" class="text-center w-auto">Actions</th>
                                 </tr>
                             </thead>
@@ -56,7 +56,7 @@
 							{
 								<tbody>
 									<tr>
-										<td colspan="6" class="text-center">No data found.</td>
+										<td colspan="9" class="text-center">No data found.</td>
 									</tr>
 								</tbody>
 							}
@@ -73,8 +73,48 @@
 												<br/>
 												<span class="small">@item.Description</span>
 											</td>
-											<td class="text-center w-auto">-</td>
-											<td class="text-center w-auto">-</td>
+											@if(PortfolioPnlSummaryMap.TryGetValue(item.Id, out var pnlSummary))
+											{
+												<td class="text-end w-auto">
+													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
+													@(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut == 0
+														? "-"
+														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+													)
+												</td>
+												<td class="text-end w-auto">
+													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
+													@(pnlSummary.TotalIncome == 0
+														? "-"
+														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalIncome, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+													)
+												</td>
+												<td class="text-end w-auto">
+													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
+													@(pnlSummary.TotalCosts == 0
+														? "-"
+														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalCosts, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+													)
+												</td>
+												<td class="text-end w-auto">
+													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
+													@(pnlSummary.TotalBuyValue == 0
+														? "-"
+														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalBuyValue, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+													)
+												</td>
+												<td class="text-end w-auto">
+													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
+													@(pnlSummary.TotalSellValue == 0
+														? "-"
+														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalSellValue, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+													)
+												</td>
+											}
+											else
+											{
+												<td colspan="5">-</td>
+											}
 											<td class="text-center w-auto">
 												<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
 													<CIcon icon="cil-info" />
@@ -101,8 +141,48 @@
 													<br/>
 													<span class="small">@child.Description</span>
 												</td>
-												<td class="text-center w-auto">-</td>
-												<td class="text-center w-auto">-</td>
+												@if(PortfolioPnlSummaryMap.TryGetValue(child.Id, out var pnlSummaryChild))
+												{
+													<td class="text-end w-auto">
+														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
+														@(pnlSummaryChild.TotalMoneyIn-pnlSummaryChild.TotalMoneyOut == 0
+															? "-"
+															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalMoneyIn-pnlSummaryChild.TotalMoneyOut, DefaultMarket(child)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
+														)
+													</td>
+													<td class="text-end w-auto">
+														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
+														@(pnlSummaryChild.TotalIncome == 0
+															? "-"
+															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalIncome, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
+														)
+													</td>
+													<td class="text-end w-auto">
+														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
+														@(pnlSummaryChild.TotalCosts == 0
+															? "-"
+															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalCosts, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
+														)
+													</td>
+													<td class="text-end w-auto">
+														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
+														@(pnlSummaryChild.TotalBuyValue == 0
+															? "-"
+															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalBuyValue, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
+														)
+													</td>
+													<td class="text-end w-auto">
+														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
+														@(pnlSummaryChild.TotalSellValue == 0
+															? "-"
+															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalSellValue, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
+														)
+													</td>
+												}
+												else
+												{
+													<td colspan="5">-</td>
+												}
 												<td class="text-center w-auto">
 													<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(child.Id))">
 														<CIcon icon="cil-info" />
