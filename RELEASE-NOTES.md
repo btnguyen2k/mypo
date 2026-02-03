@@ -1,5 +1,14 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-03 - v0.5.1
+
+### Fixed/Improvements
+
+- (Patch) Add Unsettled P/L to portfolio summary page.
+- (Patch) Redesign portfolio asset page.
+- (Patch) UI fix portfolio buys/sells page.
+- (Patch) UI fix portfolio settlements page.
+
 ## 2026-02-01 - v0.5.0
 
 ### Added/Refactoring/Deprecation
