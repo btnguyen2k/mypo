@@ -36,6 +36,8 @@ public static class PortfolioUtils
 		"dd-MMMM-yyyy HH:mm",
 		"dd/MM/yyyy HH:mm",
 		"dd/MMM/yyyy HH:mm",
+		"yyyy-MM-dd HH:mm",
+		"yyyy-MM-dd, HH:mm",
 	];
 
 	/// <summary>
