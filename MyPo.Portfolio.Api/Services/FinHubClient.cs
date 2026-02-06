@@ -1,0 +1,24 @@
+using Microsoft.AspNetCore.WebUtilities;
+using MyPo.Portfolio.Shared.Models.FinHub;
+using MyPo.Shared.Api;
+
+namespace MyPo.Portfolio.Api.Services;
+
+public partial class FinHubClient : BaseClient, IFinHubClient
+{
+	public FinHubClient(HttpClient httpClient, string baseUrl = "") : base(httpClient, baseUrl) { }
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStockQuotesAsync(string symbols, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_STOCK_QUOTES, new Dictionary<string, string?> { { "symbols", symbols } });
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
+	}
+}
