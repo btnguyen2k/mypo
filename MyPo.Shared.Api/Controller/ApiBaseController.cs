@@ -65,15 +65,23 @@ public abstract class ApiBaseController : ControllerBase
 	/// <param name="statusCode"></param>
 	/// <param name="message"></param>
 	/// <returns></returns>
-	protected static ObjectResult ResponseNoData(int statusCode, string? message) => new(String.IsNullOrWhiteSpace(message) ? new ApiResp<object>
-	{
-		Status = statusCode
-	}
-	: new ApiResp<object>
-	{
-		Status = statusCode,
-		Message = message
-	})
+	protected static ObjectResult ResponseNoData(int statusCode, string? message) => ResponseNoData(statusCode, message, null);
+
+	/// <summary>
+	/// Convenience method to return a response with a message and without attached data.
+	/// </summary>
+	/// <param name="statusCode"></param>
+	/// <param name="message"></param>
+	/// @param name="extras"></param>
+	/// <returns></returns>
+	protected static ObjectResult ResponseNoData(int statusCode, string? message, object? extras) => new(
+		new ApiResp<object>
+		{
+			Status = statusCode,
+			Message = message,
+			Extras = extras,
+		}
+	)
 	{
 		StatusCode = statusCode
 	};

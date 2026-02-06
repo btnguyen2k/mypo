@@ -7,16 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\\markets.json" />
+    <EmbeddedResource Include="Resources\\*.json" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MyPo.Portfolio.Shared\MyPo.Portfolio.Shared.csproj" />
     <ProjectReference Include="..\MyPo.Shared.Api\MyPo.Shared.Api.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Finance.NET" Version="1.1.13" />
-  </ItemGroup>
-
 </Project>
