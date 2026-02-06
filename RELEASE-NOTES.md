@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-06 - v0.6.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Integrate with FinHub API.
+
 ## 2026-02-03 - v0.5.3
 
 ### Fixed/Improvements
