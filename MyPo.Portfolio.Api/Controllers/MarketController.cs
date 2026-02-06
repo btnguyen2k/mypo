@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
@@ -8,7 +9,7 @@ using MyPo.Shared.Api.Controller;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
-// [Authorize]
+[Authorize]
 public partial class MarketsController : ApiBaseController
 {
 	private readonly IServiceProvider services;
@@ -61,7 +62,7 @@ public partial class MarketsController : ApiBaseController
 			var finhubResult = await finhubClient.GetStockQuotesAsync(string.Join(',', yfSymbolMap.Keys));
 			if (finhubResult.Status != 200)
 			{
-				return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub");
+				return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub", finhubResult.Extras);
 			}
 			var result = new Dictionary<string, StockQuote>();
 			var quotes = finhubResult.Data ?? new Dictionary<string, StockQuote>();

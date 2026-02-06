@@ -1,7 +1,7 @@
-﻿using Finance.Net.Models.Yahoo;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -30,7 +30,7 @@ public partial class CPortfolioSummary : CBase
 		}
 		return 0;
 	}) ?? 0;
-	private Dictionary<string, Quote> QuotesMap = []; // map {asset-id --> quote}
+	private Dictionary<string, StockQuote> QuotesMap = []; // map {asset-id --> quote}
 	private readonly Dictionary<string, decimal> LatestPricesMap = [];
 
 	private async Task GetStocksQuotesBackground(List<string> symbolsList)
@@ -48,7 +48,7 @@ public partial class CPortfolioSummary : CBase
 					var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
 					if (QuotesMap.TryGetValue(symbolKey, out var quote))
 					{
-						var latestPrice = (decimal)(quote.RegularMarketPrice ?? 0);
+						var latestPrice = quote.MarketPrice ?? 0;
 						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
 						LatestPricesMap[asset.Id] = latestPrice;
 					}

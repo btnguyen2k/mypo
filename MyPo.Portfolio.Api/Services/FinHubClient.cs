@@ -6,7 +6,7 @@ namespace MyPo.Portfolio.Api.Services;
 
 public partial class FinHubClient : BaseClient, IFinHubClient
 {
-	public FinHubClient(HttpClient httpClient, string baseUrl = "") : base(httpClient, baseUrl) { }
+	public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl) { }
 
 	/// <inheritdoc/>
 	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStockQuotesAsync(string symbols, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)

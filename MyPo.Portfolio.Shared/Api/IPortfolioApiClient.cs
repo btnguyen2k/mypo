@@ -1,4 +1,4 @@
-﻿using Finance.Net.Models.Yahoo;
+﻿using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Shared.Api;
@@ -30,5 +30,5 @@ public partial interface IPortfolioApiClient : IApiClient
 	/// <param name="requestHttpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<IDictionary<string, Quote>>> GetStocksQuotesAsync(string symbols, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<IDictionary<string, StockQuote>>> GetStocksQuotesAsync(string symbols, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }
