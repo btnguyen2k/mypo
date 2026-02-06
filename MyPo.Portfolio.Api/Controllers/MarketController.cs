@@ -1,9 +1,9 @@
-﻿using Finance.Net.Interfaces;
-using Finance.Net.Models.Yahoo;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 using MyPo.Shared.Api.Controller;
 
@@ -37,7 +37,7 @@ public partial class MarketsController : ApiBaseController
 	/// <param name="symbols">Comma-separated list of symbols. Each symbol is in the following format CODE:market-id</param>
 	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_STOCKS_GET_QUOTES)]
-	public async ValueTask<ActionResult<ApiResp<IEnumerable<Quote>>>> GetStockQuotes([FromQuery] string symbols)
+	public async ValueTask<ActionResult<ApiResp<IDictionary<string, StockQuote>>>> GetStockQuotes([FromQuery] string symbols)
 	{
 		var yfSymbolMap = new Dictionary<string, string>();
 		var pairsCodeMarketId = symbols.ToUpper().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -58,20 +58,18 @@ public partial class MarketsController : ApiBaseController
 
 		using (var scope = services.CreateScope())
 		{
-			var YFService = scope.ServiceProvider.GetRequiredService<IYahooFinanceService>();
-			var result = new Dictionary<string, Quote>();
-			var quotes = await YFService.GetQuotesAsync([.. yfSymbolMap.Keys]) ?? [];
-			foreach (var quote in quotes.Where(q => yfSymbolMap.TryGetValue(q.Symbol??string.Empty, out _)))
+			var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+			var finhubResult = await finhubClient.GetStockQuotesAsync(string.Join(',', yfSymbolMap.Keys));
+			if (finhubResult.Status != 200)
 			{
-				result[yfSymbolMap[quote.Symbol??string.Empty]] = quote;
+				return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub", finhubResult.Extras);
 			}
-			// foreach (var quote in quotes)
-			// {
-			// 	if (yfSymbolMap.TryGetValue(quote.Symbol??string.Empty, out var originalCodeMarketId))
-			// 	{
-			// 		result[originalCodeMarketId] = quote;
-			// 	}
-			// }
+			var result = new Dictionary<string, StockQuote>();
+			var quotes = finhubResult.Data ?? new Dictionary<string, StockQuote>();
+			foreach (var quote in quotes.Where(q => yfSymbolMap.TryGetValue(q.Key, out _)))
+			{
+				result[yfSymbolMap[quote.Key]] = quote.Value;
+			}
 			return ResponseOk(result);
 		}
 	}

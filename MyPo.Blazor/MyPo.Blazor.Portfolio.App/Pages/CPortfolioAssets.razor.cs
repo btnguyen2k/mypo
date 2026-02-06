@@ -1,9 +1,9 @@
-﻿using Finance.Net.Models.Yahoo;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -22,7 +22,7 @@ public partial class CPortfolioAssets : CBase
 		}
 		return 0;
 	}) ?? 0;
-	private Dictionary<string, Quote> QuotesMap = []; // map {asset-id --> quote}
+	private Dictionary<string, StockQuote> QuotesMap = []; // map {asset-id --> quote}
 	private readonly Dictionary<string, decimal> LatestPricesMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLMap = [];
 	private readonly Dictionary<string, decimal> UnsettledPnLPercentMap = [];
@@ -71,7 +71,7 @@ public partial class CPortfolioAssets : CBase
 					var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
 					if (QuotesMap.TryGetValue(symbolKey, out var quote))
 					{
-						var latestPrice = (decimal)(quote.RegularMarketPrice ?? 0);
+						var latestPrice = quote.MarketPrice ?? 0;
 						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
 						LatestPricesMap[asset.Id] = latestPrice;
 						var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;
@@ -83,6 +83,10 @@ public partial class CPortfolioAssets : CBase
 					}
 				}
 				StateHasChanged();
+			}
+			else
+			{
+				Console.WriteLine($"[ERROR] Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
 			}
 			if (!StopRefreshQuotes)
 			{

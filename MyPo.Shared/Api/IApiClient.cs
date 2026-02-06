@@ -226,7 +226,6 @@ public interface IApiClient
 	/// <returns></returns>
 	public Task<ApiResp<string>> GetExternalAuthUrlAsync(ExternalAuthUrlReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
-
 	/// <summary>
 	/// Calls the API <see cref="API_ENDPOINT_EXTERNAL_AUTH_LOGIN"/> to sign in an external user.
 	/// </summary>

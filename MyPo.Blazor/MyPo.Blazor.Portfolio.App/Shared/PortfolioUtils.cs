@@ -1,6 +1,6 @@
-﻿using Finance.Net.Models.Yahoo;
-using MyPo.Portfolio.Shared.Api;
+﻿using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
@@ -138,18 +138,18 @@ public static class PortfolioUtils
 		return ((newValue - oldValue) / Math.Abs(oldValue)) * 100;
 	}
 
-	public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, Quote quote)
+	public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
 	{
 		return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
 	}
 
-	public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, Quote quote)
+	public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, StockQuote quote)
 	{
 		if (market == null)
 		{
 			return 0;
 		}
-		var currentPrice = quote.RegularMarketPrice ?? 0;
+		var currentPrice = quote.MarketPrice ?? 0;
 		var pnl = ((decimal)currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
 		return pnl;
 	}

@@ -1,7 +1,7 @@
-﻿using Finance.Net.Models.Yahoo;
-using Microsoft.AspNetCore.WebUtilities;
+﻿using Microsoft.AspNetCore.WebUtilities;
 using MyPo.Blazor.App.Services;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Services;
@@ -24,7 +24,7 @@ public partial class PortfolioApiClient : ApiClient, IPortfolioApiClient
 	}
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IDictionary<string, Quote>>> GetStocksQuotesAsync(string symbols, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStocksQuotesAsync(string symbols, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
 	{
 		var queryParams = new Dictionary<string, string>{ { "symbols", symbols } };
 		var endpoint = QueryHelpers.AddQueryString(IPortfolioApiClient.API_STOCKS_GET_QUOTES, queryParams);
@@ -35,6 +35,6 @@ public partial class PortfolioApiClient : ApiClient, IPortfolioApiClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IDictionary<string, Quote>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
 	}
 }
