@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
+using MyPo.Portfolio.Shared.Models.FinHub;
+using MyPo.Blazor.Portfolio.App.Shared;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -16,6 +18,70 @@ public partial class MyPortfolioDetails : BasePage
 	private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
 	private IEnumerable<AssetResp>? Assets { get; set; }
 	private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
+
+	private Dictionary<string, StockQuote> QuotesMap = []; // map {asset-id --> quote}
+	private readonly Dictionary<string, decimal> MarketPricesMap = []; // map {asset-id --> price}
+	private readonly Dictionary<string, decimal> UnsettledPnLMap = [];
+	private readonly Dictionary<string, decimal> UnsettledPnLPercentMap = [];
+
+	private bool StopRefreshQuotes { get; set; } = false;
+
+	private void StopRefreshQuotesBackground()
+	{
+		StopRefreshQuotes = true;
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			StopRefreshQuotesBackground();
+		}
+		base.Dispose(disposing);
+	}
+
+	private async Task GetStocksQuotesBackground(List<string> symbolsList)
+	{
+		if (symbolsList.Count > 0 && !StopRefreshQuotes)
+		{
+			var symbols = string.Join(",", symbolsList);
+			Console.WriteLine($"[DEBUG] Fetching quotes for symbols: {symbols}");
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var quotesResp = await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (quotesResp.Status == 200)
+			{
+				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
+				foreach (var asset in Assets ?? [])
+				{
+					var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
+					if (QuotesMap.TryGetValue(symbolKey, out var quote))
+					{
+						var latestPrice = quote.MarketPrice ?? 0;
+						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
+						MarketPricesMap[asset.Id] = latestPrice;
+						var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;
+						UnsettledPnLMap[asset.Id] = unsettledPnL;
+						UnsettledPnLPercentMap[asset.Id] = PortfolioUtils.CalculatePercentageChange(
+							asset.AveragePrice,
+							latestPrice
+						);
+					}
+				}
+				StateHasChanged();
+			}
+			else
+			{
+				Console.WriteLine($"[ERROR] Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+			}
+			if (!StopRefreshQuotes)
+			{
+				var sleepTime = Random.Shared.NextInt64(60000, 180000);
+				Console.WriteLine($"[DEBUG] Sleeping {sleepTime} ms before next quotes refresh...");
+				await Task.Delay((int)sleepTime);
+				await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
+			}
+		}
+	}
 
 	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -90,6 +156,10 @@ public partial class MyPortfolioDetails : BasePage
 
 		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 		if (SelectedPortfolio == null) return;
+
+		var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		Console.WriteLine($"[DEBUG] Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
+		// await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
 
 		HideUI = false;
 
