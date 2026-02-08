@@ -23,10 +23,8 @@ public partial class MarketsController : ApiBaseController
 	{
 		return market.Code switch
 		{
-			"ASX" => $"{code}.AX",
-			"HOSE" => $"{code}.VN",
-			"HNX" => $"{code}.VN",
-			"UPCOM" => $"{code}.VN",
+			"*AUSYD" or "ASX" => $"{code}.AX",
+			"*VNVN" or "HOSE" or "HNX" or "UPCOM" => $"{code}.VN",
 			_ => code,
 		};
 	}
@@ -71,6 +69,34 @@ public partial class MarketsController : ApiBaseController
 				result[yfSymbolMap[quote.Key]] = quote.Value;
 			}
 			return ResponseOk(result);
+		}
+	}
+
+	/// <summary>
+	/// Get stock symbol info for the given symbol.
+	/// </summary>
+	/// <param name="symbol">Symbol in the following format CODE:market-id</param>
+	/// <returns></returns>
+	[HttpGet(IPortfolioApiClient.API_STOCKS_SYMBOL_INFO)]
+	public async ValueTask<ActionResult<ApiResp<SymbolInfo>>> GetStockSymbolInfo([FromRoute] string symbol)
+	{
+		var (code, marketId) = symbol.Split(':', 2) switch
+		{
+			var arr when arr.Length == 2 => (arr[0], arr[1]),
+			_ => (symbol, string.Empty),
+		};
+		var market = Globals.MarketsMap.TryGetValue(marketId.ToUpper(), out var mkt) ? mkt : null;
+		var yfSymbol = market != null ? BuildYFSymbol(code, market) : code;
+
+		using (var scope = services.CreateScope())
+		{
+			var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+			var finhubResult = await finhubClient.GetStockSymbolInfoAsync(yfSymbol);
+			if (finhubResult.Status != 200)
+			{
+				return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol info for '{symbol}' from FinHub", finhubResult.Extras);
+			}
+			return ResponseOk(finhubResult.Data);
 		}
 	}
 }

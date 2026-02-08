@@ -1,43 +1,43 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Net.Http.Headers;
-using Microsoft.VisualBasic;
 using MyPo.Blazor.App.Shared;
-using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class CStockChart : BaseComponent
 {
 	[Parameter]
-	public MarketDef? Market { get; set; }
+	public string? Symbol { get; set; }
 
 	[Parameter]
-	public string? Symbol { get; set; }
+	public string? Exchange { get; set; }
 
 	private string? ErrorMessage {get; set; }
 
-	private readonly HashSet<string> ChartsUseVietstock = ["HOSE", "HNX", "UPCOM"];
+	private readonly HashSet<string> ChartsUseVietstock = ["*VNVN", "HOSE", "HNX", "UPCOM"];
 
-	private bool UseVietstockChart => ChartsUseVietstock.Contains(Market?.Code ?? "");
+	private bool UseVietstockChart => ChartsUseVietstock.Contains(Exchange??"");
+	private bool UseTradingViewChart => !UseVietstockChart;
 
 	protected override async Task OnParametersSetAsync()
 	{
 		await base.OnParametersSetAsync();
-
-		ErrorMessage = null;
-		if (Market == null || String.IsNullOrEmpty(Symbol))
-		{
-			ErrorMessage = "No Chart Available.";
-		}
-		if (!UseVietstockChart)
-		{
-			ErrorMessage = $"Charting for market '{Market?.Id}' is not supported.";
-		}
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
+		if (firstRender)
+		{
+			ErrorMessage = null;
+			if (string.IsNullOrEmpty(Symbol))
+			{
+				ErrorMessage = "No Chart Available.";
+			}
+			else if (!UseVietstockChart && !UseTradingViewChart)
+			{
+				ErrorMessage = $"Charting for exchange '{Exchange}' is not supported.";
+			}
+			StateHasChanged();
+		}
 	}
 }

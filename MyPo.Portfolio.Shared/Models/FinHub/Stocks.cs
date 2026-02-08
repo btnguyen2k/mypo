@@ -43,8 +43,29 @@ public sealed class SymbolOverview
 
 public sealed class StockQuote
 {
-	[JsonPropertyName("market_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? MarketPrice { get; set; }
+	[JsonPropertyName("market_price")]
+	public decimal MarketPrice { get; set; }
+
+	[JsonPropertyName("market_price_change")]
+	public decimal MarketPriceChange { get; set; }
+
+	[JsonPropertyName("market_price_change_percent")]
+	public decimal MarketPriceChangePercent { get; set; }
+
+	[JsonPropertyName("market_open")]
+	public decimal MarketOpen { get; set; }
+
+	[JsonPropertyName("market_day_high")]
+	public decimal MarketDayHigh { get; set; }
+
+	[JsonPropertyName("market_day_low")]
+	public decimal MarketDayLow { get; set; }
+
+	[JsonPropertyName("market_volume")]
+	public int MarketVolume { get; set; }
+
+	[JsonIgnore]
+	public int MarketPriceStatus => MarketPriceChange == 0 ? 0 : (MarketPriceChange < 0 ? -1 : 1);
 }
 
 public sealed class SymbolInfo : SymbolBase

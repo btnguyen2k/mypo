@@ -67,7 +67,7 @@ public partial class CPortfolioAssets : CBase
 				var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
 				if (QuotesMap.TryGetValue(symbolKey, out var quote))
 				{
-					var latestPrice = quote.MarketPrice ?? 0;
+					var latestPrice = quote.MarketPrice;
 					latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
 					MarketPricesMap[asset.Id] = latestPrice;
 					var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;

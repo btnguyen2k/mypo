@@ -149,7 +149,7 @@ public static class PortfolioUtils
 		{
 			return 0;
 		}
-		var currentPrice = quote.MarketPrice ?? 0;
+		var currentPrice = quote.MarketPrice;
 		var pnl = ((decimal)currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
 		return pnl;
 	}
