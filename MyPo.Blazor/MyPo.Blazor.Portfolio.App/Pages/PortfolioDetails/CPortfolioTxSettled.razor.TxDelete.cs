@@ -4,7 +4,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxSettled
 {
@@ -19,7 +19,7 @@ public partial class CPortfolioTxSettled
 	{
 		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
 		{
-			ShowAlert("danger", "You do not have permission to delete ROI records from this portfolio.");
+			ShowAlert("danger", "You do not have permission to delete Settlement records from this portfolio.");
 			return;
 		}
 		TxSettlementResp? selectedRec = TxSettlementsMap.TryGetValue(rid, out var rec) ? rec : null;
@@ -30,7 +30,7 @@ public partial class CPortfolioTxSettled
 		}
 		else
 		{
-			ShowAlert("danger", $"ROI record '{rid}' not found.");
+			ShowAlert("danger", $"Settlement record '{rid}' not found.");
 		}
 	}
 
@@ -42,16 +42,16 @@ public partial class CPortfolioTxSettled
 
 	private async void BtnClickDeleteRecordConfirm()
 	{
-		ModalDialogDeleteRecord.ShowAlert("info", "Deleting ROI record...");
+		ModalDialogDeleteRecord.ShowAlert("info", "Deleting Settlement record...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.DeleteMyPortfolioTxSettlementAsync(Tx.PortfolioId, TxId, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ModalDialogDeleteRecord.ShowAlert("danger", resp.Message ?? $"Error deleting ROI record '{TxId}'.");
+			ModalDialogDeleteRecord.ShowAlert("danger", resp.Message ?? $"Error deleting Settlement record '{TxId}'.");
 			return;
 		}
-		ModalDialogDeleteRecord.ShowAlert("success", "ROI record deleted successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"ROI record '{TxId}' deleted successfully.";
+		ModalDialogDeleteRecord.ShowAlert("success", "Settlement record deleted successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Settlement record '{TxId}' deleted successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogDeleteRecord.Close();

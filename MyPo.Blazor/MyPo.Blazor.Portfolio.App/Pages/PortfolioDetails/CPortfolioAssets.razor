@@ -1,6 +1,7 @@
 ﻿@using MyPo.Blazor.App.Shared
-@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
 
@@ -99,7 +100,7 @@
 								<td class="text-start w-auto">
 									@foreach (var tag in asset.TagsList)
 									{
-										<CRandomBadge Text="@tag" />
+										<CBadgeRandom Text="@tag" />
 									}
 								</td>
 								<td class="text-center w-auto">

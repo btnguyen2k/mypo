@@ -5,7 +5,7 @@ using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxSettled : CBase
 {
@@ -79,7 +79,7 @@ public partial class CPortfolioTxSettled : CBase
 		return true;
 	}
 
-	private static CreateOrUpdateTxSettlementReq NewRoiRecReqFrom(TxSettlementResp rec)
+	private static CreateOrUpdateTxSettlementReq NewTxSettlementReqFrom(TxSettlementResp rec)
 	{
 		return new CreateOrUpdateTxSettlementReq()
 		{
