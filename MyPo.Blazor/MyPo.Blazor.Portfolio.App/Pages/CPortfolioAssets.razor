@@ -83,7 +83,7 @@
 								<td class="text-end w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1346)&&upnl1346>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
-										@(LatestPricesMap.TryGetValue(asset.Id, out var lp0762)
+										@(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
 											? $"{PortfolioUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
 											: "-"
 										)
@@ -139,7 +139,7 @@
 		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
 			<WidgetBuyCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
+				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				OwningUnits="@(SelectedAsset?.Quantity??0)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
@@ -147,7 +147,7 @@
 		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
 			<WidgetSellCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
+				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				NumUnits="@(SelectedAsset?.Quantity??10)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
@@ -247,7 +247,7 @@
 										</td>
 										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
+											@(MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
 												? $"{PortfolioUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
 												: "-"
 											)
@@ -263,7 +263,7 @@
 												? "-"
 												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
 												  PortfolioUtils.FormatValueWithScale(
-													LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
+													MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
 														? lp7317 * SelectedAsset.Quantity
 														: 0,
 													SelectedAsset.Market?.PriceScale??1,

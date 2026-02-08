@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MyPo.Libs.Opurator;
@@ -23,6 +24,17 @@ public interface ITaskOperator
 	/// <param name="action"></param>
 	/// <returns><c>true</c> if the task is scheduled to execute.</returns>
 	public Task<bool> ExecuteNonParallelAsync(string id, Action action);
+
+	/// <summary>
+	/// Executes the action in background without any control.
+	/// </summary>
+	/// <param name="action"></param>
+	public void ExecuteInBackground(Action action)
+	{
+		using var backgroundWorker = new BackgroundWorker();
+		backgroundWorker.DoWork += async (sender, e) => await Task.Run(action);
+		backgroundWorker.RunWorkerAsync();
+	}
 }
 
 /// <summary>

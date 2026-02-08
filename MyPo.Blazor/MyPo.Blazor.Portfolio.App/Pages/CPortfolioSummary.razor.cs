@@ -24,40 +24,16 @@ public partial class CPortfolioSummary : CBase
 	public IEnumerable<AssetResp>? Assets { get; set; }
 	private decimal TotalMarketValue => Assets?.Where(a => a.Market?.Currency==Portfolio?.Currency).Sum(a =>
 	{
-		if (LatestPricesMap.TryGetValue(a.Id, out var latestPrice))
+		if (MarketPricesMap.TryGetValue(a.Id, out var latestPrice))
 		{
 			return latestPrice * a.Quantity;
 		}
 		return 0;
 	}) ?? 0;
-	private Dictionary<string, StockQuote> QuotesMap = []; // map {asset-id --> quote}
-	private readonly Dictionary<string, decimal> LatestPricesMap = [];
 
-	private async Task GetStocksQuotesBackground(List<string> symbolsList)
-	{
-		if (symbolsList.Count > 0)
-		{
-			var symbols = string.Join(",", symbolsList);
-			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var quotesResp = await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (quotesResp.Status == 200)
-			{
-				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
-				foreach (var asset in Assets ?? [])
-				{
-					var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
-					if (QuotesMap.TryGetValue(symbolKey, out var quote))
-					{
-						var latestPrice = quote.MarketPrice ?? 0;
-						latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
-						LatestPricesMap[asset.Id] = latestPrice;
-					}
-				}
-				StateHasChanged();
-			}
-		}
-	}
-
+	[Parameter]
+	public Dictionary<string, StockQuote>? QuotesMap { get; set; } // map {asset-id --> quote}
+	private Dictionary<string, decimal> MarketPricesMap { get; set; } = []; // map {asset-id --> market-price}
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
@@ -71,9 +47,25 @@ public partial class CPortfolioSummary : CBase
 			else
 				PnlSummary = pnlSummaryResp.Data;
 
-			var symbolsList = Assets.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
-			await Task.Run(async () => await GetStocksQuotesBackground(symbolsList));
+			StateHasChanged();
+		}
+	}
 
+	protected override async Task OnParametersSetAsync()
+	{
+		await base.OnParametersSetAsync();
+		if (Assets != null && QuotesMap != null)
+		{
+			foreach (var asset in Assets ?? [])
+			{
+				var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
+				if (QuotesMap.TryGetValue(symbolKey, out var quote))
+				{
+					var latestPrice = quote.MarketPrice ?? 0;
+					latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
+					MarketPricesMap[asset.Id] = latestPrice;
+				}
+			}
 			StateHasChanged();
 		}
 	}
