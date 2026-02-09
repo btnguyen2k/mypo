@@ -36,30 +36,25 @@ public sealed class MarketDef
 		{
 			return TimeSpan.Zero;
 		}
+		var delta = TimeSpan.Zero;
 		var now = TimeZoneInfo.ConvertTime(DateTimeOffset.Now, TZ);
-		if (!TradingDays.Contains(now.DayOfWeek))
+		var openDateTime = new DateTimeOffset(now.Year, now.Month, now.Day, OpenHour.Hour, OpenHour.Minute, 0, TZ.GetUtcOffset(now));
+		while (true)
 		{
-			// find next trading day
-			var nextTradingDay = Enumerable.Range(1, 7)
-				.Select(i => now.AddDays(i))
-				.FirstOrDefault(d => TradingDays.Contains(d.DayOfWeek));
-			if (nextTradingDay == default)
+			if (delta > TimeSpan.FromHours(72)) return delta; // sanity check to avoid infinite loop in case of misconfiguration
+			if (TradingDays.Contains(now.DayOfWeek) && now < openDateTime)
 			{
-				return TimeSpan.MaxValue; // no trading day found, should not happen if config is correct
+				// today is trading date, not yet open
+				return delta + (openDateTime - now);
 			}
-			var nextOpenDateTime = new DateTimeOffset(
-				nextTradingDay.Year,
-				nextTradingDay.Month,
-				nextTradingDay.Day,
-				OpenHour.Hour,
-				OpenHour.Minute,
-				0,
-				TZ.GetUtcOffset(nextTradingDay)
-			);
-			return nextOpenDateTime - now;
+
+			// not trading date, or already closed, find next trading date
+			var nextDate = now.AddDays(1);
+			nextDate = new DateTimeOffset(nextDate.Year, nextDate.Month, nextDate.Day, 0, 0, 0 , TZ.GetUtcOffset(nextDate));
+			delta += nextDate - now;
+			now = nextDate;
+			openDateTime = new DateTimeOffset(now.Year, now.Month, now.Day, OpenHour.Hour, OpenHour.Minute, 0, TZ.GetUtcOffset(now));
 		}
-		var todayOpenDateTime = new DateTimeOffset(now.Year, now.Month, now.Day, OpenHour.Hour, OpenHour.Minute, 0, TZ.GetUtcOffset(now));
-		return todayOpenDateTime - now;
 	}
 
 	public bool IsCurrentlyOpen()

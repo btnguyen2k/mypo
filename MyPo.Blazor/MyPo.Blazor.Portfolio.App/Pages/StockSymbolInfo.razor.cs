@@ -104,6 +104,7 @@ public sealed partial class StockSymbolInfo : BasePage
 			if (!Market.IsCurrentlyOpen())
 			{
 				var timeTillOpen = Market.TimeTillOpen();
+				var threshold = TimeSpan.FromMinutes(60);
 				if (timeTillOpen > TimeSpan.FromMinutes(60))
 				{
 					SetBackgroundMsg($"❗Market '{MarketId}' is currently closed. Not refreshing.");

@@ -77,8 +77,22 @@ public sealed class StockQuote
 	[JsonPropertyName("ask_size")]
 	public int AskSize { get; set; }
 
+	[JsonPropertyName("trailing_eps")]
+	public decimal TrailingEps { get; set; }
+
+	[JsonPropertyName("forward_eps")]
+	public decimal ForwardEps { get; set; }
+
+	[JsonPropertyName("trailing_p_e")]
+	public decimal TrailingPE { get; set; }
+
+	[JsonPropertyName("forward_p_e")]
+	public decimal ForwardPE { get; set; }
+
 	[JsonIgnore]
 	public int MarketPriceStatus => MarketPriceChange == 0 ? 0 : (MarketPriceChange < 0 ? -1 : 1);
+
+	public int EpsStatus => TrailingEps==ForwardEps ? 0 : (TrailingEps>ForwardEps ? -1 : 1);
 }
 
 public sealed class SymbolInfo : SymbolBase

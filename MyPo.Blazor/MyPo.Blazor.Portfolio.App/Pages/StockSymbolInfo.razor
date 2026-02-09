@@ -153,6 +153,30 @@
 															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketDayHigh??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
 														</td>
 													</tr>
+													<tr>
+														<td>Trailing EPS</td>
+														<td class="text-end">
+															@((SymbolInfo.StockQuote?.TrailingEps??0).ToString("N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>Forward EPS</td>
+														<td class="text-end @(new string[]{"text-danger", "", "text-success"}[1+SymbolInfo.StockQuote?.EpsStatus??0])">
+															@((SymbolInfo.StockQuote?.ForwardEps??0).ToString("N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>Trailing P/E</td>
+														<td class="text-end">
+															@((SymbolInfo.StockQuote?.TrailingPE??0).ToString("N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>Forward P/E</td>
+														<td class="text-end">
+															@((SymbolInfo.StockQuote?.ForwardPE??0).ToString("N2"))
+														</td>
+													</tr>
 												</table>
 											</div>
 										</div>
