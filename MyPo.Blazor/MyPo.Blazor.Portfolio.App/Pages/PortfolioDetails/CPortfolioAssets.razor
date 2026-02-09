@@ -72,7 +72,9 @@
 							<tr>
 								<td class="text-start w-auto">
 									<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
-									@(asset.ItemCode)
+									<button type="button" class="btn btn-link p-0 pb-1" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
+										@(asset.ItemCode)
+									</button>
 								</td>
 								<td class="text-end w-auto">
 									@(asset.Market?.CurrencySymbol??"")
@@ -104,10 +106,13 @@
 									}
 								</td>
 								<td class="text-center w-auto">
+									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)">
+										<BIcon icon="graph-up-arrow" />
+									</button>
 									<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
 										<BIcon icon="calculator" />
 									</button>
-									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
+									<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
 										<BIcon icon="pencil" />
 									</button>
 								</td>

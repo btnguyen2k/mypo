@@ -82,6 +82,20 @@ public partial class CPortfolioAssets : CBase
 		}
 	}
 
+	private void BtnClickAssetInfo(string assetId)
+	{
+		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
+		if (SelectedAsset == null)
+		{
+			ShowAlert("danger", "Asset not found.");
+			return;
+		}
+		SelectedAsset.Market = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.MarketId);
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", $"{SelectedAsset.ItemCode}:{SelectedAsset.Market?.Id}", StringComparison.OrdinalIgnoreCase)}"
+			+ $"?pid={SelectedAsset.PortfolioId}";
+		NavigationManager.NavigateTo(nextUrl);
+	}
+
 	private void BtnClickAssetBuySellCalculator(string assetId)
 	{
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;

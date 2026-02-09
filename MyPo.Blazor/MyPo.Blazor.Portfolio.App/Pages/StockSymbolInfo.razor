@@ -49,8 +49,14 @@
 						</div>
 						<div class="col-auto m-1 g-0">
 							<button type="button" class="btn btn-sm btn-outline-primary" @onclick="BtnClickLoadData" title="Load data">
-								<CIcon icon="cil-sync" />
+								<CIcon icon="sync" />
 							</button>
+							@if (!string.IsNullOrEmpty(PortfolioId))
+							{
+								<button type="button" class="btn btn-sm btn-outline-secondary ms-1" @onclick="BtnClickReturnToPortfolio" title="Return to portfolio">
+									<BIcon icon="arrow-return-left" />
+								</button>
+							}
 						</div>
 					</div>
                 </div>
@@ -69,12 +75,6 @@
 							<div class="container">
 								<!-- Header -->
 								<div class="d-flex justify-content-between align-items-center mb-4">
-									@*
-									<div>
-										<h2 class="mb-0">@(SymbolInfo.Symbol) <small class="text-muted">@SymbolInfo.Overview?.LongName</small></h2>
-										<small class="text-muted">@(SymbolInfo.Exchange) • @(SymbolInfo.Currency) • @(Market?.IsCurrentlyOpen()??false?"Market Open":"Market Close"??"Unknown")</small>
-									</div>
-									*@
 									<div>
 										<h2 class="mb-0">
 											@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
@@ -91,55 +91,15 @@
 									</div>
 								</div>
 
-								@*
-								<!-- Quick stats -->
-								<div class="row g-3 mb-4">
-									<div class="col-6 col-md-3">
-										<div class="card text-center">
-											<div class="card-body">
-												<small class="text-muted">Open</small>
-												<div class="fw-semibold">187.80</div>
-											</div>
-										</div>
-									</div>
-
-									<div class="col-6 col-md-3">
-										<div class="card text-center">
-											<div class="card-body">
-												<small class="text-muted">Day Range</small>
-												<div class="fw-semibold">187.50 – 190.10</div>
-											</div>
-										</div>
-									</div>
-
-									<div class="col-6 col-md-3">
-										<div class="card text-center">
-											<div class="card-body">
-												<small class="text-muted">52W Range</small>
-												<div class="fw-semibold">164.08 – 199.62</div>
-											</div>
-										</div>
-									</div>
-
-									<div class="col-6 col-md-3">
-										<div class="card text-center">
-											<div class="card-body">
-												<small class="text-muted">Volume</small>
-												<div class="fw-semibold">52.3M</div>
-											</div>
-										</div>
-									</div>
-								</div>
-								*@
-
 								<!-- Chart + Key metrics -->
 								<div class="row g-3 mb-4">
 									<div class="col-lg-8">
 										<div class="card h-100" style="min-height: 440px !important;">
-											<div class="card-body p-1">
+											<div class="card-body p-0">
 												<div class="bg-secondary bg-opacity-10 rounded d-flex align-items-center justify-content-center h-100">
 													<CStockChart
 														Symbol="@SymbolCode"
+														Market="@Market"
 														Exchange="@SymbolInfo.Exchange"
 													/>
 												</div>
@@ -150,18 +110,56 @@
 									<div class="col-lg-4">
 										<div class="card h-100">
 											<div class="card-body">
-												<h6 class="card-title">Key Metrics</h6>
 												<table class="table table-sm mb-0">
-													<tr><td>Bid / Ask</td><td class="text-end">189.42 / 189.46</td></tr>
-													<tr><td>Avg Volume</td><td class="text-end">61.8M</td></tr>
-													<tr><td>VWAP</td><td class="text-end">188.90</td></tr>
-													<tr><td>Market Cap</td><td class="text-end">2.95T</td></tr>
+													<tr class="text-success">
+														<td>Bid / Size</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.Bid??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															/
+															@((SymbolInfo.StockQuote?.BidSize??0) > 0
+																? PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.BidSize??0)
+																: "--"
+															)
+														</td>
+													</tr>
+													<tr class="text-danger">
+														<td>Ask / Size</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.Ask??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															/
+															@((SymbolInfo.StockQuote?.AskSize??0) > 0
+																? PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.AskSize??0)
+																: "--"
+															)
+														</td>
+													</tr>
+													<tr>
+														<td>Volume</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.MarketVolume??0))
+														</td>
+													</tr>
+													<tr>
+														<td>Market Cap</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.MarketCap??0))
+														</td>
+													</tr>
+													<tr>
+														<td>Day's Range</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketDayLow??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															-
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketDayHigh??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+														</td>
+													</tr>
 												</table>
 											</div>
 										</div>
 									</div>
 								</div>
 
+								@*
 								<!-- Detailed quote -->
 								<div class="card">
 									<div class="card-body">
@@ -176,12 +174,18 @@
 										</table>
 									</div>
 								</div>
+								*@
 							</div>
 						}
                     }
+
+					<div class="alert alert-warning mt-2" role="alert">
+						<span style="font-size: small">@warningMsg</span>
+					</div>
+
 					@if (!string.IsNullOrEmpty(BackgroundMsg))
 					{
-						<div class="alert alert-light" role="alert">
+						<div class="alert alert-light mt-2" role="alert">
 							<span style="font-size: small !important;">@BackgroundMsg</span>
 						</div>
 					}
@@ -193,4 +197,8 @@
 
 @code {
     private const string PAGE_TITLE = "Stock Symbol Info";
+
+	private string warningMsg = "Stock chart and data are provided by third-party services. " +
+		"The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
+		"Users should verify the data independently before making any investment decisions.";
 }

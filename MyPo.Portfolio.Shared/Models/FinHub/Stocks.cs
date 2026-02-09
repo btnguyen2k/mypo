@@ -64,6 +64,19 @@ public sealed class StockQuote
 	[JsonPropertyName("market_volume")]
 	public int MarketVolume { get; set; }
 
+	[JsonPropertyName("market_cap")]
+	public long MarketCap { get; set; }
+
+	[JsonPropertyName("bid")]
+	public decimal Bid { get; set; }
+	[JsonPropertyName("bid_size")]
+	public int BidSize { get; set; }
+
+	[JsonPropertyName("ask")]
+	public decimal Ask { get; set; }
+	[JsonPropertyName("ask_size")]
+	public int AskSize { get; set; }
+
 	[JsonIgnore]
 	public int MarketPriceStatus => MarketPriceChange == 0 ? 0 : (MarketPriceChange < 0 ? -1 : 1);
 }

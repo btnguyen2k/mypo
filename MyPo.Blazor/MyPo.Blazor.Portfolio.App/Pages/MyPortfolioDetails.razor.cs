@@ -57,10 +57,34 @@ public partial class MyPortfolioDetails : BasePage
 			}
 			if (!StopRefreshQuotes)
 			{
-				var sleepTime = Random.Shared.NextInt64(60000, 180000);
-				SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next quotes refresh...");
-				await Task.Delay((int)sleepTime);
-				await Task.Run(() => GetStocksQuotesBackground(symbolsList));
+				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
+				var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
+				if (market == null)
+				{
+					SetBackgroundMsg($"❗Default market '{SelectedPortfolio?.Metadata?.DefaultMarketId}' not found in markets metadata. Not refreshing quotes.");
+					return;
+				}
+				if (!market.IsCurrentlyOpen())
+				{
+					var timeTillOpen = market.TimeTillOpen();
+					if (timeTillOpen > TimeSpan.FromMinutes(60))
+					{
+						SetBackgroundMsg($"❗Market '{market.Id}' is currently closed. Not refreshing.");
+						return;
+					}
+					sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
+				}
+				while (sleepTime > 0 && !StopRefreshQuotes)
+				{
+					SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next quotes refresh...");
+					var delay = Math.Min(sleepTime, 1000);
+					await Task.Delay((int)delay);
+					sleepTime -= delay;
+				}
+				if (!StopRefreshQuotes)
+				{
+					await Task.Run(() => GetStocksQuotesBackground(symbolsList));
+				}
 			}
 		}
 	}
