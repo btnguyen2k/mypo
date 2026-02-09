@@ -74,20 +74,53 @@
 						{
 							<div class="container">
 								<!-- Header -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<div>
-										<h2 class="mb-0">
-											@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
-											<small style="font-size: large !important;" class="@(new string[]{"text-danger", "text-muted", "text-success"}[(SymbolInfo.StockQuote?.MarketPriceStatus??0)+1]) fw-semibold">
-												@(
-													(SymbolInfo.StockQuote?.MarketPriceChange??0) >= 0 ? "+" : ""
-												)@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPriceChange??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
-												(@(
-													(SymbolInfo.StockQuote?.MarketPriceChange??0) >= 0 ? "+" : ""
-												)@((SymbolInfo.StockQuote?.MarketPriceChangePercent??0).ToString("N2"))%)
-											</small>
-										</h2>
-										<small class="text-muted">@(SymbolInfo.Exchange) • @(SymbolInfo.Currency) • @(Market?.IsCurrentlyOpen()??false?"Market Open":"Market Close"??"Unknown")</small>
+								<div class="row g-3 mb-4">
+									<div class="col-md-6 d-flex justify-content-between align-items-center">
+										<div>
+											<h2 class="mb-0">
+												@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+												<small style="font-size: large !important;" class="@(new string[]{"text-danger", "text-muted", "text-success"}[(SymbolInfo.StockQuote?.MarketPriceStatus??0)+1]) fw-semibold">
+													@(
+														(SymbolInfo.StockQuote?.MarketPriceChange??0) >= 0 ? "+" : ""
+													)@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPriceChange??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+													(@(
+														(SymbolInfo.StockQuote?.MarketPriceChange??0) >= 0 ? "+" : ""
+													)@((SymbolInfo.StockQuote?.MarketPriceChangePercent??0).ToString("N2"))%)
+												</small>
+											</h2>
+											<small class="text-muted">@(SymbolInfo.Exchange) • @(SymbolInfo.Currency) • @(Market?.IsCurrentlyOpen()??false?"Market Open":"Market Close"??"Unknown")</small>
+										</div>
+									</div>
+
+									<div class="col-md-3">
+										<div class="card text-center">
+											<div class="card-body">
+												<small class="text-muted">Bid / Size</small>
+												<div class="fw-semibold text-success">
+													@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.Bid??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+													/
+													@((SymbolInfo.StockQuote?.BidSize??0) > 0
+														? PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.BidSize??0)
+														: "--"
+													)
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3">
+										<div class="card text-center">
+											<div class="card-body">
+												<small class="text-muted">Ask / Size</small>
+												<div class="fw-semibold text-danger">
+													@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.Ask??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+													/
+													@((SymbolInfo.StockQuote?.AskSize??0) > 0
+														? PortfolioUtils.FormatVolume(SymbolInfo.StockQuote?.AskSize??0)
+														: "--"
+													)
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 
@@ -111,6 +144,7 @@
 										<div class="card h-100">
 											<div class="card-body">
 												<table class="table table-sm mb-0">
+													@*
 													<tr class="text-success">
 														<td>Bid / Size</td>
 														<td class="text-end">
@@ -133,6 +167,7 @@
 															)
 														</td>
 													</tr>
+													*@
 													<tr>
 														<td>Volume</td>
 														<td class="text-end">
@@ -151,6 +186,14 @@
 															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketDayLow??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
 															-
 															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketDayHigh??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>52 Week Range</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.FiftyTwoWeekLow??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															-
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.FiftyTwoWeekHigh??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
 														</td>
 													</tr>
 													<tr>
@@ -175,6 +218,37 @@
 														<td>Forward P/E</td>
 														<td class="text-end">
 															@((SymbolInfo.StockQuote?.ForwardPE??0).ToString("N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>Beta</td>
+														<td class="text-end">
+															@((SymbolInfo.StockQuote?.Beta??0).ToString("N2"))
+														</td>
+													</tr>
+												</table>
+												<hr />
+												<table class="table table-sm mb-0">
+													<tr>
+														<td>Analyst Recommendation</td>
+														<td class="text-end fw-semibold">
+															@(SymbolInfo.StockQuote?.RecommendationKey??"--")
+														</td>
+													</tr>
+													<tr>
+														<td>Target Range</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetLowPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															-
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetHighPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+														</td>
+													</tr>
+													<tr>
+														<td>Target Mean / Median</td>
+														<td class="text-end">
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMeanPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															/
+															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMedianPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
 														</td>
 													</tr>
 												</table>

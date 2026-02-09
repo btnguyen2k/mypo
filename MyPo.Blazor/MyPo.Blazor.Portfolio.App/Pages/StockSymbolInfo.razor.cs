@@ -100,7 +100,7 @@ public sealed partial class StockSymbolInfo : BasePage
 				SetBackgroundMsg($"❗Market info not found for market id '{MarketId}'. Cannot determine refresh timing for symbol info.");
 				return;
 			}
-			var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
+			var sleepTime = Random.Shared.NextInt64(10*1000, 20*1000);
 			if (!Market.IsCurrentlyOpen())
 			{
 				var timeTillOpen = Market.TimeTillOpen();
