@@ -5,7 +5,7 @@ using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxSettled : CBase
 {
@@ -35,6 +35,19 @@ public partial class CPortfolioTxSettled : CBase
 			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>("import", $"./_content/{typeof(CPortfolioTxSettled).Assembly.GetName().Name!}/js/datetime-picker.js").AsTask());
 			var module = await moduleTask.Value;
         	await module.InvokeAsync<string>("InitDatetimePickers");
+		}
+	}
+
+	private void AutoGenTxNotes()
+	{
+		if (TxSettlementEntity.TxTypes.Contains(Tx.TxType) && Tx.TxValue > 0)
+		{
+			Tx.TxDesc = Tx.TxType switch
+			{
+				TxSettlementEntity.TX_TYPE_DIVIDEND => $"Dividend from {Tx.RefItemCode?.ToUpper()}",
+				TxSettlementEntity.TX_TYPE_DISTRIBUTION => $"Distribution from {Tx.RefItemCode?.ToUpper()}",
+				_ => Tx.TxDesc,
+			};
 		}
 	}
 
@@ -79,7 +92,7 @@ public partial class CPortfolioTxSettled : CBase
 		return true;
 	}
 
-	private static CreateOrUpdateTxSettlementReq NewRoiRecReqFrom(TxSettlementResp rec)
+	private static CreateOrUpdateTxSettlementReq NewTxSettlementReqFrom(TxSettlementResp rec)
 	{
 		return new CreateOrUpdateTxSettlementReq()
 		{

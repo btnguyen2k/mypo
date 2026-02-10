@@ -7,6 +7,7 @@ public sealed class TxSettlementEntity : Entity<string>
 	public const string TX_TYPE_CASHIN = "CASHIN";
 	public const string TX_TYPE_CASHOUT = "CASHOUT";
 	public const string TX_TYPE_DIVIDEND = "DIVIDEND";
+	public const string TX_TYPE_DISTRIBUTION = "DISTRIBUTION";
 	public const string TX_TYPE_INTEREST = "INTEREST";
 	public const string TX_TYPE_FEE = "FEE";
 	public const string TX_TYPE_TAX = "TAX";
@@ -18,6 +19,7 @@ public sealed class TxSettlementEntity : Entity<string>
 		TX_TYPE_CASHIN,
 		TX_TYPE_CASHOUT,
 		TX_TYPE_DIVIDEND,
+		TX_TYPE_DISTRIBUTION,
 		TX_TYPE_INTEREST,
 		TX_TYPE_FEE,
 		TX_TYPE_TAX,

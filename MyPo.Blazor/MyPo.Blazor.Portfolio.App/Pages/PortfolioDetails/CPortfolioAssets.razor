@@ -1,6 +1,7 @@
 ﻿@using MyPo.Blazor.App.Shared
-@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
 
@@ -24,17 +25,17 @@
 					<div class="card-body">
 						<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
 							<tr>
-								<td class="fs-5 fw-semibold">
+								<td class="fs-5 fw-semibold col-4 text-center">
 									Total Cost:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalCost<=0?"-":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
 									Market Value:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
 									Unsettled P/L:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalCost<=0||TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
@@ -57,10 +58,13 @@
 					<thead>
 						<tr>
 							<th scope="col" class="text-center w-auto">Item</th>
-							<th scope="col" class="text-center w-auto">Avg. Price</th>
 							<th scope="col" class="text-center w-auto">Units</th>
-							<th scope="col" class="text-center w-auto">Market Price</th>
+							<th scope="col" class="text-center w-auto">Avg. Price</th>
+							<th scope="col" class="text-center w-auto">Total Cost</th>
+							<th scope="col" class="text-center w-auto">Mkt. Price</th>
+							<th scope="col" class="text-center w-auto">Mkt. Value</th>
 							<th scope="col" class="text-center w-auto">Unsettled P/L %</th>
+							<th scope="col" class="text-center w-auto">Analyst Rec.</th>
 							<th scope="col" class="text-center w-auto">Tags</th>
 							<th scope="col" class="text-center w-auto">Actions</th>
 						</tr>
@@ -71,20 +75,35 @@
 							<tr>
 								<td class="text-start w-auto">
 									<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
-									@(asset.ItemCode)
+									<button type="button" class="btn btn-link p-0 pb-1" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
+										@(asset.ItemCode)
+									</button>
+								</td>
+								<td class="text-end w-auto">
+									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
 								</td>
 								<td class="text-end w-auto">
 									@(asset.Market?.CurrencySymbol??"")
 									@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
 								<td class="text-end w-auto">
-									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
+									@(asset.Market?.CurrencySymbol??"")
+									@(PortfolioUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
 								<td class="text-end w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1346)&&upnl1346>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
-										@(LatestPricesMap.TryGetValue(asset.Id, out var lp0762)
+										@(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
 											? $"{PortfolioUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+											: "-"
+										)
+									</span>
+								</td>
+								<td class="text-end w-auto">
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2091)&&upnl2091>=0?"text-success":"text-danger"))">
+										@(asset.Market?.CurrencySymbol??"")
+										@(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
+											? $"{PortfolioUtils.FormatValueWithScale(lp8326, asset.Quantity*asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
 											: "-"
 										)
 									</span>
@@ -96,17 +115,34 @@
 										(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"-"))
 									</span>
 								</td>
+								<td class="text-center w-auto">
+									@(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
+										? (quote.RecommendationKey??string.Empty) switch
+											{
+												"strong_buy" => "Strong Buy",
+												"buy" => "Buy",
+												"hold" => "Hold",
+												"sell" => "Sell",
+												"strong_sell" => "Strong Sell",
+												_ => "-",
+											}
+										: "-"
+									)
+								</td>
 								<td class="text-start w-auto">
 									@foreach (var tag in asset.TagsList)
 									{
-										<CRandomBadge Text="@tag" />
+										<CBadgeRandom Text="@tag" />
 									}
 								</td>
 								<td class="text-center w-auto">
+									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)">
+										<BIcon icon="graph-up-arrow" />
+									</button>
 									<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
 										<BIcon icon="calculator" />
 									</button>
-									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
+									<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
 										<BIcon icon="pencil" />
 									</button>
 								</td>
@@ -139,7 +175,7 @@
 		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
 			<WidgetBuyCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
+				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				OwningUnits="@(SelectedAsset?.Quantity??0)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
@@ -147,7 +183,7 @@
 		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
 			<WidgetSellCalculator
 				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(LatestPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
+				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
 				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
 				NumUnits="@(SelectedAsset?.Quantity??10)"
 				OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
@@ -247,7 +283,7 @@
 										</td>
 										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
+											@(MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
 												? $"{PortfolioUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
 												: "-"
 											)
@@ -263,7 +299,7 @@
 												? "-"
 												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
 												  PortfolioUtils.FormatValueWithScale(
-													LatestPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
+													MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
 														? lp7317 * SelectedAsset.Quantity
 														: 0,
 													SelectedAsset.Market?.PriceScale??1,

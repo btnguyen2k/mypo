@@ -4,7 +4,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxBuysSells
 {

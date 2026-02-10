@@ -3,7 +3,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxSettled
 {
@@ -11,7 +11,7 @@ public partial class CPortfolioTxSettled
 
 	private void PrepareUpdateRecord(TxSettlementResp rec)
 	{
-		Tx = NewRoiRecReqFrom(rec);
+		Tx = NewTxSettlementReqFrom(rec);
 		TxTime = Tx.TxTime.ToString(PortfolioUtils.DEFAULT_DATETIME_PICKER_FORMAT);
 		TxId = rec.Id;
 		CloseAlert();
@@ -21,7 +21,7 @@ public partial class CPortfolioTxSettled
 	{
 		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
 		{
-			ShowAlert("danger", "You do not have permission to update ROI records in this portfolio.");
+			ShowAlert("danger", "You do not have permission to update Settlement records in this portfolio.");
 			return;
 		}
 		TxSettlementResp? selectedRec = TxSettlementsMap.TryGetValue(rid, out var rec) ? rec : null;
@@ -32,7 +32,7 @@ public partial class CPortfolioTxSettled
 		}
 		else
 		{
-			ShowAlert("danger", $"ROI record '{rid}' not found.");
+			ShowAlert("danger", $"Settlement record '{rid}' not found.");
 		}
 	}
 
@@ -44,7 +44,7 @@ public partial class CPortfolioTxSettled
 
 	private async void BtnClickUpdateRecordSave()
 	{
-		ModalDialogUpdateRecord.ShowAlert("info", "Saving ROI record...");
+		ModalDialogUpdateRecord.ShowAlert("info", "Saving Settlement record...");
 		if (!ValidateTx(ModalDialogAddRecord))
 		{
 			return;
@@ -54,11 +54,11 @@ public partial class CPortfolioTxSettled
 		var resp = await apiClient.UpdateMyPortfolioTxSettlementAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ModalDialogUpdateRecord.ShowAlert("danger", resp.Message ?? $"Error updating ROI record '{TxId}'.");
+			ModalDialogUpdateRecord.ShowAlert("danger", resp.Message ?? $"Error updating Settlement record '{TxId}'.");
 			return;
 		}
-		ModalDialogUpdateRecord.ShowAlert("success", "ROI record updated successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"ROI record '{TxId}' updated successfully.";
+		ModalDialogUpdateRecord.ShowAlert("success", "Settlement record updated successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Settlement record '{TxId}' updated successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogUpdateRecord.Close();
