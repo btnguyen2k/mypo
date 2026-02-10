@@ -85,10 +85,18 @@
 							</tr>
 							<tr>
 								<td class="text-start">
-									Dividends (6)
+									Dividends (6a)
 								</td>
 								<td class="text-end">
 									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalDividends, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+								</td>
+							</tr>
+							<tr>
+								<td class="text-start">
+									Distribution (6b)
+								</td>
+								<td class="text-end">
+									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalDistributions, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
@@ -101,7 +109,7 @@
 							</tr>
 							<tr>
 								<td class="text-start fw-semibold">
-									Total Income (8=6+7)
+									Total Income (8=6a+6b+7)
 								</td>
 								<td class="text-end fw-semibold">
 									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.TotalIncome, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
@@ -212,34 +220,34 @@
 								</td>
 							</tr>
 							<tr>
-								<td class="text-start fw-semibold text-danger">
+								<td class="text-start fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									Unsettled P/L (* @PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
-								<td class="text-end fw-semibold text-danger">
+								<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									@(PortfolioUtils.FormatValueWithScale(PnlSummary.Value.NetPnL+TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
 							</tr>
 							<tr>
-								<td class="text-start fw-semibold text-danger">
+								<td class="text-start fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									Unsettled ROI (vs Total Buy)
 								</td>
-								<td class="text-end fw-semibold text-danger">
+								<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									@(PnlSummary.Value.UnsettledROIvsTotalBuy(PnlSummary.Value.NetPnL+TotalMarketValue).ToString("N2")+"%")
 								</td>
 							</tr>
 							<tr>
-								<td class="text-start fw-semibold text-danger">
+								<td class="text-start fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									Unsettled ROI (vs Peak Capital)
 								</td>
-								<td class="text-end fw-semibold text-danger">
+								<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									@(PnlSummary.Value.UnsettledROIvsPeakCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
 								</td>
 							</tr>
 							<tr>
-								<td class="text-start fw-semibold text-danger">
+								<td class="text-start fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									Unsettled ROI (vs Average Capital)
 								</td>
-								<td class="text-end fw-semibold text-danger">
+								<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
 									@(PnlSummary.Value.UnsettledROIvsAverageCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
 								</td>
 							</tr>
