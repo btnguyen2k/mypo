@@ -25,17 +25,17 @@
 					<div class="card-body">
 						<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
 							<tr>
-								<td class="fs-5 fw-semibold">
+								<td class="fs-5 fw-semibold col-4 text-center">
 									Total Cost:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalCost<=0?"-":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
 									Market Value:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 								</td>
-								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger"))">
+								<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
 									Unsettled P/L:
 									@(DefaultMarket?.CurrencySymbol??"")
 									@(TotalCost<=0||TotalMarketValue<=0?"-":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
@@ -58,10 +58,13 @@
 					<thead>
 						<tr>
 							<th scope="col" class="text-center w-auto">Item</th>
-							<th scope="col" class="text-center w-auto">Avg. Price</th>
 							<th scope="col" class="text-center w-auto">Units</th>
-							<th scope="col" class="text-center w-auto">Market Price</th>
+							<th scope="col" class="text-center w-auto">Avg. Price</th>
+							<th scope="col" class="text-center w-auto">Total Cost</th>
+							<th scope="col" class="text-center w-auto">Mkt. Price</th>
+							<th scope="col" class="text-center w-auto">Mkt. Value</th>
 							<th scope="col" class="text-center w-auto">Unsettled P/L %</th>
+							<th scope="col" class="text-center w-auto">Analyst Rec.</th>
 							<th scope="col" class="text-center w-auto">Tags</th>
 							<th scope="col" class="text-center w-auto">Actions</th>
 						</tr>
@@ -77,11 +80,15 @@
 									</button>
 								</td>
 								<td class="text-end w-auto">
+									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
+								</td>
+								<td class="text-end w-auto">
 									@(asset.Market?.CurrencySymbol??"")
 									@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
 								<td class="text-end w-auto">
-									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
+									@(asset.Market?.CurrencySymbol??"")
+									@(PortfolioUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
 								<td class="text-end w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1346)&&upnl1346>=0?"text-success":"text-danger"))">
@@ -93,11 +100,34 @@
 									</span>
 								</td>
 								<td class="text-end w-auto">
+									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2091)&&upnl2091>=0?"text-success":"text-danger"))">
+										@(asset.Market?.CurrencySymbol??"")
+										@(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
+											? $"{PortfolioUtils.FormatValueWithScale(lp8326, asset.Quantity*asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+											: "-"
+										)
+									</span>
+								</td>
+								<td class="text-end w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2272)&&upnl2272>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
 										@(PortfolioUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 										(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"-"))
 									</span>
+								</td>
+								<td class="text-center w-auto">
+									@(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
+										? (quote.RecommendationKey??string.Empty) switch
+											{
+												"strong_buy" => "Strong Buy",
+												"buy" => "Buy",
+												"hold" => "Hold",
+												"sell" => "Sell",
+												"strong_sell" => "Strong Sell",
+												_ => "-",
+											}
+										: "-"
+									)
 								</td>
 								<td class="text-start w-auto">
 									@foreach (var tag in asset.TagsList)

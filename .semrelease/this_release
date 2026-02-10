@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Patch) Optimize loading of stock quotes in the background.
 - (Feat) Add Stock Symbol Info page.
+- (Patch) Add settlement type Distribution.

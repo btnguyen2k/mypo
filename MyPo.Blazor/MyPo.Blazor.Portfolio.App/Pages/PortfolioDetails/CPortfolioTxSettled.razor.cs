@@ -38,6 +38,19 @@ public partial class CPortfolioTxSettled : CBase
 		}
 	}
 
+	private void AutoGenTxNotes()
+	{
+		if (TxSettlementEntity.TxTypes.Contains(Tx.TxType) && Tx.TxValue > 0)
+		{
+			Tx.TxDesc = Tx.TxType switch
+			{
+				TxSettlementEntity.TX_TYPE_DIVIDEND => $"Dividend from {Tx.RefItemCode?.ToUpper()}",
+				TxSettlementEntity.TX_TYPE_DISTRIBUTION => $"Distribution from {Tx.RefItemCode?.ToUpper()}",
+				_ => Tx.TxDesc,
+			};
+		}
+	}
+
 	private bool ValidateTx(CModal? activeForm = null)
 	{
 		// validate transaction type

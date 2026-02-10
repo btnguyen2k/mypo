@@ -71,7 +71,7 @@ CREATE TABLE mypo_settlements (
     tx_id varchar(48) NOT NULL,
     tx_status varchar(8) NOT NULL DEFAULT 'NEW',
     portfolio_id varchar(48) NOT NULL,
-    tx_type varchar(8) NOT NULL,
+    tx_type varchar(16) NOT NULL,
     tx_time timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     tx_value numeric(20,6) NOT NULL DEFAULT 0,
     ref_tx_id varchar(48) NULL,
