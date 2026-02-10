@@ -30,6 +30,33 @@ public sealed class MarketDef
 
 	public List<DayOfWeek> TradingDays { get; set; } = [];
 
+	public TimeSpan TimeTillOpen()
+	{
+		if (IsCurrentlyOpen())
+		{
+			return TimeSpan.Zero;
+		}
+		var delta = TimeSpan.Zero;
+		var now = TimeZoneInfo.ConvertTime(DateTimeOffset.Now, TZ);
+		var openDateTime = new DateTimeOffset(now.Year, now.Month, now.Day, OpenHour.Hour, OpenHour.Minute, 0, TZ.GetUtcOffset(now));
+		while (true)
+		{
+			if (delta > TimeSpan.FromHours(72)) return delta; // sanity check to avoid infinite loop in case of misconfiguration
+			if (TradingDays.Contains(now.DayOfWeek) && now < openDateTime)
+			{
+				// today is trading date, not yet open
+				return delta + (openDateTime - now);
+			}
+
+			// not trading date, or already closed, find next trading date
+			var nextDate = now.AddDays(1);
+			nextDate = new DateTimeOffset(nextDate.Year, nextDate.Month, nextDate.Day, 0, 0, 0 , TZ.GetUtcOffset(nextDate));
+			delta += nextDate - now;
+			now = nextDate;
+			openDateTime = new DateTimeOffset(now.Year, now.Month, now.Day, OpenHour.Hour, OpenHour.Minute, 0, TZ.GetUtcOffset(now));
+		}
+	}
+
 	public bool IsCurrentlyOpen()
 	{
 		var now = TimeZoneInfo.ConvertTime(DateTimeOffset.Now, TZ);

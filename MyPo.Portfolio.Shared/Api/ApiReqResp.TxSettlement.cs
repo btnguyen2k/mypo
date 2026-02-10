@@ -104,6 +104,7 @@ public struct PnlSummaryResp
 			TotalBuyValue = pnl.TotalBuyValue,
 			TotalSellValue = pnl.TotalSellValue,
 			TotalDividends = pnl.TotalDividends,
+			TotalDistributions = pnl.TotalDistributions,
 			TotalTax = pnl.TotalTax,
 			TotalFees = pnl.TotalFees,
 			TotalCashIn = pnl.TotalCashIn,
@@ -124,6 +125,9 @@ public struct PnlSummaryResp
 	[JsonPropertyName("total_dividends")]
 	public decimal TotalDividends { get; set; }
 
+	[JsonPropertyName("total_distributions")]
+	public decimal TotalDistributions { get; set; }
+
 	[JsonPropertyName("total_tax")]
 	public decimal TotalTax { get; set; }
 
@@ -139,11 +143,11 @@ public struct PnlSummaryResp
 	[JsonPropertyName("total_interest")]
 	public decimal TotalInterest { get; set; }
 
-	public readonly decimal TotalMoneyIn => TotalSellValue + TotalCashIn + TotalDividends + TotalInterest;
+	public readonly decimal TotalMoneyIn => TotalSellValue + TotalCashIn + TotalDividends + TotalDistributions + TotalInterest;
 	public readonly decimal TotalMoneyOut => TotalBuyValue + TotalCashOut + TotalTax + TotalFees;
 
 	public readonly decimal NetCapitalContributed => TotalCashIn - TotalCashOut;
-	public readonly decimal TotalIncome => TotalDividends + TotalInterest;
+	public readonly decimal TotalIncome => TotalDividends + TotalDistributions + TotalInterest;
 	public readonly decimal TotalCosts => TotalTax + TotalFees;
 	public readonly decimal RealizedCapitalGains => TotalSellValue - TotalBuyValue;
 	public readonly decimal GrossReturns => TotalIncome + RealizedCapitalGains;
@@ -255,6 +259,7 @@ public struct PnlSummaryResp
 			TotalBuyValue = this.TotalBuyValue,
 			TotalSellValue = this.TotalSellValue,
 			TotalDividends = this.TotalDividends,
+			TotalDistributions = this.TotalDistributions,
 			TotalTax = this.TotalTax,
 			TotalFees = this.TotalFees,
 			TotalCashIn = this.TotalCashIn,

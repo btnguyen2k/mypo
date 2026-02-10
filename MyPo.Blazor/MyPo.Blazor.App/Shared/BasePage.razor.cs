@@ -10,7 +10,15 @@ public abstract class BasePage : BaseComponent
 {
 	protected bool HideUI { get; set; } = false;
 
+	protected string BackgroundMsg { get; set; } = string.Empty;
+
 	protected UserResp? CurrentUser { get; set; }
+
+	protected void SetBackgroundMsg(string msg)
+	{
+		BackgroundMsg = msg;
+		StateHasChanged();
+	}
 
 	/// <inheritdoc />
 	protected override async Task OnInitializedAsync()

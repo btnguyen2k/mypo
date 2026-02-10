@@ -1,4 +1,5 @@
 ﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Identity
 @using MyPo.Portfolio.Shared.Models
@@ -89,7 +90,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType">
+							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType" @bind:after="AutoGenTxNotes">
 								@foreach (var rt in TxSettlementEntity.TxTypes)
 								{
 									<option value="@rt">@rt</option>
@@ -134,13 +135,13 @@
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode" />
+							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode" @bind:after="AutoGenTxNotes" />
 							<label for="refItemCode">Item Code:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue" @bind:after="AutoGenTxNotes" />
 							<label for="txValue">Tx Value (*):</label>
 						</div>
 					</div>
@@ -176,7 +177,7 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType"
+							<select class="form-select" id="recType" aria-label="Record Type" @bind="Tx.TxType" @bind:after="AutoGenTxNotes"
 									disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)">
 								@foreach (var rt in TxSettlementEntity.TxTypes)
 								{
@@ -225,14 +226,14 @@
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode"
+							<input type="text" class="form-control" id="refItemCode" aria-label="Item Code" @bind="Tx.RefItemCode" @bind:after="AutoGenTxNotes"
 								disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)" />
 							<label for="refItemCode">Item Code:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue"
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue" @bind:after="AutoGenTxNotes"
 								disabled="@TxSettlementEntity.ImmutableStatuses.Contains(Tx.Status?.ToUpper()??string.Empty)" />
 							<label for="txValue">Tx Value (*):</label>
 						</div>

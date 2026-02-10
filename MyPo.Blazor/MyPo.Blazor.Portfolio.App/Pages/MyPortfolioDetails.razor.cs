@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
+using MyPo.Portfolio.Shared.Models.FinHub;
+using MyPo.Libs.Opurator;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -16,6 +18,76 @@ public partial class MyPortfolioDetails : BasePage
 	private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
 	private IEnumerable<AssetResp>? Assets { get; set; }
 	private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
+
+	// map {asset-id --> quote}
+	private Dictionary<string, StockQuote> QuotesMap = [];
+
+	private bool StopRefreshQuotes { get; set; } = false;
+
+	private void StopRefreshQuotesBackground()
+	{
+		StopRefreshQuotes = true;
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			StopRefreshQuotesBackground();
+		}
+		base.Dispose(disposing);
+	}
+
+	private async void GetStocksQuotesBackground(List<string> symbolsList)
+	{
+		if (symbolsList.Count > 0 && !StopRefreshQuotes)
+		{
+			var symbols = string.Join(",", symbolsList);
+			SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var quotesResp = await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (quotesResp.Status == 200)
+			{
+				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
+				StateHasChanged();
+			}
+			else
+			{
+				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+			}
+			if (!StopRefreshQuotes)
+			{
+				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
+				var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
+				if (market == null)
+				{
+					SetBackgroundMsg($"❗Default market '{SelectedPortfolio?.Metadata?.DefaultMarketId}' not found in markets metadata. Not refreshing quotes.");
+					return;
+				}
+				if (!market.IsCurrentlyOpen())
+				{
+					var timeTillOpen = market.TimeTillOpen();
+					if (timeTillOpen > TimeSpan.FromMinutes(60))
+					{
+						SetBackgroundMsg($"❗Market '{market.Id}' is currently closed. Not refreshing.");
+						return;
+					}
+					sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
+				}
+				while (sleepTime > 0 && !StopRefreshQuotes)
+				{
+					SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next quotes refresh...");
+					var delay = Math.Min(sleepTime, 1000);
+					await Task.Delay((int)delay);
+					sleepTime -= delay;
+				}
+				if (!StopRefreshQuotes)
+				{
+					await Task.Run(() => GetStocksQuotesBackground(symbolsList));
+				}
+			}
+		}
+	}
 
 	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
 	{
@@ -91,6 +163,11 @@ public partial class MyPortfolioDetails : BasePage
 		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 		if (SelectedPortfolio == null) return;
 
+		var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
+		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
+		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList));
+
 		HideUI = false;
 
 		var (alertType, alertMessage) = GetPassedMessageFromQuery();
@@ -121,7 +198,7 @@ public partial class MyPortfolioDetails : BasePage
 			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
 
 			// reload page data in the background
-			await Task.Run(() => InitializePage());
+			await Task.Run(InitializePage);
 		}
 	}
 
@@ -143,6 +220,10 @@ public partial class MyPortfolioDetails : BasePage
 		);
 		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
 		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
+		if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
+		{
+			ActiveTab = TabIdSummary;
+		}
 	}
 
 	private async void SwitchTab(string tab)

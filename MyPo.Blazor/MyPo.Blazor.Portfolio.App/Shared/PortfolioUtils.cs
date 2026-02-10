@@ -129,6 +129,32 @@ public static class PortfolioUtils
 		return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", System.Globalization.CultureInfo.CurrentCulture);
 	}
 
+	public static string FormatVolume(int volume)
+	{
+		return FormatVolume((long)volume);
+	}
+
+	public static string FormatVolume(long volume)
+	{
+		if (volume >= 1_000_000_000_000)
+		{
+			return $"{(volume / 1_000_000_000_000m):N2}T";
+		}
+		if (volume >= 1_000_000_000)
+		{
+			return $"{(volume / 1_000_000_000m):N2}B";
+		}
+		if (volume >= 1_000_000)
+		{
+			return $"{(volume / 1_000_000m):N2}M";
+		}
+		if (volume >= 1_000)
+		{
+			return $"{(volume / 1_000m):N2}K";
+		}
+		return volume.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
+	}
+
 	public static decimal CalculatePercentageChange(decimal oldValue, decimal newValue)
 	{
 		if (oldValue == 0)
@@ -149,7 +175,7 @@ public static class PortfolioUtils
 		{
 			return 0;
 		}
-		var currentPrice = quote.MarketPrice ?? 0;
+		var currentPrice = quote.MarketPrice;
 		var pnl = ((decimal)currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
 		return pnl;
 	}

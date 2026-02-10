@@ -37,4 +37,18 @@ public partial class PortfolioApiClient : ApiClient, IPortfolioApiClient
 		);
 		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
 	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<SymbolInfo>> GetStockSymbolInfoAsync(string symbol, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_STOCKS_SYMBOL_INFO.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase);
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			authToken,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<SymbolInfo>(httpResult, cancellationToken);
+	}
 }

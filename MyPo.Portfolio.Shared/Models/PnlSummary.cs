@@ -7,6 +7,7 @@ public sealed class PnlSummary
 	public decimal TotalBuyValue { get; set; } = 0.0m;
 	public decimal TotalSellValue { get; set; } = 0.0m;
 	public decimal TotalDividends { get; set; } = 0.0m;
+	public decimal TotalDistributions { get; set; } = 0.0m;
 	public decimal TotalTax { get; set; } = 0.0m;
 	public decimal TotalFees { get; set; } = 0.0m;
 	public decimal TotalCashIn { get; set; } = 0.0m;

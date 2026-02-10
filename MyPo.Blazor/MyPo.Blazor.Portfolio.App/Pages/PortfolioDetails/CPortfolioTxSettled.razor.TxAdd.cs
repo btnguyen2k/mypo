@@ -3,7 +3,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
-namespace MyPo.Blazor.Portfolio.App.Pages;
+namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioTxSettled
 {
@@ -29,7 +29,7 @@ public partial class CPortfolioTxSettled
 	{
 		if (Portfolio?.OwnerUserId != CurrentUser?.Id)
 		{
-			ShowAlert("danger", "You do not have permission to add ROI records to this portfolio.");
+			ShowAlert("danger", "You do not have permission to add Settlement records to this portfolio.");
 			return;
 		}
 		PrepareAddRecord();
@@ -44,7 +44,7 @@ public partial class CPortfolioTxSettled
 
 	private async void BtnClickAddRecordSave()
 	{
-		ModalDialogAddRecord.ShowAlert("info", "Adding ROI record...");
+		ModalDialogAddRecord.ShowAlert("info", "Adding Settlement record...");
 		if (!ValidateTx(ModalDialogAddRecord))
 		{
 			return;
@@ -55,11 +55,11 @@ public partial class CPortfolioTxSettled
 		var resp = await apiClient.CreateMyPortfolioTxSettlementAsync(Tx, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (resp.Status != 200)
 		{
-			ModalDialogAddRecord.ShowAlert("danger", resp.Message ?? "Failed to create ROI record.");
+			ModalDialogAddRecord.ShowAlert("danger", resp.Message ?? "Failed to create Settlement record.");
 			return;
 		}
-		ModalDialogAddRecord.ShowAlert("success", "ROI record added successfully. Navigating to portfolio page...");
-		var passAlertMessage = $"ROI record '{resp.Data.Id}' added successfully.";
+		ModalDialogAddRecord.ShowAlert("success", "Settlement record added successfully. Navigating to portfolio page...");
+		var passAlertMessage = $"Settlement record '{resp.Data.Id}' added successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		ModalDialogAddRecord.Close();

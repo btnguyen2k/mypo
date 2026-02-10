@@ -41,10 +41,114 @@ public sealed class SymbolOverview
 	public string? Sector { get; set; }
 }
 
+public sealed class SymbolDividend
+{
+	[JsonPropertyName("dividend_rate")]
+	public decimal DividendRate { get; set; }
+
+	[JsonPropertyName("dividend_yield")]
+	public decimal DividendYield { get; set; }
+
+	[JsonPropertyName("ex_dividend_date")]
+	public long ExDividendTimestamp { get; set; }
+	[JsonIgnore]
+	public DateTime ExDividendDate => DateTimeOffset.FromUnixTimeSeconds(ExDividendTimestamp).DateTime;
+
+	[JsonPropertyName("five_year_avg_dividend_yield")]
+	public decimal FiveYearAvgDividendYield { get; set; }
+
+	[JsonPropertyName("trailing_annual_dividend_rate")]
+    public decimal TrailingAnnualDividendRate { get; set; }
+
+	[JsonPropertyName("trailing_annual_dividend_yield")]
+    public decimal TrailingAnnualDividendYield { get; set; }
+
+	[JsonPropertyName("last_dividend_value")]
+    public decimal LastDividendValue { get; set; }
+
+	[JsonPropertyName("last_dividend_date")]
+    public long LastDividendTimestamp { get; set; }
+	[JsonIgnore]
+	public DateTime LastDividendDate => DateTimeOffset.FromUnixTimeSeconds(LastDividendTimestamp).DateTime;
+}
+
 public sealed class StockQuote
 {
-	[JsonPropertyName("market_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? MarketPrice { get; set; }
+	[JsonPropertyName("market_price")]
+	public decimal MarketPrice { get; set; }
+
+	[JsonPropertyName("market_price_change")]
+	public decimal MarketPriceChange { get; set; }
+
+	[JsonPropertyName("market_price_change_percent")]
+	public decimal MarketPriceChangePercent { get; set; }
+
+	[JsonPropertyName("market_open")]
+	public decimal MarketOpen { get; set; }
+
+	[JsonPropertyName("market_day_high")]
+	public decimal MarketDayHigh { get; set; }
+
+	[JsonPropertyName("market_day_low")]
+	public decimal MarketDayLow { get; set; }
+
+	[JsonPropertyName("fifty_two_week_high")]
+	public decimal FiftyTwoWeekHigh { get; set; }
+
+	[JsonPropertyName("fifty_two_week_low")]
+	public decimal FiftyTwoWeekLow { get; set; }
+
+	[JsonPropertyName("market_volume")]
+	public int MarketVolume { get; set; }
+
+	[JsonPropertyName("market_cap")]
+	public long MarketCap { get; set; }
+
+	[JsonPropertyName("bid")]
+	public decimal Bid { get; set; }
+	[JsonPropertyName("bid_size")]
+	public int BidSize { get; set; }
+
+	[JsonPropertyName("ask")]
+	public decimal Ask { get; set; }
+	[JsonPropertyName("ask_size")]
+	public int AskSize { get; set; }
+
+	[JsonPropertyName("trailing_eps")]
+	public decimal TrailingEps { get; set; }
+
+	[JsonPropertyName("forward_eps")]
+	public decimal ForwardEps { get; set; }
+
+	[JsonPropertyName("trailing_p_e")]
+	public decimal TrailingPE { get; set; }
+
+	[JsonPropertyName("forward_p_e")]
+	public decimal ForwardPE { get; set; }
+
+	[JsonPropertyName("beta")]
+	public decimal Beta { get; set; }
+
+	[JsonPropertyName("recommendation_key"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RecommendationKey { get; set; }
+
+	[JsonPropertyName("target_high_price")]
+	public decimal TargetHighPrice { get; set; }
+
+	[JsonPropertyName("target_low_price")]
+	public decimal TargetLowPrice { get; set; }
+
+	[JsonPropertyName("target_mean_price")]
+	public decimal TargetMeanPrice { get; set; }
+
+	[JsonPropertyName("target_median_price")]
+	public decimal TargetMedianPrice { get; set; }
+
+	[JsonIgnore]
+	public int MarketPriceStatus => MarketPriceChange == 0 ? 0 : (MarketPriceChange < 0 ? -1 : 1);
+
+	[JsonIgnore]
+	public int EpsStatus => TrailingEps==ForwardEps ? 0 : (TrailingEps>ForwardEps ? -1 : 1);
 }
 
 public sealed class SymbolInfo : SymbolBase
@@ -54,4 +158,7 @@ public sealed class SymbolInfo : SymbolBase
 
 	[JsonPropertyName("stock_quote"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public StockQuote? StockQuote { get; set; }
+
+	[JsonPropertyName("dividend"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public SymbolDividend? Dividend { get; set; }
 }
