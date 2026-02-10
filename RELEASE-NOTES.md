@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-10 - v0.7.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Add Stock Symbol Info page.
+
+### Fixed/Improvements
+
+- (Patch) Optimize loading of stock quotes in the background.
+- (Patch) Add settlement type Distribution.
+
 ## 2026-02-06 - v0.6.0
 
 ### Added/Refactoring/Deprecation
