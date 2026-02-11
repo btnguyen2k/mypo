@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -24,6 +25,9 @@ public partial class CPortfolioTxBuysSells : CBase
 	private CreateOrUpdateTxBuySellReq Tx = default!;
 	private string TxTime { get; set; } = string.Empty;
 	private string TxId { get; set; } = string.Empty;
+
+	[Inject]
+	private ILogger<CPortfolioTxBuysSells> Logger { get; set; } = default!;
 
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;

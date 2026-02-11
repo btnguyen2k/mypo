@@ -5,6 +5,7 @@ using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Libs.Opurator;
+using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -38,22 +39,40 @@ public partial class MyPortfolioDetails : BasePage
 		base.Dispose(disposing);
 	}
 
+	private async Task<ApiResp<IDictionary<string, StockQuote>>> FetchQuotesForSymbols(List<string> symbolsList)
+	{
+		var symbols = string.Join(",", symbolsList);
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		return await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
+	}
+
 	private async void GetStocksQuotesBackground(List<string> symbolsList)
 	{
 		if (symbolsList.Count > 0 && !StopRefreshQuotes)
 		{
-			var symbols = string.Join(",", symbolsList);
-			SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
-			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var quotesResp = await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (quotesResp.Status == 200)
+			// fech stock quotes chunk by chunk to avoid too long query string issue
+			// each chunk is 5 symbols max
+			var cloneSymbolList = new List<string>(symbolsList.OrderBy(_ => Random.Shared.Next()));
+			while (cloneSymbolList.Count > 0 && !StopRefreshQuotes)
 			{
-				QuotesMap = quotesResp.Data?.ToDictionary(q => q.Key, q => q.Value) ?? [];
-				StateHasChanged();
-			}
-			else
-			{
-				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+				var currentChunk = cloneSymbolList.Take(5).ToList();
+				cloneSymbolList = [.. cloneSymbolList.Skip(5)];
+
+				var symbols = string.Join(",", currentChunk);
+				SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
+				var quotesResp = await FetchQuotesForSymbols(currentChunk);
+				if (quotesResp.Status == 200)
+				{
+					foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
+					{
+						QuotesMap[quote.Key] = quote.Value;
+					}
+					StateHasChanged();
+				}
+				else
+				{
+					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+				}
 			}
 			if (!StopRefreshQuotes)
 			{
@@ -73,6 +92,7 @@ public partial class MyPortfolioDetails : BasePage
 						return;
 					}
 					sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
+					sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds)+1000;
 				}
 				while (sleepTime > 0 && !StopRefreshQuotes)
 				{

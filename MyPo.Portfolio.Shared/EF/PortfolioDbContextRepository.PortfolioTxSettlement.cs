@@ -48,6 +48,7 @@ public sealed partial class PortfolioDbContextRepository
 			TotalBuyValue = 0.0m,
 			TotalSellValue = 0.0m,
 			TotalDividends = 0.0m,
+			TotalDistributions = 0.0m,
 			TotalTax = 0.0m,
 			TotalFees = 0.0m,
 			TotalCashIn = 0.0m,
@@ -76,6 +77,9 @@ public sealed partial class PortfolioDbContextRepository
 					break;
 				case TxSettlementEntity.TX_TYPE_DIVIDEND:
 					roiSummary.TotalDividends = row.TotalValue;
+					break;
+				case TxSettlementEntity.TX_TYPE_DISTRIBUTION:
+					roiSummary.TotalDistributions = row.TotalValue;
 					break;
 				case TxSettlementEntity.TX_TYPE_TAX:
 					roiSummary.TotalTax = row.TotalValue;

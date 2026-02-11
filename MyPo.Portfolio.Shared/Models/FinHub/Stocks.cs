@@ -14,6 +14,18 @@ public class SymbolBase
 	public string Exchange { get; set; } = string.Empty;
 }
 
+public sealed class HistoryValueDaily
+{
+	[JsonPropertyName("timestamp")]
+	public long Timestamp { get; set; }
+
+	[JsonIgnore]
+	public DateTime Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).DateTime;
+
+	[JsonPropertyName("value")]
+	public decimal Value { get; set; }
+}
+
 public sealed class SymbolOverview
 {
 	[JsonPropertyName("country"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -151,6 +163,42 @@ public sealed class StockQuote
 	public int EpsStatus => TrailingEps==ForwardEps ? 0 : (TrailingEps>ForwardEps ? -1 : 1);
 }
 
+public sealed class StockHistory
+{
+	[JsonPropertyName("recent_high_price")]
+	public decimal RecentHighPrice { get; set; }
+
+	[JsonPropertyName("pull_pack_percent")]
+	public decimal PullBackPercent { get; set; }
+
+	[JsonPropertyName("current_volume")]
+	public long CurrentVolume { get; set; }
+
+	[JsonPropertyName("average_volume_30d")]
+	public long AverageVolume30d { get; set; }
+
+	[JsonPropertyName("ma10")]
+	public decimal MA10 { get; set; }
+
+	[JsonPropertyName("ma20")]
+	public decimal MA20 { get; set; }
+
+	[JsonPropertyName("ma50")]
+	public decimal MA50 { get; set; }
+
+	[JsonPropertyName("ma100")]
+	public decimal MA100 { get; set; }
+
+	[JsonPropertyName("ma200")]
+	public decimal MA200 { get; set; }
+
+	[JsonPropertyName("rsi14")]
+	public decimal RSI14 { get; set; }
+
+	[JsonPropertyName("rsi14_history_daily"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public List<HistoryValueDaily>? RSI14HistoryDaily { get; set; }
+}
+
 public sealed class SymbolInfo : SymbolBase
 {
 	[JsonPropertyName("overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -161,4 +209,7 @@ public sealed class SymbolInfo : SymbolBase
 
 	[JsonPropertyName("dividend"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public SymbolDividend? Dividend { get; set; }
+
+	[JsonPropertyName("stock_history"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public StockHistory? StockHistory { get; set; }
 }

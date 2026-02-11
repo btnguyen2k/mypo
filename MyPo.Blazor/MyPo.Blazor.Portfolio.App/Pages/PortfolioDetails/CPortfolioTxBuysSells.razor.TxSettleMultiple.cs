@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -58,6 +59,8 @@ public partial class CPortfolioTxBuysSells
 			var resp = await apiClient.SettleMyPortfolioTxAsync(txReq, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (resp.Status != 200)
 			{
+
+				Logger.LogError("Failed to settle transaction '{TxId}': {ErrorMessage}", tx.Id, resp.Message??"Unknown error");
 				ModalDialogSettleTxMultiple.ShowAlert("danger", $"Failed to settle transaction '{tx.Id}': {resp.Message ?? "Unknown error"}");
 				break;
 			}

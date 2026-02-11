@@ -153,6 +153,7 @@ public struct PnlSummaryResp
 	public readonly decimal GrossReturns => TotalIncome + RealizedCapitalGains;
 	public readonly decimal NetReturns => GrossReturns - TotalCosts;
 	public readonly decimal NetPnL => NetReturns;
+	public readonly decimal UnSetledPnL(decimal marketValue) => NetPnL + marketValue;
 	public readonly decimal ROIvsTotalBuy => TotalBuyValue > 0  ? (NetPnL / TotalBuyValue * 100) : 0;
 	public readonly decimal UnsettledROIvsTotalBuy(decimal unsettledPnL)
 	{
