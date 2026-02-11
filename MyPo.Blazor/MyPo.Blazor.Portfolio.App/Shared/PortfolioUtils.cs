@@ -1,10 +1,11 @@
 ﻿using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
+using System.Text.RegularExpressions;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
-public static class PortfolioUtils
+public static partial class PortfolioUtils
 {
     public static IEnumerable<PortfolioResp> BuildPortfolioTree(IEnumerable<PortfolioResp> PortfolioList)
     {
@@ -40,6 +41,9 @@ public static class PortfolioUtils
 		"yyyy-MM-dd, HH:mm",
 	];
 
+	[GeneratedRegex( @"(?<=^|-)(\d)(?=-)", RegexOptions.Compiled)]
+	private static partial Regex MyRegexPaddingDayAndMonth();
+
 	/// <summary>
 	/// Parse DateTime from datetime picker string, trying multiple formats.
 	/// </summary>
@@ -48,6 +52,8 @@ public static class PortfolioUtils
 	public static DateTime? ParseDateTimeFromDateTimePicker(string dateTimeStr)
 	{
 		dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
+		dateTimeStr = MyRegexPaddingDayAndMonth().Replace(dateTimeStr, "0$1");
+
 		foreach (var format in DATETIME_PICKER_FORMATS)
 		{
 			if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
