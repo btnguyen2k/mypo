@@ -33,26 +33,26 @@ public class ControllersBootstrapper
 
 	public static void DecorateApp(WebApplication app)
 	{
-		// // configure global exception handler to return JSON response with error details
-		// app.UseExceptionHandler(errorApp =>
-		// {
-		// 	errorApp.Run(async context =>
-		// 	{
-		// 		var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
-		// 		var exception = exceptionHandlerPathFeature?.Error;
+		// configure global exception handler to return JSON response with error details
+		app.UseExceptionHandler(errorApp =>
+		{
+			errorApp.Run(async context =>
+			{
+				var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+				var exception = exceptionHandlerPathFeature?.Error;
 
-		// 		var response = new ApiResp
-		// 		{
-		// 			Status = 500,
-		// 			Message = exception?.Message ?? "An unexpected error occurred.",
-		// 			Extras = exception?.Message
-		// 		};
+				var response = new ApiResp
+				{
+					Status = 500,
+					Message = exception?.Message ?? "An unexpected error occurred.",
+					Extras = exception?.Message
+				};
 
-		// 		context.Response.ContentType = "application/json";
-		// 		context.Response.StatusCode = 500;
-		// 		await context.Response.WriteAsJsonAsync(response);
-		// 	});
-		// });
+				context.Response.ContentType = "application/json";
+				context.Response.StatusCode = 500;
+				await context.Response.WriteAsJsonAsync(response);
+			});
+		});
 
 		// app.UseExceptionHandler();
 		app.MapControllers();

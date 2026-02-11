@@ -67,7 +67,7 @@
 									{
 										<tr>
 											<td class="text-center w-auto"><BIcon icon="diagram-2" /></td>
-											<td class="text-center w-auto">@item.Currency</td>
+											<td class="text-center w-auto"><CBadgeRandom Text="@item.Currency" /></td>
 											<td>
 												<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(item.Id))">@item.Name</button>
 												<br/>
@@ -135,7 +135,7 @@
 										{
 											<tr>
 												<td class="text-center w-auto">&nbsp;@*↳*@</td>
-												<td class="text-center w-auto">@child.Currency</td>
+												<td class="text-center w-auto"><CBadgeRandom Text="@child.Currency" /></td>
 												<td>
 													<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(child.Id))">@child.Name</button>
 													<br/>

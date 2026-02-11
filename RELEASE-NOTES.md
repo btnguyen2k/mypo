@@ -1,5 +1,15 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-11 - v0.7.1
+
+### Fixed/Improvements
+
+- (Patch) Fix Portfolio Summary page after adding new Distribution settlement type.
+- (Patch) Optimize refreshing stock info in the background.
+- (Patch) Improve datetime parsing from datetime picker.
+- (Patch) Fix timezone conversion when saving TxBuySell and TxSettlement.
+- (Patch) Add global exception handler for API endpoints.
+
 ## 2026-02-10 - v0.7.0
 
 ### Added/Refactoring/Deprecation

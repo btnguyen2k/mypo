@@ -1,10 +1,11 @@
 ﻿using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
+using System.Text.RegularExpressions;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
-public static class PortfolioUtils
+public static partial class PortfolioUtils
 {
     public static IEnumerable<PortfolioResp> BuildPortfolioTree(IEnumerable<PortfolioResp> PortfolioList)
     {
@@ -40,6 +41,9 @@ public static class PortfolioUtils
 		"yyyy-MM-dd, HH:mm",
 	];
 
+	[GeneratedRegex( @"(?<=^|-)(\d)(?=-)", RegexOptions.Compiled)]
+	private static partial Regex MyRegexPaddingDayAndMonth();
+
 	/// <summary>
 	/// Parse DateTime from datetime picker string, trying multiple formats.
 	/// </summary>
@@ -48,6 +52,8 @@ public static class PortfolioUtils
 	public static DateTime? ParseDateTimeFromDateTimePicker(string dateTimeStr)
 	{
 		dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
+		dateTimeStr = MyRegexPaddingDayAndMonth().Replace(dateTimeStr, "0$1");
+
 		foreach (var format in DATETIME_PICKER_FORMATS)
 		{
 			if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
@@ -178,5 +184,50 @@ public static class PortfolioUtils
 		var currentPrice = quote.MarketPrice;
 		var pnl = ((decimal)currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
 		return pnl;
+	}
+
+	public static string BootstrapCssClassForAnalystRecommendation(string ar)
+	{
+		return ar switch
+		{
+			"strong_buy" => "text-success fw-semibold",
+			"buy" => "text-success",
+			"hold" => "text-warning",
+			"sell" => "text-danger",
+			"strong_sell" => "text-danger fw-semibold",
+			_ => "text-muted",
+		};
+	}
+
+	public static string BootstrapCssClassForTargetValue(decimal target, decimal current, decimal low, decimal high)
+	{
+		if (target < low)
+		{
+			return "text-danger";
+		}
+		if (target > high)
+		{
+			return "text-success";
+		}
+		if (target < current)
+		{
+			return "text-warning";
+		}
+		if (target > current)
+		{
+			return "text-info";
+		}
+		return "text-muted";
+	}
+
+	public static decimal Delta(decimal? oldValue, decimal? newValue)
+	{
+		return (newValue??0) - (oldValue??0);
+	}
+
+	public static string BootstrapCssClassForDelta(decimal? oldValue, decimal? newValue)
+	{
+		var delta = Delta(oldValue, newValue);
+		return delta > 0 ? "text-success" : (delta < 0 ? "text-danger" : "text-muted");
 	}
 }

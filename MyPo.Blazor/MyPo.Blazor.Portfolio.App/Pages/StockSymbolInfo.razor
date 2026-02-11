@@ -227,28 +227,63 @@
 														</td>
 													</tr>
 												</table>
+
 												<hr />
+
 												<table class="table table-sm mb-0">
 													<tr>
 														<td>Analyst Recommendation</td>
-														<td class="text-end fw-semibold">
-															@(SymbolInfo.StockQuote?.RecommendationKey??"--")
+														<td class="text-end @(PortfolioUtils.BootstrapCssClassForAnalystRecommendation(SymbolInfo.StockQuote?.RecommendationKey??string.Empty))">
+															@((SymbolInfo.StockQuote?.RecommendationKey??string.Empty) switch
+																{
+																	"strong_buy" => "Strong Buy",
+																	"buy" => "Buy",
+																	"hold" => "Hold",
+																	"sell" => "Sell",
+																	"strong_sell" => "Strong Sell",
+																	_ => "--",
+																}
+															)
 														</td>
 													</tr>
 													<tr>
 														<td>Target Range</td>
 														<td class="text-end">
-															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetLowPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															<span class="@(PortfolioUtils.BootstrapCssClassForTargetValue(
+																	SymbolInfo.StockQuote?.TargetLowPrice??0,
+																	SymbolInfo.StockQuote?.MarketPrice??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekLow??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekHigh??0))">
+																@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetLowPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															</span>
 															-
-															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetHighPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															<span class="@(PortfolioUtils.BootstrapCssClassForTargetValue(
+																	SymbolInfo.StockQuote?.TargetHighPrice??0,
+																	SymbolInfo.StockQuote?.MarketPrice??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekLow??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekHigh??0))">
+																@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetHighPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															</span>
 														</td>
 													</tr>
 													<tr>
 														<td>Target Mean / Median</td>
 														<td class="text-end">
-															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMeanPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															<span class="@(PortfolioUtils.BootstrapCssClassForTargetValue(
+																	SymbolInfo.StockQuote?.TargetMeanPrice??0,
+																	SymbolInfo.StockQuote?.MarketPrice??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekLow??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekHigh??0))">
+																@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMeanPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															</span>
 															/
-															@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMedianPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															<span class="@(PortfolioUtils.BootstrapCssClassForTargetValue(
+																	SymbolInfo.StockQuote?.TargetMedianPrice??0,
+																	SymbolInfo.StockQuote?.MarketPrice??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekLow??0,
+																	SymbolInfo.StockQuote?.FiftyTwoWeekHigh??0))">
+																@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.TargetMedianPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+															</span>
 														</td>
 													</tr>
 												</table>
@@ -257,22 +292,111 @@
 									</div>
 								</div>
 
-								@*
 								<!-- Detailed quote -->
 								<div class="card">
 									<div class="card-body">
-										<h6 class="card-title">Quote Details</h6>
 										<table class="table table-bordered table-sm mb-0">
-											<tr><td>Previous Close</td><td>187.35</td></tr>
-											<tr><td>Open</td><td>187.80</td></tr>
-											<tr><td>Day High</td><td>190.10</td></tr>
-											<tr><td>Day Low</td><td>187.50</td></tr>
-											<tr><td>P/E Ratio</td><td>28.9</td></tr>
-											<tr><td>Dividend Yield</td><td>0.52%</td></tr>
+											<tr>
+												<td class="col-4">Dividend Yield</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.DividendYield??0) > 0
+														? SymbolInfo.Dividend?.DividendYield.ToString("N2")+"%"
+														: "--"
+													)</td>
+												<td class="col-4">MA10</td>
+												<td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice))">
+													@((SymbolInfo.StockHistory?.MA10??0) > 0
+														? PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA10??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+															+ " ("
+																+ (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+																+ PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+																+ ")"
+														: "--"
+													)</td>
+											</tr>
+											<tr>
+												<td class="col-4">Annual Dividend</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.DividendRate??0) > 0
+														? PortfolioUtils.FormatValueWithScale(SymbolInfo.Dividend?.DividendRate??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+														: "--"
+													)</td>
+												<td class="col-4">MA20</td>
+												<td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice))">
+													@((SymbolInfo.StockHistory?.MA20??0) > 0
+														? PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA20??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+															+ " ("
+																+ (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+																+ PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+																+ ")"
+														: "--"
+													)</td>
+											</tr>
+											<tr>
+												<td class="col-4">Ex-Dividend Date</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.ExDividendTimestamp??0) > 0
+														? DateTimeOffset.FromUnixTimeSeconds(SymbolInfo.Dividend?.ExDividendTimestamp??0).ToString("MMM dd, yyyy")
+														: "--"
+													)</td>
+												<td class="col-4">MA50</td>
+												<td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice))">
+													@((SymbolInfo.StockHistory?.MA50??0) > 0
+														? PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA50??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+															+ " ("
+																+ (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+																+ PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+																+ ")"
+														: "--"
+													)</td>
+											</tr>
+											<tr>
+												<td class="col-4">Last Dividend</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.LastDividendValue??0) > 0
+														? PortfolioUtils.FormatValueWithScale(SymbolInfo.Dividend?.LastDividendValue??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+														: "--"
+													)</td>
+												<td class="col-4">MA100</td>
+												<td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice))">
+													@((SymbolInfo.StockHistory?.MA100??0) > 0
+														? PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA100??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+															+ " ("
+																+ (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+																+ PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+																+ ")"
+														: "--"
+													)</td>
+											</tr>
+											<tr>
+												<td class="col-4">Last Dividend Date</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.LastDividendTimestamp??0) > 0
+														? DateTimeOffset.FromUnixTimeSeconds(SymbolInfo.Dividend?.LastDividendTimestamp??0).ToString("MMM dd, yyyy")
+														: "--"
+													)</td>
+												<td class="col-4">MA200</td>
+												<td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice))">
+													@((SymbolInfo.StockHistory?.MA200??0) > 0
+														? PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA200??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+															+ " ("
+																+ (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+																+ PortfolioUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+																+ ")"
+														: "--"
+													)</td>
+											</tr>
+											<tr>
+												<td class="col-4">5-year Avg. Dividend Yield</td>
+												<td class="col-2 text-end fw-semibold pe-4">@((SymbolInfo.Dividend?.FiveYearAvgDividendYield??0) > 0
+														? SymbolInfo.Dividend?.FiveYearAvgDividendYield.ToString("N2")+"%"
+														: "--"
+													)</td>
+												<td class="col-4">RSI-14</td>
+												<td class="col-2 text-end fw-semibold">
+													@((SymbolInfo.StockHistory?.RSI14??0) > 0
+														? SymbolInfo.StockHistory?.RSI14.ToString("N2")
+														: "--"
+													)</td>
+											</tr>
 										</table>
 									</div>
 								</div>
-								*@
 							</div>
 						}
                     }
@@ -296,7 +420,7 @@
 @code {
     private const string PAGE_TITLE = "Stock Symbol Info";
 
-	private string warningMsg = "Stock chart and data are provided by third-party services. " +
+	private readonly string warningMsg = "Stock chart and data are provided by third-party services. " +
 		"The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
 		"Users should verify the data independently before making any investment decisions.";
 }

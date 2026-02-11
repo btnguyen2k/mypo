@@ -68,7 +68,7 @@ public partial class PortfolioController
 				return (null, ResponseNoData(400, $"Market '{reqTx.RefMarketId}' is not recognized."));
 			}
 			// shift the transaction's timezone to market's timezone
-			reqTx.TxTime = new DateTimeOffset(reqTx.TxTime.DateTime, market.TZ.BaseUtcOffset);
+			reqTx.TxTime = new DateTimeOffset(reqTx.TxTime.DateTime, market.TZ.GetUtcOffset(reqTx.TxTime));
 		}
 		reqTx.TxTime = reqTx.TxTime.ToUniversalTime(); // convert to UTC for storing into database
 

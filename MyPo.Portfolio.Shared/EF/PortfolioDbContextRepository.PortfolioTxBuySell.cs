@@ -69,6 +69,7 @@ public sealed partial class PortfolioDbContextRepository
 		var existingAsset = await GetAssetByOwningAsync(tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
 		if (existingAsset == null)
 		{
+			logger?.LogInformation("SettleTx - (Tx: {txid}) No existing asset {portfolioId}: {itemType}/{itemCode}/{marketId} found for the transaction. Creating new asset record.", tx.Id, tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
 			existingAsset = await CreateAssetAsync(new()
 			{
 				PortfolioId = tx.PortfolioId,
@@ -93,7 +94,7 @@ public sealed partial class PortfolioDbContextRepository
 
 		// update owning asset
 		var newQuantity = existingAsset.Quantity + (txType.Equals(TxBuySellEntity.TX_TYPE_BUY, StringComparison.OrdinalIgnoreCase) ? tx.Quantity : -tx.Quantity);
-		if (tx.Type.Equals(TxBuySellEntity.TX_TYPE_BUY,StringComparison.OrdinalIgnoreCase))
+		if (tx.Type.Equals(TxBuySellEntity.TX_TYPE_BUY, StringComparison.OrdinalIgnoreCase))
 		{
 			// update owning asset average price for buy transaction
 			var assetTotalCost = existingAsset.AveragePrice * existingAsset.Quantity;
@@ -110,71 +111,71 @@ public sealed partial class PortfolioDbContextRepository
 			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to update owning asset.");
 	}
 
-	private async Task SettleTxUpdateRoiAsync(PortfolioEntity portfolio, TxBuySellEntity tx, MarketDef market, CancellationToken cancellationToken = default)
+	private async Task SettleTxUpdateSettlementAsync(PortfolioEntity portfolio, TxBuySellEntity txBuySell, MarketDef market, CancellationToken cancellationToken = default)
 	{
 		if (!portfolio.Currency.Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
 		{
-			// ignore ROI record if market currency is different from portfolio currency
-			logger?.LogWarning("SettleTx - (Tx: {txid}) Market currency ({marketCurrency}) is different from portfolio currency ({portfolioCurrency}). Skipping ROI record creation.",
-				tx.Id, market.Currency, portfolio.Currency);
+			// ignore Settlement record if market currency is different from portfolio currency
+			logger?.LogWarning("SettleTx - (Tx: {txid}) Market currency ({marketCurrency}) is different from portfolio currency ({portfolioCurrency}). Skipping Settlement record creation.",
+				txBuySell.Id, market.Currency, portfolio.Currency);
 			return;
 		}
 
-		var txType = tx.Type.Trim().ToUpper();
-		var roiRec = new TxSettlementEntity()
+		var txType = txBuySell.Type.Trim().ToUpper();
+		var txSettlement = new TxSettlementEntity()
 		{
-			PortfolioId = tx.PortfolioId,
+			PortfolioId = txBuySell.PortfolioId,
 			Status = TxSettlementEntity.STATUS_FINAL,
 			TxType = txType == TxBuySellEntity.TX_TYPE_SELL ? TxSettlementEntity.TX_TYPE_SELL : TxSettlementEntity.TX_TYPE_BUY,
-			TxTime = tx.Time,
-			TxValue = tx.Price * tx.Quantity,
-			RefTxId = tx.Id,
-			RefItemType = tx.ItemType,
-			RefItemCode = tx.ItemCode,
-			RefMarketId = tx.MarketId,
+			TxTime = txBuySell.Time,
+			TxValue = txBuySell.Price * txBuySell.Quantity,
+			RefTxId = txBuySell.Id,
+			RefItemType = txBuySell.ItemType,
+			RefItemCode = txBuySell.ItemCode,
+			RefMarketId = txBuySell.MarketId,
 			TxDesc = txType == TxBuySellEntity.TX_TYPE_SELL
-				? $"Sold {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price}"
-				: $"Bought {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market.Code}-{market.Country} @ {tx.Price}",
+				? $"Sold {txBuySell.Quantity} of {txBuySell.ItemType}/{txBuySell.ItemCode}/{market.Code}-{market.Country} @ {txBuySell.Price}"
+				: $"Bought {txBuySell.Quantity} of {txBuySell.ItemType}/{txBuySell.ItemCode}/{market.Code}-{market.Country} @ {txBuySell.Price}",
 		};
-		_ = await CreateTxSettlementAsync(roiRec, cancellationToken)
-			?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+		_ = await CreateTxSettlementAsync(txSettlement, cancellationToken)
+			?? throw new InvalidOperationException($"SettleTx - (Tx: {txBuySell.Id}) Failed to create Settlement record.");
 
-		if (tx.FeeTax != 0.0m)
+		if (txBuySell.FeeTax != 0.0m)
 		{
-			var taxRoiRec = new TxSettlementEntity()
+			var taxTxSettlement = new TxSettlementEntity()
 			{
-				PortfolioId = tx.PortfolioId,
+				PortfolioId = txBuySell.PortfolioId,
 				Status = TxSettlementEntity.STATUS_FINAL,
 				TxType = TxSettlementEntity.TX_TYPE_TAX,
-				TxTime = tx.Time,
-				TxValue = tx.FeeTax,
-				RefTxId = tx.Id,
-				RefItemType = tx.ItemType,
-				RefItemCode = tx.ItemCode,
-				RefMarketId = tx.MarketId,
-				TxDesc = $"Tax for {txType} {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price}",
+				TxTime = txBuySell.Time,
+				TxValue = txBuySell.FeeTax,
+				RefTxId = txBuySell.Id,
+				RefItemType = txBuySell.ItemType,
+				RefItemCode = txBuySell.ItemCode,
+				RefMarketId = txBuySell.MarketId,
+				TxDesc = $"Tax for {txType} {txBuySell.Quantity} of {txBuySell.ItemType}/{txBuySell.ItemCode}/{market!.Code}-{market.Country} @ {txBuySell.Price}",
 			};
-			_ = await CreateTxSettlementAsync(taxRoiRec, cancellationToken)
-				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+			_ = await CreateTxSettlementAsync(taxTxSettlement, cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {txBuySell.Id}) Failed to create Settlement record.");
 		}
 
-		if (tx.FeeTx != 0.0m || tx.FeeOther != 0.0m)
+		if (txBuySell.FeeTx != 0.0m || txBuySell.FeeOther != 0.0m)
 		{
-			var feeRoiRec = new TxSettlementEntity()
+			var feeTxSettlement = new TxSettlementEntity()
 			{
-				PortfolioId = tx.PortfolioId,
+				PortfolioId = txBuySell.PortfolioId,
 				Status = TxSettlementEntity.STATUS_FINAL,
 				TxType = TxSettlementEntity.TX_TYPE_FEE,
-				TxTime = tx.Time,
-				TxValue = tx.FeeTx + tx.FeeOther,
-				RefTxId = tx.Id,
-				RefItemType = tx.ItemType,
-				RefItemCode = tx.ItemCode,
-				RefMarketId = tx.MarketId,
-				TxDesc = $"Fee for {txType} {tx.Quantity} of {tx.ItemType}/{tx.ItemCode}/{market!.Code}-{market.Country} @ {tx.Price}",
+				TxTime = txBuySell.Time,
+				TxValue = txBuySell.FeeTx + txBuySell.FeeOther,
+				RefTxId = txBuySell.Id,
+				RefItemType = txBuySell.ItemType,
+				RefItemCode = txBuySell.ItemCode,
+				RefMarketId = txBuySell.MarketId,
+				TxDesc = $"Fee for {txType} {txBuySell.Quantity} of {txBuySell.ItemType}/{txBuySell.ItemCode}/{market!.Code}-{market.Country} @ {txBuySell.Price}",
 			};
-			_ = await CreateTxSettlementAsync(feeRoiRec, cancellationToken)
-				?? throw new InvalidOperationException($"SettleTx - (Tx: {tx.Id}) Failed to create ROI record.");
+			_ = await CreateTxSettlementAsync(feeTxSettlement, cancellationToken)
+				?? throw new InvalidOperationException($"SettleTx - (Tx: {txBuySell.Id}) Failed to create Settlement record.");
 		}
 	}
 
@@ -206,7 +207,7 @@ public sealed partial class PortfolioDbContextRepository
 
 			if (market != null)
 			{
-				await SettleTxUpdateRoiAsync(portfolio, tx, market, cancellationToken);
+				await SettleTxUpdateSettlementAsync(portfolio, tx, market, cancellationToken);
 			}
 
 			tx.IsSettled = true;

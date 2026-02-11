@@ -41,7 +41,9 @@ public partial class PortfolioController
 		return ResponseOk(result);
 	}
 
+#pragma warning disable IDE0060 // Remove unused parameter
 	private static (CreateOrUpdateTxBuySellReq?, ObjectResult?) ValidateTxBuySell(CreateOrUpdateTxBuySellReq reqTx, TxBuySellEntity? existingTx)
+#pragma warning restore IDE0060 // Remove unused parameter
 	{
 		// validate transaction type, must be either BUY or SELL
 		reqTx.Type = reqTx.Type.ToUpper().Trim();
@@ -79,10 +81,9 @@ public partial class PortfolioController
 				return (null, ResponseNoData(400, $"Market '{reqTx.MarketId}' is not recognized."));
 			}
 			// shift the transaction's timezone to market's timezone
-			reqTx.Time = new DateTimeOffset(reqTx.Time.DateTime, market.TZ.BaseUtcOffset);
+			reqTx.Time = new DateTimeOffset(reqTx.Time.DateTime, market.TZ.GetUtcOffset(reqTx.Time));
 		}
 		reqTx.Time = reqTx.Time.ToUniversalTime(); // convert to UTC for storing into database
-
 		return (reqTx, null);
 	}
 
