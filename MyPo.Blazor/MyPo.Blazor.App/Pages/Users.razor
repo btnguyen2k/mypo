@@ -133,7 +133,7 @@
 								{
 									<label class="col-form-label col-form-label-sm">Roles:</label>
 									<ul class="list-unstyled">
-										@foreach (var role in SelectedUser?.Roles!)
+										@foreach (var role in SelectedUser?.Roles??[])
 										{
 											<li class="col-form-label col-form-label-sm"><BIcon icon="bi-person-lines-fill" /> <abbr title="@role.Description">@role.Name</abbr></li>
 										}
@@ -145,7 +145,7 @@
 								{
 									<label class="col-form-label col-form-label-sm">Claims:</label>
 									<ul class="list-unstyled">
-										@foreach (var claim in SelectedUser?.Claims!)
+										@foreach (var claim in SelectedUser?.Claims??[])
 										{
 											<li class="col-form-label col-form-label-sm"><BIcon icon="bi-shield-check" /> @claim.ClaimType:@claim.ClaimValue</li>
 										}
@@ -205,7 +205,7 @@
 								{
 									<label class="col-form-label col-form-label-sm">Roles:</label>
 									<ul class="list-unstyled">
-										@foreach (var role in SelectedUser?.Roles!)
+										@foreach (var role in SelectedUser?.Roles??[])
 										{
 											<li class="col-form-label col-form-label-sm"><BIcon icon="bi-person-lines-fill" /> <abbr title="@role.Description">@role.Name</abbr></li>
 										}
@@ -217,7 +217,7 @@
 								{
 									<label class="col-form-label col-form-label-sm">Claims:</label>
 									<ul class="list-unstyled">
-										@foreach (var claim in SelectedUser?.Claims!)
+										@foreach (var claim in SelectedUser?.Claims??[])
 										{
 											<li class="col-form-label col-form-label-sm"><BIcon icon="bi-shield-check" /> @claim.ClaimType:@claim.ClaimValue</li>
 										}
