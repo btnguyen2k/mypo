@@ -21,7 +21,7 @@ public partial class MyPortfolioDetails : BasePage
 	private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
 
 	// map {asset-id --> quote}
-	private Dictionary<string, StockQuote> QuotesMap = [];
+	private readonly Dictionary<string, StockQuote> QuotesMap = [];
 
 	private bool StopRefreshQuotes { get; set; } = false;
 
