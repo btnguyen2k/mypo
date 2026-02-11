@@ -88,7 +88,7 @@
 													)@((SymbolInfo.StockQuote?.MarketPriceChangePercent??0).ToString("N2"))%)
 												</small>
 											</h2>
-											<small class="text-muted">@(SymbolInfo.Exchange) • @(SymbolInfo.Currency) • @(Market?.IsCurrentlyOpen()??false?"Market Open":"Market Close"??"Unknown")</small>
+											<small class="text-muted">@(SymbolInfo.Exchange) • @(SymbolInfo.Currency) • @((Market?.IsCurrentlyOpen()??false)?"Market Open":"Market Close")</small>
 										</div>
 									</div>
 
