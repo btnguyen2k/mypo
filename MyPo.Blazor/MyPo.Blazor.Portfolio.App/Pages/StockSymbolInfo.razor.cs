@@ -111,6 +111,7 @@ public sealed partial class StockSymbolInfo : BasePage
 					return;
 				}
 				sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
+				sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds)+1000;
 			}
 			while (sleepTime > 0 && !StopRefreshBackground)
 			{
