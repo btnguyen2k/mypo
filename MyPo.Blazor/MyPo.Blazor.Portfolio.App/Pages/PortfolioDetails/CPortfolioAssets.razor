@@ -252,7 +252,7 @@
 										</td>
 										<td class="text-end">
 											@(SelectedAsset.Market?.Country??"-") / @(SelectedAsset.Market?.Code??"-")
-											(@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Open" : "Closed") ?? "-"))
+											(@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen()??false)?"Open":"Closed"))
 										</td>
 									</tr>
 									@*
