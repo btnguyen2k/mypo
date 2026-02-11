@@ -179,4 +179,49 @@ public static class PortfolioUtils
 		var pnl = ((decimal)currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
 		return pnl;
 	}
+
+	public static string BootstrapCssClassForAnalystRecommendation(string ar)
+	{
+		return ar switch
+		{
+			"strong_buy" => "text-success fw-semibold",
+			"buy" => "text-success",
+			"hold" => "text-warning",
+			"sell" => "text-danger",
+			"strong_sell" => "text-danger fw-semibold",
+			_ => "text-muted",
+		};
+	}
+
+	public static string BootstrapCssClassForTargetValue(decimal target, decimal current, decimal low, decimal high)
+	{
+		if (target < low)
+		{
+			return "text-danger";
+		}
+		if (target > high)
+		{
+			return "text-success";
+		}
+		if (target < current)
+		{
+			return "text-warning";
+		}
+		if (target > current)
+		{
+			return "text-info";
+		}
+		return "text-muted";
+	}
+
+	public static decimal Delta(decimal? oldValue, decimal? newValue)
+	{
+		return (newValue??0) - (oldValue??0);
+	}
+
+	public static string BootstrapCssClassForDelta(decimal? oldValue, decimal? newValue)
+	{
+		var delta = Delta(oldValue, newValue);
+		return delta > 0 ? "text-success" : (delta < 0 ? "text-danger" : "text-muted");
+	}
 }
