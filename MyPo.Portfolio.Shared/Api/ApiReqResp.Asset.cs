@@ -44,7 +44,8 @@ public sealed class AssetResp
 			AveragePrice = a.AveragePrice,
 			MarketId = a.MarketId,
 			Market = market != null ? MarketDefResp.BuildFrom(market) : null,
-			Tags = a.Tags,
+			// Tags = a.Tags,
+			Metadata = a.Metadata,
 		};
 		return aResp;
 	}
@@ -72,11 +73,15 @@ public sealed class AssetResp
 	[JsonPropertyName("market"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public MarketDefResp? Market { get; set; }
 
-	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Tags { get; set; }
+	// [JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	// public string? Tags { get; set; }
+
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public AssetMetadata? Metadata { get; set; }
 
 	[JsonIgnore]
-	public IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+	// public IEnumerable<string> TagsList => Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+	public IEnumerable<string> TagsList => [..Metadata?.Tags ?? new HashSet<string>()];
 
 	[JsonIgnore]
 	public decimal TotalCost => AveragePrice * Quantity;
@@ -92,7 +97,8 @@ public sealed class AssetResp
 			Quantity = this.Quantity,
 			AveragePrice = this.AveragePrice,
 			MarketId = this.MarketId,
-			Tags = this.Tags,
+			// Tags = this.Tags,
+			Metadata = this.Metadata,
 		};
 	}
 }

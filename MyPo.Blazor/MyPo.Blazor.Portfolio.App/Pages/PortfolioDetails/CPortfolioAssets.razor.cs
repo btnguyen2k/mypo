@@ -113,7 +113,7 @@ public partial class CPortfolioAssets : CBase
 			ShowAlert("danger", "Asset not found.");
 			return;
 		}
-		AssetTags = SelectedAsset.Tags ?? string.Empty;
+		AssetTags = string.Join(", ", SelectedAsset.Metadata?.Tags ?? new HashSet<string>());
 		ModalDialogAssetUpdateTags.Open();
 	}
 

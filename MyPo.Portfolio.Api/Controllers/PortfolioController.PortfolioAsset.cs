@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Identity;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Controllers;
@@ -78,7 +79,13 @@ public partial class PortfolioController
 
 		// only tags list can be updated for asset
 		var tagsSet = (req.Tags?.Trim() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
-		existingAsset.Tags = tagsSet.Count > 0 ? string.Join(", ", tagsSet) : string.Empty;
+		// add existing tags from existingAsset.Metadata.Tags
+		foreach (var t in existingAsset.Metadata?.Tags ?? new HashSet<string>())
+		{
+			tagsSet.Add(t);
+		}
+		existingAsset.Metadata ??= new AssetMetadata();
+		existingAsset.Metadata.Tags = tagsSet;
 
 		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
 		if (existingAsset == null)

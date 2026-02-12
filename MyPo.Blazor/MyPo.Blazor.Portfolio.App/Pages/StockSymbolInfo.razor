@@ -401,6 +401,61 @@
 						}
                     }
 
+					<div class="alert alert-light text-start mt-2" style="font-size: small !important" role="alert">
+<p>
+	Context: I am playing a stock trading game. There is a hypothesis stock @(SymbolCode) with the information provided in the next section. Help me analyze it.
+</p>
+<pre class="text-start">
+Inputs:
+- Currency: @(SymbolInfo?.Currency??"USD")
+- Quote type: @(SymbolInfo?.Overview?.QuoteType??"N/A")
+- Industry: @(SymbolInfo?.Overview?.Industry??"N/A")
+- Sector: @(SymbolInfo?.Overview?.Sector??"N/A")
+- Total cash: @(SymbolInfo?.Overview?.TotalCash.ToString("F0")??"N/A")
+- Total cash per share: @(SymbolInfo?.Overview?.TotalCashPerShare.ToString("F2")??"N/A")
+- Total debt: @(SymbolInfo?.Overview?.TotalDebt.ToString("F0")??"N/A")
+- Total debt per share: @(SymbolInfo?.Overview?.TotalDebtPerShare.ToString("F2")??"N/A")
+- Total revenue: @(SymbolInfo?.Overview?.TotalRevenue.ToString("F0")??"N/A")
+- Total revenue per share: @(SymbolInfo?.Overview?.TotalRevenuePerShare.ToString("F2")??"N/A")
+- Revenue growth: @(SymbolInfo?.Overview?.RevenueGrowth.ToString("P2")??"N/A")
+- Earnings growth: @(SymbolInfo?.Overview?.EarningsGrowth.ToString("P2")??"N/A")
+- EBITDA: @(SymbolInfo?.Overview?.Ebitda.ToString("F0")??"N/A")
+- EBITDA margins: @(SymbolInfo?.Overview?.EbitdaMargins.ToString("P2")??"N/A")
+- Gross margins: @(SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A")
+- Profit margins: @(SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A")
+- Operating margins: @(SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A")
+- Market Capitalization: @(SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A")
+- Current Price: @(SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A")
+- Current Volume: @(SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A")
+- Average Volume last 30 days: @(SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A")
+- Trailing EPS: @(SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A")
+- Forward EPS: @(SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A")
+- Trailing P/E: @(SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A")
+- Forward P/E: @(SymbolInfo?.StockQuote?.ForwardPE.ToString("F2")??"N/A")
+- Industry P/E average: N/A
+- Beta: @(SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A")
+- MA10: @(SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A")
+- MA20: @(SymbolInfo?.StockHistory?.MA20.ToString("F2")??"N/A")
+- MA50: @(SymbolInfo?.StockHistory?.MA50.ToString("F2")??"N/A")
+- MA100: @(SymbolInfo?.StockHistory?.MA100.ToString("F2")??"N/A")
+- MA200: @(SymbolInfo?.StockHistory?.MA200.ToString("F2")??"N/A")
+- RSI-14: @(SymbolInfo?.StockHistory?.RSI14.ToString("F2")??"N/A")
+</pre>
+
+<pre class="text-start">
+Output:
+- Valuation Analysis
+- Risk Profile
+- Volume Analysis
+- Technical Analysis
+- Big Picture Summary
+- Trading Game Strategy
+- Overall View and potential future trends
+</pre>
+
+Provide Analysis for two scenarios: short-term ranking competition and long-term portfolio scoring. Output should be in Markdown format with clear sections and bullet points for easy reading.
+					</div>
+
 					<div class="alert alert-warning mt-2" role="alert">
 						<span style="font-size: small">@warningMsg</span>
 					</div>

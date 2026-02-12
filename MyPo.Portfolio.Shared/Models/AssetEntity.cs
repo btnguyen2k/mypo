@@ -1,4 +1,5 @@
-﻿using MyPo.Shared.Models;
+﻿using System.Text.Json.Serialization;
+using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
@@ -14,5 +15,11 @@ public sealed class AssetEntity : Entity<string>
 	public string? MarketId { get; set; }
 	public decimal Quantity { get; set; } = 0.0m;
 	public decimal AveragePrice { get; set; } = 0.0m;
-	public string? Tags { get; set; }
+	public AssetMetadata? Metadata { get; set; }
+}
+
+public sealed class AssetMetadata
+{
+	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public ISet<string>? Tags { get; set; }
 }

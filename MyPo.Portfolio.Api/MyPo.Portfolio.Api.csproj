@@ -14,4 +14,8 @@
     <ProjectReference Include="..\MyPo.Portfolio.Shared\MyPo.Portfolio.Shared.csproj" />
     <ProjectReference Include="..\MyPo.Shared.Api\MyPo.Shared.Api.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.GenAI" Version="0.15.0" />
+  </ItemGroup>
 </Project>
