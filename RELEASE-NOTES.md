@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-12 - v0.8.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Add Metadata attribute to AssetEntity, replacing Tags attribute.
+- (Feat) Auto update Asset metadata.
+
+### Fixed/Improvements
+
+- (Patch) Fix some CodeQL warnings.
+
 ## 2026-02-11 - v0.7.1
 
 ### Fixed/Improvements
