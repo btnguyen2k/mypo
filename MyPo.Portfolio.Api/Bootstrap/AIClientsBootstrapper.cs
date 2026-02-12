@@ -55,7 +55,6 @@ public class AIClientsBootstrapper
 			aiVendor.TieredModels[AIVendor.TIER_FREE] = availableModels;
 			services.AddKeyedSingleton<Client, Client>(key, (sp, key) =>
 			{
-				var logger = sp.GetRequiredService<ILogger<AIClientsBootstrapper>>();
 				var apiKey = aiClientsSettings.GetValue<string>($"{key}:ApiKey") ?? "No key provided";
 				return new Client(apiKey: apiKey);
 			});
@@ -76,7 +75,6 @@ public class AIClientsBootstrapper
 			aiVendor.TieredModels[AIVendor.TIER_LOW_COST] = availableModels;
 			services.AddKeyedSingleton<Client, Client>(key, (sp, key) =>
 			{
-				var logger = sp.GetRequiredService<ILogger<AIClientsBootstrapper>>();
 				var apiKey = aiClientsSettings.GetValue<string>($"{key}:ApiKey") ?? "No key provided";
 				return new Client(apiKey: apiKey);
 			});
@@ -97,7 +95,6 @@ public class AIClientsBootstrapper
 			aiVendor.TieredModels[AIVendor.TIER_PREMIUM] = availableModels;
 			services.AddKeyedSingleton<Client, Client>(key, (sp, key) =>
 			{
-				var logger = sp.GetRequiredService<ILogger<AIClientsBootstrapper>>();
 				var apiKey = aiClientsSettings.GetValue<string>($"{key}:ApiKey") ?? "No key provided";
 				return new Client(apiKey: apiKey);
 			});

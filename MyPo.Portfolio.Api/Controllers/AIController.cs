@@ -44,7 +44,7 @@ public partial class AIController : ApiBaseController
 		}
 
 		Globals.AIVendorsMap.TryGetValue(req.AIVendor.ToUpper(), out var aiVendor);
-		if (aiVendor == null || aiVendor.TieredModels == null || !aiVendor.TieredModels.ContainsKey(req.Tier))
+		if (aiVendor == null || aiVendor.TieredModels == null || !aiVendor.TieredModels.TryGetValue(req.Tier, out _))
 		{
 			return ResponseNoData(400, $"AI vendor '{req.AIVendor}' not configured properly.");
 		}
