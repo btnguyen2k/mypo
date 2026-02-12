@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
@@ -128,7 +129,10 @@ public partial class CPortfolioAssets : CBase
 			Quantity = SelectedAsset!.Quantity,
 			AveragePrice = SelectedAsset!.AveragePrice,
 			MarketId = SelectedAsset!.MarketId,
-			Tags = AssetTags,
+			Metadata = new AssetMetadata()
+				{
+					Tags = AssetTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase)
+				},
 		};
 
 		ModalDialogAssetUpdateTags.ShowAlert("info", "Updating asset tags...");

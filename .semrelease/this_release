@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Patch) Fix some CodeQL warnings.
 - (Feat) Add Metadata attribute to AssetEntity, replacing Tags attribute.
+- (Feat) Auto update Asset metadata.

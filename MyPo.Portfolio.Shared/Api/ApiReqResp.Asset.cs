@@ -26,8 +26,11 @@ public struct CreateOrUpdateAssetReq
 	[JsonPropertyName("market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? MarketId { get; set; }
 
-	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Tags { get; set; }
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public AssetMetadata? Metadata { get; set; }
+
+	// [JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	// public string? Tags { get; set; }
 }
 
 public sealed class AssetResp

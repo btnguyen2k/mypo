@@ -20,6 +20,15 @@ public sealed class AssetEntity : Entity<string>
 
 public sealed class AssetMetadata
 {
+	[JsonPropertyName("corp_name")]
+	public string CorpName { get; set; } = default!;
+
+	[JsonPropertyName("industry")]
+	public string Industry { get; set; } = default!;
+
+	[JsonPropertyName("sector")]
+	public string Sector { get; set; } = default!;
+
 	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public ISet<string>? Tags { get; set; }
 }

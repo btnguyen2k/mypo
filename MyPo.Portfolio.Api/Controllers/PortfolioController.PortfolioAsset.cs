@@ -77,15 +77,12 @@ public partial class PortfolioController
 			return ResponseNoData(400, "Portfolio not found or mismatched.");
 		}
 
-		// only tags list can be updated for asset
-		var tagsSet = (req.Tags?.Trim() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
-		// add existing tags from existingAsset.Metadata.Tags
-		foreach (var t in existingAsset.Metadata?.Tags ?? new HashSet<string>())
-		{
-			tagsSet.Add(t);
-		}
+		// only asset's metadata can be updated
 		existingAsset.Metadata ??= new AssetMetadata();
-		existingAsset.Metadata.Tags = tagsSet;
+		existingAsset.Metadata.Tags = req.Metadata?.Tags ?? existingAsset.Metadata.Tags;
+		existingAsset.Metadata.CorpName = req.Metadata?.CorpName ?? existingAsset.Metadata.CorpName;
+		existingAsset.Metadata.Industry = req.Metadata?.Industry ?? existingAsset.Metadata.Industry;
+		existingAsset.Metadata.Sector = req.Metadata?.Sector ?? existingAsset.Metadata.Sector;
 
 		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
 		if (existingAsset == null)

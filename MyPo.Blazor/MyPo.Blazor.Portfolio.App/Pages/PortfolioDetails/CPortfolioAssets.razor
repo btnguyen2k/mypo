@@ -57,40 +57,40 @@
 				<table class="table table-sm table-bordered table-striped table-hover">
 					<thead>
 						<tr>
-							<th scope="col" class="text-center w-auto">Item</th>
-							<th scope="col" class="text-center w-auto">Units</th>
-							<th scope="col" class="text-center w-auto">Avg. Price</th>
-							<th scope="col" class="text-center w-auto">Total Cost</th>
-							<th scope="col" class="text-center w-auto">Mkt. Price</th>
-							<th scope="col" class="text-center w-auto">Mkt. Value</th>
-							<th scope="col" class="text-center w-auto">Unsettled P/L %</th>
-							<th scope="col" class="text-center w-auto">Analyst Rec.</th>
-							<th scope="col" class="text-center w-auto">Tags</th>
-							<th scope="col" class="text-center w-auto">Actions</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Item</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Units</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Avg. Price</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Total Cost</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Mkt. Price</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Mkt. Value</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Unsettled P/L %</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Analyst Rec.</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Tags</th>
+							<th scope="col" class="text-center text-nowrap w-auto">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
 						@foreach (var asset in Assets)
 						{
 							<tr>
-								<td class="text-start w-auto">
+								<td class="text-start text-nowrap w-auto">
 									<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
 									<button type="button" class="btn btn-link p-0 pb-1" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
 										@(asset.ItemCode)
 									</button>
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									@(asset.Market?.CurrencySymbol??"")
 									@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									@(asset.Market?.CurrencySymbol??"")
 									@(PortfolioUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1346)&&upnl1346>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
 										@(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
@@ -99,7 +99,7 @@
 										)
 									</span>
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2091)&&upnl2091>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
 										@(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
@@ -108,14 +108,14 @@
 										)
 									</span>
 								</td>
-								<td class="text-end w-auto">
+								<td class="text-end text-nowrap w-auto">
 									<span class="@(asset.Quantity<=0?"":(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl2272)&&upnl2272>=0?"text-success":"text-danger"))">
 										@(asset.Market?.CurrencySymbol??"")
 										@(PortfolioUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 										(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"-"))
 									</span>
 								</td>
-								<td class="text-center w-auto">
+								<td class="text-center text-nowrap w-auto">
 									@(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
 										? (quote.RecommendationKey??string.Empty) switch
 											{
@@ -135,7 +135,7 @@
 										<CBadgeRandom Text="@tag" />
 									}
 								</td>
-								<td class="text-center w-auto">
+								<td class="text-center text-nowrap w-auto">
 									<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)">
 										<BIcon icon="graph-up-arrow" />
 									</button>
