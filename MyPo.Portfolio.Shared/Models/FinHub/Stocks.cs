@@ -51,6 +51,45 @@ public sealed class SymbolOverview
 
 	[JsonPropertyName("sector"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Sector { get; set; }
+
+	[JsonPropertyName("total_cash")]
+	public long TotalCash { get; set; }
+
+	[JsonPropertyName("total_cash_per_share")]
+	public decimal TotalCashPerShare { get; set; }
+
+	[JsonPropertyName("total_debt")]
+	public long TotalDebt { get; set; }
+
+	[JsonPropertyName("total_debt_per_share")]
+	public decimal TotalDebtPerShare { get; set; }
+
+	[JsonPropertyName("total_revenue")]
+	public long TotalRevenue { get; set; }
+
+	[JsonPropertyName("total_revenue_per_share")]
+	public decimal TotalRevenuePerShare { get; set; }
+
+	[JsonPropertyName("ebitda")]
+	public long Ebitda { get; set; }
+
+	[JsonPropertyName("ebitda_margins")]
+	public decimal EbitdaMargins { get; set; }
+
+	[JsonPropertyName("earnings_growth")]
+	public decimal EarningsGrowth { get; set; }
+
+	[JsonPropertyName("revenue_growth")]
+	public decimal RevenueGrowth { get; set; }
+
+	[JsonPropertyName("gross_margins")]
+	public decimal GrossMargins { get; set; }
+
+	[JsonPropertyName("operating_margins")]
+	public decimal OperatingMargins { get; set; }
+
+	[JsonPropertyName("profit_margins")]
+	public decimal ProfitMargins { get; set; }
 }
 
 public sealed class SymbolDividend

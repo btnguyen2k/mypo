@@ -4,14 +4,11 @@ using System.Reflection;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-/// <summary>
-/// Bootstrapper that register services used by MyPo.Portfolio module.
-/// </summary>
 [Bootstrapper]
-public class ServicesBootstrapper
+public class ExternalServicesBootstrapper
 {
 	private const string EXTERNAL_SERVICES_SETTINGS_FILE = "Resources.ext_services_settings.json";
-	private static readonly ILogger<ServicesBootstrapper> logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ServicesBootstrapper>();
+	private static readonly ILogger<ExternalServicesBootstrapper> logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ExternalServicesBootstrapper>();
 
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
 	{

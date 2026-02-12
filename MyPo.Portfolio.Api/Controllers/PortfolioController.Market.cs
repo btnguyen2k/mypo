@@ -14,7 +14,7 @@ public partial class PortfolioController
 	public ActionResult<ApiResp<List<MarketDefResp>>> GetMarkets()
 	{
 		var result = new List<MarketDefResp>();
-		 foreach (var market in Globals.Markets)
+		foreach (var market in Globals.Markets)
 		{
 			result.Add(MarketDefResp.BuildFrom(market));
 		}

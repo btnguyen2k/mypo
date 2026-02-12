@@ -57,7 +57,7 @@ CREATE TABLE mypo_ownings (
     market_id varchar(16) NULL,
     item_quantity numeric(20,6) NOT NULL DEFAULT 0,
     average_price numeric(20,6) NOT NULL DEFAULT 0,
-    tags varchar(256) NULL,
+    item_metadata jsonb NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     concurrency_stamp varchar(48) NULL,

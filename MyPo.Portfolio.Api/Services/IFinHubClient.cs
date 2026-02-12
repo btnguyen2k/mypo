@@ -5,11 +5,22 @@ namespace MyPo.Portfolio.Api.Services;
 
 public interface IFinHubClient
 {
+	public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_OVERVIEW = "/stocks/{symbol}/overview";
 	public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO = "/stocks/{symbol}/info";
 	public const string API_FINHUB_ENDPOINT_STOCK_QUOTES = "/stocks/quotes";
 
 	/// <summary>
-	/// Calls the API <see cref="API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO"/> to get information about a stock symbol.
+	/// Calls the API <see cref="API_FINHUB_ENDPOINT_STOCK_SYMBOL_OVERVIEW"/> to get overview information about a stock symbol.
+	/// </summary>
+	/// <param name="symbol">The symbol to get information about.</param>
+	/// <param name="baseUrl">The base URL of the API, optional.</param>
+	/// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+	/// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+	/// <returns></returns>
+	public Task<ApiResp<SymbolOverview>> GetStockSymbolOverviewAsync(string symbol, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO"/> to get detailed information about a stock symbol.
 	/// </summary>
 	/// <param name="symbol">The symbol to get information about.</param>
 	/// <param name="baseUrl">The base URL of the API, optional.</param>

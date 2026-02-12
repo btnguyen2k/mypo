@@ -69,7 +69,13 @@ public sealed partial class PortfolioDbContextRepository
 		var existingAsset = await GetAssetByOwningAsync(tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
 		if (existingAsset == null)
 		{
-			logger?.LogInformation("SettleTx - (Tx: {txid}) No existing asset {portfolioId}: {itemType}/{itemCode}/{marketId} found for the transaction. Creating new asset record.", tx.Id, tx.PortfolioId, tx.ItemType, tx.ItemCode, tx.MarketId);
+			logger?.LogInformation("SettleTx - (Tx: {txid}) No existing asset {portfolioId}: {itemType}/{itemCode}/{marketId} found for the transaction. Creating new asset record.",
+				tx.Id.Replace(Environment.NewLine, ""),
+				tx.PortfolioId.Replace(Environment.NewLine, ""),
+				tx.ItemType.Replace(Environment.NewLine, ""),
+				tx.ItemCode.Replace(Environment.NewLine, ""),
+				tx.MarketId?.Replace(Environment.NewLine, "")??""
+			);
 			existingAsset = await CreateAssetAsync(new()
 			{
 				PortfolioId = tx.PortfolioId,
