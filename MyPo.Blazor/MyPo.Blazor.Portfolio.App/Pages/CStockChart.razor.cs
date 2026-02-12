@@ -25,18 +25,15 @@ public partial class CStockChart : BaseComponent
 	protected override async Task OnParametersSetAsync()
 	{
 		await base.OnParametersSetAsync();
-		if (!string.IsNullOrEmpty(Symbol))
+		if (!string.IsNullOrEmpty(Symbol) && UseTradingViewChart)
 		{
-			if (UseTradingViewChart)
+			if ("Australia".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
 			{
-				if ("Australia".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
-				{
-					Exchange = "ASX";
-				}
-				else if ("USA".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
-				{
-					Exchange = "";
-				}
+				Exchange = "ASX";
+			}
+			else if ("USA".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
+			{
+				Exchange = "";
 			}
 		}
 	}

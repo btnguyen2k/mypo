@@ -69,7 +69,13 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
 		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
 		builder.Property(p => p.Quantity).HasColumnName("item_quantity");
 		builder.Property(p => p.AveragePrice).HasColumnName("average_price");
-		builder.Property(p => p.Tags).HasColumnName("tags").HasMaxLength(256);
+		// builder.Property(p => p.Tags).HasColumnName("tags").HasMaxLength(256);
+		builder.Property(p => p.Metadata).HasColumnName("item_metadata")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+				v => JsonSerializer.Deserialize<AssetMetadata>(v, (JsonSerializerOptions?)null)
+			)
+			.HasColumnType("jsonb");
 		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
 		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
 		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();

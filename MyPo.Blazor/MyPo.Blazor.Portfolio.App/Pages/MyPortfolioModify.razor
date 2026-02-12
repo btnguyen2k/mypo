@@ -42,12 +42,9 @@
 									<div class="form-floating">
 										<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
 											<option value="@(string.Empty)">-</option>
-											@foreach (var p in MyPortfolioTree??[])
+											@foreach (var p in (MyPortfolioTree??[]).Where(p => p.Id != PortfolioId))
 											{
-												@if(p.Id != PortfolioId)
-												{
-													<option value="@p.Id">@p.Name</option>
-												}
+												<option value="@p.Id">@p.Name</option>
 											}
 										</select>
 										<label for="pParentId">Parent Portfolio:</label>

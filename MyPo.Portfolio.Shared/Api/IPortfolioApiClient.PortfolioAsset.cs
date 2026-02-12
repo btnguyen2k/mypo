@@ -2,7 +2,7 @@
 
 namespace MyPo.Portfolio.Shared.Api;
 
-public partial interface IPortfolioApiClient : IApiClient
+public partial interface IPortfolioApiClient
 {
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSETS = "/api/my_portfolio/{id}/assets";
 	public const string API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_ASSET_ID = "/api/my_portfolio/{id}/asset/{aid}";

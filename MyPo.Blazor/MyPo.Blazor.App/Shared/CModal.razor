@@ -107,9 +107,9 @@ Modal dialog with a button to close:
 
 	public CAlert Alert { get; set; } = default!;
 
-	public void ShowAlert(string message, string type = "info", int autoCloseAfterMs = 0)
+	public void ShowAlert(string alertMsg, string alertType = "info", int autoCloseAfterMs = 0)
 	{
-		Alert.Show(message, type, autoCloseAfterMs);
+		Alert.Show(alertMsg, alertType, autoCloseAfterMs);
 		StateHasChanged();
 	}
 
