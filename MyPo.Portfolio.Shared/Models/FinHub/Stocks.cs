@@ -212,6 +212,9 @@ public sealed class StockHistory
 
 	[JsonPropertyName("current_volume")]
 	public long CurrentVolume { get; set; }
+	[JsonPropertyName("yesterday_volume")]
+	public long YesterdayVolume { get; set; }
+
 
 	[JsonPropertyName("average_volume_30d")]
 	public long AverageVolume30d { get; set; }

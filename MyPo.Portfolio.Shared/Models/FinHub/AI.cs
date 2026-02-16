@@ -6,6 +6,7 @@ public class AIVendor
 {
 	public const string VENDOR_GEMINI = "Gemini";
 	public const string VENDOR_OPENAI = "OpenAI";
+	public const string VENDOR_AZURE_OPENAI = "AzureOpenAI";
 
 	public const string TIER_FREE = "FreeTier";
 	public const string TIER_LOW_COST = "LowCostTier";
