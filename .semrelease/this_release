@@ -1,7 +1,3 @@
-# This file has been cleaned up post-releasing version 0.8.0.
+# This file has been cleaned up post-releasing version 1.0.0.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
-#!VERSION=1.0.0
-- (Patch) Fix CodeQL warnings.
-- (Feat) Apply AI to analyze stock symbols.
-- (Patch) Other fixes and enhancements.
