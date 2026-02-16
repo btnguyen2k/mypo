@@ -316,7 +316,7 @@ public sealed partial class StockSymbolInfo : BasePage
 				AITiers.AddRange(aiVendor.TieredModels.Keys);
 				SelectedAITier = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-tier");
 				var aiTier = AITiers.FirstOrDefault(t => string.Equals(t, SelectedAITier, StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
-				if (aiVendor != null && !string.IsNullOrEmpty(aiTier))
+				if (!string.IsNullOrEmpty(aiTier))
 				{
 					AIModels.AddRange(aiVendor.TieredModels[aiTier]);
 					SelectedAIModel = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-model");
