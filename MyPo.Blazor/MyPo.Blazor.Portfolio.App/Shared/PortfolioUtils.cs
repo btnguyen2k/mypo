@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Api;
+﻿using Microsoft.JSInterop;
+using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using System.Text.RegularExpressions;
@@ -28,6 +29,17 @@ public static partial class PortfolioUtils
 
         return rootPortfolios;
     }
+
+	private static IJSObjectReference? jsLocalStorage;
+
+	public static async ValueTask<IJSObjectReference> LoadJSLocalStorage(IJSRuntime JS)
+	{
+		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/local-storage.js"
+		);
+		return jsLocalStorage;
+	}
 
 	public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";
 	public static readonly List<string> DATETIME_PICKER_FORMATS =

@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-16 - v1.0.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Apply AI to analyze stock symbols.
+
+### Fixed/Improvements
+
+- (Patch) Fix CodeQL warnings.
+- (Patch) Other fixes and enhancements.
+
 ## 2026-02-12 - v0.8.0
 
 ### Added/Refactoring/Deprecation

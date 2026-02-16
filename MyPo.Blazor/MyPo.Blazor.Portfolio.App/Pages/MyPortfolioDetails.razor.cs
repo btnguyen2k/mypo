@@ -7,6 +7,7 @@ using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Blazor.Portfolio.App.Shared;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -176,59 +177,56 @@ public partial class MyPortfolioDetails : BasePage
 	private async void AutoPopulateAssetMetadata()
 	{
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var asset in Assets ?? [])
+		foreach (var asset in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
+				|| string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)
+				|| a.Metadata.Tags == null || a.Metadata.Tags.Count == 0))
 		{
-			if (asset.Metadata==null || string.IsNullOrEmpty(asset.Metadata.CorpName)
-				|| string.IsNullOrEmpty(asset.Metadata.Industry) || string.IsNullOrEmpty(asset.Metadata.Industry)
-				|| asset.Metadata.Tags == null || asset.Metadata.Tags.Count == 0)
+			var symbol = $"{asset.ItemCode}:{asset.MarketId}";
+			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
+			var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (apiResp.Status != 200)
 			{
-				var symbol = $"{asset.ItemCode}:{asset.MarketId}";
-				SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
-				var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (apiResp.Status != 200)
+				SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
+			}
+			else
+			{
+				var overview = apiResp.Data;
+				if (overview != null)
 				{
-					SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
+					asset.Metadata ??= new AssetMetadata();
+					asset.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
+					asset.Metadata.Industry = overview.Industry ?? "";
+					asset.Metadata.Sector = overview.Sector ?? "";
+					asset.Metadata.Tags ??= new HashSet<string>();
+					if (!string.IsNullOrEmpty(asset.Metadata.Industry))
+					{
+						asset.Metadata.Tags.Add(asset.Metadata.Industry);
+					}
+					// if (!string.IsNullOrEmpty(asset.Metadata.Sector))
+					// {
+					// 	asset.Metadata.Tags.Add(asset.Metadata.Sector);
+					// }
+				}
+				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
+				var updateReq = new CreateOrUpdateAssetReq()
+				{
+					Id = asset.Id,
+					PortfolioId = asset.PortfolioId,
+					ItemType = asset.ItemType,
+					ItemCode = asset.ItemCode,
+					Quantity = asset.Quantity,
+					AveragePrice = asset.AveragePrice,
+					MarketId = asset.MarketId,
+					Metadata = asset.Metadata,
+				};
+				var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
+				if (updateResp.Status != 200)
+				{
+					SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
 				}
 				else
 				{
-					var overview = apiResp.Data;
-					if (overview != null)
-					{
-						asset.Metadata ??= new AssetMetadata();
-						asset.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
-						asset.Metadata.Industry = overview.Industry ?? "";
-						asset.Metadata.Sector = overview.Sector ?? "";
-						asset.Metadata.Tags ??= new HashSet<string>();
-						if (!string.IsNullOrEmpty(asset.Metadata.Industry))
-						{
-							asset.Metadata.Tags.Add(asset.Metadata.Industry);
-						}
-						// if (!string.IsNullOrEmpty(asset.Metadata.Sector))
-						// {
-						// 	asset.Metadata.Tags.Add(asset.Metadata.Sector);
-						// }
-					}
-					SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
-					var updateReq = new CreateOrUpdateAssetReq()
-					{
-						Id = asset.Id,
-						PortfolioId = asset.PortfolioId,
-						ItemType = asset.ItemType,
-						ItemCode = asset.ItemCode,
-						Quantity = asset.Quantity,
-						AveragePrice = asset.AveragePrice,
-						MarketId = asset.MarketId,
-						Metadata = asset.Metadata,
-					};
-					var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
-					if (updateResp.Status != 200)
-					{
-						SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
-					}
-					else
-					{
-						SetBackgroundMsg($"✅Successfully updated asset metadata for '{symbol}'.");
-					}
+					SetBackgroundMsg($"✅Successfully updated asset metadata for '{symbol}'.");
 				}
 			}
 		}
@@ -293,14 +291,10 @@ public partial class MyPortfolioDetails : BasePage
 
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;
-	private IJSObjectReference? jsLocalStorage;
 
 	private async void SwitchToSavedTab()
 	{
-		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
-			"import",
-			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
-		);
+		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
 		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
 		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
 		if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
@@ -312,10 +306,7 @@ public partial class MyPortfolioDetails : BasePage
 	private async void SwitchTab(string tab)
 	{
 		CloseAlert();
-		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
-			"import",
-			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
-		);
+		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
 		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
 	}
 }
