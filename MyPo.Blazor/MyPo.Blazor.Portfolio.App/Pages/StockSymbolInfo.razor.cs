@@ -180,11 +180,13 @@ public sealed partial class StockSymbolInfo : BasePage
 		NavigationManager.NavigateTo(nextUrl);
 	}
 
-	private bool StopRefreshBackground { get; set; } = false;
+	// private bool StopRefreshBackground { get; set; } = false;
+	private int RefreshBackgroundTaskId = Random.Shared.Next();
 
 	private void StopRefresBackground()
 	{
-		StopRefreshBackground = true;
+		// StopRefreshBackground = true;
+		RefreshBackgroundTaskId = 0;
 	}
 
 	protected override void Dispose(bool disposing)
@@ -225,15 +227,15 @@ public sealed partial class StockSymbolInfo : BasePage
 		SymbolInfo = symbolResult.Data;
 
 		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-		taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground());
+		taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground(RefreshBackgroundTaskId = Random.Shared.Next()));
 
 		HideUI = false;
 		CloseAlert();
 	}
 
-	private async void LoadSymbolInfoBackground()
+	private async void LoadSymbolInfoBackground(int myTaskId)
 	{
-		if (!StopRefreshBackground)
+		if (myTaskId == RefreshBackgroundTaskId)
 		{
 			if (Market == null)
 			{
@@ -252,14 +254,14 @@ public sealed partial class StockSymbolInfo : BasePage
 				sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
 				sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds)+1000;
 			}
-			while (sleepTime > 0 && !StopRefreshBackground)
+			while (sleepTime > 0 && myTaskId == RefreshBackgroundTaskId)
 			{
 				SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next info refresh...");
 				var delay = Math.Min(sleepTime, 1000);
 				await Task.Delay((int)delay);
 				sleepTime -= delay;
 			}
-			if (!StopRefreshBackground)
+			if (myTaskId == RefreshBackgroundTaskId)
 			{
 				var symbolResult = await FetchSymbolInfo();
 				if (symbolResult.Status == 200)
@@ -267,7 +269,7 @@ public sealed partial class StockSymbolInfo : BasePage
 					SymbolInfo = symbolResult.Data;
 					StateHasChanged();
 				}
-				await Task.Run(() => LoadSymbolInfoBackground());
+				await Task.Run(() => LoadSymbolInfoBackground(myTaskId));
 			}
 		}
 	}
@@ -286,12 +288,6 @@ public sealed partial class StockSymbolInfo : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-
-			var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-			SelectedAIVendor = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-vendor");
-			SelectedAITier = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-tier");
-			SelectedAIModel = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-model");
-
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 
 			ShowAlert("info", "Loading market info...");
@@ -311,6 +307,21 @@ public sealed partial class StockSymbolInfo : BasePage
 				return;
 			}
 			AIVendors.AddRange(aiVendorResult.Data ?? []);
+
+			var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
+			SelectedAIVendor = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-vendor");
+			var aiVendor = AIVendors.FirstOrDefault(v => string.Equals(v.Name, SelectedAIVendor, StringComparison.OrdinalIgnoreCase)) ?? null;
+			if (aiVendor != null)
+			{
+				AITiers.AddRange(aiVendor.TieredModels.Keys);
+				SelectedAITier = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-tier");
+				var aiTier = AITiers.FirstOrDefault(t => string.Equals(t, SelectedAITier, StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
+				if (aiVendor != null && !string.IsNullOrEmpty(aiTier))
+				{
+					AIModels.AddRange(aiVendor.TieredModels[aiTier]);
+					SelectedAIModel = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-model");
+				}
+			}
 
 			CloseAlert();
 

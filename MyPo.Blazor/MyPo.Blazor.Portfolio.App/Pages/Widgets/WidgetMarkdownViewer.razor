@@ -1,9 +1,33 @@
 @using Markdig
 @using System.Text.RegularExpressions
 
+<style>
+/* Hide everything by default when printing */
+@@media print {
+    body * {
+        visibility: hidden !important;
+    }
+
+    /* Show only the print area and its children */
+    #printArea, #printArea.*, #printArea * {
+        visibility: visible !important;
+    }
+
+    /* Position the print area at the top-left for printing */
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+</style>
+
 @if (!string.IsNullOrWhiteSpace(Content))
 {
-	@((MarkupString)Markdown.ToHtml(SanitizeMarkdown(Content), pipeline))
+	<div id="printArea" class="cotainer">
+		@((MarkupString)Markdown.ToHtml(SanitizeMarkdown(Content), pipeline))
+	</div>
 }
 
 @code {
