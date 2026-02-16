@@ -560,7 +560,7 @@ Provide Analysis for two scenarios: short-term ranking competition and long-term
 				@if (AnalysisResponse.HasValue)
 				{
 					<div class="card-footer">
-						<small>@(AnalysisResponse.Value.IsCached?"(Cached) ":"")@((AnalysisResponse.Value.TotalTimeMs/1000).ToString("F2"))s - Total Tokens: @(AnalysisResponse.Value.TotalTokens) (Prompt: @(AnalysisResponse.Value.NumTokensPrompt) / Thought: @(AnalysisResponse.Value.NumTokensThought) / Completion: @(AnalysisResponse.Value.NumTokensResponse))</small>
+						<small>@(AnalysisResponse.Value.IsCached?"(Cached) ":"")@((AnalysisResponse.Value.TotalTimeMs/1000m).ToString("F1"))s - Total Tokens: @(AnalysisResponse.Value.TotalTokens) (Prompt: @(AnalysisResponse.Value.NumTokensPrompt) / Thought: @(AnalysisResponse.Value.NumTokensThought) / Completion: @(AnalysisResponse.Value.NumTokensResponse))</small>
 					</div>
 				}
 			</div>

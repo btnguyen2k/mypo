@@ -210,7 +210,7 @@ public partial class AIController : ApiBaseController
 			+ $"Inputs:\n{req.Inputs}\n\n"
 			+ $"Expected Outputs:\n{req.ExpectedOutputs}\n\n"
 			+ $"Provide Analysis for two scenarios: short-term ranking competition and long-term portfolio scoring.\n"
-			+ $"Output should be in {req.OutputFormat} format with clear sections and bullet points for easy reading. Enclose response between ```markdown and ```, no other text should be output outside the enclosed tags.\n"
+			+ $"Output should be in {req.OutputFormat} format with clear sections and bullet points for easy reading. Enclose response between ```markdown and ```, there must be no additonal next after the ending ```.\n"
 			+ $"Highlight key insights and actionable recommendations using CSS class 'text-danger' (we all know about CSS, do not output instructions on how to use CSS/HTML/Styling)."
 			;
 

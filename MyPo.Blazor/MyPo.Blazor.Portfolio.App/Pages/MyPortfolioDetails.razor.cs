@@ -7,6 +7,7 @@ using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Blazor.Portfolio.App.Shared;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -290,14 +291,10 @@ public partial class MyPortfolioDetails : BasePage
 
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;
-	private IJSObjectReference? jsLocalStorage;
 
 	private async void SwitchToSavedTab()
 	{
-		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
-			"import",
-			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
-		);
+		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
 		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
 		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
 		if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
@@ -309,10 +306,7 @@ public partial class MyPortfolioDetails : BasePage
 	private async void SwitchTab(string tab)
 	{
 		CloseAlert();
-		jsLocalStorage ??= await JS.InvokeAsync<IJSObjectReference>(
-			"import",
-			$"./_content/{typeof(MyPortfolioDetails).Assembly.GetName().Name!}/js/local-storage.js"
-		);
+		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
 		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
 	}
 }

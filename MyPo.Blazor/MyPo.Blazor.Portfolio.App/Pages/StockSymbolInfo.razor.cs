@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Libs.Opurator;
@@ -13,6 +13,9 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public sealed partial class StockSymbolInfo : BasePage
 {
+	[Inject]
+	private IJSRuntime JS { get; set; } = default!;
+
 	[Parameter]
 	public string Symbol { get; set; } = string.Empty;
 	private string SymbolCode { get; set; } = string.Empty;
@@ -114,9 +117,15 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private async void BtnClickAIAnalyze()
 	{
+		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
+		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-vendor", SelectedAIVendor);
+		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-tier", SelectedAITier);
+		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-model", SelectedAIModel);
+
+		var alertMsg = $"Analyzing symbol with AI (Vendor: {SelectedAIVendor} / Tier: {SelectedAITier} / Model: {SelectedAIModel})...";
 		AnalysisResponse = null;
 		ModalDialogAnalyzeSymbol.Open();
-		ModalDialogAnalyzeSymbol.ShowAlert("info", $"Analyzing symbol with AI (Vendor: {SelectedAIVendor} / Tier: {SelectedAITier} / Model: {SelectedAIModel})...");
+		ModalDialogAnalyzeSymbol.ShowAlert("info", alertMsg);
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var req = new SymbolAnalysisReq
 		{
@@ -128,7 +137,22 @@ public sealed partial class StockSymbolInfo : BasePage
 			ExpectedOutputs = BuidAnalysisExpectedOutputs(),
 			MaxOutputTokens = SelectedAITier.Equals(AIVendor.TIER_FREE, StringComparison.OrdinalIgnoreCase) ? 0 : 3000,
 		};
+		var stopFlag = false;
+		var startTimestamp = DateTime.UtcNow;
+		_ = Task.Run(async () =>
+		{
+			while (!stopFlag)
+			{
+				var elapsed = DateTime.UtcNow - startTimestamp;
+				if (elapsed > TimeSpan.FromSeconds(1))
+				{
+					ModalDialogAnalyzeSymbol.ShowAlert("info", $"{alertMsg} {elapsed.TotalSeconds:F0} seconds.");
+				}
+				await Task.Delay(100);
+			}
+		});
 		var analysisResponse = await apiClient.AnalyzeSymbolAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
+		stopFlag = true;
 		if (analysisResponse.Status != 200)
 		{
 			ModalDialogAnalyzeSymbol.ShowAlert("danger", analysisResponse.Message ?? "Error analyzing symbol.");
@@ -262,6 +286,12 @@ public sealed partial class StockSymbolInfo : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
+
+			var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
+			SelectedAIVendor = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-vendor");
+			SelectedAITier = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-tier");
+			SelectedAIModel = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-model");
+
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 
 			ShowAlert("info", "Loading market info...");
