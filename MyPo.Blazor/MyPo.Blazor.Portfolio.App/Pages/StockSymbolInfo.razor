@@ -1,5 +1,6 @@
 @using MyPo.Blazor.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Shared;
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets;
 @using MyPo.Blazor.App.Layout;
 @using MyPo.Portfolio.Shared.Identity;
 
@@ -287,6 +288,56 @@
 														</td>
 													</tr>
 												</table>
+
+												<hr />
+
+												<table class="table table-sm mb-0">
+													<tr>
+														<td>AI Vendor</td>
+														<td class="text-end">
+															<select class="form-select form-select-sm" id="aiVendor" @bind="SelectedAIVendor" @bind:after="OnChangeAIVendor">
+																<option value="">-= AI Vendor =-</option>
+																@foreach (var aiVendor in AIVendors)
+																{
+																	<option value="@aiVendor.Name">@aiVendor.Name</option>
+																}
+															</select>
+														</td>
+													</tr>
+													<tr>
+														<td>Price Tier</td>
+														<td class="text-end">
+															<select class="form-select form-select-sm" id="aiTier" @bind="SelectedAITier" @bind:after="OnChangeAITier">
+																<option value="">-= Price Tier =-</option>
+																@foreach (var aiTier in AITiers)
+																{
+																	<option value="@aiTier">@aiTier</option>
+																}
+															</select>
+														</td>
+													</tr>
+													<tr>
+														<td>Model</td>
+														<td class="text-end">
+															<select class="form-select form-select-sm" id="aiModel" @bind="SelectedAIModel">
+																<option value="">-= Model =-</option>
+																@foreach (var aiModel in AIModels)
+																{
+																	<option value="@aiModel">@aiModel</option>
+																}
+															</select>
+														</td>
+													</tr>
+													<tr>
+														<td>&nbsp;</td>
+														<td class="text-end">
+															<button type="button" class="btn btn-block btn-sm btn-outline-primary" @onclick="BtnClickAIAnalyze" title="Run AI Analysis"
+																	disabled="@(string.IsNullOrEmpty(SelectedAIVendor) || string.IsNullOrEmpty(SelectedAITier) || string.IsNullOrEmpty(SelectedAIModel))">
+																<BIcon icon="graph-up-arrow" /> Run AI Analysis
+															</button>
+														</td>
+													</tr>
+												</table>
 											</div>
 										</div>
 									</div>
@@ -401,9 +452,19 @@
 						}
                     }
 
-					<div class="alert alert-light text-start mt-2" style="font-size: small !important" role="alert">
+					<hr />
+
+@*
+					<div class="alert alert-light text-start mt-2 align-items-center" style="font-size: small !important" role="alert">
+						<div class="row mb-2">
+							<div class="col">
+								@(AnalysisResponse)
+							</div>
+						</div>
+						<div class="row">
+							<div class="col">
 <p>
-	Context: I am playing a stock trading game. There is a hypothesis stock @(SymbolCode) with the information provided in the next section.
+	Context and Task: I am playing a stock trading game. There is a hypothesis stock @(Market?.Code??""):@(SymbolCode) with the information provided in the next section.
 	Help me analyze it. Let me know if you need further information to make the analysis beter.
 </p>
 <pre class="text-start">
@@ -425,10 +486,12 @@ Inputs:
 - Gross margins: @(SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A")
 - Profit margins: @(SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A")
 - Operating margins: @(SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A")
-- Market Capitalization: @(SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A")
-- Current Price: @(SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A")
-- Current Volume: @(SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A")
-- Average Volume last 30 days: @(SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A")
+- Market capitalization: @(SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A")
+- Current price: @(SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A")
+- 52-week low/high: @(SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A") / @(SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A")
+- Current volume (@((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")): @(SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A")
+- Yesterday volume: @(SymbolInfo?.StockHistory?.YesterdayVolume.ToString("F0")??"N/A")
+- Average volume last 30 days: @(SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A")
 - Trailing EPS: @(SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A")
 - Forward EPS: @(SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A")
 - Trailing P/E: @(SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A")
@@ -444,19 +507,32 @@ Inputs:
 </pre>
 
 <pre class="text-start">
-Output:
+Outputs:
+- What is the overall analysis of this stock based on the above information? Is it a good buy/sell/hold? Why?
+- What are the key strengths and weaknesses of this stock?
+- What are the potential risks and opportunities for this stock?
+- What is the expected price movement for this stock in the next 1 month, 3 months, and 6 months? Please provide a brief explanation for each time frame.
+- What are the Big Picture Summary and Trading Game Strategy.
+- Estimated Fair Value and Optimal Buy/Sell Zones.
+</pre>
+
+<pre class="text-start">
+Outputs:
 - Valuation Analysis
 - Risk Profile
 - Volume Analysis
 - Technical Analysis
 - Big Picture Summary
 - Trading Game Strategy
-- Overall View and potential future trends
+- Estimated Fair Value and Optimal Buy/Sell Zones
 - Additional information needed, if any.
 </pre>
 
 Provide Analysis for two scenarios: short-term ranking competition and long-term portfolio scoring. Output should be in Markdown format with clear sections and bullet points for easy reading.
+							</div>
+						</div>
 					</div>
+*@
 
 					<div class="alert alert-warning mt-2" role="alert">
 						<span style="font-size: small">@warningMsg</span>
@@ -471,6 +547,24 @@ Provide Analysis for two scenarios: short-term ranking competition and long-term
                 </div>
             </div>
         </div>
+
+		<CModal @ref="@ModalDialogAnalyzeSymbol" title="Analyze Symbol" centered="false" type="primary" size="extra-large">
+			<div class="card">
+				<div class="card-body">
+					<CAlert @ref="@ModalDialogAnalyzeSymbol.Alert" />
+					@if (AnalysisResponse.HasValue)
+					{
+						<WidgetMarkdownViewer Content="@AnalysisResponse.Value.Response" />
+					}
+				</div>
+				@if (AnalysisResponse.HasValue)
+				{
+					<div class="card-footer">
+						<small>@(AnalysisResponse.Value.IsCached?"(Cached) ":"")@((AnalysisResponse.Value.TotalTimeMs/1000).ToString("F2"))s - Total Tokens: @(AnalysisResponse.Value.TotalTokens) (Prompt: @(AnalysisResponse.Value.NumTokensPrompt) / Thought: @(AnalysisResponse.Value.NumTokensThought) / Completion: @(AnalysisResponse.Value.NumTokensResponse))</small>
+					</div>
+				}
+			</div>
+		</CModal>
 	</Authorized>
 </AuthorizeView>
 

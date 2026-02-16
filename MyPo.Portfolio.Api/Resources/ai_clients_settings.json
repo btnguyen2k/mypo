@@ -12,5 +12,23 @@
       "ApiKey": "",
       "Models": ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
     }
+  },
+
+  "AzureOpenAI": {
+    "FreeTier": {
+      "ApiKey": "",
+      "Endpoint": "",
+      "Models": []
+    },
+    "LowCostTier": {
+      "ApiKey": "",
+      "Endpoint": "",
+      "Models": ["mistral-large-3", "o4-mini", "gpt-5-mini"]
+    },
+    "PremiumTier": {
+      "ApiKey": "",
+      "Endpoint": "",
+      "Models": ["gpt-5.2-chat"]
+    }
   }
 }

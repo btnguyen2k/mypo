@@ -1,0 +1,21 @@
+@using Markdig
+@using System.Text.RegularExpressions
+
+@if (!string.IsNullOrWhiteSpace(Content))
+{
+	@((MarkupString)Markdown.ToHtml(SanitizeMarkdown(Content), pipeline))
+}
+
+@code {
+	[Parameter]
+	public string? Content { get; set; }
+
+	private MarkdownPipeline pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+
+	private static string SanitizeMarkdown(string markdown)
+	{
+		markdown = Regex.Replace(markdown, @"^\s*`+markdown\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+		markdown = Regex.Replace(markdown, @"[\s`]+$", string.Empty);
+		return markdown;
+	}
+}

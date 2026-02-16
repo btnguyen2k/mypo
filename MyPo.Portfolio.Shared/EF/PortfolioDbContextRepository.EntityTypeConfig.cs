@@ -69,7 +69,6 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
 		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
 		builder.Property(p => p.Quantity).HasColumnName("item_quantity");
 		builder.Property(p => p.AveragePrice).HasColumnName("average_price");
-		// builder.Property(p => p.Tags).HasColumnName("tags").HasMaxLength(256);
 		builder.Property(p => p.Metadata).HasColumnName("item_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
@@ -99,6 +98,35 @@ sealed class TxSettlementEntityTypeConfiguration : GenericEntityTypeConfiguratio
 		builder.Property(p => p.RefItemCode).HasColumnName("ref_item_code").HasMaxLength(16);
 		builder.Property(p => p.RefMarketId).HasColumnName("ref_market_id").HasMaxLength(16);
 		builder.Property(p => p.TxDesc).HasColumnName("tx_desc").HasMaxLength(256);
+		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
+		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
+		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+	}
+}
+
+sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfiguration<SymbolAnalysisEntity, string>
+{
+	public override void Configure(EntityTypeBuilder<SymbolAnalysisEntity> builder)
+	{
+		base.Configure(builder);
+		builder.ToTable($"{Globals.TABLE_PREFIX}symbol_analysis"); // change table name if needed
+		builder.Property(p => p.Id).HasColumnName("analysis_id").HasMaxLength(48);
+		builder.Property(p => p.OwnerId).HasColumnName("owner_id").HasMaxLength(48);
+		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
+		builder.Property(p => p.ItemType).HasColumnName("item_type").HasMaxLength(16);
+		builder.Property(p => p.ItemCode).HasColumnName("item_code").HasMaxLength(16);
+		// builder.Property(p => p.AIVendor).HasColumnName("ai_vendor").HasMaxLength(32);
+		// builder.Property(p => p.AITier).HasColumnName("ai_tier").HasMaxLength(32);
+		// builder.Property(p => p.AIModel).HasColumnName("ai_model").HasMaxLength(64);
+		builder.Property(p => p.AnalysisTime).HasColumnName("analysis_time");
+		builder.Property(p => p.AnalysisPrompt).HasColumnName("analysis_prompt");
+		builder.Property(p => p.AnalysisResult).HasColumnName("analysis_result");
+		builder.Property(p => p.Metadata).HasColumnName("analysis_metadata")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+				v => JsonSerializer.Deserialize<SymbolAnalysisMetadata>(v, (JsonSerializerOptions?)null)
+			)
+			.HasColumnType("jsonb");
 		builder.Property(p => p.CreatedAt).HasColumnName("created_at");
 		builder.Property(p => p.UpdatedAt).HasColumnName("updated_at");
 		builder.Property(p => p.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();

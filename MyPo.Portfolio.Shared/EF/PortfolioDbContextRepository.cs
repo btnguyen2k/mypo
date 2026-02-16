@@ -37,6 +37,7 @@ public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolio
 		new TxBuySellEntityTypeConfiguration().Configure(modelBuilder.Entity<TxBuySellEntity>());
 		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<AssetEntity>());
 		new TxSettlementEntityTypeConfiguration().Configure(modelBuilder.Entity<TxSettlementEntity>());
+		new SymbolAnalysisEntityTypeConfiguration().Configure(modelBuilder.Entity<SymbolAnalysisEntity>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>

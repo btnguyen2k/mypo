@@ -90,3 +90,25 @@ CREATE INDEX idx_mypo_settlements_portfolio_id_tx_time ON mypo_settlements (port
 CREATE INDEX idx_mypo_settlements_portfolio_id_tx_type ON mypo_settlements (portfolio_id, tx_type);
 -- CREATE INDEX idx_mypo_settlements_tx_time ON mypo_roi (tx_time);
 -- CREATE INDEX idx_mypo_settlements_tx_type ON mypo_roi (tx_type);
+
+DROP TABLE IF EXISTS mypo_symbol_analysis;
+CREATE TABLE mypo_symbol_analysis (
+    analysis_id varchar(48) NOT NULL,
+    owner_id varchar(48) NOT NULL,
+    market_id varchar(16) NOT NULL,
+    item_type varchar(16) NOT NULL,
+    item_code varchar(16) NOT NULL,
+    -- ai_vendor varchar(32) NOT NULL,
+    -- ai_tier varchar(32) NOT NULL,
+    -- ai_model varchar(32) NOT NULL,
+    analysis_time timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    analysis_prompt TEXT NULL,
+    analysis_result TEXT NULL,
+    analysis_metadata jsonb NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    concurrency_stamp varchar(48) NULL,
+    CONSTRAINT pk_mypo_symbol_analysis PRIMARY KEY (analysis_id)
+);
+CREATE UNIQUE INDEX uidx_pk_mypo_symbol_analysis ON mypo_symbol_analysis (owner_id, market_id, item_type, item_code);
+-- CREATE INDEX idx_mypo_symbol_analysis_owner_id ON mypo_symbol_analysis (owner_id);
