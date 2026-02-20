@@ -48,6 +48,7 @@ public class AIClientsBootstrapper
 			TieredModels = [],
 		};
 
+		var aiCapacity = new AICapacity(aiClientsSettings.GetSection($"{AI_VENDOR}:Capacity"));
 		foreach (var aiTier in new[] { AIVendor.TIER_FREE, AIVendor.TIER_LOW_COST, AIVendor.TIER_PREMIUM })
 		{
 			var key = $"{AI_VENDOR}:{aiTier}";
@@ -63,11 +64,11 @@ public class AIClientsBootstrapper
 			{
 				logger.LogInformation("-- Available models for '{key}': {models}.", key, string.Join(", ", availableModels));
 				aiVendor.TieredModels[aiTier] = availableModels;
-				services.AddKeyedSingleton<OpenAIChatClientFactory, OpenAIChatClientFactory>(key, (sp, key) =>
+				services.AddKeyedSingleton<OpenAIClientFactory, OpenAIClientFactory>(key, (sp, key) =>
 				{
 					var apiEndpoint = aiClientsSettings.GetValue<string>($"{key}:Endpoint") ?? "No endpoint provided";
 					var apiKey = aiClientsSettings.GetValue<string>($"{key}:ApiKey") ?? "No key provided";
-					return new OpenAIChatClientFactory(apiKey: apiKey, endpoint: apiEndpoint);
+					return new OpenAIClientFactory(apiKey: apiKey, endpoint: apiEndpoint, capacity: aiCapacity);
 				});
 			}
 		}
@@ -118,6 +119,7 @@ public class AIClientsBootstrapper
 			TieredModels = [],
 		};
 
+		var aiCapacity = new AICapacity(aiClientsSettings.GetSection($"{AI_VENDOR}:Capacity"));
 		foreach (var aiTier in new[] { AIVendor.TIER_FREE, AIVendor.TIER_LOW_COST, AIVendor.TIER_PREMIUM })
 		{
 			var key = $"{AI_VENDOR}:{aiTier}";
@@ -133,11 +135,11 @@ public class AIClientsBootstrapper
 			{
 				logger.LogInformation("-- Available models for '{key}': {models}.", key, string.Join(", ", availableModels));
 				aiVendor.TieredModels[aiTier] = availableModels;
-				services.AddKeyedSingleton<OpenAIChatClientFactory, OpenAIChatClientFactory>(key, (sp, key) =>
+				services.AddKeyedSingleton<OpenAIClientFactory, OpenAIClientFactory>(key, (sp, key) =>
 				{
 					var apiEndpoint = aiClientsSettings.GetValue<string>($"{key}:Endpoint") ?? "No endpoint provided";
 					var apiKey = aiClientsSettings.GetValue<string>($"{key}:ApiKey") ?? "No key provided";
-					return new OpenAIChatClientFactory(apiKey: apiKey, endpoint: apiEndpoint);
+					return new OpenAIClientFactory(apiKey: apiKey, endpoint: apiEndpoint, capacity: aiCapacity);
 				});
 			}
 		}

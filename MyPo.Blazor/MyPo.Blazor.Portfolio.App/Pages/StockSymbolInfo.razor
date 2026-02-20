@@ -76,7 +76,7 @@
 							<div class="container">
 								<!-- Header -->
 								<div class="row g-3 mb-4">
-									<div class="col-md-6 d-flex justify-content-between align-items-center">
+									<div class="col-md-5 d-flex justify-content-between align-items-center">
 										<div>
 											<h2 class="mb-0">
 												@(PortfolioUtils.FormatRawValueWithScale(SymbolInfo.StockQuote?.MarketPrice??0, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
@@ -94,6 +94,22 @@
 									</div>
 
 									<div class="col-md-3">
+										@if(OwningAsset != null)
+										{
+											<div class="card text-center">
+												<div class="card-body">
+													<small class="text-muted">Position / Avg. Price</small>
+													<div class="fw-semibold @(OwningAsset.AveragePrice>(SymbolInfo.StockQuote?.MarketPrice??0)?"text-danger":"text-success")">
+														@(OwningAsset.Quantity.ToString(Market?.QuantityFormat??"N2"))
+														/
+														@(PortfolioUtils.FormatValueWithScale(OwningAsset.AveragePrice, Market?.PriceScale??0, Market?.ValueFormat??"N2"))
+													</div>
+												</div>
+											</div>
+										}
+									</div>
+
+									<div class="col-md-2">
 										<div class="card text-center">
 											<div class="card-body">
 												<small class="text-muted">Bid / Size</small>
@@ -108,7 +124,7 @@
 											</div>
 										</div>
 									</div>
-									<div class="col-md-3">
+									<div class="col-md-2">
 										<div class="card text-center">
 											<div class="card-body">
 												<small class="text-muted">Ask / Size</small>
@@ -456,79 +472,28 @@
 
 @*
 					<div class="alert alert-light text-start mt-2 align-items-center" style="font-size: small !important" role="alert">
-						<div class="row mb-2">
-							<div class="col">
-								@(AnalysisResponse)
-							</div>
-						</div>
 						<div class="row">
 							<div class="col">
 <p>
-	Context and Task: I am playing a stock trading game. There is a hypothesis stock @(Market?.Code??""):@(SymbolCode) with the information provided in the next section.
-	Help me analyze it. Let me know if you need further information to make the analysis beter.
+	Context and Task: Given today is @(DateTimeOffset.Now.ToString("yyyy-MMM-dd")) and 30-day history of the stock @(Market?.Code??""):@(SymbolCode).
+	Analyse the data and find any abnormal values. Browse the web for the most up-to-date information if needed, and provide insights on the following:
 </p>
+
 <pre class="text-start">
-Inputs:
-- Currency: @(SymbolInfo?.Currency??"USD")
-- Quote type: @(SymbolInfo?.Overview?.QuoteType??"N/A")
-- Industry: @(SymbolInfo?.Overview?.Industry??"N/A")
-- Sector: @(SymbolInfo?.Overview?.Sector??"N/A")
-- Total cash: @(SymbolInfo?.Overview?.TotalCash.ToString("F0")??"N/A")
-- Total cash per share: @(SymbolInfo?.Overview?.TotalCashPerShare.ToString("F2")??"N/A")
-- Total debt: @(SymbolInfo?.Overview?.TotalDebt.ToString("F0")??"N/A")
-- Total debt per share: @(SymbolInfo?.Overview?.TotalDebtPerShare.ToString("F2")??"N/A")
-- Total revenue: @(SymbolInfo?.Overview?.TotalRevenue.ToString("F0")??"N/A")
-- Total revenue per share: @(SymbolInfo?.Overview?.TotalRevenuePerShare.ToString("F2")??"N/A")
-- Revenue growth: @(SymbolInfo?.Overview?.RevenueGrowth.ToString("P2")??"N/A")
-- Earnings growth: @(SymbolInfo?.Overview?.EarningsGrowth.ToString("P2")??"N/A")
-- EBITDA: @(SymbolInfo?.Overview?.Ebitda.ToString("F0")??"N/A")
-- EBITDA margins: @(SymbolInfo?.Overview?.EbitdaMargins.ToString("P2")??"N/A")
-- Gross margins: @(SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A")
-- Profit margins: @(SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A")
-- Operating margins: @(SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A")
-- Market capitalization: @(SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A")
-- Current price: @(SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A")
-- 52-week low/high: @(SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A") / @(SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A")
-- Current volume (@((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")): @(SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A")
-- Yesterday volume: @(SymbolInfo?.StockHistory?.YesterdayVolume.ToString("F0")??"N/A")
-- Average volume last 30 days: @(SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A")
-- Trailing EPS: @(SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A")
-- Forward EPS: @(SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A")
-- Trailing P/E: @(SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A")
-- Forward P/E: @(SymbolInfo?.StockQuote?.ForwardPE.ToString("F2")??"N/A")
-- Industry P/E average: N/A
-- Beta: @(SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A")
-- MA10: @(SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A")
-- MA20: @(SymbolInfo?.StockHistory?.MA20.ToString("F2")??"N/A")
-- MA50: @(SymbolInfo?.StockHistory?.MA50.ToString("F2")??"N/A")
-- MA100: @(SymbolInfo?.StockHistory?.MA100.ToString("F2")??"N/A")
-- MA200: @(SymbolInfo?.StockHistory?.MA200.ToString("F2")??"N/A")
-- RSI-14: @(SymbolInfo?.StockHistory?.RSI14.ToString("F2")??"N/A")
+- Abnormal data point
+- Potential reason for the abnormality
+- Potential impact on the stock performance
 </pre>
 
 <pre class="text-start">
-Outputs:
-- What is the overall analysis of this stock based on the above information? Is it a good buy/sell/hold? Why?
-- What are the key strengths and weaknesses of this stock?
-- What are the potential risks and opportunities for this stock?
-- What is the expected price movement for this stock in the next 1 month, 3 months, and 6 months? Please provide a brief explanation for each time frame.
-- What are the Big Picture Summary and Trading Game Strategy.
-- Estimated Fair Value and Optimal Buy/Sell Zones.
+30-days history:
+| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |
+|-------------|--------|--------|--------|--------|------------|--------|
+@foreach(var h in SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[])
+{
+	@($"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp).ToString("yyyy-MMM-dd")} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n")
+}
 </pre>
-
-<pre class="text-start">
-Outputs:
-- Valuation Analysis
-- Risk Profile
-- Volume Analysis
-- Technical Analysis
-- Big Picture Summary
-- Trading Game Strategy
-- Estimated Fair Value and Optimal Buy/Sell Zones
-- Additional information needed, if any.
-</pre>
-
-Provide Analysis for two scenarios: short-term ranking competition and long-term portfolio scoring. Output should be in Markdown format with clear sections and bullet points for easy reading.
 							</div>
 						</div>
 					</div>

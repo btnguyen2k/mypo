@@ -14,7 +14,7 @@ public sealed class SymbolAnalysisReq
 	public string AIModel { get; set; } = string.Empty;
 
 	[JsonPropertyName("max_output_tokens")]
-	public int MaxOutputTokens { get; set; } = 3000;
+	public int MaxOutputTokens { get; set; }
 
 	[JsonPropertyName("symbol")]
 	public string Symbol { get; set; } = string.Empty;
@@ -22,15 +22,26 @@ public sealed class SymbolAnalysisReq
 	[JsonPropertyName("inputs")]
 	public string Inputs { get; set; } = string.Empty;
 
-	[JsonPropertyName("expected_outputs")]
-	public string ExpectedOutputs { get; set; } = string.Empty;
+	// [JsonPropertyName("history"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	// public List<HistoryPoint>? History { get; set; }
 
-	[JsonPropertyName("output_format")]
-	public string OutputFormat { get; set; } = "Markdown";
+	[JsonPropertyName("owning_amount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? OwningAmount { get; set; }
+
+	[JsonPropertyName("owning_average_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? OwningAveragePrice { get; set; }
+
+	// [JsonPropertyName("expected_outputs")]
+	// public string ExpectedOutputs { get; set; } = string.Empty;
+
+	// [JsonPropertyName("output_format")]
+	// public string OutputFormat { get; set; } = "Markdown";
 }
 
 public struct SymbolAnalysisResp
 {
+	public readonly static SymbolAnalysisResp Error = new() { IsError = true };
+
 	[JsonPropertyName("response")]
 	public string Response { get; set; }
 
@@ -51,4 +62,7 @@ public struct SymbolAnalysisResp
 
 	[JsonPropertyName("is_cached")]
 	public bool IsCached { get; set; }
+
+	[JsonPropertyName("is_error")]
+	public bool IsError { get; set; }
 }
