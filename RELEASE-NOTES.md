@@ -1,5 +1,13 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-21 - v1.0.1
+
+### Fixed/Improvements
+
+- (Patch) Improve AI analysis prompt.
+- (Patch) UI/UX improvements.
+- (Patch) Fix login page when external authenticator has empty config.
+
 ## 2026-02-16 - v1.0.0
 
 ### Added/Refactoring/Deprecation
