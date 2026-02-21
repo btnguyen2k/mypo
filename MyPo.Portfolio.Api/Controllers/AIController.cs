@@ -397,8 +397,7 @@ public partial class AIController : ApiBaseController
 		---
 
 		Formatting Rules:
-		- Output MUST be Markdown format and enclosed in ```markdown and ```
-		- No text outside block
+		- Output MUST be Markdown format and enclosed between ```markdown and ```; STRICTLY no text OUTSIDE the enclose tags
 		- Use tables where helpful
 		- Highlight decisive actions:
 			- 🟢 Buy
