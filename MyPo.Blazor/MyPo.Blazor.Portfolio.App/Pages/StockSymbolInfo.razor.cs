@@ -66,14 +66,14 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private string BuildAnalysisInputs()
 	{
-		var inputs = $"Company Classification:\n"
+		var inputs = $"## Company Classification\n"
 			+ $"- Currency: {SymbolInfo?.Currency??"USD"}\n"
 			+ $"- Quote type: {SymbolInfo?.Overview?.QuoteType??"N/A"}\n"
 			+ $"- Industry: {SymbolInfo?.Overview?.Industry??"N/A"}\n"
 			+ $"- Sector: {SymbolInfo?.Overview?.Sector??"N/A"}\n"
 			+ "\n";
 
-		inputs += $"Financials:\n"
+		inputs += $"## Financials\n"
 			+ $"- Total cash: {SymbolInfo?.Overview?.TotalCash.ToString("F0")??"N/A"}\n"
 			// + $"- Total cash per share: {SymbolInfo?.Overview?.TotalCashPerShare.ToString("F2")??"N/A"}\n"
 			+ $"- Total debt: {SymbolInfo?.Overview?.TotalDebt.ToString("F0")??"N/A"}\n"
@@ -89,7 +89,7 @@ public sealed partial class StockSymbolInfo : BasePage
 			+ $"- Profit margins: {SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A"}\n"
 			+ "\n";
 
-		inputs += $"Valuation:\n"
+		inputs += $"## Valuation\n"
 			+ $"- Market capitalization: {SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A"}\n"
 			+ $"- Current price: {SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A"}\n"
 			+ $"- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? (SymbolInfo.StockQuote.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0") : "N/A")}\n"
@@ -100,7 +100,7 @@ public sealed partial class StockSymbolInfo : BasePage
 			+ $"- Industry P/E average: N/A\n"
 			+ "\n";
 
-		inputs += $"Technical Indicators:\n"
+		inputs += $"## Technical Indicators\n"
 			+ $"- 52-week low/high: {SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A"} / {SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A"}\n"
 			+ $"- Beta: {SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A"}\n"
 			+ $"- MA10: {SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A"}\n"
@@ -114,14 +114,13 @@ public sealed partial class StockSymbolInfo : BasePage
 			+ $"- 30-day average volume: {SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A"}\n"
 			+ "\n";
 
-		inputs += $"30-days history:\n"
+		inputs += $"## 30-days history\n"
 			+ "| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |\n"
 			+ "|-------------|--------|--------|--------|--------|------------|--------|\n";
 		foreach(var h in SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[])
 		{
 			inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp).ToString("yyyy-MMM-dd")} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n";
 		}
-		inputs += "\n";
 
 		return inputs;
 	}

@@ -42,6 +42,7 @@ public class AIHelper
 		var timestampEnd = DateTimeOffset.UtcNow;
 
 		var completion = aiResponse.Candidates?[0].Content?.Parts?[0].Text ?? null;
+		Console.WriteLine($"[DEBUG] Gemini Chat: {aiResponse.PromptFeedback?.BlockReason} / IsError: {aiResponse.PromptFeedback?.BlockReason != null || string.IsNullOrEmpty(completion)}\n{completion}");
 		return new SymbolAnalysisResp
 		{
 			TotalTimeMs = (int)(timestampEnd - timestampStart).TotalMilliseconds,
@@ -64,6 +65,7 @@ public class AIHelper
 		});
 		var timestampEnd = DateTimeOffset.UtcNow;
 		var completion = aiResponse.Content.Count > 0 ? aiResponse.Content.Last().Text : null;
+		Console.WriteLine($"[DEBUG] OpenAI Chat: {aiResponse.FinishReason} / IsError: {aiResponse.FinishReason != ChatFinishReason.Stop || string.IsNullOrEmpty(completion)}\n{completion}");
 		return new SymbolAnalysisResp
 		{
 			TotalTimeMs = (int)(timestampEnd - timestampStart).TotalMilliseconds,

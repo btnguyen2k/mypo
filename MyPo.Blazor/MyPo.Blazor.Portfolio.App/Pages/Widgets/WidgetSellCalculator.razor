@@ -23,7 +23,8 @@
 			<div class="col-md-4 col-sm-12">
 				<label for="numUnits" class="form-label">Num Units:</label>
 				<div class="input-group input-group-sm">
-					<input type="number" min="1" step="1" class="form-control" id="numUnits" placeholder="Units to sell" @bind="NumUnits" />
+					<input type="number" min="1" step="0.1" class="form-control" id="numUnits" placeholder="Units to sell"
+						value="@NumUnits.ToString(numDecimals)" @onchange="(e)=>{NumUnits=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
 				</div>
 			</div>
 			<div class="col-md-4 col-sm-12">
@@ -80,7 +81,7 @@
 				<label for="pnl" class="form-label">P/L:</label>
 				<div class="input-group input-group-sm">
 					<span class="input-group-text">💵</span>
-					<input type="text" class="form-control fw-bolder @(pnl>=0?"text-success":"text-danger")" id="pnl" disabled value="@(pnl.ToString(numDecimals))"/>
+					<input type="text" class="form-control fw-bolder @(pnl>=0?"text-success":"text-danger")" id="pnl" disabled value="@((pnl>0?"+":"")+pnl.ToString(numDecimals)) (@((pnl>0?"+":"")+pnlPercent.ToString("P2")))"/>
 				</div>
 			</div>
 		</div>
@@ -108,6 +109,7 @@
 	[Parameter]
 	public decimal OwningAvgPrice { get; set; } = 80m;
 	private decimal pnl => (EffectiveUnitPrice - OwningAvgPrice) * NumUnits;
+	private decimal pnlPercent => OwningAvgPrice > 0 ? (EffectiveUnitPrice / OwningAvgPrice - 1) : 0;
 	private decimal MinValue => numDecimals switch
 	{
 		"N0" => 1m,

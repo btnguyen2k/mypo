@@ -133,8 +133,12 @@ public partial class AIController : ApiBaseController
 		}
 
 		var prompt = $"""
-		Context and Task: I am competing in a high-performance trading game using real stocks.
-		Primary objective: MAXIMIZE 3-month expected return while controlling probability of >25% drawdown.
+		# CONTEXT AND TASK
+
+		I am competing in a high-performance trading game using real stocks.
+
+		Primary objective: MAXIMIZE 3-month to 6-month expected return while controlling probability of >25% drawdown ≤ 35%.
+
 		Date: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} UTC.
 
 		Analyze {symbolCode} using the provided data.
@@ -159,15 +163,27 @@ public partial class AIController : ApiBaseController
 		- Anchoring bias
 		- Unquantified statements
 
-		Neutral stance only allowed if Expected Value ≈ 0.
+		Neutral stance allowed ONLY if:
+		- 3M Expected Value between -5% and +5%
+		AND
+		- No asymmetry >1.5x detected.
 
-		---
+		Otherwise a decisive allocation is mandatory.
 
-		# RAW INPUT DATA (DO NOT INTERPRET)
+		# RAW INPUT DATA (IMMUTABLE)
+
+		All company-specific data MUST be pasted between the markers below.
+		Do NOT reinterpret or modify inside the block.
+
+		====================================================
+		============= RAW INPUT DATA (IMMUTABLE) ===========
+		====================================================
 
 		{req.Inputs}
 
-		---
+		====================================================
+		================ END RAW INPUT DATA ================
+		====================================================
 
 		# Analytical Framework Rules
 
@@ -196,6 +212,30 @@ public partial class AIController : ApiBaseController
 		Expected Value > +8% over timeframe
 		OR downside asymmetry > 1.8x upside risk
 
+		## DECISION STANDARD
+
+		Actionable ONLY if at least one:
+		- 3M Expected Value > +8%
+		- 6M Expected Value > +15%
+		- Upside asymmetry ≥ 1.8x downside risk
+
+		If none met → Capital must be redeployed.
+
+		---
+
+		# REGIME CLASSIFICATION (MANDATORY)
+
+		Classify current environment:
+		- Risk-on
+		- Risk-off
+		- Liquidity expansion
+		- Liquidity contraction
+		- Technical capitulation
+
+		Assign probability to each.
+
+		Explain impact on {symbolCode} if applicable.
+
 		---
 
 		# REQUIRED CALCULATIONS
@@ -211,8 +251,25 @@ public partial class AIController : ApiBaseController
 		- PEG (normalized growth)
 		- % from 52W high/low
 		- MA slope bias (short vs long trend)
-		- Volume deviation vs 30D avg
-		- Net Debt / EBITDA
+		- Volume anomaly factor (vs 30D avg)
+		- Volatility-adjusted downside (Beta x market stress assumption)
+		- Kelly-optimal position sizing (based on EV and downside probability)
+
+		---
+
+		# ABNORMAL EVENT DETECTION (MANDATORY)
+
+		If:
+		- >10% 1-day move
+		- >15% 3-day move
+		- Volume >2x 30D avg
+
+		Then:
+		- Identify anomaly
+		- Quantify deviation
+		- Hypothesize cause
+		- Retrieve web evidence if possible
+		- Estimate forward price impact (probability weighted)
 
 		---
 
@@ -221,59 +278,16 @@ public partial class AIController : ApiBaseController
 		## 1. Executive Summary
 		- Conviction Score (0-100)
 		- Risk Rating (Low / Moderate / High / Extreme)
-		- Buy/Sell/Hold (1-3M, 3-6M, 12M+)
+		- 🟢 Buy / 🔴 Sell / 🟡 Hold (1-3M, 3-6M, 12M+)
 		- 1-line quantified thesis
 		- Primary edge: Fundamental or Technical
-		- Expected 3M return (%)
+		- Expected 3M/6M return (%)
 		- Probability of >25% drawdown (%)
+		- Optimal position size (% capital)
 
 		---
 
-		## 2. Quantitative Snapshot
-		Table:
-		- Raw metrics
-		- Derived metrics
-		- Valuation positioning vs sector
-		- Capital efficiency indicators
-
-		---
-
-		## 3. Forward Earnings Model
-		Project:
-		- Revenue (base, bull, bear)
-		- EPS trajectory
-		- Margin expansion/compression
-		- Sensitivity table (growth vs margin impact)
-
-		---
-
-		## 4. Fundamental Analysis
-		- Revenue durability (contract-based? cyclicality?)
-		- Margin sustainability (operating leverage quantified)
-		- Balance sheet stress test (Net Debt / EBITDA scenarios)
-		- Return profile inference
-		- % Valuation mispricing vs peers (quantified)
-
-		---
-
-		## 5. Technical Structure
-		- Trend regime (short / medium / long)
-		- Breakdown or accumulation?
-		- RSI regime shift
-		- Price/Volume anomaly detection
-		- Volatility-adjusted downside risk (Beta applied)
-
-		---
-
-		## 6. Strengths (Ranked by Impact)
-
-		## 7. Weaknesses (Ranked by Severity)
-
-		## 8. Critical Risks (Probability-Weighted)
-
-		---
-
-		## 9. Price Scenario Matrix
+		## 2. Price Scenario Matrix
 
 		For each timeframe (1M, 3M, 6M):
 
@@ -285,7 +299,7 @@ public partial class AIController : ApiBaseController
 
 		---
 
-		## 10. Fair Value Estimation
+		## 3. Fair Value Estimation
 
 		Use minimum TWO methods:
 		1. Forward normalized P/E
@@ -300,7 +314,7 @@ public partial class AIController : ApiBaseController
 
 		---
 
-		## 11. Optimal Trading Zones
+		## 4. Optimal Trading Zones
 
 		Define:
 		- High conviction accumulation
@@ -310,9 +324,9 @@ public partial class AIController : ApiBaseController
 
 		---
 
-		## 12. Trading Game Strategy
+		## 5. Trading Game Strategy
 
-		{(req.OwningAmount!=null && req.OwningAveragePrice!=null ? ("Current position: Own " + req.OwningAmount + " shares at average " + req.OwningAveragePrice + ".") : "")}
+		{(req.OwningAmount!=null && req.OwningAveragePrice!=null ? ("Current position: Own " + req.OwningAmount.Value.ToString("F2") + " shares at average " + req.OwningAveragePrice.Value.ToString("F2") + ".") : "")}
 
 		Evaluate hold vs sell using FORWARD EXPECTED VALUE (ignore anchoring bias).
 
@@ -329,23 +343,56 @@ public partial class AIController : ApiBaseController
 
 		---
 
+		## 6. Quantitative Snapshot
+		Table:
+		- Raw metrics
+		- Derived metrics
+		- Valuation positioning vs sector
+		- Capital efficiency indicators
+
+		---
+
+		## 7. Forward Earnings Model
+		Project:
+		- Revenue (base, bull, bear)
+		- EPS trajectory
+		- Margin expansion/compression
+		- Sensitivity table (growth vs margin impact)
+
+		---
+
+		## 8. Fundamental Analysis
+		- Revenue durability (contract-based? cyclicality?)
+		- Margin sustainability (operating leverage quantified)
+		- Balance sheet stress test (Net Debt / EBITDA scenarios)
+		- Return profile inference
+		- % Valuation mispricing vs peers (quantified)
+
+		---
+
+		## 9. Technical Structure
+		- Trend regime (short / medium / long)
+		- Breakdown or accumulation?
+		- RSI regime shift
+		- Price/Volume anomaly detection
+		- Volatility-adjusted downside risk (Beta applied)
+
+		---
+
+		## 10. Strengths (Ranked by Impact)
+
+		## 11. Weaknesses (Ranked by Severity)
+
+		## 12. Critical Risks (Probability-Weighted)
+
+		---
+
 		# Conflict Resolution Rule
 
 		If fundamentals and technicals disagree:
 		- Quantify statistical edge
 		- State which dominates decision
 		- Justify using expected value math
-
-		---
-
-		# Abnormality Rule
-
-		If abnormal event detected:
-		- Identify anomaly
-		- Quantify deviation from normal
-		- Hypothesize cause
-		- Retrieve web evidence if possible
-		- Estimate price impact
 
 		---
 
