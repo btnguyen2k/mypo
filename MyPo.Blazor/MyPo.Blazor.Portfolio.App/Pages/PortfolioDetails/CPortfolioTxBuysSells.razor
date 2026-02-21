@@ -284,13 +284,13 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" @bind="Tx.Price" disabled="@Tx.IsSettled" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" autocomplete="off" @bind="Tx.Price" disabled="@Tx.IsSettled" />
 							<label for="txPrice">Price (*):</label>
 						</div>
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" autocomplete="off" @bind="Tx.Quantity" disabled="@Tx.IsSettled" @bind:after="AutoGenTxNotes" />
 							<label for="txQuantity">Quantity (*):</label>
 						</div>
 					</div>
@@ -298,19 +298,19 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx" disabled="@Tx.IsSettled" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" autocomplete="off" @bind="Tx.FeeTx" disabled="@Tx.IsSettled" />
 							<label for="txFeeTx">Transaction Fee:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax" disabled="@Tx.IsSettled" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" autocomplete="off" @bind="Tx.FeeTax" disabled="@Tx.IsSettled" />
 							<label for="txFeeTax">Tax:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther" disabled="@Tx.IsSettled" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Other Fee" autocomplete="off" @bind="Tx.FeeOther" disabled="@Tx.IsSettled" />
 							<label for="txFeeOther">Other Fee:</label>
 						</div>
 					</div>
@@ -398,13 +398,13 @@
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" @bind="Tx.Price" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txPrice" aria-label="Price" autocomplete="off" @bind="Tx.Price" />
 							<label for="txPrice">Price (*):</label>
 						</div>
 					</div>
 					<div class="col-3">
 						<div class="form-floating">
-							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" @bind="Tx.Quantity" @bind:after="AutoGenTxNotes" />
+							<input type="number" min="0" step="1" class="form-control" id="txQuantity" aria-label="Quantity" autocomplete="off" @bind="Tx.Quantity" @bind:after="AutoGenTxNotes" />
 							<label for="txQuantity">Quantity (*):</label>
 						</div>
 					</div>
@@ -412,19 +412,19 @@
 				<div class="row mb-3 align-items-center">
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" @bind="Tx.FeeTx" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTx" aria-label="Transaction Fee" autocomplete="off" @bind="Tx.FeeTx" />
 							<label for="txFeeTx">Transaction Fee:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" @bind="Tx.FeeTax" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeTax" aria-label="Tax" autocomplete="off" @bind="Tx.FeeTax" />
 							<label for="txFeeTax">Tax:</label>
 						</div>
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Tax" @bind="Tx.FeeOther" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txFeeOther" aria-label="Other Fee" autocomplete="off" @bind="Tx.FeeOther" />
 							<label for="txFeeOther">Other Fee:</label>
 						</div>
 					</div>
