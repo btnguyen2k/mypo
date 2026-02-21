@@ -1,32 +1,10 @@
 @using Markdig
 @using System.Text.RegularExpressions
 
-<style>
-/* Hide everything by default when printing */
-@@media print {
-    body * {
-        visibility: hidden !important;
-    }
-
-    /* Show only the print area and its children */
-    #printArea, #printArea.*, #printArea * {
-        visibility: visible !important;
-    }
-
-    /* Position the print area at the top-left for printing */
-    #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-}
-</style>
-
 @if (!string.IsNullOrWhiteSpace(Content))
 {
-	<div id="printArea" class="cotainer">
-		@((MarkupString)Markdown.ToHtml(SanitizeMarkdown(Content), pipeline))
+	<div class="cotainer">
+		@((MarkupString)RenderMarkdown())
 	</div>
 }
 
@@ -38,8 +16,19 @@
 
 	private static string SanitizeMarkdown(string markdown)
 	{
+		// remove leading ```markdown
 		markdown = Regex.Replace(markdown, @"^\s*`+markdown\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+		// and trailing ```
 		markdown = Regex.Replace(markdown, @"[\s`]+$", string.Empty);
 		return markdown;
+	}
+
+	private string RenderMarkdown()
+	{
+		var markdown = SanitizeMarkdown(Content??string.Empty);
+		var doc = Markdown.Parse(markdown, pipeline);
+		var html = Markdown.ToHtml(doc, pipeline);
+		html = html.Replace("<table>", "<table class=\"table table-sm\">");
+		return html;
 	}
 }

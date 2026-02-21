@@ -41,13 +41,7 @@ public class ExternalLoginBuilder
 	public ExternalLoginManager Build()
 	{
 		var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ExternalLoginBuilder>();
-		IDictionary<string, ExternalLoginProviderConfig> finalProviders = new Dictionary<string, ExternalLoginProviderConfig>();
-
-		if (ProvidersConfig.Count == 0 && Providers.Count == 0)
-		{
-			logger.LogWarning("No external login providers configuration provided.");
-			return new ExternalLoginManager(ServiceProvider, finalProviders);
-		}
+		Dictionary<string, ExternalLoginProviderConfig> finalProviders = [];
 
 		foreach (var (providerName, providerConfig) in ProvidersConfig)
 		{
@@ -57,15 +51,49 @@ public class ExternalLoginBuilder
 					: null);
 			if (pconfig != null)
 			{
+				var clientId = pconfig.TryGetValue("ClientId", out var cid) ? cid : null;
+				var clientSecret = pconfig.TryGetValue("ClientSecret", out var cs) ? cs : null;
+				if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+				{
+					if (ThrownOnInvalidConfig)
+					{
+						throw new InvalidOperationException($"External login provider '{providerName}' configuration is invalid. ClientId and ClientSecret are required.");
+					}
+					else
+					{
+						logger.LogWarning("External login provider '{ProviderName}' configuration is invalid. ClientId and ClientSecret are required.", providerName);
+						continue;
+					}
+				}
 				finalProviders[providerName] = pconfig;
 			}
 		}
+
 		foreach (var (providerName, providerConfig) in Providers)
 		{
 			if (providerConfig != null)
 			{
+				var clientId = providerConfig.TryGetValue("ClientId", out var cid) ? cid : null;
+				var clientSecret = providerConfig.TryGetValue("ClientSecret", out var cs) ? cs : null;
+				if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+				{
+					if (ThrownOnInvalidConfig)
+					{
+						throw new InvalidOperationException($"External login provider '{providerName}' configuration is invalid. ClientId and ClientSecret are required.");
+					}
+					else
+					{
+						logger.LogWarning("External login provider '{ProviderName}' configuration is invalid. ClientId and ClientSecret are required.", providerName);
+						continue;
+					}
+				}
 				finalProviders[providerName] = providerConfig;
 			}
+		}
+
+		if (finalProviders.Count == 0)
+		{
+			logger.LogWarning("No external login providers configuration provided.");
 		}
 
 		return new ExternalLoginManager(ServiceProvider, finalProviders, HttpClient);

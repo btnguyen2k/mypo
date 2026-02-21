@@ -15,12 +15,13 @@ public sealed partial class PortfolioDbContextRepository
 	}
 
 	/// <inheritdoc />
-	public async ValueTask<SymbolAnalysisEntity?> GetSymbolAnalysisAsync(string ownerId, string marketId, string itemType, string itemCode, CancellationToken cancellationToken = default)
+	public async ValueTask<SymbolAnalysisEntity?> GetSymbolAnalysisAsync(string ownerId, string marketId, string itemType, string itemCode, string analysisType, CancellationToken cancellationToken = default)
 	{
 		return await SymbolAnalysisStore.AsNoTracking().FirstOrDefaultAsync(e => e.OwnerId == ownerId
 			&& e.MarketId == marketId.ToUpper()
 			&& e.ItemType == itemType.ToUpper()
-			&& e.ItemCode == itemCode.ToUpper(),
+			&& e.ItemCode == itemCode.ToUpper()
+			&& e.AnalysisType == analysisType.ToUpper(),
 			cancellationToken: cancellationToken);
 	}
 

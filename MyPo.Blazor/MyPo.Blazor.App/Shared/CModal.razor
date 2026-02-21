@@ -24,7 +24,9 @@ Modal dialog with a button to close:
     data-coreui-backdrop="static"
     data-coreui-keyboard="true"
     tabindex="-1"
-    aria-labelledby="staticBackdropLiveLabel" aria-modal="@modal" style="display:@display;">
+    aria-labelledby="staticBackdropLiveLabel" aria-modal="@modal" style="display:@display;"
+	id="@id"
+  >
   <div class="modal-dialog modal-dialog-scrollable @cssClassCentered">
     <div class="modal-content">
       <div class="modal-header">
@@ -45,6 +47,9 @@ Modal dialog with a button to close:
 @code {
     [Parameter]
     public string title { get; set; } = "Modal title";
+
+	[Parameter]
+	public string id { get; set; } = $"modal-{Guid.NewGuid()}";
 
     /// <summary>
     /// Set to true to center the modal vertically and horizontally. Default is true.

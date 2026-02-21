@@ -141,7 +141,7 @@
 					</div>
 					<div class="col-4">
 						<div class="form-floating">
-							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" @bind="Tx.TxValue" @bind:after="AutoGenTxNotes" />
+							<input type="number" min="0.00" step="0.01" class="form-control" id="txValue" aria-label="Tx Value" autocomplete="off" @bind="Tx.TxValue" @bind:after="AutoGenTxNotes" />
 							<label for="txValue">Tx Value (*):</label>
 						</div>
 					</div>

@@ -1,5 +1,6 @@
 {
   "Gemini": {
+    "Capacity": {},
     "FreeTier": {
       "ApiKey": "",
       "Models": ["gemini-3-flash-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
@@ -15,6 +16,23 @@
   },
 
   "AzureOpenAI": {
+    "Capacity": {
+      "mistral-large-3": {
+        "ApiType": "Chat"
+      },
+      "o4-mini": {
+        "ApiType": "Response",
+        "ToolChain": [{"type": "web_search_preview"}]
+      },
+      "gpt-5-mini": {
+        "ApiType": "Response",
+        "ToolChain": [{"type": "web_search_preview"}]
+      },
+      "gpt-5.2-chat": {
+        "ApiType": "Response",
+        "ToolChain": [{"type": "web_search_preview"}]
+      }
+    },
     "FreeTier": {
       "ApiKey": "",
       "Endpoint": "",
