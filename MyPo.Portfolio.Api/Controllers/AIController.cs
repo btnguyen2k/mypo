@@ -1,5 +1,4 @@
 ﻿using Google.GenAI;
-using Google.GenAI.Types;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -9,8 +8,7 @@ using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 using MyPo.Shared.Api.Controller;
-using OpenAI.Chat;
-
+using MyPortfolio.Api.Utils;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -43,9 +41,9 @@ public partial class AIController : ApiBaseController
 		return ResponseOk(result);
 	}
 
-	private async ValueTask<SymbolAnalysisEntity?> GetOrCreateAsync(string ownerId, string marketId, string itemType, string itemCode)
+	private async ValueTask<SymbolAnalysisEntity?> GetOrCreateAnalysisRecordAsync(string ownerId, string marketId, string itemType, string itemCode)
 	{
-		var existingAnalysis = await PortfolioRepository.GetSymbolAnalysisAsync(ownerId, marketId, itemType, itemCode);
+		var existingAnalysis = await PortfolioRepository.GetSymbolAnalysisAsync(ownerId, marketId, itemType, itemCode, SymbolAnalysisEntity.ANALYSIS_TYPE_FULL);
 		existingAnalysis ??= await PortfolioRepository.CreateSymbolAnalysisAsync(new SymbolAnalysisEntity
 			{
 				Id = Guid.NewGuid().ToString(),
@@ -53,105 +51,33 @@ public partial class AIController : ApiBaseController
 				MarketId = marketId.ToUpper(),
 				ItemType = itemType.ToUpper(),
 				ItemCode = itemCode.ToUpper(),
+				AnalysisType = SymbolAnalysisEntity.ANALYSIS_TYPE_FULL,
 				AnalysisTime = DateTimeOffset.MinValue,
 			});
 		return existingAnalysis;
 	}
 
-	private async Task UpdateAnalysisRecordAsync(SymbolAnalysisEntity existingAnalysis, string aiVendor, string aiTier, string aiModel, string prompt, string completion, int totalTimeMs, int promptTokens, int thoughtTokens, int completionTokens)
+	private async Task UpdateAnalysisRecordAsync(SymbolAnalysisEntity existingAnalysis, string aiVendor, string aiTier, string aiModel, string prompt, SymbolAnalysisResp analysisResp)
 	{
-		existingAnalysis.Metadata ??= new SymbolAnalysisMetadata
+		existingAnalysis.Metadata = new()
 		{
 			AIVendor = aiVendor,
 			AITier = aiTier,
 			AIModel = aiModel,
+			TotalTimeMs = analysisResp.TotalTimeMs,
+			PromptTokens = analysisResp.NumTokensPrompt,
+			ThoughtTokens = analysisResp.NumTokensThought,
+			CompletionTokens = analysisResp.NumTokensResponse
 		};
-		existingAnalysis.Metadata.TotalTimeMs = totalTimeMs;
-		existingAnalysis.Metadata.PromptTokens = promptTokens;
-		existingAnalysis.Metadata.ThoughtTokens = thoughtTokens;
-		existingAnalysis.Metadata.CompletionTokens = completionTokens;
 		existingAnalysis.AnalysisPrompt = prompt;
-		existingAnalysis.AnalysisResult = completion;
+		existingAnalysis.AnalysisResult = analysisResp.Response;
 		existingAnalysis.AnalysisTime = DateTimeOffset.UtcNow;
-		// using var scope = Services.CreateScope();
-		// var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
-		await PortfolioRepository.UpdateSymbolAnalysisAsync(existingAnalysis);
-	}
-
-	private async Task<ActionResult<ApiResp<SymbolAnalysisResp>>> AnalyzeSymbolWithGemini(SymbolAnalysisReq req, AIVendor aiVendor, string prompt, SymbolAnalysisEntity existingAnalysis, DateTimeOffset timestampStart)
-	{
-		var geminiClient = Services.GetRequiredKeyedService<Client>($"{req.AIVendor}:{req.AITier}");
-		var model = string.IsNullOrEmpty(req.AIModel) ? aiVendor.TieredModels[req.AITier][0] : req.AIModel;
-		var aiResponse = await geminiClient.Models.GenerateContentAsync(
-			model: model,
-			contents:
-			[
-				new() {
-					Role = "user",
-					Parts =
-					[
-						new() { Text = prompt },
-					]
-				},
-			],
-			config: new GenerateContentConfig
-			{
-				Temperature = 0.0f,
-				MaxOutputTokens = req.MaxOutputTokens > 0 ? req.MaxOutputTokens : null,
-				ThinkingConfig = new ThinkingConfig
-				{
-					ThinkingLevel = ThinkingLevel.HIGH,
-				}
-			}
-		);
-		var timestampEnd = DateTimeOffset.UtcNow;
-		var completion = aiResponse.Candidates?[0].Content?.Parts?[0].Text ?? "No analysis result";
-		var result = new SymbolAnalysisResp
+		var dbResult = await PortfolioRepository.UpdateSymbolAnalysisAsync(existingAnalysis);
+		if (dbResult == null)
 		{
-			TotalTimeMs = (int)(timestampEnd - timestampStart).TotalMilliseconds,
-			NumTokensPrompt = aiResponse.UsageMetadata?.PromptTokenCount ?? 0,
-			NumTokensThought = aiResponse.UsageMetadata?.ThoughtsTokenCount ?? 0,
-			NumTokensResponse = aiResponse.UsageMetadata?.CandidatesTokenCount ?? 0,
-			Response = completion,
-		};
-		if (aiResponse.Candidates != null && aiResponse.Candidates.Count > 0)
-		{
-			await UpdateAnalysisRecordAsync(existingAnalysis, req.AIVendor, req.AITier, model, prompt, completion, result.TotalTimeMs, result.NumTokensPrompt, result.NumTokensThought, result.NumTokensResponse);
-			// await Task.Run(() => UpdateAnalysisRecord(existingAnalysis, req.AIVendor, req.AITier, model, prompt, completion, result.TotalTimeMs, result.NumTokensPrompt, result.NumTokensThought, result.NumTokensResponse));
+			var logger = Services.GetService<ILogger<AIController>>();
+			logger?.LogError("Failed to update analysis record for {ItemCode}", existingAnalysis.ItemCode);
 		}
-		return ResponseOk(result);
-	}
-
-	private async Task<ActionResult<ApiResp<SymbolAnalysisResp>>> AnalyzeSymbolWithOpenAI(SymbolAnalysisReq req, AIVendor aiVendor, string prompt, SymbolAnalysisEntity existingAnalysis, DateTimeOffset timestampStart)
-	{
-		var chatClientFactory = Services.GetRequiredKeyedService<OpenAIChatClientFactory>($"{req.AIVendor}:{req.AITier}");
-		var model = string.IsNullOrEmpty(req.AIModel) ? aiVendor.TieredModels[req.AITier][0] : req.AIModel;
-		var chatClient = chatClientFactory.Create(model);
-		ChatCompletion aiResponse = await chatClient.CompleteChatAsync(
-			[
-				new UserChatMessage(prompt),
-			]);
-		var timestampEnd = DateTimeOffset.UtcNow;
-		var completion = aiResponse.Content.Count > 0 ? aiResponse.Content.Last().Text : "No analysis result";
-		var result = new SymbolAnalysisResp
-		{
-			TotalTimeMs = (int)(timestampEnd - timestampStart).TotalMilliseconds,
-			NumTokensPrompt = aiResponse.Usage.InputTokenCount,
-			NumTokensThought = 0,
-			NumTokensResponse = aiResponse.Usage.OutputTokenCount,
-			Response = completion,
-		};
-		if (aiResponse.FinishReason == ChatFinishReason.Stop)
-		{
-			await UpdateAnalysisRecordAsync(existingAnalysis, req.AIVendor, req.AITier, model, prompt, completion, result.TotalTimeMs, result.NumTokensPrompt, result.NumTokensThought, result.NumTokensResponse);
-			// await Task.Run(() => UpdateAnalysisRecord(existingAnalysis, req.AIVendor, req.AITier, model, prompt, completion, result.TotalTimeMs, result.NumTokensPrompt, result.NumTokensThought, result.NumTokensResponse));
-		}
-		return ResponseOk(result);
-	}
-
-	private async Task<ActionResult<ApiResp<SymbolAnalysisResp>>> AnalyzeSymbolWithAzureOpenAI(SymbolAnalysisReq req, AIVendor aiVendor, string prompt, SymbolAnalysisEntity existingAnalysis, DateTimeOffset timestampStart)
-	{
-		return await AnalyzeSymbolWithOpenAI(req, aiVendor, prompt, existingAnalysis, timestampStart);
 	}
 
 	/// <summary>
@@ -179,7 +105,7 @@ public partial class AIController : ApiBaseController
 		}
 
 		var currentUserId = GetUserID(IdentityOptions);
-		var existingAnalysis = await GetOrCreateAsync(
+		var existingAnalysis = await GetOrCreateAnalysisRecordAsync(
 			ownerId: currentUserId ?? string.Empty,
 			marketId: marketId,
 			itemType: AssetEntity.ASSET_TYPE_STOCK,
@@ -193,33 +119,403 @@ public partial class AIController : ApiBaseController
 		var now = DateTimeOffset.Now;
 		if (req.AIModel.Equals(existingAnalysis.Metadata?.AIModel, StringComparison.OrdinalIgnoreCase) && existingAnalysis.AnalysisTime != DateTimeOffset.MinValue && (now - existingAnalysis.AnalysisTime).TotalHours < 8)
 		{
-			// if existing analysis is not too old, return it directly without calling AI again
+			// if existing analysis is not too old, return it without calling AI again
 			var result = new SymbolAnalysisResp
 			{
+				IsError = false,
 				IsCached = true,
 				TotalTimeMs = (int)(now - timestampStart).TotalMilliseconds,
 				NumTokensPrompt = existingAnalysis.Metadata?.PromptTokens ?? 0,
 				NumTokensThought = existingAnalysis.Metadata?.ThoughtTokens ?? 0,
 				NumTokensResponse = existingAnalysis.Metadata?.CompletionTokens ?? 0,
-				Response = existingAnalysis.AnalysisResult ?? "No analysis result"
+				Response = existingAnalysis.AnalysisResult ?? "<No analysis result>"
 			};
 			return ResponseOk(result);
 		}
 
-		var prompt = $"Context and Task: I am playing a stock trading game. There is a hypothesis stock {symbolCode} with the information provided in the next section. Help me analyze it.\n\n"
-			+ $"Inputs:\n{req.Inputs}\n\n"
-			+ $"Expected Outputs:\n{req.ExpectedOutputs}\n\n"
-			+ $"Provide Analysis for two scenarios: short-term ranking competition and long-term portfolio scoring.\n"
-			+ $"Output should be in {req.OutputFormat} format with clear sections and bullet points for easy reading. Enclose response between ```markdown and ```, there must be no additonal next after the ending ```.\n"
-			+ $"Highlight key insights and actionable recommendations using CSS class 'text-danger' (we all know about CSS, do not output instructions on how to use CSS/HTML/Styling)."
-			;
+		var prompt = $"""
+		# CONTEXT AND TASK
 
-		return req.AIVendor switch
+		I am competing in a high-performance trading game using real stocks.
+
+		Primary objective: MAXIMIZE 3-month to 6-month Expected Value (EV).
+		Subject to: Probability of >25% drawdown ≤ 35%.
+
+		Explicit Expected Value math: EV = Σ (Probability_i x Return_i)
+		Where:
+		- Return_i is % return from CURRENT PRICE
+		- Σ Probabilities must equal 100%
+
+		Date: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} UTC.
+
+		Analyze {symbolCode} using the provided data.
+
+		If critical macro, peer, contract backlog, or sector multiple data is missing:
+		- Retrieve latest available web data.
+		- If unavailable, explicitly state assumptions.
+		- Quantify sensitivity impact of those assumptions.
+
+		You must think like a professional portfolio manager allocating real capital under uncertainty.
+
+		All conclusions must:
+		- Reference specific numerical metrics
+		- Quantify magnitude and directional impact
+		- Assign probability weighting
+		- Provide confidence level (%)
+		- Be justified using EV math
+
+		Avoid:
+		- Generic commentary
+		- Mechanical metric listing without interpretation
+		- Anchoring bias
+		- Unquantified statements
+
+		Neutral stance allowed ONLY if:
+		- 3M Expected Value between -5% and +5%
+		AND
+		- No asymmetry >1.5x detected.
+
+		Otherwise a decisive allocation is mandatory.
+
+		# DATA INTEGRITY CHECK
+
+		1. Identify missing financial fields.
+		2. Classify data quality:
+		- Complete
+		- Partial
+		- Severely limited
+		3. State modeling constraints caused by missing data.
+		4. Select modeling hierarchy accordingly.
+
+		If EPS ≤ 0:
+		- Do NOT use P/E as primary valuation metric.
+		- Shift to EV-based or asset-based methods.
+
+		If revenue/EBITDA missing:
+		- Use technical + macro regime dominance model.
+		- Clearly state valuation limitations.
+
+		---
+
+		# RAW INPUT DATA (IMMUTABLE)
+
+		All company-specific data MUST be pasted between the markers below.
+		Do NOT reinterpret or modify inside the block.
+
+		Rules:
+		1. Do NOT modify or reinterpret raw data.
+		2. Do NOT assume missing financial data.
+		3. If data is missing:
+		- Explicitly state: "Metric not computable due to missing X."
+		4. Web retrieval allowed ONLY for:
+		- Macro regime
+		- Peer valuation multiples
+		- Confirmed abnormal events
+		5. All externally retrieved data must be labeled:
+		"External Data Assumption:"
+		6. No silent assumptions allowed.
+
+		====================================================
+		============= RAW INPUT DATA (IMMUTABLE) ===========
+		====================================================
+
+		{req.Inputs}
+
+		====================================================
+		================ END RAW INPUT DATA ================
+		====================================================
+
+		---
+
+		# ASSET-STAGE CLASSIFICATION (MANDATORY)
+
+		Classify company as one of:
+		- Profitable operator
+		- Pre-profit growth
+		- Asset developer
+		- Explorer / resource option
+		- etc
+
+		If "Asset developer" or "Explorer":
+		Override valuation dominance to:
+		1. Commodity regime
+		2. Cash runway
+		3. Dilution probability
+		4. Technical structure
+		5. Peer optionality valuation
+
+		---
+
+		# MODELING HIERARCHY
+
+		If full financial data available:
+			1. Forward normalized P/E
+			2. Sector-adjusted EV/EBITDA
+			3. 3-stage DCF-lite
+
+		If partial financial data:
+			1. Relative valuation vs peers
+			2. Price momentum regime model
+			3. Risk-adjusted technical framework
+
+		If minimal financial data:
+			1. Technical regime dominance
+			2. Volatility-adjusted expected return modeling
+			3. Position sizing optimization
+
+		# Analytical Framework Rules
+
+		1. Growth Normalization Rule:
+		If earnings growth >200%, assess base-effect distortion.
+		Use normalized growth assumption for PEG and forward modeling.
+
+		2. Capital Structure Rule:
+		If Net Debt / EBITDA > 2.5x → prioritize EV-based valuation.
+		If < 1.5x → equity valuation acceptable.
+
+		3. Valuation Hierarchy:
+		Primary: Forward normalized P/E
+		Secondary: Sector-adjusted EV/EBITDA
+		Optional: 3-stage DCF-lite
+
+		4. Peer Selection Rule:
+		Select minimum 2 comparable companies in the same industry/sector:
+		- Similar market cap range
+		- Similar margin structure
+		- Similar geographic exposure
+		- Check global companies if domestic peers unavailable
+
+		5. Statistical Edge Rule:
+		A decision is actionable only if:
+		Expected Value > +8% over timeframe
+		OR downside asymmetry > 1.8x upside risk
+
+		## DECISION STANDARD
+
+		Actionable ONLY if:
+
+		3M EV ≥ +8%
+		OR
+		6M EV ≥ +15%
+		AND
+		Drawdown probability ≤ 35%
+
+		Otherwise: Capital redeployment required.
+
+		---
+
+		# REGIME CLASSIFICATION (IF APPLICABLE)
+
+		Classify current environment:
+		- Risk-on
+		- Risk-off
+		- Liquidity expansion
+		- Liquidity contraction
+		- Technical capitulation
+
+		Assign probability to each.
+
+		Explain impact on {symbolCode} if applicable.
+
+		---
+
+		# CASH RUNWAY ANALYSIS (MANDATORY IF PRE-PROFIT)
+
+		Compute:
+		- Net cash
+		- Quarterly burn (estimate if missing)
+		- Runway (quarters)
+		- Dilution probability within 6M
+		- Estimated dilution magnitude
+
+		Adjust EV accordingly.
+
+		---
+
+		# REQUIRED CALCULATIONS (ONLY IF DATA EXISTS)
+
+		Before conclusions, compute:
+
+		- Net debt
+		- Enterprise value
+		- EV/EBITDA
+		- Revenue per share
+		- Earnings yield
+		- Implied growth from P/E (Gordon-derived)
+		- PEG (normalized growth)
+		- % from 52W high/low
+		- MA slope bias (short vs long trend)
+		- Volume anomaly factor (vs 30D avg)
+		- Volatility-adjusted downside (Beta x market stress assumption)
+		- Kelly-optimal position sizing (based on EV and downside probability)
+
+		If data unavailable → explicitly state: "Metric not computable due to missing X."
+
+		---
+
+		# ABNORMAL EVENT DETECTION (MANDATORY)
+
+		If:
+		- >10% 1-day move
+		- 1-day move > 2x 20D avg daily move
+		- >15% 3-day move
+		- 3-day move > 2.5x 20D avg 3D move
+		- Volume >2x 30D avg
+
+		Then:
+		- Identify anomaly
+		- Quantify deviation
+		- Hypothesize cause
+		- Retrieve web evidence if possible
+		- Estimate forward price impact (probability weighted)
+
+		---
+
+		# OUTPUT STRUCTURE (STRICT)
+
+		## 1. Executive Summary
+		- Conviction Score (0-100)
+		- Risk Rating (Low / Moderate / High / Extreme)
+		- 🟢 Buy / 🔴 Sell / 🟡 Hold (1-3M, 3-6M, 12M+)
+		- 1-line quantified thesis
+		- Primary edge: Fundamental or Technical
+		- Expected 3M/6M return (%)
+		- Probability of >25% drawdown (%)
+		- Optimal position size (% capital)
+
+		---
+
+		## 2. Price Scenario Matrix
+
+		For each timeframe (1M, 3M, 6M):
+
+		Table:
+		- Bull (price, probability, catalyst)
+		- Base (price, probability, reasoning)
+		- Bear (price, probability, risk driver)
+		- Expected Price
+
+		---
+
+		## 3. Fair Value Estimation
+
+		Use minimum TWO methods:
+		1. Forward normalized P/E
+		2. EV/EBITDA sector-adjusted
+		(Optional 3rd: DCF-lite with 3-stage growth)
+
+		Provide:
+		- Conservative FV
+		- Base FV
+		- Aggressive FV
+		- Margin of safety %
+
+		---
+
+		## 4. Optimal Trading Zones
+
+		Define:
+		- High conviction accumulation
+		- Tactical rebound
+		- Distribution zone
+		- Invalidation level (technical + fundamental breach)
+
+		---
+
+		## 5. Trading Game Strategy
+
+		{(req.OwningAmount!=null && req.OwningAveragePrice!=null ? ("Current position: Own " + req.OwningAmount.Value.ToString("F2") + " shares at average " + req.OwningAveragePrice.Value.ToString("F2") + ".") : "")}
+
+		Evaluate hold vs sell using FORWARD EXPECTED VALUE (ignore anchoring bias).
+
+		A. Aggressive leaderboard strategy
+		- Position sizing %
+		- Entry logic
+		- Exit logic
+		- Risk of ruin %
+
+		B. Risk-adjusted portfolio strategy
+		- Allocation %
+		- Hedging logic (if applicable)
+		- Capital efficiency comparison vs alternatives
+
+		---
+
+		## 6. Quantitative Snapshot
+		Table:
+		- Raw metrics
+		- Derived metrics
+		- Valuation positioning vs sector
+		- Capital efficiency indicators
+
+		---
+
+		## 7. Forward Earnings Model
+		Project:
+		- Revenue (base, bull, bear)
+		- EPS trajectory
+		- Margin expansion/compression
+		- Sensitivity table (growth vs margin impact)
+
+		---
+
+		## 8. Fundamental Analysis
+		- Revenue durability (contract-based? cyclicality?)
+		- Margin sustainability (operating leverage quantified)
+		- Balance sheet stress test (Net Debt / EBITDA scenarios)
+		- Return profile inference
+		- % Valuation mispricing vs peers (quantified)
+
+		---
+
+		## 9. Technical Structure
+		- Trend regime (short / medium / long)
+		- Breakdown or accumulation?
+		- RSI regime shift
+		- Price/Volume anomaly detection
+		- Volatility-adjusted downside risk (Beta applied)
+
+		---
+
+		## 10. Strengths (Ranked by Impact)
+
+		## 11. Weaknesses (Ranked by Severity)
+
+		## 12. Critical Risks (Probability-Weighted)
+
+		---
+
+		# Conflict Resolution Rule
+
+		If fundamentals and technicals disagree:
+		- Quantify statistical edge
+		- State which dominates decision
+		- Justify using expected value math
+
+		---
+
+		Formatting Rules:
+		- Output MUST be Markdown format and enclosed between ```markdown and ```; STRICTLY no text OUTSIDE enclosure
+		- Use tables where helpful
+		- Highlight decisive actions:
+			- 🟢 Buy
+			- 🔴 Sell
+			- 🟡 Hold
+		- No neutral stance unless mathematically unavoidable
+		""";
+
+		Console.WriteLine(prompt);
+
+		var analysisResult = req.AIVendor switch
 		{
-			AIVendor.VENDOR_GEMINI => await AnalyzeSymbolWithGemini(req, aiVendor, prompt, existingAnalysis, timestampStart),
-			AIVendor.VENDOR_OPENAI => await AnalyzeSymbolWithOpenAI(req, aiVendor, prompt, existingAnalysis, timestampStart),
-			AIVendor.VENDOR_AZURE_OPENAI => await AnalyzeSymbolWithAzureOpenAI(req, aiVendor, prompt, existingAnalysis, timestampStart),
-			_ => ResponseNoData(400, $"AI vendor '{req.AIVendor}' not supported."),// should not happen
+			AIVendor.VENDOR_GEMINI => await AIHelper.AnalyzeSymbolWithGemini(Services.GetRequiredKeyedService<Client>($"{req.AIVendor}:{req.AITier}"), req, prompt),
+			AIVendor.VENDOR_OPENAI or AIVendor.VENDOR_AZURE_OPENAI => await AIHelper.AnalyzeSymbolWithOpenAI(Services.GetRequiredKeyedService<OpenAIClientFactory>($"{req.AIVendor}:{req.AITier}"), req, prompt),
+			_ => SymbolAnalysisResp.Error,
 		};
+		if (!analysisResult.IsError)
+		{
+			await UpdateAnalysisRecordAsync(existingAnalysis, req.AIVendor, req.AITier, req.AIModel, prompt, analysisResult);
+		}
+		return ResponseOk(analysisResult);
 	}
 }

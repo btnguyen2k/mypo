@@ -14,7 +14,7 @@ public class SymbolBase
 	public string Exchange { get; set; } = string.Empty;
 }
 
-public sealed class HistoryValueDaily
+public sealed class HistoryPoint
 {
 	[JsonPropertyName("timestamp")]
 	public long Timestamp { get; set; }
@@ -22,8 +22,23 @@ public sealed class HistoryValueDaily
 	[JsonIgnore]
 	public DateTime Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).DateTime;
 
-	[JsonPropertyName("value")]
-	public decimal Value { get; set; }
+	[JsonPropertyName("open")]
+	public decimal OpenValue { get; set; }
+
+	[JsonPropertyName("close")]
+	public decimal CloseValue { get; set; }
+
+	[JsonPropertyName("high")]
+	public decimal HighValue { get; set; }
+
+	[JsonPropertyName("low")]
+	public decimal LowValue { get; set; }
+
+	[JsonPropertyName("volume")]
+	public long Volume { get; set; }
+
+	[JsonPropertyName("rsi14")]
+	public decimal RSI14 { get; set; }
 }
 
 public sealed class SymbolOverview
@@ -215,7 +230,6 @@ public sealed class StockHistory
 	[JsonPropertyName("yesterday_volume")]
 	public long YesterdayVolume { get; set; }
 
-
 	[JsonPropertyName("average_volume_30d")]
 	public long AverageVolume30d { get; set; }
 
@@ -237,8 +251,8 @@ public sealed class StockHistory
 	[JsonPropertyName("rsi14")]
 	public decimal RSI14 { get; set; }
 
-	[JsonPropertyName("rsi14_history_daily"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public List<HistoryValueDaily>? RSI14HistoryDaily { get; set; }
+	[JsonPropertyName("history_90d"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public List<HistoryPoint>? History90d { get; set; }
 }
 
 public sealed class SymbolInfo : SymbolBase

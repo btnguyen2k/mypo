@@ -5,6 +5,8 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public sealed class SymbolAnalysisEntity : Entity<string>
 {
+	public const string ANALYSIS_TYPE_FULL = "FULL";
+
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
 
@@ -16,11 +18,7 @@ public sealed class SymbolAnalysisEntity : Entity<string>
 
 	public string ItemCode { get; set; } = string.Empty;
 
-	// public string AIVendor { get; set; } = string.Empty;
-
-	// public string AITier { get; set; } = string.Empty;
-
-	// public string AIModel { get; set; } = string.Empty;
+	public string AnalysisType { get; set; } = ANALYSIS_TYPE_FULL;
 
 	public DateTimeOffset AnalysisTime { get; set; } = DateTimeOffset.UtcNow;
 
