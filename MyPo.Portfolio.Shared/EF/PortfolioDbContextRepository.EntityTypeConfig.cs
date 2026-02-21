@@ -115,9 +115,7 @@ sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfigurat
 		builder.Property(p => p.MarketId).HasColumnName("market_id").HasMaxLength(16);
 		builder.Property(p => p.ItemType).HasColumnName("item_type").HasMaxLength(16);
 		builder.Property(p => p.ItemCode).HasColumnName("item_code").HasMaxLength(16);
-		// builder.Property(p => p.AIVendor).HasColumnName("ai_vendor").HasMaxLength(32);
-		// builder.Property(p => p.AITier).HasColumnName("ai_tier").HasMaxLength(32);
-		// builder.Property(p => p.AIModel).HasColumnName("ai_model").HasMaxLength(64);
+		builder.Property(p => p.AnalysisType).HasColumnName("analysis_type");
 		builder.Property(p => p.AnalysisTime).HasColumnName("analysis_time");
 		builder.Property(p => p.AnalysisPrompt).HasColumnName("analysis_prompt");
 		builder.Property(p => p.AnalysisResult).HasColumnName("analysis_result");

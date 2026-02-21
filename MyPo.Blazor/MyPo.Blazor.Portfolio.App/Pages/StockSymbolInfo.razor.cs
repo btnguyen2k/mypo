@@ -66,60 +66,69 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private string BuildAnalysisInputs()
 	{
-		var inputs = $"## Company Classification\n"
-			+ $"- Currency: {SymbolInfo?.Currency??"USD"}\n"
-			+ $"- Quote type: {SymbolInfo?.Overview?.QuoteType??"N/A"}\n"
-			+ $"- Industry: {SymbolInfo?.Overview?.Industry??"N/A"}\n"
-			+ $"- Sector: {SymbolInfo?.Overview?.Sector??"N/A"}\n"
-			+ "\n";
+		var inputs = $"""
+		## Company Classification
 
-		inputs += $"## Financials\n"
-			+ $"- Total cash: {SymbolInfo?.Overview?.TotalCash.ToString("F0")??"N/A"}\n"
-			// + $"- Total cash per share: {SymbolInfo?.Overview?.TotalCashPerShare.ToString("F2")??"N/A"}\n"
-			+ $"- Total debt: {SymbolInfo?.Overview?.TotalDebt.ToString("F0")??"N/A"}\n"
-			// + $"- Total debt per share: {SymbolInfo?.Overview?.TotalDebtPerShare.ToString("F2")??"N/A"}\n"
-			+ $"- Total revenue: {SymbolInfo?.Overview?.TotalRevenue.ToString("F0")??"N/A"}\n"
-			// + $"- Total revenue per share: {SymbolInfo?.Overview?.TotalRevenuePerShare.ToString("F2")??"N/A"}\n"
-			+ $"- Revenue growth: {SymbolInfo?.Overview?.RevenueGrowth.ToString("P2")??"N/A"}\n"
-			+ $"- Earnings growth: {SymbolInfo?.Overview?.EarningsGrowth.ToString("P2")??"N/A"}\n"
-			+ $"- EBITDA: {SymbolInfo?.Overview?.Ebitda.ToString("F0")??"N/A"}\n"
-			+ $"- EBITDA margins: {SymbolInfo?.Overview?.EbitdaMargins.ToString("P2")??"N/A"}\n"
-			+ $"- Gross margins: {SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A"}\n"
-			+ $"- Operating margins: {SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A"}\n"
-			+ $"- Profit margins: {SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A"}\n"
-			+ "\n";
+		- Currency: {SymbolInfo?.Currency??"USD"}
+		- Quote type: {SymbolInfo?.Overview?.QuoteType??"N/A"}
+		- Industry: {SymbolInfo?.Overview?.Industry??"N/A"}
+		- Sector: {SymbolInfo?.Overview?.Sector??"N/A"}
 
-		inputs += $"## Valuation\n"
-			+ $"- Market capitalization: {SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A"}\n"
-			+ $"- Current price: {SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A"}\n"
-			+ $"- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? (SymbolInfo.StockQuote.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0") : "N/A")}\n"
-			+ $"- Trailing EPS: {SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A"}\n"
-			+ $"- Forward EPS: {SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A"}\n"
-			+ $"- Trailing P/E: {SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A"}\n"
-			+ $"- Forward P/E: {SymbolInfo?.StockQuote?.ForwardPE.ToString("F2")??"N/A"}\n"
-			+ $"- Industry P/E average: N/A\n"
-			+ "\n";
 
-		inputs += $"## Technical Indicators\n"
-			+ $"- 52-week low/high: {SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A"} / {SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A"}\n"
-			+ $"- Beta: {SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A"}\n"
-			+ $"- MA10: {SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A"}\n"
-			+ $"- MA20: {SymbolInfo?.StockHistory?.MA20.ToString("F2")??"N/A"}\n"
-			+ $"- MA50: {SymbolInfo?.StockHistory?.MA50.ToString("F2")??"N/A"}\n"
-			+ $"- MA100: {SymbolInfo?.StockHistory?.MA100.ToString("F2")??"N/A"}\n"
-			+ $"- MA200: {SymbolInfo?.StockHistory?.MA200.ToString("F2")??"N/A"}\n"
-			+ $"- RSI-14: {SymbolInfo?.StockHistory?.RSI14.ToString("F2")??"N/A"}\n"
-			+ $"- Current volume ({((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")}): {SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A"}\n"
-			+ $"- Yesterday volume: {SymbolInfo?.StockHistory?.YesterdayVolume.ToString("F0")??"N/A"}\n"
-			+ $"- 30-day average volume: {SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A"}\n"
-			+ "\n";
+		## Financials
 
-		inputs += $"## 30-days history\n"
-			+ "| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |\n"
-			+ "|-------------|--------|--------|--------|--------|------------|--------|\n";
-		foreach(var h in SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[])
+		- Total cash: {((SymbolInfo?.Overview?.TotalCash??0)>0?SymbolInfo?.Overview?.TotalCash.ToString("F0"):"N/A")}
+		- Total debt: {((SymbolInfo?.Overview?.TotalDebt??0)>0?SymbolInfo?.Overview?.TotalDebt.ToString("F0"):"N/A")}
+		- Total revenue: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.TotalRevenue.ToString("F0"):"N/A")}
+		- Revenue growth: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.RevenueGrowth.ToString("P2"):"N/A")}
+		- Earnings growth: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.EarningsGrowth.ToString("P2"):"N/A")}
+		- EBITDA: {((SymbolInfo?.Overview?.Ebitda??0)>0?SymbolInfo?.Overview?.Ebitda.ToString("F0"):"N/A")}
+		- EBITDA margins: {((SymbolInfo?.Overview?.Ebitda??0)>0?SymbolInfo?.Overview?.EbitdaMargins.ToString("P2"):"N/A")}
+		- Gross margins: {SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A"}
+		- Operating margins: {SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A"}
+		- Profit margins: {SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A"}
+
+
+		## Valuation
+
+		- Market capitalization: {SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A"}
+		- Current price: {SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A"}
+		- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? (SymbolInfo.StockQuote.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0") : "N/A")}
+		- Trailing EPS: {SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A"}
+		- Forward EPS: {SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A"}
+		- Trailing P/E: {SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A"}
+		- Forward P/E: {SymbolInfo?.StockQuote?.ForwardPE.ToString("F2")??"N/A"}
+
+
+		## Technical Indicators
+
+		- 52-week low/high: {SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A"} / {SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A"}
+		- Beta: {SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A"}
+		- MA10: {SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A"}
+		- MA20: {SymbolInfo?.StockHistory?.MA20.ToString("F2")??"N/A"}
+		- MA50: {SymbolInfo?.StockHistory?.MA50.ToString("F2")??"N/A"}
+		- MA100: {SymbolInfo?.StockHistory?.MA100.ToString("F2")??"N/A"}
+		- MA200: {SymbolInfo?.StockHistory?.MA200.ToString("F2")??"N/A"}
+		- RSI-14: {SymbolInfo?.StockHistory?.RSI14.ToString("F2")??"N/A"}
+		- Current volume ({((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")}): {SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A"}
+		- Yesterday volume: {SymbolInfo?.StockHistory?.YesterdayVolume.ToString("F0")??"N/A"}
+		- 30-day average volume: {SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A"}
+		""";
+
+		var historyData = SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[];
+		if (historyData.Any())
 		{
-			inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp).ToString("yyyy-MMM-dd")} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n";
+			inputs += "\n\n\n";
+			inputs += """
+			## 30-days history
+
+			| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |
+			|-------------|--------|--------|--------|--------|------------|--------|
+			""";
+			foreach(var h in historyData)
+			{
+				inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp):yyyy-MMM-dd} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n";
+			}
 		}
 
 		return inputs;

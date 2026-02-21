@@ -43,7 +43,7 @@ public partial class AIController : ApiBaseController
 
 	private async ValueTask<SymbolAnalysisEntity?> GetOrCreateAnalysisRecordAsync(string ownerId, string marketId, string itemType, string itemCode)
 	{
-		var existingAnalysis = await PortfolioRepository.GetSymbolAnalysisAsync(ownerId, marketId, itemType, itemCode);
+		var existingAnalysis = await PortfolioRepository.GetSymbolAnalysisAsync(ownerId, marketId, itemType, itemCode, SymbolAnalysisEntity.ANALYSIS_TYPE_FULL);
 		existingAnalysis ??= await PortfolioRepository.CreateSymbolAnalysisAsync(new SymbolAnalysisEntity
 			{
 				Id = Guid.NewGuid().ToString(),
@@ -51,6 +51,7 @@ public partial class AIController : ApiBaseController
 				MarketId = marketId.ToUpper(),
 				ItemType = itemType.ToUpper(),
 				ItemCode = itemCode.ToUpper(),
+				AnalysisType = SymbolAnalysisEntity.ANALYSIS_TYPE_FULL,
 				AnalysisTime = DateTimeOffset.MinValue,
 			});
 		return existingAnalysis;
@@ -137,7 +138,13 @@ public partial class AIController : ApiBaseController
 
 		I am competing in a high-performance trading game using real stocks.
 
-		Primary objective: MAXIMIZE 3-month to 6-month expected return while controlling probability of >25% drawdown ≤ 35%.
+		Primary objective: MAXIMIZE 3-month to 6-month Expected Value (EV).
+		Subject to: Probability of >25% drawdown ≤ 35%.
+
+		Explicit Expected Value math: EV = Σ (Probability_i x Return_i)
+		Where:
+		- Return_i is % return from CURRENT PRICE
+		- Σ Probabilities must equal 100%
 
 		Date: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} UTC.
 
@@ -155,7 +162,7 @@ public partial class AIController : ApiBaseController
 		- Quantify magnitude and directional impact
 		- Assign probability weighting
 		- Provide confidence level (%)
-		- Be justified using expected value math
+		- Be justified using EV math
 
 		Avoid:
 		- Generic commentary
@@ -170,10 +177,43 @@ public partial class AIController : ApiBaseController
 
 		Otherwise a decisive allocation is mandatory.
 
+		# DATA INTEGRITY CHECK
+
+		1. Identify missing financial fields.
+		2. Classify data quality:
+		- Complete
+		- Partial
+		- Severely limited
+		3. State modeling constraints caused by missing data.
+		4. Select modeling hierarchy accordingly.
+
+		If EPS ≤ 0:
+		- Do NOT use P/E as primary valuation metric.
+		- Shift to EV-based or asset-based methods.
+
+		If revenue/EBITDA missing:
+		- Use technical + macro regime dominance model.
+		- Clearly state valuation limitations.
+
+		---
+
 		# RAW INPUT DATA (IMMUTABLE)
 
 		All company-specific data MUST be pasted between the markers below.
 		Do NOT reinterpret or modify inside the block.
+
+		Rules:
+		1. Do NOT modify or reinterpret raw data.
+		2. Do NOT assume missing financial data.
+		3. If data is missing:
+		- Explicitly state: "Metric not computable due to missing X."
+		4. Web retrieval allowed ONLY for:
+		- Macro regime
+		- Peer valuation multiples
+		- Confirmed abnormal events
+		5. All externally retrieved data must be labeled:
+		"External Data Assumption:"
+		6. No silent assumptions allowed.
 
 		====================================================
 		============= RAW INPUT DATA (IMMUTABLE) ===========
@@ -184,6 +224,44 @@ public partial class AIController : ApiBaseController
 		====================================================
 		================ END RAW INPUT DATA ================
 		====================================================
+
+		---
+
+		# ASSET-STAGE CLASSIFICATION (MANDATORY)
+
+		Classify company as one of:
+		- Profitable operator
+		- Pre-profit growth
+		- Asset developer
+		- Explorer / resource option
+		- etc
+
+		If "Asset developer" or "Explorer":
+		Override valuation dominance to:
+		1. Commodity regime
+		2. Cash runway
+		3. Dilution probability
+		4. Technical structure
+		5. Peer optionality valuation
+
+		---
+
+		# MODELING HIERARCHY
+
+		If full financial data available:
+			1. Forward normalized P/E
+			2. Sector-adjusted EV/EBITDA
+			3. 3-stage DCF-lite
+
+		If partial financial data:
+			1. Relative valuation vs peers
+			2. Price momentum regime model
+			3. Risk-adjusted technical framework
+
+		If minimal financial data:
+			1. Technical regime dominance
+			2. Volatility-adjusted expected return modeling
+			3. Position sizing optimization
 
 		# Analytical Framework Rules
 
@@ -214,16 +292,19 @@ public partial class AIController : ApiBaseController
 
 		## DECISION STANDARD
 
-		Actionable ONLY if at least one:
-		- 3M Expected Value > +8%
-		- 6M Expected Value > +15%
-		- Upside asymmetry ≥ 1.8x downside risk
+		Actionable ONLY if:
 
-		If none met → Capital must be redeployed.
+		3M EV ≥ +8%
+		OR
+		6M EV ≥ +15%
+		AND
+		Drawdown probability ≤ 35%
+
+		Otherwise: Capital redeployment required.
 
 		---
 
-		# REGIME CLASSIFICATION (MANDATORY)
+		# REGIME CLASSIFICATION (IF APPLICABLE)
 
 		Classify current environment:
 		- Risk-on
@@ -238,7 +319,20 @@ public partial class AIController : ApiBaseController
 
 		---
 
-		# REQUIRED CALCULATIONS
+		# CASH RUNWAY ANALYSIS (MANDATORY IF PRE-PROFIT)
+
+		Compute:
+		- Net cash
+		- Quarterly burn (estimate if missing)
+		- Runway (quarters)
+		- Dilution probability within 6M
+		- Estimated dilution magnitude
+
+		Adjust EV accordingly.
+
+		---
+
+		# REQUIRED CALCULATIONS (ONLY IF DATA EXISTS)
 
 		Before conclusions, compute:
 
@@ -255,13 +349,17 @@ public partial class AIController : ApiBaseController
 		- Volatility-adjusted downside (Beta x market stress assumption)
 		- Kelly-optimal position sizing (based on EV and downside probability)
 
+		If data unavailable → explicitly state: "Metric not computable due to missing X."
+
 		---
 
 		# ABNORMAL EVENT DETECTION (MANDATORY)
 
 		If:
 		- >10% 1-day move
+		- 1-day move > 2x 20D avg daily move
 		- >15% 3-day move
+		- 3-day move > 2.5x 20D avg 3D move
 		- Volume >2x 30D avg
 
 		Then:
@@ -397,7 +495,7 @@ public partial class AIController : ApiBaseController
 		---
 
 		Formatting Rules:
-		- Output MUST be Markdown format and enclosed between ```markdown and ```; STRICTLY no text OUTSIDE the enclose tags
+		- Output MUST be Markdown format and enclosed between ```markdown and ```; STRICTLY no text OUTSIDE enclosure
 		- Use tables where helpful
 		- Highlight decisive actions:
 			- 🟢 Buy

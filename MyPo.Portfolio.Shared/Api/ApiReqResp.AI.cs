@@ -22,20 +22,11 @@ public sealed class SymbolAnalysisReq
 	[JsonPropertyName("inputs")]
 	public string Inputs { get; set; } = string.Empty;
 
-	// [JsonPropertyName("history"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	// public List<HistoryPoint>? History { get; set; }
-
 	[JsonPropertyName("owning_amount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public decimal? OwningAmount { get; set; }
 
 	[JsonPropertyName("owning_average_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public decimal? OwningAveragePrice { get; set; }
-
-	// [JsonPropertyName("expected_outputs")]
-	// public string ExpectedOutputs { get; set; } = string.Empty;
-
-	// [JsonPropertyName("output_format")]
-	// public string OutputFormat { get; set; } = "Markdown";
 }
 
 public struct SymbolAnalysisResp

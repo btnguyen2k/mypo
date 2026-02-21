@@ -98,9 +98,7 @@ CREATE TABLE mypo_symbol_analysis (
     market_id varchar(16) NOT NULL,
     item_type varchar(16) NOT NULL,
     item_code varchar(16) NOT NULL,
-    -- ai_vendor varchar(32) NOT NULL,
-    -- ai_tier varchar(32) NOT NULL,
-    -- ai_model varchar(32) NOT NULL,
+    analysis_type varchar(16) NOT NULL,
     analysis_time timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     analysis_prompt TEXT NULL,
     analysis_result TEXT NULL,
@@ -110,5 +108,4 @@ CREATE TABLE mypo_symbol_analysis (
     concurrency_stamp varchar(48) NULL,
     CONSTRAINT pk_mypo_symbol_analysis PRIMARY KEY (analysis_id)
 );
-CREATE UNIQUE INDEX uidx_pk_mypo_symbol_analysis ON mypo_symbol_analysis (owner_id, market_id, item_type, item_code);
--- CREATE INDEX idx_mypo_symbol_analysis_owner_id ON mypo_symbol_analysis (owner_id);
+CREATE UNIQUE INDEX uidx_pk_mypo_symbol_analysis ON mypo_symbol_analysis (owner_id, market_id, item_type, item_code, analysis_type);

@@ -10,7 +10,7 @@ public partial interface IPortfolioRepository
 	/// <summary>
 	/// Gets an existing symbol analysis for a specific item and AI configuration.
 	/// </summary>
-	public ValueTask<SymbolAnalysisEntity?> GetSymbolAnalysisAsync(string ownerId, string marketId, string itemType, string itemCode, CancellationToken cancellationToken = default);
+	public ValueTask<SymbolAnalysisEntity?> GetSymbolAnalysisAsync(string ownerId, string marketId, string itemType, string itemCode, string analysisType, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Updates an existing symbol analysis report in the repository.
