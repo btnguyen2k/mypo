@@ -110,17 +110,17 @@ Modal dialog with a button to close:
             _ => "text-info"
         };
 
-	public CAlert Alert { get; set; } = default!;
+	public CAlert? Alert { get; set; } = null;
 
 	public void ShowAlert(string alertMsg, string alertType = "info", int autoCloseAfterMs = 0)
 	{
-		Alert.Show(alertMsg, alertType, autoCloseAfterMs);
+		Alert?.Show(alertMsg, alertType, autoCloseAfterMs);
 		StateHasChanged();
 	}
 
 	public void CloseAlert()
 	{
-		Alert.Hide();
+		Alert?.Hide();
 		StateHasChanged();
 	}
 
