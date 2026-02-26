@@ -203,7 +203,6 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private void StopRefresBackground()
 	{
-		// StopRefreshBackground = true;
 		RefreshBackgroundTaskId = 0;
 	}
 
