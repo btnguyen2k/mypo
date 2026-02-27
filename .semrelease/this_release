@@ -4,3 +4,4 @@
 - (Patch) Optimize background stock info refresh on MyPortfolioDetails page.
 - (Fix) Error when updating asset tags.
 - (Feat) Fetch incoming events from FinHub.
+- (Fix) Some CodeQL warnings.

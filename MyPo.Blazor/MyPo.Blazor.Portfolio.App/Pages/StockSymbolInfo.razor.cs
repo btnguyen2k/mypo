@@ -249,9 +249,9 @@ public sealed partial class StockSymbolInfo : BasePage
 			OwningAsset = null;
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 			var apiResult = await apiClient.GetMyPortfolioAssetsAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (symbolResult.Status != 200)
+			if (apiResult.Status != 200)
 			{
-				ShowAlert("danger", symbolResult.Message ?? $"Error loading owning asset info for {Symbol}.");
+				ShowAlert("danger", apiResult.Message ?? $"Error loading owning asset info for {Symbol}.");
 				return;
 			}
 			OwningAsset = apiResult.Data?.FirstOrDefault(a => string.Equals(a.ItemCode, SymbolCode, StringComparison.OrdinalIgnoreCase));
