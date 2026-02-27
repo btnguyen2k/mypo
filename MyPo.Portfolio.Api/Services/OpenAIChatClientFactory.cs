@@ -55,10 +55,9 @@ public class OpenAIClientFactory
 	{
 		var toolChain = new List<ResponseTool>();
 		var toolsList = Capacity?.GetToolChainForModel(modelOrDeployment) ?? [];
-		string? toolType = null;
-		foreach (var tool in toolsList.Where(tool => tool.TryGetValue("type", out toolType)))
+		foreach (var tool in toolsList.Where(t => t.TryGetValue("type", out _)))
 		{
-			switch (toolType)
+			switch (tool["type"])
 			{
 				case "web_search":
 				case "web-search":
