@@ -58,7 +58,12 @@ public sealed partial class PortfolioDbContextRepository
 		using (var tx = await Database.BeginTransactionAsync(cancellationToken))
 		try
 		{
-			var existingEntry = await MarketEventStore.FindAsync([marketEvent.Id], cancellationToken);
+			var existingEntry = await MarketEventStore.Where(
+				x => x.OwnerId.Equals(marketEvent.OwnerId, StringComparison.OrdinalIgnoreCase)
+				&& x.MarketId.Equals(marketEvent.MarketId, StringComparison.OrdinalIgnoreCase)
+				&& x.ItemCode.Equals(marketEvent.ItemCode, StringComparison.OrdinalIgnoreCase)
+				&& x.EventType.Equals(marketEvent.EventType, StringComparison.OrdinalIgnoreCase)
+			).FirstOrDefaultAsync(cancellationToken);
 			if (existingEntry == null)
 			{
 				var entry = await MarketEventStore.AddAsync(marketEvent, cancellationToken);
@@ -66,6 +71,7 @@ public sealed partial class PortfolioDbContextRepository
 			}
 			else
 			{
+				marketEvent.Id = existingEntry.Id; // make sure the key is not modified
 				Entry(existingEntry).CurrentValues.SetValues(PrepareForUpdate(marketEvent));
 				existingEntry = await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
 			}
