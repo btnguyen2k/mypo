@@ -2,7 +2,7 @@
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Bootstrap;
 
-namespace MyPo.Portfolio.Api;
+namespace MyPo.Portfolio.Api.Bootstrap;
 
 /// <summary>
 /// Bootstrapper that loads pre-defined market data.

@@ -55,23 +55,20 @@ public class OpenAIClientFactory
 	{
 		var toolChain = new List<ResponseTool>();
 		var toolsList = Capacity?.GetToolChainForModel(modelOrDeployment) ?? [];
-		foreach (var tool in toolsList)
+		foreach (var tool in toolsList.Where(t => t.TryGetValue("type", out _)))
 		{
-			if (tool.TryGetValue("type", out var toolType))
+			switch (tool["type"])
 			{
-				switch (toolType)
-				{
-					case "web_search":
-					case "web-search":
-						toolChain.Add(ResponseTool.CreateWebSearchTool());
-						break;
-					case "web-search-preview":
-					case "web_search_preview":
-						toolChain.Add(ResponseTool.CreateWebSearchPreviewTool());
-						break;
-					default:
-						break;
-				}
+				case "web_search":
+				case "web-search":
+					toolChain.Add(ResponseTool.CreateWebSearchTool());
+					break;
+				case "web-search-preview":
+				case "web_search_preview":
+					toolChain.Add(ResponseTool.CreateWebSearchPreviewTool());
+					break;
+				default:
+					break;
 			}
 		}
 		return toolChain;

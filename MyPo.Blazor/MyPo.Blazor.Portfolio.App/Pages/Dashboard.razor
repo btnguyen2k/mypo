@@ -1,0 +1,89 @@
+﻿@using MyPo.Blazor.App.Layout
+@using MyPo.Blazor.App.Shared
+@using System.Reflection
+@using MyPo.Portfolio.Shared.Models
+
+@attribute [Route(UIGlobals.ROUTE_HOME)]
+@inherits BasePage
+
+<HeadContent>
+    <!-- Plugins and styles required by this page-->
+    <!--<link href="@UIGlobals.COREUI_BASE/vendors/@@coreui/chartjs/css/coreui-chartjs.css" rel="stylesheet">-->
+</HeadContent>
+
+<PageTitle>Home | @AppInfo?.Name</PageTitle>
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>Dashboard</span>
+    </li>
+</SectionContent>
+
+<CAlert @ref="@Alert" />
+@if (!HideUI)
+{
+	<div class="container-lg px-4">
+		@if (MarketEventsList!=null && MarketEventsList.Count() > 0)
+		{
+			<div class="card mb-4">
+				<div class="card-header">
+					<h4 class="card-title">Incoming Events</h4>
+				</div>
+				<div class="card-body">
+					<table class="table table-sm">
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Event</th>
+								<th class="text-center">Market</th>
+								<th>Item</th>
+								<th>Status</th>
+								<th class="text-end">Amount/Period</th>
+							</tr>
+						</thead>
+						<tbody>
+							@foreach (var e in MarketEventsList)
+							{
+								<tr>
+									<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+									<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.EventType</a></td>
+									<td class="text-center">@e.MarketId</td>
+									<td>@e.ItemCode <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
+									<td>@(e.Metadata?.Status??"--")</td>
+									@if (e.EventType==MarketEventEntity.EVENT_DIVIDEND||e.EventType==MarketEventEntity.EVENT_DISTRIBUTION)
+									{
+										<td class="text-end">@((e.Metadata?.Amount??0).ToString("F2")) @(e.Metadata?.CurrencySymbol??"--")</td>
+									}
+									else
+									{
+										<td class="text-end">@(e.Metadata?.ReportPeriod??"--")</td>
+									}
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+<!-- Plugins and scripts required by this page-->
+<!--
+<script src="@UIGlobals.COREUI_BASE/vendors/chart.js/js/chart.umd.js"></script>
+<script src="@UIGlobals.COREUI_BASE/vendors/@@coreui/chartjs/js/coreui-chartjs.js"></script>
+-->
+<!--<script src="@UIGlobals.COREUI_BASE/js/colors.js"></script>-->
+<!--<script src="@UIGlobals.COREUI_BASE/js/main.js"></script>-->
+
+@code {
+	private string releaseInfo { get; set; } = string.Empty;
+
+	protected override async Task OnInitializedAsync() {
+		await base.OnInitializedAsync();
+		// TODO: Load release info from a file or API
+	}
+}

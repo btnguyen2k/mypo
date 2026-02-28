@@ -25,11 +25,11 @@ public partial class MyPortfolioDetails : BasePage
 	// map {asset-id --> quote}
 	private readonly Dictionary<string, StockQuote> QuotesMap = [];
 
-	private bool StopRefreshQuotes { get; set; } = false;
+	private int RefreshBackgroundTaskId = Random.Shared.Next();
 
 	private void StopRefreshQuotesBackground()
 	{
-		StopRefreshQuotes = true;
+		RefreshBackgroundTaskId = 0;
 	}
 
 	protected override void Dispose(bool disposing)
@@ -48,14 +48,14 @@ public partial class MyPortfolioDetails : BasePage
 		return await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
 	}
 
-	private async void GetStocksQuotesBackground(List<string> symbolsList)
+	private async void GetStocksQuotesBackground(List<string> symbolsList, int myTaskId)
 	{
-		if (symbolsList.Count > 0 && !StopRefreshQuotes)
+		if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
 		{
 			// fech stock quotes chunk by chunk to avoid too long query string issue
 			// each chunk is 5 symbols max
 			var cloneSymbolList = new List<string>(symbolsList.OrderBy(_ => Random.Shared.Next()));
-			while (cloneSymbolList.Count > 0 && !StopRefreshQuotes)
+			while (cloneSymbolList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
 			{
 				var currentChunk = cloneSymbolList.Take(5).ToList();
 				cloneSymbolList = [.. cloneSymbolList.Skip(5)];
@@ -76,7 +76,7 @@ public partial class MyPortfolioDetails : BasePage
 					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
 				}
 			}
-			if (!StopRefreshQuotes)
+			if (myTaskId == RefreshBackgroundTaskId)
 			{
 				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
 				var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
@@ -96,16 +96,16 @@ public partial class MyPortfolioDetails : BasePage
 					sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
 					sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds)+1000;
 				}
-				while (sleepTime > 0 && !StopRefreshQuotes)
+				while (sleepTime > 0 && myTaskId == RefreshBackgroundTaskId)
 				{
 					SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next quotes refresh...");
 					var delay = Math.Min(sleepTime, 1000);
 					await Task.Delay((int)delay);
 					sleepTime -= delay;
 				}
-				if (!StopRefreshQuotes)
+				if (myTaskId == RefreshBackgroundTaskId)
 				{
-					await Task.Run(() => GetStocksQuotesBackground(symbolsList));
+					await Task.Run(() => GetStocksQuotesBackground(symbolsList, myTaskId));
 				}
 			}
 		}
@@ -202,10 +202,6 @@ public partial class MyPortfolioDetails : BasePage
 					{
 						asset.Metadata.Tags.Add(asset.Metadata.Industry);
 					}
-					// if (!string.IsNullOrEmpty(asset.Metadata.Sector))
-					// {
-					// 	asset.Metadata.Tags.Add(asset.Metadata.Sector);
-					// }
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
 				var updateReq = new CreateOrUpdateAssetReq()
@@ -246,7 +242,7 @@ public partial class MyPortfolioDetails : BasePage
 		var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
 		SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
 		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList));
+		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
 		taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
 
 		HideUI = false;

@@ -102,6 +102,7 @@ public partial class CPortfolioAssets : CBase
 		SelectedAsset = AssetsMap.TryGetValue(assetId, out var asset) ? asset : null;
 		if (SelectedAsset != null)
 		{
+			ModalDialogBuySellAssetCalculator.CloseAlert();
 			ModalDialogBuySellAssetCalculator.Open();
 		}
 	}
@@ -115,6 +116,7 @@ public partial class CPortfolioAssets : CBase
 			return;
 		}
 		AssetTags = string.Join(", ", SelectedAsset.Metadata?.Tags ?? new HashSet<string>());
+		ModalDialogAssetUpdateTags.CloseAlert();
 		ModalDialogAssetUpdateTags.Open();
 	}
 
@@ -129,11 +131,9 @@ public partial class CPortfolioAssets : CBase
 			Quantity = SelectedAsset!.Quantity,
 			AveragePrice = SelectedAsset!.AveragePrice,
 			MarketId = SelectedAsset!.MarketId,
-			Metadata = new AssetMetadata()
-				{
-					Tags = AssetTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase)
-				},
+			Metadata = SelectedAsset!.Metadata ?? new AssetMetadata(),
 		};
+		req.Metadata.Tags = AssetTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
 		ModalDialogAssetUpdateTags.ShowAlert("info", "Updating asset tags...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();

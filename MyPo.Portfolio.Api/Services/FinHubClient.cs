@@ -49,4 +49,44 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 		);
 		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
 	}
+
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<IncomingEarningsEvent>>> GetIncomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> { { "country", country } };
+		if (!string.IsNullOrWhiteSpace(index))
+		{
+			queryParams["index"] = index;
+		}
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_AI_EVENT_EARNINGS, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<IncomingEarningsEvent>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<IncomingDividendEvent>>> GetIncomingDividendAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> { { "country", country } };
+		if (!string.IsNullOrWhiteSpace(index))
+		{
+			queryParams["index"] = index;
+		}
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_AI_EVENT_DIVIDENDS, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<IncomingDividendEvent>>(httpResult, cancellationToken);
+	}
 }

@@ -61,8 +61,53 @@ public class AICapacity
 	}
 }
 
-class AIModelCapacity
+sealed class AIModelCapacity
 {
 	public string ApiType { get; set; } = AICapacity.API_TYPE_CHAT;
 	public List<Dictionary<string, string>> ToolChain { get; set; } = [];
+}
+
+public class EventBase
+{
+	[JsonPropertyName("symbol")]
+	public string Symbol { get; set; } = string.Empty;
+
+	[JsonPropertyName("company_name")]
+	public string CompanyName { get; set; } = string.Empty;
+
+	[JsonPropertyName("timestamp")]
+	public int Timestamp { get; set; }
+
+	[JsonIgnore]
+	public DateTimeOffset Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime();
+
+	[JsonPropertyName("event_category")]
+	public string EventCategory { get; set; } = string.Empty;
+
+	[JsonPropertyName("source_name")]
+	public string SourceName { get; set; } = string.Empty;
+
+	[JsonPropertyName("link")]
+	public string Link { get; set; } = string.Empty;
+}
+
+public sealed class IncomingEarningsEvent : EventBase
+{
+	[JsonPropertyName("report_period")]
+	public string ReportPeriod { get; set; } = string.Empty;
+
+	[JsonPropertyName("status")]
+	public string Status { get; set; } = string.Empty;
+}
+
+public sealed class IncomingDividendEvent : EventBase
+{
+	[JsonPropertyName("status")]
+	public string Status { get; set; } = string.Empty;
+
+	[JsonPropertyName("amount")]
+	public decimal Amount { get; set; }
+
+	[JsonPropertyName("currency")]
+	public string Currency { get; set; } = string.Empty;
 }
