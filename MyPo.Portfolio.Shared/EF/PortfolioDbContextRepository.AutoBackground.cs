@@ -59,10 +59,10 @@ public sealed partial class PortfolioDbContextRepository
 		try
 		{
 			var existingEntry = await MarketEventStore.Where(
-				x => x.OwnerId.Equals(marketEvent.OwnerId, StringComparison.OrdinalIgnoreCase)
-				&& x.MarketId.Equals(marketEvent.MarketId, StringComparison.OrdinalIgnoreCase)
-				&& x.ItemCode.Equals(marketEvent.ItemCode, StringComparison.OrdinalIgnoreCase)
-				&& x.EventType.Equals(marketEvent.EventType, StringComparison.OrdinalIgnoreCase)
+				x => x.OwnerId==marketEvent.OwnerId
+				&& x.MarketId==marketEvent.MarketId
+				&& x.ItemCode==marketEvent.ItemCode
+				&& x.EventType==marketEvent.EventType
 			).FirstOrDefaultAsync(cancellationToken);
 			if (existingEntry == null)
 			{
