@@ -1,5 +1,18 @@
 # My Portfolio Tracker release notes
 
+## 2026-02-28 - v1.1.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Fetch incoming events from FinHub.
+- (Feat) Reword dashboard page.
+
+### Fixed/Improvements
+
+- (Patch) Optimize background stock info refresh on MyPortfolioDetails page.
+- (Fix) Error when updating asset tags.
+- (Fix) Some CodeQL warnings.
+
 ## 2026-02-21 - v1.0.1
 
 ### Fixed/Improvements
