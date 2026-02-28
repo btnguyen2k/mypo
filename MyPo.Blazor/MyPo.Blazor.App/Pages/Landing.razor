@@ -1,0 +1,21 @@
+﻿@using MyPo.Blazor.App.Shared;
+
+@attribute [Route(UIGlobals.ROUTE_LANDING)]
+@layout Layout.Empty
+@inherits BaseComponent
+
+<PageTitle>@AppInfo?.Name - v@(AppInfo?.Version)</PageTitle>
+
+<div class="container">
+    <CAlert type="info">
+        <span>Please wait...</span>
+    </CAlert>
+</div>
+
+@code {
+	 protected override async Task OnInitializedAsync()
+	 {
+		 await base.OnInitializedAsync();
+		 NavigationManager.NavigateTo(UIGlobals.ROUTE_HOME);
+	 }
+}

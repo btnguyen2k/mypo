@@ -13,7 +13,7 @@ public partial interface IPortfolioRepository
 	public ValueTask<AssetEntity?> GetAssetAsync(string assetId, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Upserts an <see cref="AssetEntity" /> record.
+	/// Updates an existing <see cref="AssetEntity" /> record.
 	/// </summary>
 	public ValueTask<AssetEntity?> UpdateAssetAsync(AssetEntity asset, CancellationToken cancellationToken = default);
 }

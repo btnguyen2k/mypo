@@ -38,6 +38,8 @@ public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolio
 		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<AssetEntity>());
 		new TxSettlementEntityTypeConfiguration().Configure(modelBuilder.Entity<TxSettlementEntity>());
 		new SymbolAnalysisEntityTypeConfiguration().Configure(modelBuilder.Entity<SymbolAnalysisEntity>());
+		new CheckpointEntityTypeConfiguration().Configure(modelBuilder.Entity<CheckpointEntity>());
+		new MarketEventEntityTypeConfiguration().Configure(modelBuilder.Entity<MarketEventEntity>());
 	}
 
 	private static T PrepareForUpdate<T>(T t) where T : Entity<string>
