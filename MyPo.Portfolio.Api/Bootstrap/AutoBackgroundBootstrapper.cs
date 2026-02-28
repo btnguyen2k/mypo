@@ -51,11 +51,11 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 		{
 			checkpoint = new()
 			{
-				OwnerId = ownerId,
-				PortfolioId = portfolioId,
-				MarketId = marketId,
-				ItemCode = itemCode,
-				CheckpointType = checkpointType,
+				OwnerId = ownerId.Trim().ToLower(),
+				PortfolioId = portfolioId.Trim().ToLower(),
+				MarketId = marketId.Trim().ToUpper(),
+				ItemCode = itemCode.Trim().ToUpper(),
+				CheckpointType = checkpointType.Trim().ToUpper(),
 				CheckpointTime = DateTimeOffset.MinValue,
 			};
 			var dbresult = await portfolioRepo.CreateCheckpointAsync(checkpoint, cancellationToken);
@@ -76,18 +76,18 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 		{
 			var marketEvent = new MarketEventEntity
 			{
-				OwnerId = ownerId,
-				MarketId = marketId,
-				ItemCode = e.Symbol?.ToUpper()??CheckpointEntity.NON_ITEM,
-				EventType = MarketEventEntity.EVENT_EARNINGS,
+				OwnerId = ownerId.Trim().ToLower(),
+				MarketId = marketId.Trim().ToUpper(),
+				ItemCode = e.Symbol?.Trim().ToUpper()??CheckpointEntity.NON_ITEM,
+				EventType = MarketEventEntity.EVENT_EARNINGS.Trim().ToUpper(),
 				EventTime = e.Date,
 				Metadata = new()
 				{
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
-					Status = e.Status,
-					ReportPeriod = e.ReportPeriod,
+					Status = e.Status.Trim().ToLower(),
+					ReportPeriod = e.ReportPeriod.Trim().ToLower(),
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
