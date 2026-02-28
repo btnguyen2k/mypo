@@ -42,6 +42,17 @@ public sealed partial class PortfolioDbContextRepository
 	private DbSet<MarketEventEntity> MarketEventStore { get; set; }
 
 	/// <inheritdoc />
+	public async ValueTask<IEnumerable<MarketEventEntity>> GetIncomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default)
+	{
+		var now = DateTimeOffset.UtcNow;
+		var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+		return await MarketEventStore.AsNoTracking()
+			.Where(x => x.OwnerId == ownerId && x.EventTime >= currentDate)
+			.OrderBy(x => x.EventTime)
+			.ToListAsync(cancellationToken);
+	}
+
+	/// <inheritdoc />
 	public async ValueTask<MarketEventEntity?> UpsertMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default)
 	{
 		using (var tx = await Database.BeginTransactionAsync(cancellationToken))

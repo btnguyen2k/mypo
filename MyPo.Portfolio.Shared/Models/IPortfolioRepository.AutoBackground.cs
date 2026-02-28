@@ -18,6 +18,11 @@ public partial interface IPortfolioRepository
 	public ValueTask<CheckpointEntity?> UpdateCheckpointAsync(CheckpointEntity checkoint, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Gets a list of <see cref="MarketEventEntity" /> records that are incoming for the specified owner.
+	/// </summary>
+	public ValueTask<IEnumerable<MarketEventEntity>> GetIncomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Upserts a <see cref="CheckpointEntity" /> record.
 	/// </summary>
 	public ValueTask<MarketEventEntity?> UpsertMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default);

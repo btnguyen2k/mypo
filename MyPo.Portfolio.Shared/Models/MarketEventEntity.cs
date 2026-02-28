@@ -51,4 +51,13 @@ public sealed class MarketEventMetadata
 
 	[JsonPropertyName("currency"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Currency { get; set; }
+
+	[JsonIgnore]
+	public string CurrencySymbol => Currency?.ToUpper() switch
+	{
+		"DOLLAR" or "USD" or "AUD" => "$",
+		"CENT" => "¢",
+		"DONG" or "VND" => "₫",
+		_ => string.Empty
+	};
 }
