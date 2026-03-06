@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Internal;
-using MyPo.Portfolio.Shared.Models;
+﻿using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Bootstrap;
 
@@ -13,17 +12,18 @@ public class AutoBackgroundBootstrapper
 {
 	public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
 	{
-		appBuilder.Services.AddHostedService<AutoBackgroundFindNextEarningsAnnoucements>();
-		appBuilder.Services.AddHostedService<AutoBackgroundFindNextDividendAnnoucements>();
+		appBuilder.Services.AddHostedService<AutoBackgroundUpcomingDividendAnnouncementsScanner>();
+		appBuilder.Services.AddHostedService<AutoBackgroundUpcomingEarningsAnnouncementsScanner>();
+		appBuilder.Services.AddHostedService<AutoBackgroundNewListingAnnouncementsScanner>();
 	}
 }
 
-abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
+abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 {
 	protected readonly IServiceProvider ServiceProvider;
-	protected readonly ILogger<AutoBackgroundFindNextAnnoucements> Logger;
+	protected readonly ILogger<AutoBackgroundAnnouncementScanner> Logger;
 
-	protected AutoBackgroundFindNextAnnoucements(IServiceProvider serviceProvider, ILogger<AutoBackgroundFindNextAnnoucements> logger) : base()
+	protected AutoBackgroundAnnouncementScanner(IServiceProvider serviceProvider, ILogger<AutoBackgroundAnnouncementScanner> logger) : base()
 	{
 		this.ServiceProvider = serviceProvider;
 		this.Logger = logger;
@@ -68,7 +68,41 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 		return checkpoint;
 	}
 
-	protected async Task SaveEvents(IEnumerable<IncomingEarningsEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
+	protected async Task SaveEvents(IEnumerable<UpcomingDividendEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
+	{
+		using var scope = ServiceProvider.CreateScope();
+		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+		foreach (var e in events)
+		{
+			var marketEvent = new MarketEventEntity
+			{
+				OwnerId = ownerId,
+				MarketId = marketId,
+				ItemCode = e.Symbol?.ToUpper()??CheckpointEntity.NON_ITEM,
+				EventType = e.EventCategory.Equals("DIVIDEND", StringComparison.OrdinalIgnoreCase) ? MarketEventEntity.EVENT_DIVIDEND : MarketEventEntity.EVENT_DISTRIBUTION,
+				EventTime = e.Date,
+				Metadata = new()
+				{
+					Exchange = e.Exchange,
+					CompanyName = e.CompanyName,
+					SourceName = e.SourceName,
+					Link = e.Link,
+					Status = e.Status,
+					Amount = e.Amount,
+					DividendYield = e.DividendYield,
+					Currency = e.Currency,
+					PaymentDate = e.PaymentDate,
+				},
+			};
+			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
+			if (dbresult == null)
+			{
+				Logger.LogError("Failed to upsert market event for symbol {symbol} in market {market}.", e.Symbol, marketId);
+			}
+		}
+	}
+
+	protected async Task SaveEvents(IEnumerable<UpcomingEarningsEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
 	{
 		using var scope = ServiceProvider.CreateScope();
 		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
@@ -79,10 +113,11 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 				OwnerId = ownerId.Trim().ToLower(),
 				MarketId = marketId.Trim().ToUpper(),
 				ItemCode = e.Symbol?.Trim().ToUpper()??CheckpointEntity.NON_ITEM,
-				EventType = MarketEventEntity.EVENT_EARNINGS.Trim().ToUpper(),
+				EventType = MarketEventEntity.EVENT_EARNINGS,
 				EventTime = e.Date,
 				Metadata = new()
 				{
+					Exchange = e.Exchange,
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
@@ -98,7 +133,7 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 		}
 	}
 
-	protected async Task SaveEvents(IEnumerable<IncomingDividendEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
+	protected async Task SaveEvents(IEnumerable<ListingEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
 	{
 		using var scope = ServiceProvider.CreateScope();
 		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
@@ -106,19 +141,21 @@ abstract class AutoBackgroundFindNextAnnoucements : BackgroundService
 		{
 			var marketEvent = new MarketEventEntity
 			{
-				OwnerId = ownerId,
-				MarketId = marketId,
-				ItemCode = e.Symbol?.ToUpper()??CheckpointEntity.NON_ITEM,
-				EventType = e.EventCategory.Equals("DIVIDEND", StringComparison.OrdinalIgnoreCase) ? MarketEventEntity.EVENT_DIVIDEND : MarketEventEntity.EVENT_DISTRIBUTION,
+				OwnerId = ownerId.Trim().ToLower(),
+				MarketId = marketId.Trim().ToUpper(),
+				ItemCode = e.Symbol?.Trim().ToUpper()??CheckpointEntity.NON_ITEM,
+				EventType = MarketEventEntity.EVENT_LISTING,
 				EventTime = e.Date,
 				Metadata = new()
 				{
+					Exchange = e.Exchange,
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
-					Status = e.Status,
-					Amount = e.Amount,
+					Industry = e.Industry,
+					Price = e.Price,
 					Currency = e.Currency,
+					Capital = e.Capital,
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);

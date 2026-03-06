@@ -3,16 +3,16 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackgroundAnnouncementScanner
+sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnouncementScanner
 {
-	public AutoBackgroundUpcomingDividendAnnouncementsScanner(
-			IServiceProvider serviceProvider, ILogger<AutoBackgroundUpcomingDividendAnnouncementsScanner> logger
+	public AutoBackgroundNewListingAnnouncementsScanner(
+			IServiceProvider serviceProvider, ILogger<AutoBackgroundNewListingAnnouncementsScanner> logger
 		) : base(serviceProvider, logger)
 	{
 	}
 
 	// TODO: move this to configuration
-	private static readonly List<string> COUNTRIES = ["AU", "VN", "US"];
+	private static readonly List<string> COUNTRIES = ["AU"];
 	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(18);
 
 	private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
@@ -33,22 +33,22 @@ sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackground
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,
 					marketId: country,
 					itemCode: CheckpointEntity.NON_ITEM,
-					checkpointType: CheckpointEntity.CHECKPOINT_UPCOMING_DIVIDEND,
+					checkpointType: CheckpointEntity.CHECKPOINT_NEW_LISTINGS,
 					cancellationToken
 				);
 
 				if (checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow-checkpoint.CheckpointTime >= INTERVAL))
 				{
-					Logger.LogInformation("Finding upcoming dividend/distribution announcements for market {market}...", country);
+					Logger.LogInformation("Finding new listing announcements for market {market}...", country);
 					var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-					var events = await finhubClient.GetUpcomingDividendAnnouncementsAsync(country, cancellationToken: cancellationToken);
+					var events = await finhubClient.GetNewListingAnnouncementsAsync(country, cancellationToken: cancellationToken);
 					if (events.Status != 200)
 					{
-						Logger.LogError("Failed to fetch upcoming dividend/distribution announcements for market {market}. Status: {status}, Message: {message}", country, events.Status, events.Message);
+						Logger.LogError("Failed to fetch new listing announcements for market {market}. Status: {status}, Message: {message}", country, events.Status, events.Message);
 					}
 					else
 					{
-						Logger.LogInformation("Upcoming dividend/distribution announcements for market {market}: {event}", country, (events.Data??[]).Count());
+						Logger.LogInformation("New listing announcements for market {market}: {event}", country, (events.Data??[]).Count());
 						await SaveEvents(events.Data??[], CheckpointEntity.NON_OWNER, country, cancellationToken);
 
 						checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
