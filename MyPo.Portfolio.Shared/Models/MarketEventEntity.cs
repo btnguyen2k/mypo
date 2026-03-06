@@ -13,6 +13,7 @@ public sealed class MarketEventEntity : Entity<string>
 	public const string EVENT_DIVIDEND = "DIVIDEND";
 	public const string EVENT_DISTRIBUTION = "DISTRIBUTION";
 	public const string EVENT_LISTING = "LISTING";
+	public static readonly IEnumerable<string> ALL_EVENTS = [EVENT_EARNINGS, EVENT_DIVIDEND, EVENT_DISTRIBUTION, EVENT_LISTING];
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();

@@ -30,6 +30,26 @@ public partial class MarketsController : ApiBaseController
 	}
 
 	/// <summary>
+	/// Build Yahoo Finance symbol for the given input, accepting format EXCHANGE:TICKER
+	/// </summary>
+	/// <param name="exchangeCode"></param>
+	/// <returns></returns>
+	private static string BuildYFSymbol(string exchangeCode)
+	{
+		var (exchange, ticker) = exchangeCode.Split(':', 2) switch
+		{
+			var arr when arr.Length == 2 => (arr[0], arr[1]),
+			_ => (string.Empty, exchangeCode),
+		};
+		return exchange.ToUpper() switch
+		{
+			"ASX" => $"{ticker}.AX",
+			"HOSE" or "HNX" or "UPCOM" => $"{ticker}.VN",
+			_ => ticker,
+		};
+	}
+
+	/// <summary>
 	/// Get stock quotes for the given comma-separated symbols.
 	/// </summary>
 	/// <param name="symbols">Comma-separated list of symbols. Each symbol is in the following format CODE:market-id</param>
@@ -47,11 +67,13 @@ public partial class MarketsController : ApiBaseController
 				_ => (codeMarketIdPair, string.Empty),
 			};
 			var market = Globals.MarketsMap.TryGetValue(marketId.ToUpper(), out var mkt) ? mkt : null;
-			if (market != null)
-			{
-				var symbol = BuildYFSymbol(code, market);
-				yfSymbolMap[symbol] = codeMarketIdPair;
-			}
+			var symbol = market != null ? BuildYFSymbol(code, market) : BuildYFSymbol(codeMarketIdPair);
+			yfSymbolMap[symbol] = codeMarketIdPair;
+			// if (market != null)
+			// {
+			// 	var symbol = BuildYFSymbol(code, market);
+			// 	yfSymbolMap[symbol] = codeMarketIdPair;
+			// }
 		}
 
 		using (var scope = services.CreateScope())
