@@ -41,13 +41,26 @@ public sealed partial class PortfolioDbContextRepository
 
 	private DbSet<MarketEventEntity> MarketEventStore { get; set; }
 
+	// /// <inheritdoc />
+	// public async ValueTask<IEnumerable<MarketEventEntity>> GetUpcomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default)
+	// {
+	// 	var now = DateTimeOffset.UtcNow;
+	// 	var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+	// 	var next14Days = currentDate.AddDays(14);
+	// 	return await MarketEventStore.AsNoTracking()
+	// 		.Where(x => x.OwnerId == ownerId && x.EventTime >= currentDate && x.EventTime <= next14Days)
+	// 		.OrderBy(x => x.EventTime)
+	// 		.ToListAsync(cancellationToken);
+	// }
+
 	/// <inheritdoc />
-	public async ValueTask<IEnumerable<MarketEventEntity>> GetIncomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default)
+	public async ValueTask<IEnumerable<MarketEventEntity>> GetMarketEventsAsync(string ownerId, DateTimeOffset fromDateInc, DateTimeOffset toDateExc, IEnumerable<string>? eventTypes = null, CancellationToken cancellationToken = default)
 	{
-		var now = DateTimeOffset.UtcNow;
-		var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+		var from = fromDateInc.ToUniversalTime();
+		var to = toDateExc.ToUniversalTime();
+		var evTypes = (eventTypes==null || !eventTypes.Any() ? MarketEventEntity.ALL_EVENTS : eventTypes).Select(x => x.ToUpper()).ToHashSet();
 		return await MarketEventStore.AsNoTracking()
-			.Where(x => x.OwnerId == ownerId && x.EventTime >= currentDate)
+			.Where(x => x.OwnerId == ownerId && x.EventTime >= from && x.EventTime < to && evTypes.Contains(x.EventType))
 			.OrderBy(x => x.EventTime)
 			.ToListAsync(cancellationToken);
 	}

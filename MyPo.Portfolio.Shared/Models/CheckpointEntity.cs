@@ -1,4 +1,4 @@
-using MyPo.Shared.Models;
+﻿using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
@@ -8,8 +8,9 @@ public sealed class CheckpointEntity : Entity<string>
 	public const string NON_PORTFOLIO = "*";
 	public const string NON_MARKET = "*";
 	public const string NON_ITEM = "*";
-	public const string CHECKPOINT_INCOMING_EARNINGS = "INCOMING-EARNINGS";
-	public const string CHECKPOINT_INCOMING_DIVIDEND = "INCOMING-DIVIDEND";
+	public const string CHECKPOINT_UPCOMING_EARNINGS = "UPCOMING-EARNINGS";
+	public const string CHECKPOINT_UPCOMING_DIVIDEND = "UPCOMING-DIVIDEND";
+	public const string CHECKPOINT_NEW_LISTINGS = "NEW-LISTINGS";
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();

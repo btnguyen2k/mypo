@@ -1,6 +1,7 @@
 ﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using System.Reflection
+@using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
 
 @attribute [Route(UIGlobals.ROUTE_HOME)]
@@ -22,54 +23,171 @@
     </li>
 </SectionContent>
 
-<CAlert @ref="@Alert" />
-@if (!HideUI)
-{
-	<div class="container-lg px-4">
-		@if (MarketEventsList!=null && MarketEventsList.Count() > 0)
-		{
-			<div class="card mb-4">
-				<div class="card-header">
-					<h4 class="card-title">Incoming Events</h4>
+<div class="container-lg px-4">
+	<div class="card border-top-primary border-top-3 mb-4">
+		<div class="card-body">
+			<CAlert @ref="@Alert" />
+			@if (!HideUI)
+			{
+				<nav>
+					<div class="nav nav-tabs" id="nav-tab" role="tablist">
+						<button class="nav-link @(ActiveTab==TabIdDividend?"active":"")"
+							@onclick="(()=>SwitchTab(TabIdDividend))" id="@TabIdDividend"
+							data-coreui-toggle="tab" data-coreui-target="#@(TabIdDividend)-content"
+							type="button" role="tab" aria-controls="@(TabIdDividend)-content"
+							aria-selected="@(ActiveTab==TabIdDividend?"true":"false")">Upcoming Dividends</button>
+						<button class="nav-link @(ActiveTab==TabIdListing?"active":"")"
+							@onclick="(()=>SwitchTab(TabIdListing))" id="@TabIdListing"
+							data-coreui-toggle="tab" data-coreui-target="#@(TabIdListing)-content"
+							type="button" role="tab" aria-controls="@(TabIdListing)-content"
+							aria-selected="@(ActiveTab==TabIdListing?"true":"false")">New Listings</button>
+						<button class="nav-link @(ActiveTab==TabIdEarnings?"active":"")"
+							@onclick="(()=>SwitchTab(TabIdEarnings))" id="@TabIdEarnings"
+							data-coreui-toggle="tab" data-coreui-target="#@(TabIdEarnings)-content"
+							type="button" role="tab" aria-controls="@(TabIdEarnings)-content"
+							aria-selected="@(ActiveTab==TabIdEarnings?"true":"false")">Upcoming Earnings</button>
+					</div>
+				</nav>
+				<div class="tab-content" id="nav-tabContent">
+					<div class="tab-pane fade @(ActiveTab==TabIdDividend?"show active":"")" id="@(TabIdDividend)-content" role="tabpanel" aria-labelledby="@TabIdDividend" tabindex="0">
+						<div class="row mt-2">
+							<div class="col-12">
+								<div class="card">
+									<div class="card-body">
+										@if(EventsDistribution.Count <= 0)
+										{
+											<h5>No Data</h5>
+										}
+										else
+										{
+											<table class="table table-sm mb-0">
+												<thead>
+													<tr>
+														<th>Ex-Date</th>
+														<th>Pay Date</th>
+														<th class="text-center">Market</th>
+														<th>Item</th>
+														<th class="text-end">Amount</th>
+														<th class="text-end">Cur.Price</th>
+														<th class="text-end">This Yield</th>
+													</tr>
+												</thead>
+												<tbody>
+													@foreach (var e in EventsDistribution)
+													{
+														<tr class="@(TextFormatDivident(e))">
+															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td>@(e.Metadata?.PaymentDate??"--")</td>
+															<td class="text-center">@e.MarketId</td>
+															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
+															<td class="text-end">@((e.Metadata?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
+															<td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
+														</tr>
+													}
+												</tbody>
+											</table>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade @(ActiveTab==TabIdListing?"show active":"")" id="@(TabIdListing)-content" role="tabpanel" aria-labelledby="@TabIdListing" tabindex="0">
+						<div class="row mt-2">
+							<div class="col-12">
+								<div class="card">
+									<div class="card-body">
+										@if(EventsListing.Count <= 0)
+										{
+											<h5>No Data</h5>
+										}
+										else
+										{
+											<table class="table table-sm mb-0">
+												<thead>
+													<tr>
+														<th>Date</th>
+														<th class="text-center">Market</th>
+														<th>Item</th>
+														<th>Industry</th>
+														<th class="text-end">Price</th>
+														<th class="text-end">Cur.Price</th>
+														<th class="text-end">Capital</th>
+													</tr>
+												</thead>
+												<tbody>
+													@foreach (var e in EventsListing)
+													{
+														<tr>
+															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td class="text-center">@e.MarketId</td>
+															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
+															<td>@(e.Metadata?.Industry??"--")</td>
+															<td class="text-end">@((e.Metadata?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
+															<td class="text-end">@(e.Metadata?.Capital??"--")</td>
+														</tr>
+													}
+												</tbody>
+											</table>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade @(ActiveTab==TabIdEarnings?"show active":"")" id="@(TabIdEarnings)-content" role="tabpanel" aria-labelledby="@TabIdEarnings" tabindex="0">
+						<div class="row mt-2">
+							<div class="col-12">
+								<div class="card">
+									<div class="card-body">
+										@if(EventsEarnings.Count <= 0)
+										{
+											<h5>No Data</h5>
+										}
+										else
+										{
+											<table class="table table-sm mb-0">
+												<thead>
+													<tr>
+														<th>Date</th>
+														<th class="text-center">Market</th>
+														<th>Item</th>
+														<th>Status</th>
+														<th class="text-end">Period</th>
+													</tr>
+												</thead>
+												<tbody>
+													@foreach (var e in EventsEarnings)
+													{
+														<tr>
+															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td class="text-center">@e.MarketId</td>
+															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
+															<td>@(e.Metadata?.Status??"--")</td>
+															<td class="text-end">@(e.Metadata?.ReportPeriod??"--")</td>
+														</tr>
+													}
+												</tbody>
+											</table>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
-				<div class="card-body">
-					<table class="table table-sm">
-						<thead>
-							<tr>
-								<th>Date</th>
-								<th>Event</th>
-								<th class="text-center">Market</th>
-								<th>Item</th>
-								<th>Status</th>
-								<th class="text-end">Amount/Period</th>
-							</tr>
-						</thead>
-						<tbody>
-							@foreach (var e in MarketEventsList)
-							{
-								<tr>
-									<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-									<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.EventType</a></td>
-									<td class="text-center">@e.MarketId</td>
-									<td>@e.ItemCode <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-									<td>@(e.Metadata?.Status??"--")</td>
-									@if (e.EventType==MarketEventEntity.EVENT_DIVIDEND||e.EventType==MarketEventEntity.EVENT_DISTRIBUTION)
-									{
-										<td class="text-end">@((e.Metadata?.Amount??0).ToString("F2")) @(e.Metadata?.CurrencySymbol??"--")</td>
-									}
-									else
-									{
-										<td class="text-end">@(e.Metadata?.ReportPeriod??"--")</td>
-									}
-								</tr>
-							}
-						</tbody>
-					</table>
+			}
+			@if (!string.IsNullOrEmpty(BackgroundMsg))
+			{
+				<div class="alert alert-light" role="alert">
+					<span style="font-size: small !important;">@BackgroundMsg</span>
 				</div>
-			</div>
-		}
+			}
+		</div>
 	</div>
-}
+</div>
 
 <!-- Plugins and scripts required by this page-->
 <!--
@@ -80,10 +198,43 @@
 <!--<script src="@UIGlobals.COREUI_BASE/js/main.js"></script>-->
 
 @code {
-	private string releaseInfo { get; set; } = string.Empty;
+	private static string DecimalFormatForMarket(string countryCode)
+	{
+		return countryCode.ToUpper() switch
+		{
+			"VN" => "F0",
+			_ => "F2"
+		};
+	}
 
-	protected override async Task OnInitializedAsync() {
-		await base.OnInitializedAsync();
-		// TODO: Load release info from a file or API
+	private string TextFormatDivident(MarketEventResp e)
+	{
+		if (e.MarketId=="VN")
+		{
+			if (e.Metadata?.Amount >= 3000)
+			{
+				return "table-danger";
+			}
+			else if (YieldsMap.TryGetValue(e.ItemCode, out var yield) && yield >= 0.04m)
+			{
+				return "table-success";
+			}
+		}
+		else if (YieldsMap.TryGetValue(e.ItemCode, out var yield))
+		{
+			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
+			{
+				return "table-danger";
+			}
+			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
+			{
+				return "table-success";
+			}
+			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
+			{
+				return "table-info";
+			}
+		}
+		return "";
 	}
 }

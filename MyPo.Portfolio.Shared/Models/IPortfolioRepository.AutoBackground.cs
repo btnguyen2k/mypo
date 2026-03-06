@@ -17,10 +17,15 @@ public partial interface IPortfolioRepository
 	/// </summary>
 	public ValueTask<CheckpointEntity?> UpdateCheckpointAsync(CheckpointEntity checkoint, CancellationToken cancellationToken = default);
 
+	// /// <summary>
+	// /// Gets a list of <see cref="MarketEventEntity" /> records that are upcoming for the specified owner.
+	// /// </summary>
+	// public ValueTask<IEnumerable<MarketEventEntity>> GetUpcomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default);
+
 	/// <summary>
-	/// Gets a list of <see cref="MarketEventEntity" /> records that are incoming for the specified owner.
+	/// Gets a list of <see cref="MarketEventEntity" /> records that are within the specified date range for the specified owner.
 	/// </summary>
-	public ValueTask<IEnumerable<MarketEventEntity>> GetIncomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default);
+	public ValueTask<IEnumerable<MarketEventEntity>> GetMarketEventsAsync(string ownerId, DateTimeOffset fromDateInc, DateTimeOffset toDateExc, IEnumerable<string>? eventTypes = null, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Upserts a <see cref="CheckpointEntity" /> record.

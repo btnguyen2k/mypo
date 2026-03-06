@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-03-06 - v1.2.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Fetch new listing announcements from FinHub.
+
+### Fixed/Improvements
+
+- (Improvement) Fetch events from FinHub.
+- (Fix) Error while updating an asset (from My Portfolio page).
+
 ## 2026-02-28 - v1.1.1
 
 ### Fixed/Improvements

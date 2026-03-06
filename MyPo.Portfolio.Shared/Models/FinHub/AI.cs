@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 
 namespace MyPo.Portfolio.Shared.Models.FinHub;
@@ -72,6 +72,9 @@ public class EventBase
 	[JsonPropertyName("symbol")]
 	public string Symbol { get; set; } = string.Empty;
 
+	[JsonPropertyName("exchange")]
+	public string Exchange { get; set; } = string.Empty;
+
 	[JsonPropertyName("company_name")]
 	public string CompanyName { get; set; } = string.Empty;
 
@@ -79,7 +82,7 @@ public class EventBase
 	public int Timestamp { get; set; }
 
 	[JsonIgnore]
-	public DateTimeOffset Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime();
+	public DateTimeOffset Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).UtcDateTime;
 
 	[JsonPropertyName("event_category")]
 	public string EventCategory { get; set; } = string.Empty;
@@ -91,7 +94,25 @@ public class EventBase
 	public string Link { get; set; } = string.Empty;
 }
 
-public sealed class IncomingEarningsEvent : EventBase
+public sealed class UpcomingDividendEvent : EventBase
+{
+	[JsonPropertyName("status")]
+	public string Status { get; set; } = string.Empty;
+
+	[JsonPropertyName("amount")]
+	public decimal Amount { get; set; }
+
+	[JsonPropertyName("dividend_yield")]
+	public decimal DividendYield { get; set; }
+
+	[JsonPropertyName("currency")]
+	public string Currency { get; set; } = string.Empty;
+
+	[JsonPropertyName("payment_date")]
+	public string PaymentDate { get; set; } = string.Empty;
+}
+
+public sealed class UpcomingEarningsEvent : EventBase
 {
 	[JsonPropertyName("report_period")]
 	public string ReportPeriod { get; set; } = string.Empty;
@@ -100,14 +121,17 @@ public sealed class IncomingEarningsEvent : EventBase
 	public string Status { get; set; } = string.Empty;
 }
 
-public sealed class IncomingDividendEvent : EventBase
+public sealed class ListingEvent : EventBase
 {
-	[JsonPropertyName("status")]
-	public string Status { get; set; } = string.Empty;
+	[JsonPropertyName("industry")]
+	public string Industry { get; set; } = string.Empty;
 
-	[JsonPropertyName("amount")]
-	public decimal Amount { get; set; }
+	[JsonPropertyName("price")]
+	public decimal Price { get; set; }
 
 	[JsonPropertyName("currency")]
 	public string Currency { get; set; } = string.Empty;
+
+	[JsonPropertyName("capital")]
+	public string Capital { get; set; } = string.Empty;
 }

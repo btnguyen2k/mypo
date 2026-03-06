@@ -1,19 +1,18 @@
-﻿using System.Text.Json;
-using MyPo.Portfolio.Api.Services;
+﻿using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundFindNextEarningsAnnoucements : AutoBackgroundFindNextAnnoucements
+sealed class AutoBackgroundUpcomingEarningsAnnouncementsScanner : AutoBackgroundAnnouncementScanner
 {
-	public AutoBackgroundFindNextEarningsAnnoucements(
-			IServiceProvider serviceProvider, ILogger<AutoBackgroundFindNextEarningsAnnoucements> logger
+	public AutoBackgroundUpcomingEarningsAnnouncementsScanner(
+			IServiceProvider serviceProvider, ILogger<AutoBackgroundUpcomingEarningsAnnouncementsScanner> logger
 		) : base(serviceProvider, logger)
 	{
 	}
 
 	// TODO: move this to configuration
-	private static readonly List<string> COUNTRIES = ["AU", "VN", "US"];
+	private static readonly List<string> COUNTRIES = ["AU", "US"];
 	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(18);
 
 	private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
@@ -34,23 +33,23 @@ sealed class AutoBackgroundFindNextEarningsAnnoucements : AutoBackgroundFindNext
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,
 					marketId: country,
 					itemCode: CheckpointEntity.NON_ITEM,
-					checkpointType: CheckpointEntity.CHECKPOINT_INCOMING_EARNINGS,
+					checkpointType: CheckpointEntity.CHECKPOINT_UPCOMING_EARNINGS,
 					cancellationToken
 				);
 
 				if (checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow-checkpoint.CheckpointTime >= INTERVAL))
 				{
-					Logger.LogInformation("Finding next earnings announcements for market {market}...", country);
+					Logger.LogInformation("Finding upcoming earnings announcements for market {market}...", country);
 					var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-					var incomingEvents = await finhubClient.GetIncomingEarningsAnnouncementsAsync(country, cancellationToken: cancellationToken);
-					if (incomingEvents.Status != 200)
+					var events = await finhubClient.GetUpcomingEarningsAnnouncementsAsync(country, cancellationToken: cancellationToken);
+					if (events.Status != 200)
 					{
-						Logger.LogError("Failed to fetch incoming earnings announcements for market {market}. Status: {status}, Message: {message}", country, incomingEvents.Status, incomingEvents.Message);
+						Logger.LogError("Failed to fetch upcoming earnings announcements for market {market}. Status: {status}, Message: {message}", country, events.Status, events.Message);
 					}
 					else
 					{
-						Logger.LogInformation("Incoming earnings announcements for market {market}: {event}", country, JsonSerializer.Serialize(incomingEvents.Data));
-						await SaveEvents(incomingEvents.Data??[], CheckpointEntity.NON_OWNER, country, cancellationToken);
+						Logger.LogInformation("Upcoming earnings announcements for market {market}: {event}", country, (events.Data??[]).Count());
+						await SaveEvents(events.Data??[], CheckpointEntity.NON_OWNER, country, cancellationToken);
 
 						checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
 						var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
