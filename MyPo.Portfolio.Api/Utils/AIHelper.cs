@@ -1,4 +1,4 @@
-using Google.GenAI;
+﻿using Google.GenAI;
 using Google.GenAI.Types;
 using MyPo.Portfolio.Api;
 using MyPo.Portfolio.Api.Services;

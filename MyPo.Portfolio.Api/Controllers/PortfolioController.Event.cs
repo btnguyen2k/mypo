@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
@@ -12,14 +12,29 @@ public partial class PortfolioController
 	/// </summary>
 	/// <returns></returns>
 	[HttpGet(IPortfolioApiClient.API_MARKET_EVENTS)]
-	public async ValueTask<ActionResult<ApiResp<IEnumerable<MarketEventResp>>>> GetIncomingMarketEvents()
+	public async ValueTask<ActionResult<ApiResp<IEnumerable<MarketEventResp>>>> GetUpcomingMarketEvents()
 	{
-		var result = new List<MarketEventResp>();
-		var events = await PortfolioRepository.GetIncomingMarketEventsAsync(MarketEventEntity.NON_MARKET);
-		foreach (var e in events)
-		{
-			result.Add(MarketEventResp.BuildFrom(e));
-		}
-		return ResponseOk(result);
+		var now = DateTimeOffset.UtcNow;
+		var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+		var next5Days = currentDate.AddDays(5);
+		var next7Days = currentDate.AddDays(7);
+		var next10Days = currentDate.AddDays(10);
+		var prev21Days = currentDate.AddDays(-21);
+		var eventsDividend = await PortfolioRepository.GetMarketEventsAsync(
+			MarketEventEntity.NON_OWNER,
+			currentDate, next7Days,
+			[MarketEventEntity.EVENT_DIVIDEND, MarketEventEntity.EVENT_DISTRIBUTION]);
+		var eventsEarnings = await PortfolioRepository.GetMarketEventsAsync(
+			MarketEventEntity.NON_OWNER,
+			currentDate, next5Days,
+			[MarketEventEntity.EVENT_EARNINGS]);
+		var eventsListing = await PortfolioRepository.GetMarketEventsAsync(
+			MarketEventEntity.NON_OWNER,
+			prev21Days, next10Days,
+			[MarketEventEntity.EVENT_LISTING]);
+		var result = eventsDividend.Select(x => MarketEventResp.BuildFrom(x)).ToList();
+		result.AddRange(eventsEarnings.Select(x => MarketEventResp.BuildFrom(x)));
+		result.AddRange(eventsListing.Select(x => MarketEventResp.BuildFrom(x)));
+		return ResponseOk(result.OrderBy(x => x.EventTime));
 	}
 }
