@@ -15,6 +15,7 @@ public partial class Dashboard : BasePage
 	private List<MarketEventResp>? MarketEventsList { get; set; }
 	private List<MarketEventResp> EventsDistribution => MarketEventsList?.Where(e =>MarketEventEntity.EVENT_DIVIDEND.Equals(e.EventType, StringComparison.OrdinalIgnoreCase)
 			|| MarketEventEntity.EVENT_DISTRIBUTION.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
+		.Where(e => e.Metadata?.Amount >= 0.03m)
 		.OrderBy(e => e.EventTime)
 		.ToList() ?? [];
 	private List<MarketEventResp> EventsEarnings => MarketEventsList?.Where(e =>MarketEventEntity.EVENT_EARNINGS.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
