@@ -1,6 +1,7 @@
 ﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using System.Reflection
+@using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
 
 @attribute [Route(UIGlobals.ROUTE_HOME)]
@@ -74,7 +75,7 @@
 												<tbody>
 													@foreach (var e in EventsDistribution)
 													{
-														<tr>
+														<tr class="@(TextFormatDivident(e))">
 															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
 															<td>@(e.Metadata?.PaymentDate??"--")</td>
 															<td class="text-center">@e.MarketId</td>
@@ -204,5 +205,36 @@
 			"VN" => "F0",
 			_ => "F2"
 		};
+	}
+
+	private string TextFormatDivident(MarketEventResp e)
+	{
+		if (e.MarketId=="VN")
+		{
+			if (e.Metadata?.Amount >= 3000)
+			{
+				return "table-danger";
+			}
+			else if (YieldsMap.TryGetValue(e.ItemCode, out var yield) && yield >= 0.04m)
+			{
+				return "table-success";
+			}
+		}
+		else if (YieldsMap.TryGetValue(e.ItemCode, out var yield))
+		{
+			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
+			{
+				return "table-danger";
+			}
+			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
+			{
+				return "table-success";
+			}
+			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
+			{
+				return "table-info";
+			}
+		}
+		return "";
 	}
 }

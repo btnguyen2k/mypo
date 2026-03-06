@@ -14,7 +14,11 @@ public class BaseClient
 		this.defaultHttpClient = httpClient;
 		this.baseUrl = baseUrl;
 		this.logger = logger;
+
+		defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
 	}
+
+	private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(180);
 
 	protected void UsingBaseUrlAndHttpClient(string? baseUrl, HttpClient? requestHttpClient, out string usingBaseUrl, out HttpClient usingHttpClient)
 	{
