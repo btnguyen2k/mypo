@@ -226,6 +226,10 @@
 			{
 				return "table-danger";
 			}
+			if (e.Metadata?.Amount >= 5.00m && yield >= 0.02m)
+			{
+				return "table-danger";
+			}
 			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
 			{
 				return "table-success";
