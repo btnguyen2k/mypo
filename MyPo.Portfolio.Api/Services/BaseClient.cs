@@ -18,7 +18,7 @@ public class BaseClient
 		defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
 	}
 
-	private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(180);
+	private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(10*60);
 
 	protected void UsingBaseUrlAndHttpClient(string? baseUrl, HttpClient? requestHttpClient, out string usingBaseUrl, out HttpClient usingHttpClient)
 	{
