@@ -20,7 +20,7 @@ sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackground
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		// delay a bit to avoid all instances running at the same time after deployment or restart
-		await Task.Delay(Random.Shared.Next(1000, 5000), cancellationToken);
+		await Task.Delay(Random.Shared.Next(10000, 30000), cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {

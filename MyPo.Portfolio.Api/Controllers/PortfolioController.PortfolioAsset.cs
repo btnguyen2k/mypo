@@ -79,10 +79,16 @@ public partial class PortfolioController
 
 		// only asset's metadata can be updated
 		existingAsset.Metadata ??= new AssetMetadata();
-		existingAsset.Metadata.Tags = req.Metadata?.Tags ?? existingAsset.Metadata.Tags;
+		existingAsset.Metadata.Tags = req.Metadata?.Tags ?? existingAsset.Metadata.Tags ?? new HashSet<string>();
 		existingAsset.Metadata.CorpName = req.Metadata?.CorpName ?? existingAsset.Metadata.CorpName;
 		existingAsset.Metadata.Industry = req.Metadata?.Industry ?? existingAsset.Metadata.Industry;
 		existingAsset.Metadata.Sector = req.Metadata?.Sector ?? existingAsset.Metadata.Sector;
+
+		// sort tags alphabetically for better readability
+		if (existingAsset.Metadata.Tags != null)
+		{
+			existingAsset.Metadata.Tags = new SortedSet<string>(existingAsset.Metadata.Tags);
+		}
 
 		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
 		if (existingAsset == null)

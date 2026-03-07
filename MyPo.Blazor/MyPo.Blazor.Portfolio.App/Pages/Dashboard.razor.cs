@@ -67,7 +67,6 @@ public partial class Dashboard : BasePage
 
 	private async void GetStocksQuotesBackground()
 	{
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var symbolsList = MarketEventsList?
 			.Where(e => !e.EventType.Equals(MarketEventEntity.EVENT_EARNINGS, StringComparison.CurrentCultureIgnoreCase))
 			.Select(e => e.ItemCode).ToList() ?? [];
