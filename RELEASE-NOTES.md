@@ -1,5 +1,13 @@
 # My Portfolio Tracker release notes
 
+## 2026-03-07 - v1.2.1
+
+### Fixed/Improvements
+
+- (Improvement) Adjust client timeout when calling AI-assisted APIs from FinHub.
+- (Fix) Error when updating Assets.
+- (Patch) Minor UI fix in page MyPortfolioDetails.
+
 ## 2026-03-06 - v1.2.0
 
 ### Added/Refactoring/Deprecation
