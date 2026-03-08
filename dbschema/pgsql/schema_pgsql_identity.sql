@@ -1,4 +1,4 @@
--- Database: PostgreSQL (min version 15)
+﻿-- Database: PostgreSQL (min version 15)
 
 DROP TABLE IF EXISTS identity_role_claims;
 DROP TABLE IF EXISTS identity_user_claims;
@@ -27,6 +27,7 @@ CREATE TABLE identity_users (
     password_hash varchar(256) NULL,
     security_stamp varchar(48) NULL,
     concurrency_stamp varchar(48) NULL,
+    user_metadata jsonb NULL,
     CONSTRAINT pk_identity_users PRIMARY KEY (uid)
 );
 CREATE UNIQUE INDEX uidx_identity_users_email ON identity_users (normalized_email) WHERE normalized_email IS NOT NULL;
