@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MyPo.Shared.EF.Identity;
 
@@ -67,12 +68,21 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 
 	private async ValueTask<MyPoUser?> PostFetchUser(MyPoUser? user, UserFetchOptions? options = default, CancellationToken cancellationToken = default)
 	{
+		var clavis = serviceProvider.GetService<Libs.Clavis.Clavis>();
+		if (clavis != null && user != null)
+		{
+			user.Metadata ??= new MyPoUserMetadata();
+			user.Metadata.PrivateData ??= new Libs.Clavis.PrivateData();
+			user.Metadata.PrivateData.SetClavis(clavis);
+		}
+
 		if (user is null || options is null || cancellationToken.IsCancellationRequested) return user;
 		user.Roles = options.IncludeRoles ? await GetRolesAsync(
 			user,
 			roleFetchOptions: options.IncludeRoleClaims ? new RoleFetchOptions { IncludeClaims = true } : null,
 			cancellationToken: cancellationToken) : null;
 		user.Claims = options.IncludeClaims ? await GetClaimsAsync(user, cancellationToken) : null;
+
 		return user;
 	}
 

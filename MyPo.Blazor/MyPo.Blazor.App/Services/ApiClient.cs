@@ -49,6 +49,23 @@ public class ApiClient : IApiClient
 		return await usingHttpClient.SendAsync(httpReq, cancellationToken);
 	}
 
+	protected static async Task<ApiResp> ReadAndCloseResponseAsync(HttpResponseMessage httpResult, CancellationToken cancellationToken)
+	{
+		try
+		{
+			var result = await httpResult.Content.ReadFromJsonAsync<ApiResp>(cancellationToken);
+			if (result == null)
+			{
+				return new ApiResp { Status = 500, Message = "Invalid response from server." };
+			}
+			return result;
+		}
+		catch (Exception ex) when (ex is JsonException || ex is InvalidOperationException || ex is OperationCanceledException)
+		{
+			return new ApiResp { Status = 500, Message = ex.Message };
+		}
+	}
+
 	protected static async Task<ApiResp<T>> ReadAndCloseResponseAsync<T>(HttpResponseMessage httpResult, CancellationToken cancellationToken)
 	{
 		try

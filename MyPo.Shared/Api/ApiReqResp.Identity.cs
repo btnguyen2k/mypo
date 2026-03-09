@@ -89,7 +89,7 @@ public struct UserResp
 {
 	public static UserResp BuildFromUser(MyPoUser user)
 	{
-		return new UserResp
+		var userResp = new UserResp
 		{
 			Id = user.Id,
 			Username = user.UserName!,
@@ -100,6 +100,8 @@ public struct UserResp
 			Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
 			Metadata = user.Metadata,
 		};
+		if (userResp.Metadata != null) userResp.Metadata.PrivateData = null; // do not return any private data in the API response
+		return userResp;
 	}
 
 	[JsonPropertyName("id")]

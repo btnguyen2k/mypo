@@ -1,16 +1,13 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
+using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPreferences : BasePage
 {
-	[Inject]
-	private ILogger<MyPortfolio>? Logger { get; set; }
-
 	private bool EnableMarketAlertsViaTelegrams { get; set; } = false;
 	private string TimeZone { get; set; } = "";
 	private TimeOnly StartTime { get; set; } = new TimeOnly(8, 0);
@@ -24,43 +21,84 @@ public partial class MyPreferences : BasePage
 	private bool EnableDaySun { get; set; } = false;
 	private string TelegramBotApiKey { get; set; } = "";
 	private string TelegramChatIDs { get; set; } = "";
-	private string Temp { get; set; } = "-1001234567890 &#10; 987654321 &#10; -4412345678";
 
 	/// <inheritdoc />
 	protected override async Task OnInitializedAsync()
 	{
 		await base.OnInitializedAsync();
+		if (CurrentUser != null)
+		{
+			EnableMarketAlertsViaTelegrams = CurrentUser.Value.Metadata?.MarketAlertViaTelegram ?? false;
+			TimeZone = CurrentUser.Value.Metadata?.MarketAlertTimezone ?? "UTC";
+			StartTime = CurrentUser.Value.Metadata?.MarketAlertStartTime ?? new TimeOnly(8, 0);
+			EndTime = CurrentUser.Value.Metadata?.MarketAlertEndTime ?? new TimeOnly(20, 0);
+			EnableDayMon = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Monday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Mon") ?? false);
+			EnableDayTue = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Tuesday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Tue") ?? false);
+			EnableDayWed = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Wednesday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Wed") ?? false);
+			EnableDayThu = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Thursday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Thu") ?? false);
+			EnableDayFri = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Friday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Fri") ?? false);
+			EnableDaySat = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Saturday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Sat") ?? false);
+			EnableDaySun = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Sunday") ?? false)
+				|| (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Sun") ?? false);
+		}
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
-		if (firstRender && CurrentUser != null)
+		if (firstRender)
 		{
-			Console.WriteLine(JsonSerializer.Serialize(CurrentUser));
-			// EnableMarketAlertsViaTelegrams = CurrentUser.Metadata?.MarketAlertViaTelegram ?? false;
-			// TimeZone = CurrentUser.Metadata?.MarketAlertTimezone ?? "UTC";
-			// StartTime = CurrentUser.Metadata?.MarketAlertStartTime ?? new TimeOnly(8, 0);
-			// EndTime = CurrentUser.Metadata?.MarketAlertEndTime ?? new TimeOnly(20, 0);
-			// StateHasChanged();
+			var (alertType, alertMessage) = GetPassedMessageFromQuery();
+			if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+			{
+				ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
+			}
+			else
+			{
+				CloseAlert();
+			}
 		}
 	}
 
-	private void BtnClickSave()
+	private async Task BtnClickSave()
 	{
-		Console.WriteLine("Saving preferences...");
-		Console.WriteLine("Enable: {0}", EnableMarketAlertsViaTelegrams);
-		Console.WriteLine("TimeZone: {0}", TimeZone);
-		Console.WriteLine("Start: {0}", StartTime);
-		Console.WriteLine("End: {0}", EndTime);
-		Console.WriteLine("Mon: {0}", EnableDayMon);
-		Console.WriteLine("Tue: {0}", EnableDayTue);
-		Console.WriteLine("Wed: {0}", EnableDayWed);
-		Console.WriteLine("Thu: {0}", EnableDayThu);
-		Console.WriteLine("Fri: {0}", EnableDayFri);
-		Console.WriteLine("Sat: {0}", EnableDaySat);
-		Console.WriteLine("Sun: {0}", EnableDaySun);
-		Console.WriteLine("TelegramBotApiKey: {0}", TelegramBotApiKey);
-		Console.WriteLine("TelegramChatIDs: {0}", TelegramChatIDs);
+		HideUI = true;
+		ShowAlert("info", "Saving preferences...");
+		var req = new SaveMyPrefMarketAlertReq()
+		{
+			EnableMarketAlertsViaTelegrams = EnableMarketAlertsViaTelegrams,
+			MarketAlertTimezone = TimeZone,
+			MarketAlertStartTime = StartTime,
+			MarketAlertEndTime = EndTime,
+			MarketAlertDaysOfWeek = [.. new List<string>()
+			{
+				EnableDayMon ? "Mon" : null!,
+				EnableDayTue ? "Tue" : null!,
+				EnableDayWed ? "Wed" : null!,
+				EnableDayThu ? "Thu" : null!,
+				EnableDayFri ? "Fri" : null!,
+				EnableDaySat ? "Sat" : null!,
+				EnableDaySun ? "Sun" : null!
+			}.Where(day => day != null)],
+			TelegramBotApiKey = TelegramBotApiKey.Trim(),
+			TelegramChatIDs = TelegramChatIDs.Trim()
+		};
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var result = await apiClient.SaveMyPreferencesMarketAlertAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (result.Status != 200)
+		{
+			ShowAlert("error", $"Failed to save preferences: {result.Message}");
+		}
+		else
+		{
+			ShowAlert("success", "Preferences saved successfully!", ALERT_AUTO_CLOSE_MS);
+		}
+		HideUI = false;
 	}
 }
