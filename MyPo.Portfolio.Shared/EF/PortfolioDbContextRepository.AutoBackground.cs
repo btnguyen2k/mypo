@@ -41,18 +41,6 @@ public sealed partial class PortfolioDbContextRepository
 
 	private DbSet<MarketEventEntity> MarketEventStore { get; set; }
 
-	// /// <inheritdoc />
-	// public async ValueTask<IEnumerable<MarketEventEntity>> GetUpcomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default)
-	// {
-	// 	var now = DateTimeOffset.UtcNow;
-	// 	var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
-	// 	var next14Days = currentDate.AddDays(14);
-	// 	return await MarketEventStore.AsNoTracking()
-	// 		.Where(x => x.OwnerId == ownerId && x.EventTime >= currentDate && x.EventTime <= next14Days)
-	// 		.OrderBy(x => x.EventTime)
-	// 		.ToListAsync(cancellationToken);
-	// }
-
 	/// <inheritdoc />
 	public async ValueTask<IEnumerable<MarketEventEntity>> GetMarketEventsAsync(string ownerId, DateTimeOffset fromDateInc, DateTimeOffset toDateExc, IEnumerable<string>? eventTypes = null, CancellationToken cancellationToken = default)
 	{
@@ -96,5 +84,12 @@ public sealed partial class PortfolioDbContextRepository
 			await tx.RollbackAsync(cancellationToken);
 			throw;
 		}
+	}
+
+	/// <inheritdoc />
+	public async ValueTask<int> DeleteMarketEventsOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
+	{
+		var cutoff = cutoffDate.ToUniversalTime();
+		return await MarketEventStore.Where(x => x.EventTime < cutoff).ExecuteDeleteAsync(cancellationToken);
 	}
 }

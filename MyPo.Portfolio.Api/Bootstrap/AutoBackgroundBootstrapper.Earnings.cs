@@ -20,7 +20,7 @@ sealed class AutoBackgroundUpcomingEarningsAnnouncementsScanner : AutoBackground
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		// delay a bit to avoid all instances running at the same time after deployment or restart
-		await Task.Delay(Random.Shared.Next(10000, 30000), cancellationToken);
+		await Task.Delay(Random.Shared.Next(30000, 60000), cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -28,7 +28,7 @@ sealed class AutoBackgroundUpcomingEarningsAnnouncementsScanner : AutoBackground
 			try
 			{
 				var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
-				var checkpoint = await GetCheckpoint(
+				var checkpoint = await GetOrInitCheckpoint(
 					ownerId: CheckpointEntity.NON_OWNER,
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,
 					marketId: country,
@@ -56,7 +56,10 @@ sealed class AutoBackgroundUpcomingEarningsAnnouncementsScanner : AutoBackground
 						var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
 						if (dbresult == null)
 						{
-							Logger.LogError("Failed to update checkpoint for market {market}.", country);
+							Logger.LogError(
+								"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+								checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+							);
 						}
 					}
 				}

@@ -11,6 +11,7 @@ public sealed class CheckpointEntity : Entity<string>
 	public const string CHECKPOINT_UPCOMING_EARNINGS = "UPCOMING-EARNINGS";
 	public const string CHECKPOINT_UPCOMING_DIVIDEND = "UPCOMING-DIVIDEND";
 	public const string CHECKPOINT_NEW_LISTINGS = "NEW-LISTINGS";
+	public const string CHECKPOINT_REMOVE_OLD_EVENTS = "REMOVE-OLD-EVENTS";
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();

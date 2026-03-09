@@ -28,7 +28,7 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 			try
 			{
 				var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
-				var checkpoint = await GetCheckpoint(
+				var checkpoint = await GetOrInitCheckpoint(
 					ownerId: CheckpointEntity.NON_OWNER,
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,
 					marketId: country,
@@ -56,7 +56,10 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 						var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
 						if (dbresult == null)
 						{
-							Logger.LogError("Failed to update checkpoint for market {market}.", country);
+							Logger.LogError(
+								"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+								checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+							);
 						}
 					}
 				}
