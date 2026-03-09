@@ -10,6 +10,7 @@
 <HeadContent>
     <!-- Plugins and styles required by this page-->
     <!--<link href="@UIGlobals.COREUI_BASE/vendors/@@coreui/chartjs/css/coreui-chartjs.css" rel="stylesheet">-->
+	<link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
 </HeadContent>
 
 <PageTitle>Home | @AppInfo?.Name</PageTitle>
@@ -60,7 +61,7 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0">
+											<table class="table table-sm mb-0" id="tblDividendEvents">
 												<thead>
 													<tr>
 														<th>Ex-Date</th>
@@ -104,7 +105,7 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0">
+											<table class="table table-sm mb-0" id="tblListingEvents">
 												<thead>
 													<tr>
 														<th>Date</th>
@@ -148,7 +149,7 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0">
+											<table class="table table-sm mb-0" id="tblEarningsEvents">
 												<thead>
 													<tr>
 														<th>Date</th>
@@ -196,7 +197,8 @@
 -->
 <!--<script src="@UIGlobals.COREUI_BASE/js/colors.js"></script>-->
 <!--<script src="@UIGlobals.COREUI_BASE/js/main.js"></script>-->
-
+<script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
 @code {
 	private static string DecimalFormatForMarket(string countryCode)
 	{

@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Feat) Setup preferences to receive market alerts via Telegram.
 - (Feat) Clean up old events.
+- (Improvement) Rework Dashboard.

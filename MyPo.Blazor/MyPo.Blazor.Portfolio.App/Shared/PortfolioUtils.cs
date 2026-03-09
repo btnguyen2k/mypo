@@ -31,6 +31,7 @@ public static partial class PortfolioUtils
     }
 
 	private static IJSObjectReference? jsLocalStorage;
+	private static IJSObjectReference? jsLocalDatatable;
 
 	public static async ValueTask<IJSObjectReference> LoadJSLocalStorage(IJSRuntime JS)
 	{
@@ -39,6 +40,15 @@ public static partial class PortfolioUtils
 			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/local-storage.js"
 		);
 		return jsLocalStorage;
+	}
+
+	public static async ValueTask<IJSObjectReference> LoadJSDatatable(IJSRuntime JS)
+	{
+		jsLocalDatatable ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/datatable.js"
+		);
+		return jsLocalDatatable;
 	}
 
 	public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";

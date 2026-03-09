@@ -103,7 +103,7 @@ public partial class Dashboard : BasePage
 		if (firstRender)
 		{
 			HideUI = true;
-			ShowAlert("info", "Loading markets metadata...");
+			ShowAlert("info", "Loading upcoming market events...");
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 			var result = await apiClient.GetUpcomingMarketEventsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
 			if (result.Status == 200)
@@ -125,6 +125,11 @@ public partial class Dashboard : BasePage
 			{
 				ShowAlert("danger", result.Message ?? "Error loading portfolios.");
 			}
+
+			var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+			await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblDividendEvents");
+			await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblListingEvents");
+			await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblEarningsEvents");
 
 			SwitchToSavedTab();
 		}

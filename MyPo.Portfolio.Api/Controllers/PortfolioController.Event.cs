@@ -7,6 +7,16 @@ namespace MyPo.Portfolio.Api.Controllers;
 
 public partial class PortfolioController
 {
+	private static DateTimeOffset PrevWorkingDay(DateTimeOffset date)
+	{
+		var prevDay = date.AddDays(-1);
+		while (prevDay.DayOfWeek == DayOfWeek.Saturday || prevDay.DayOfWeek == DayOfWeek.Sunday)
+		{
+			prevDay = prevDay.AddDays(-1);
+		}
+		return prevDay;
+	}
+
 	/// <summary>
 	/// Gets incoming market events
 	/// </summary>
@@ -16,22 +26,28 @@ public partial class PortfolioController
 	{
 		var now = DateTimeOffset.UtcNow;
 		var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
-		var next5Days = currentDate.AddDays(5);
-		var next7Days = currentDate.AddDays(7);
-		var next10Days = currentDate.AddDays(10);
-		var prev21Days = currentDate.AddDays(-21);
+
+		var startDateDiv = PrevWorkingDay(PrevWorkingDay(currentDate));
+		var endDateDiv = currentDate.AddDays(6);
 		var eventsDividend = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
-			currentDate, next7Days,
+			startDateDiv, endDateDiv,
 			[MarketEventEntity.EVENT_DIVIDEND, MarketEventEntity.EVENT_DISTRIBUTION]);
+
+		var startDateEarnings = currentDate;
+		var endDateEarnings = currentDate.AddDays(3);
 		var eventsEarnings = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
-			currentDate, next5Days,
+			startDateEarnings, endDateEarnings,
 			[MarketEventEntity.EVENT_EARNINGS]);
+
+		var startDateListing = currentDate.AddDays(-21);
+		var endDateListing = currentDate.AddDays(14);
 		var eventsListing = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
-			prev21Days, next10Days,
+			startDateListing, endDateListing,
 			[MarketEventEntity.EVENT_LISTING]);
+
 		var result = eventsDividend.Select(x => MarketEventResp.BuildFrom(x)).ToList();
 		result.AddRange(eventsEarnings.Select(x => MarketEventResp.BuildFrom(x)));
 		result.AddRange(eventsListing.Select(x => MarketEventResp.BuildFrom(x)));
