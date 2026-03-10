@@ -31,6 +31,9 @@ public sealed partial class MyPoUserMetadata
 	[JsonPropertyName("mk_alert_tz")]
 	public string? MarketAlertTimezone { get; set; } = "UTC";
 
+	[JsonPropertyName("mk_alert_delay_mins")]
+	public int MarketAlertDelayMinutes { get; set; } = 60;
+
 	[JsonPropertyName("mk_alert_start")]
 	public TimeOnly? MarketAlertStartTime { get; set; } = new TimeOnly(8, 0); // Default to 8:00 AM
 
@@ -45,6 +48,11 @@ public sealed partial class MyPoUserMetadata
 
 	[JsonPropertyName("private_data"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public PrivateData? PrivateData { get; set; }
+
+	public MyPoUserMetadata Clone()
+	{
+		return JsonSerializer.Deserialize<MyPoUserMetadata>(JsonSerializer.Serialize(this))!;
+	}
 
 	private void InitPrivateData()
 	{

@@ -10,6 +10,9 @@ public sealed class SaveMyPrefMarketAlertReq
 	[JsonPropertyName("market_alert_timezone")]
 	public string MarketAlertTimezone { get; set; } = "UTC";
 
+	[JsonPropertyName("market_alert_delay_minutes")]
+	public int MarketAlertDelayMinutes { get; set; } = 60;
+
 	[JsonPropertyName("market_alert_start_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public TimeOnly? MarketAlertStartTime { get; set; }
 

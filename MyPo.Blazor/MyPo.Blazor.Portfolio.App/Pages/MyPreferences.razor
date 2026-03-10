@@ -70,6 +70,10 @@
 									<div class="mb-3">
 										<label class="form-label fw-semibold">🕐 Alert Time Window</label>
 										<div class="row g-2 align-items-center">
+											<div class="col-auto">
+												<label class="form-label text-muted small" for="delayMinutes">Delay in Minutes</label>
+												<input type="number" min="60" class="form-control" id="delayMinutes" name="delayMinutes" @bind="MarketAlertDelayMinutes"/>
+											</div>
 											<div class="col">
 												<label class="form-label text-muted small" for="startTime">Start Time</label>
 												<input type="time" class="form-control" id="startTime" name="startTime" @bind-value="StartTime"/>
@@ -80,7 +84,9 @@
 												<input type="time" class="form-control" id="endTime" name="endTime" @bind-value="EndTime"/>
 											</div>
 										</div>
-										<div class="form-text">Alerts will only be sent within this window (based on your timezone).</div>
+										<div class="form-text">
+											Alerts will only be sent within this window (based on your timezone), with minimum delay of <code>Delay in Minutes</code> between alerts sends to avoid spamming.
+										</div>
 									</div>
 
 									<!-- Days of Week -->

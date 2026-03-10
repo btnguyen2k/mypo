@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using MyPo.Shared.Identity;
 
 namespace MyPo.Shared.Api;
@@ -98,9 +99,11 @@ public struct UserResp
 			FamilyName = user.FamilyName,
 			Roles = user.Roles?.Select(r => RoleResp.BuildFromRole(r)),
 			Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
-			Metadata = user.Metadata,
+			Metadata = user.Metadata?.Clone() ?? null,
 		};
 		if (userResp.Metadata != null) userResp.Metadata.PrivateData = null; // do not return any private data in the API response
+		Console.WriteLine(JsonSerializer.Serialize(user));
+		Console.WriteLine(JsonSerializer.Serialize(userResp));
 		return userResp;
 	}
 

@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 
@@ -10,6 +8,7 @@ public partial class MyPreferences : BasePage
 {
 	private bool EnableMarketAlertsViaTelegrams { get; set; } = false;
 	private string TimeZone { get; set; } = "";
+	private int MarketAlertDelayMinutes { get; set; } = 60;
 	private TimeOnly StartTime { get; set; } = new TimeOnly(8, 0);
 	private TimeOnly EndTime { get; set; } = new TimeOnly(20, 0);
 	private bool EnableDayMon { get; set; } = false;
@@ -30,6 +29,7 @@ public partial class MyPreferences : BasePage
 		{
 			EnableMarketAlertsViaTelegrams = CurrentUser.Value.Metadata?.MarketAlertViaTelegram ?? false;
 			TimeZone = CurrentUser.Value.Metadata?.MarketAlertTimezone ?? "UTC";
+			MarketAlertDelayMinutes = CurrentUser.Value.Metadata?.MarketAlertDelayMinutes ?? 60;
 			StartTime = CurrentUser.Value.Metadata?.MarketAlertStartTime ?? new TimeOnly(8, 0);
 			EndTime = CurrentUser.Value.Metadata?.MarketAlertEndTime ?? new TimeOnly(20, 0);
 			EnableDayMon = (CurrentUser.Value.Metadata?.MarketAlertDaysOfWeek?.Contains("Monday") ?? false)
@@ -74,6 +74,7 @@ public partial class MyPreferences : BasePage
 		{
 			EnableMarketAlertsViaTelegrams = EnableMarketAlertsViaTelegrams,
 			MarketAlertTimezone = TimeZone,
+			MarketAlertDelayMinutes = MarketAlertDelayMinutes,
 			MarketAlertStartTime = StartTime,
 			MarketAlertEndTime = EndTime,
 			MarketAlertDaysOfWeek = [.. new List<string>()

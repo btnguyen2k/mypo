@@ -87,6 +87,9 @@ public partial class PreferencesController : ApiBaseController
 				return ResponseNoData(400, $"Invalid time zone '{req.MarketAlertTimezone}'");
 			}
 
+			// check alert delay time
+			currentUser.Metadata.MarketAlertDelayMinutes = Math.Max(req.MarketAlertDelayMinutes, 60);
+
 			// chek start/end time
 			req.MarketAlertStartTime ??= currentUser.Metadata.MarketAlertStartTime ?? new TimeOnly(0, 0);
 			req.MarketAlertEndTime ??= currentUser.Metadata.MarketAlertEndTime ?? new TimeOnly(23, 59);
