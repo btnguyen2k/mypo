@@ -16,6 +16,8 @@ public class AutoBackgroundBootstrapper
 		appBuilder.Services.AddHostedService<AutoBackgroundUpcomingEarningsAnnouncementsScanner>();
 		appBuilder.Services.AddHostedService<AutoBackgroundNewListingAnnouncementsScanner>();
 
+		appBuilder.Services.AddHostedService<AutoBackgroundSendMarketAlerts>();
+
 		appBuilder.Services.AddHostedService<AutoBackgroundOldEventsCleaner>();
 	}
 }

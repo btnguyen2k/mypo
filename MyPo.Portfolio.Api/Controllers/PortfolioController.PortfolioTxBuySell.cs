@@ -47,9 +47,9 @@ public partial class PortfolioController
 	{
 		// validate transaction type, must be either BUY or SELL
 		reqTx.Type = reqTx.Type.ToUpper().Trim();
-		if (!(existingTx?.IsSettled??false) && (reqTx.Type != "BUY" && reqTx.Type != "SELL"))
+		if (!(existingTx?.IsSettled??false) && reqTx.Type != TxBuySellEntity.TX_TYPE_BUY && reqTx.Type != TxBuySellEntity.TX_TYPE_SELL)
 		{
-			return (null, ResponseNoData(400, $"Transaction type must be either 'BUY' or 'SELL', currently '{reqTx.Type}'."));
+			return (null, ResponseNoData(400, $"Transaction type must be either '{TxBuySellEntity.TX_TYPE_BUY}' or '{TxBuySellEntity.TX_TYPE_SELL}', currently '{reqTx.Type}'."));
 		}
 
 		// validate item code, must not be empty
