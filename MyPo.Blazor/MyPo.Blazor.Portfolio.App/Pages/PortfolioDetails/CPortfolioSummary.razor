@@ -203,7 +203,7 @@
 								ROI (vs Peak Capital) (17=15/PeakCapital)
 							</td>
 							<td class="text-end fw-semibold">
-								@(PnlSummary.Value.ROIvsPeakCapital(TxSettlements??[]).ToString("N2")+"%")
+								@(PnlSummary.Value.ROIvsPeakCapital(TxSettlements).ToString("N2")+"%")
 							</td>
 						</tr>
 						<tr>
@@ -211,7 +211,7 @@
 								ROI (vs Average Capital) (18=15/AverageCapital)
 							</td>
 							<td class="text-end fw-semibold">
-								@(PnlSummary.Value.ROIvsAverageCapital(TxSettlements??[]).ToString("N2")+"%")
+								@(PnlSummary.Value.ROIvsAverageCapital(TxSettlements).ToString("N2")+"%")
 							</td>
 						</tr>
 						<tr>
@@ -235,7 +235,7 @@
 								Unsettled ROI (vs Peak Capital)
 							</td>
 							<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
-								@(PnlSummary.Value.UnsettledROIvsPeakCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
+								@(PnlSummary.Value.UnsettledROIvsPeakCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements).ToString("N2")+"%")
 							</td>
 						</tr>
 						<tr>
@@ -243,7 +243,7 @@
 								Unsettled ROI (vs Average Capital)
 							</td>
 							<td class="text-end fw-semibold @(PnlSummary.Value.UnSetledPnL(TotalMarketValue)>=0?"text-success":"text-danger")">
-								@(PnlSummary.Value.UnsettledROIvsAverageCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements??[]).ToString("N2")+"%")
+								@(PnlSummary.Value.UnsettledROIvsAverageCapital(PnlSummary.Value.NetPnL+TotalMarketValue, TxSettlements).ToString("N2")+"%")
 							</td>
 						</tr>
 
