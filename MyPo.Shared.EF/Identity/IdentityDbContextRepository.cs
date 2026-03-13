@@ -12,7 +12,7 @@ namespace MyPo.Shared.EF.Identity;
 public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, MyPoRole, string>, IIdentityRepository
 {
 	private readonly ICacheFacade<IIdentityRepository>? cache;
-	private IServiceProvider serviceProvider;
+	private readonly IServiceProvider serviceProvider;
 
 	public IdentityDbContextRepository(
 		IServiceProvider serviceProvider,
