@@ -80,9 +80,13 @@ public class EventBase
 
 	[JsonPropertyName("timestamp")]
 	public int Timestamp { get; set; }
+	[JsonPropertyName("date")]
+	public string TimestampStr { get; set; } = string.Empty;
 
 	[JsonIgnore]
-	public DateTimeOffset Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).UtcDateTime;
+	public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
+		? DateTimeOffset.TryParse(TimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime()
+		: DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime();
 
 	[JsonPropertyName("event_category")]
 	public string EventCategory { get; set; } = string.Empty;

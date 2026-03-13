@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MyPo.Libs.Tempus;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
@@ -7,16 +8,6 @@ namespace MyPo.Portfolio.Api.Controllers;
 
 public partial class PortfolioController
 {
-	private static DateTimeOffset PrevWorkingDay(DateTimeOffset date)
-	{
-		var prevDay = date.AddDays(-1);
-		while (prevDay.DayOfWeek == DayOfWeek.Saturday || prevDay.DayOfWeek == DayOfWeek.Sunday)
-		{
-			prevDay = prevDay.AddDays(-1);
-		}
-		return prevDay;
-	}
-
 	/// <summary>
 	/// Gets incoming market events
 	/// </summary>
@@ -24,10 +15,9 @@ public partial class PortfolioController
 	[HttpGet(IPortfolioApiClient.API_MARKET_EVENTS)]
 	public async ValueTask<ActionResult<ApiResp<IEnumerable<MarketEventResp>>>> GetUpcomingMarketEvents()
 	{
-		var now = DateTimeOffset.UtcNow;
-		var currentDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+		var currentDate = DateTimeOffset.UtcNow.StartOfDay();
 
-		var startDateDiv = PrevWorkingDay(PrevWorkingDay(currentDate));
+		var startDateDiv = currentDate.PrevWeekDay().PrevWeekDay().PrevWeekDay();
 		var endDateDiv = currentDate.AddDays(6);
 		var eventsDividend = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,

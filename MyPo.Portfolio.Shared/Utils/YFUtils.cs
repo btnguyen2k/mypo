@@ -1,6 +1,6 @@
 ﻿using MyPo.Portfolio.Shared.Models;
 
-namespace MyPo.Portfolio.Api.Utils;
+namespace MyPo.Portfolio.Shared.Utils;
 
 public static class YFUtils
 {

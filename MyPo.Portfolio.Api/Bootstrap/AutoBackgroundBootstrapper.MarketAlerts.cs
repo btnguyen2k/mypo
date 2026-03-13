@@ -1,8 +1,8 @@
 ﻿using MyPo.Libs.Tempus;
 using MyPo.Portfolio.Api.Services;
-using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
 using Telegram.Bot.Extensions;

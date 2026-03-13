@@ -75,6 +75,21 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 		return checkpoint;
 	}
 
+	protected async Task SaveCheckpoint(CheckpointEntity checkpoint, CancellationToken cancellationToken = default)
+	{
+		using var scope = ServiceProvider.CreateScope();
+		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+		checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
+		var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+		if (dbresult == null)
+		{
+			Logger.LogError(
+				"Failed to save checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+				checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+			);
+		}
+	}
+
 	protected async Task SaveEvents(IEnumerable<UpcomingDividendEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
 	{
 		using var scope = ServiceProvider.CreateScope();

@@ -71,19 +71,29 @@
 														<th class="text-end">Amount</th>
 														<th class="text-end">Cur.Price</th>
 														<th class="text-end">This Yield</th>
+														<th class="text-end">Pre.Price</th>
 													</tr>
 												</thead>
 												<tbody>
 													@foreach (var e in EventsDistribution)
 													{
 														<tr class="@(TextFormatDivident(e))">
-															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-															<td>@(e.Metadata?.PaymentDate??"--")</td>
+															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td class="text-nowrap">@(PaymentDateStr(e))</td>
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
 															<td class="text-end">@((e.Metadata?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
 															<td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
+															<td class="text-end text-nowrap">
+																@(PreExDivPrice.TryGetValue(e.ItemCode, out var quote9364)?$"{quote9364.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")
+																@((MarkupString)(PreExDivPriceVsCurrentPrice(e) > 0
+																	? $" <small class='text-success'>(+{PreExDivPriceVsCurrentPrice(e).ToString("P2")})</small>"
+																	: PreExDivPriceVsCurrentPrice(e) < 0
+																	  ? $" <small class='text-danger'>({PreExDivPriceVsCurrentPrice(e).ToString("P2")})</small>"
+																	  : "")
+																)
+															</td>
 														</tr>
 													}
 												</tbody>
@@ -200,6 +210,26 @@
 <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
 <script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
 @code {
+	private static string PaymentDateStr(MarketEventResp e)
+	{
+		if (!string.IsNullOrEmpty(e.Metadata?.PaymentDate??null) && e.Metadata!.PaymentDate!.Length >= 10)
+		{
+			return e.Metadata.PaymentDate.Substring(0, 10);
+		}
+		return "--";
+	}
+	private decimal PreExDivPriceVsCurrentPrice(MarketEventResp e)
+	{
+		if (QuotesMap.TryGetValue(e.ItemCode, out var quote) && PreExDivPrice.TryGetValue(e.ItemCode, out var preExDivPrice))
+		{
+			if (quote.MarketPrice > 0)
+			{
+				return (quote.MarketPrice+e.Metadata?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
+			}
+		}
+		return 0;
+	}
+
 	private static string DecimalFormatForMarket(string countryCode)
 	{
 		return countryCode.ToUpper() switch

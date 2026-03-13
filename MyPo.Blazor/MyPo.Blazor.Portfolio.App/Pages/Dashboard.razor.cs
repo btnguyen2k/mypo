@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
@@ -6,7 +7,6 @@ using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -36,6 +36,9 @@ public partial class Dashboard : BasePage
 	// map {symbol --> yield_vs_current_price}
 	private readonly Dictionary<string, decimal> YieldsMap = [];
 
+	// map {symbol --> market close price before ex-dividend date}
+	private readonly Dictionary<string, decimal> PreExDivPrice = [];
+
 	[Inject]
 	private IJSRuntime JS { get; set; } = default!;
 
@@ -58,43 +61,69 @@ public partial class Dashboard : BasePage
 		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "Dashboard-active-tab", tab);
 	}
 
-	private async Task<ApiResp<IDictionary<string, StockQuote>>> FetchQuotesForSymbols(List<string> symbolsList)
-	{
-		var symbols = string.Join(",", symbolsList);
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		return await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
-	}
-
 	private async void GetStocksQuotesBackground()
 	{
 		var symbolsList = MarketEventsList?
 			.Where(e => !e.EventType.Equals(MarketEventEntity.EVENT_EARNINGS, StringComparison.CurrentCultureIgnoreCase))
-			.Select(e => e.ItemCode).ToList() ?? [];
-		while (symbolsList.Count > 0)
-		{
-			var currentChunk = symbolsList.Take(5).ToList();
-			symbolsList = [.. symbolsList.Skip(5)];
-
-			var symbols = string.Join(",", currentChunk);
-			SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
-			var quotesResp = await FetchQuotesForSymbols(currentChunk);
-			if (quotesResp.Status == 200)
+			.Select(e => e.ItemCode).Distinct().ToList() ?? [];
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var authToken = await GetAuthTokenAsync();
+		await TickerUtils.FetchQuotesForTickers(
+			symbolsList,
+			apiClient,
+			authToken,
+			ApiBaseUrl,
+			callbackPrefetch: (currentChunk) =>
 			{
-				foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
+				var symbols = string.Join(",", currentChunk);
+				SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
+			},
+			callbackPostfetch: (quotesResp) =>
+			{
+				if (quotesResp.Status == 200)
 				{
-					QuotesMap[quote.Key] = quote.Value;
-					var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-					var amount = eventInfo?.Metadata?.Amount ?? 0;
-					YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
+					foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
+					{
+						QuotesMap[quote.Key] = quote.Value;
+						var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
+						var amount = eventInfo?.Metadata?.Amount ?? 0;
+						YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
+					}
+					StateHasChanged();
 				}
+				else
+				{
+					var symbols = string.Join(",", quotesResp.Data?.Keys ?? []);
+					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+				}
+			}
+		);
+		SetBackgroundMsg(string.Empty);
+	}
+
+	private async void GetPricePreExDivBackground()
+	{
+		var now = DateTimeOffset.UtcNow;
+		var events = MarketEventsList?
+			.Where(e => e.EventType.Equals(MarketEventEntity.EVENT_DIVIDEND, StringComparison.CurrentCultureIgnoreCase)
+				|| e.EventType.Equals(MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.CurrentCultureIgnoreCase))
+			.Where(e => e.EventTime < now) ?? [];
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		foreach (var e in events)
+		{
+			// Console.WriteLine($"Fetching pre-ex-dividend price for {e.ItemCode}...");
+			var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, e.EventTime.DateTime, await GetAuthTokenAsync(), ApiBaseUrl);
+			if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
+			{
+				PreExDivPrice[e.ItemCode] = quoteAtResp.Data.CloseValue;
+				// Console.WriteLine(JsonSerializer.Serialize(quoteAtResp.Data));
 				StateHasChanged();
 			}
 			else
 			{
-				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+				// Console.WriteLine($"Failed to fetch pre-ex-dividend price for {e.ItemCode}. Status: {quoteAtResp.Status}, Message: {quoteAtResp.Message}");
 			}
 		}
-		SetBackgroundMsg(string.Empty);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -119,6 +148,7 @@ public partial class Dashboard : BasePage
 				{
 					CloseAlert();
 					await Task.Run(GetStocksQuotesBackground);
+					await Task.Run(GetPricePreExDivBackground);
 				}
 			}
 			else

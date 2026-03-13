@@ -19,8 +19,13 @@ public sealed class HistoryPoint
 	[JsonPropertyName("timestamp")]
 	public long Timestamp { get; set; }
 
+	[JsonPropertyName("timestamp_str")]
+	public string TimestampStr { get; set; } = string.Empty;
+
 	[JsonIgnore]
-	public DateTime Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).DateTime;
+	public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
+		? DateTimeOffset.TryParse(TimestampStr, out var dt) ? dt : DateTimeOffset.FromUnixTimeSeconds(Timestamp)
+		: DateTimeOffset.FromUnixTimeSeconds(Timestamp);
 
 	[JsonPropertyName("open")]
 	public decimal OpenValue { get; set; }
@@ -117,8 +122,12 @@ public sealed class SymbolDividend
 
 	[JsonPropertyName("ex_dividend_date")]
 	public long ExDividendTimestamp { get; set; }
+	[JsonPropertyName("ex_dividend_date_str")]
+	public string ExDividendTimestampStr { get; set; } = string.Empty;
 	[JsonIgnore]
-	public DateTime ExDividendDate => DateTimeOffset.FromUnixTimeSeconds(ExDividendTimestamp).DateTime;
+	public DateTimeOffset ExDividendDate => !string.IsNullOrEmpty(ExDividendTimestampStr)
+		? DateTimeOffset.TryParse(ExDividendTimestampStr, out var dt) ? dt : DateTimeOffset.FromUnixTimeSeconds(ExDividendTimestamp)
+		: DateTimeOffset.FromUnixTimeSeconds(ExDividendTimestamp);
 
 	[JsonPropertyName("five_year_avg_dividend_yield")]
 	public decimal FiveYearAvgDividendYield { get; set; }
@@ -134,8 +143,12 @@ public sealed class SymbolDividend
 
 	[JsonPropertyName("last_dividend_date")]
     public long LastDividendTimestamp { get; set; }
+	[JsonPropertyName("last_dividend_date_str")]
+    public string LastDividendTimestampStr { get; set; } = string.Empty;
 	[JsonIgnore]
-	public DateTime LastDividendDate => DateTimeOffset.FromUnixTimeSeconds(LastDividendTimestamp).DateTime;
+	public DateTimeOffset LastDividendDate => !string.IsNullOrEmpty(LastDividendTimestampStr)
+		? DateTimeOffset.TryParse(LastDividendTimestampStr, out var dt) ? dt : DateTimeOffset.FromUnixTimeSeconds(LastDividendTimestamp)
+		: DateTimeOffset.FromUnixTimeSeconds(LastDividendTimestamp);
 }
 
 public sealed class StockQuote
