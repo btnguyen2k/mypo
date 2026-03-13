@@ -39,6 +39,13 @@ public class MenuBootstrapper
 					Label = "My Portfolio",
 					Icon = "bi-building",
 					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO,
+				},
+				new Sidebar.SidebarItem
+				{
+					Id = "mypreferences",
+					Label = "My Preferences",
+					Icon = "bi-sliders",
+					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PREFERENCES,
 				}
 			],
 		});

@@ -1,3 +1,7 @@
-# This file has been cleaned up post-releasing version 1.2.1.
+﻿# This file has been cleaned up post-releasing version 1.2.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+- (Feat) Clean up old events.
+- (Feat) Setup preferences to receive market alerts via Telegram.
+- (Feat) Send market alerts via Telegram.
+- (Improvement) Rework Dashboard.

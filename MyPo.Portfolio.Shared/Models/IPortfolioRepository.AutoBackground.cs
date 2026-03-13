@@ -17,11 +17,6 @@ public partial interface IPortfolioRepository
 	/// </summary>
 	public ValueTask<CheckpointEntity?> UpdateCheckpointAsync(CheckpointEntity checkoint, CancellationToken cancellationToken = default);
 
-	// /// <summary>
-	// /// Gets a list of <see cref="MarketEventEntity" /> records that are upcoming for the specified owner.
-	// /// </summary>
-	// public ValueTask<IEnumerable<MarketEventEntity>> GetUpcomingMarketEventsAsync(string ownerId, CancellationToken cancellationToken = default);
-
 	/// <summary>
 	/// Gets a list of <see cref="MarketEventEntity" /> records that are within the specified date range for the specified owner.
 	/// </summary>
@@ -31,4 +26,9 @@ public partial interface IPortfolioRepository
 	/// Upserts a <see cref="CheckpointEntity" /> record.
 	/// </summary>
 	public ValueTask<MarketEventEntity?> UpsertMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Deletes <see cref="MarketEventEntity" /> records that are older than the specified cutoff date.
+	/// </summary>
+	public ValueTask<int> DeleteMarketEventsOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,6 @@
 ﻿using MyPo.Shared.Api;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MyPo.Portfolio.Api.Services;
 
@@ -75,11 +76,20 @@ public class BaseClient
 		}
 	}
 
+	private static readonly JsonSerializerOptions defaultJsonOptions = new()
+	{
+		Converters = {
+			new DefaultDecimalConverter(),
+			new DefaultIntConverter(),
+			new DefaultLongConverter(),
+		},
+	};
+
 	protected async Task<ApiResp<T>> ReadAndCloseResponseAsync<T>(HttpResponseMessage httpResult, CancellationToken cancellationToken)
 	{
 		try
 		{
-			var result = await httpResult.Content.ReadFromJsonAsync<ApiResp<T>>(cancellationToken);
+			var result = await httpResult.Content.ReadFromJsonAsync<ApiResp<T>>(defaultJsonOptions, cancellationToken);
 			if (result == null)
 			{
 				return new ApiResp<T> { Status = 500, Message = "Invalid response from server." };

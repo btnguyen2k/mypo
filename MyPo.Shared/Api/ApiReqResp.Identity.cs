@@ -89,7 +89,7 @@ public struct UserResp
 {
 	public static UserResp BuildFromUser(MyPoUser user)
 	{
-		return new UserResp
+		var userResp = new UserResp
 		{
 			Id = user.Id,
 			Username = user.UserName!,
@@ -98,7 +98,10 @@ public struct UserResp
 			FamilyName = user.FamilyName,
 			Roles = user.Roles?.Select(r => RoleResp.BuildFromRole(r)),
 			Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
+			Metadata = user.Metadata?.Clone() ?? null,
 		};
+		if (userResp.Metadata != null) userResp.Metadata.PrivateData = null; // do not return any private data in the API response
+		return userResp;
 	}
 
 	[JsonPropertyName("id")]
@@ -113,21 +116,20 @@ public struct UserResp
 	[JsonPropertyName("password")]
 	public string? Password { get; set; }
 
-	[JsonPropertyName("given_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("given_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? GivenName { get; set; }
 
-	[JsonPropertyName("family_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("family_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? FamilyName { get; set; }
 
-	[JsonPropertyName("roles")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("roles"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public IEnumerable<RoleResp>? Roles { get; set; }
 
-	[JsonPropertyName("claims")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("claims"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public IEnumerable<ClaimResp>? Claims { get; set; }
+
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public MyPoUserMetadata? Metadata { get; set; }
 }
 
 /*----------------------------------------------------------------------*/

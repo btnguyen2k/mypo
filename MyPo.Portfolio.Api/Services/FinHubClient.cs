@@ -9,9 +9,27 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl) { }
 
 	/// <inheritdoc/>
+	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStockQuotesAsync(string symbols, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = QueryHelpers.AddQueryString(
+			IFinHubClient.API_FINHUB_ENDPOINT_STOCK_QUOTES,
+			new Dictionary<string, string?> { { "symbols", symbols } }
+		);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
 	public async Task<ApiResp<SymbolOverview>> GetStockSymbolOverviewAsync(string symbol, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var endpoint = IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_OVERVIEW.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase);
+		var endpoint = IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_OVERVIEW
+			.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -25,7 +43,8 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	/// <inheritdoc/>
 	public async Task<ApiResp<SymbolInfo>> GetStockSymbolInfoAsync(string symbol, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var endpoint = IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase);
+		var endpoint = IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO
+			.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -37,9 +56,11 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	}
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStockQuotesAsync(string symbols, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<HistoryPoint>> GetStockQuoteAtDateAsync(string symbol, string date, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_STOCK_QUOTES, new Dictionary<string, string?> { { "symbols", symbols } });
+		var endpoint = IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_QUOTE_AT
+			.Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase)
+			.Replace("{date}", date, StringComparison.OrdinalIgnoreCase);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -47,7 +68,7 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IDictionary<string, StockQuote>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<HistoryPoint>(httpResult, cancellationToken);
 	}
 
 	/*----------------------------------------------------------------------*/

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace MyPo.Shared.EF.Identity;
 
@@ -64,6 +65,13 @@ sealed class IdentityUserEntityTypeConfiguration : IEntityTypeConfiguration<MyPo
 		//builder.Property(t => t.AccessFailedCount).HasColumnName("access_failed_count");
 		builder.Property(t => t.GivenName).HasColumnName("given_name");
 		builder.Property(t => t.FamilyName).HasColumnName("family_name");
+
+		builder.Property(e => e.Metadata).HasColumnName("user_metadata")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+				v => JsonSerializer.Deserialize<MyPoUserMetadata>(v, (JsonSerializerOptions?)null)
+			)
+			.HasColumnType("jsonb");
 
 		// username and email should be unique
 		builder.HasIndex(t => t.NormalizedUserName).IsUnique();
