@@ -1,5 +1,17 @@
 # My Portfolio Tracker release notes
 
+## 2026-03-13 - v1.3.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Clean up old events.
+- (Feat) Setup preferences to receive market alerts via Telegram.
+- (Feat) Send market alerts via Telegram.
+
+### Fixed/Improvements
+
+- (Improvement) Rework Dashboard.
+
 ## 2026-03-07 - v1.2.1
 
 ### Fixed/Improvements
