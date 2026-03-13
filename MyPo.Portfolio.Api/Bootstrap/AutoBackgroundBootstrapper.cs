@@ -15,6 +15,10 @@ public class AutoBackgroundBootstrapper
 		appBuilder.Services.AddHostedService<AutoBackgroundUpcomingDividendAnnouncementsScanner>();
 		appBuilder.Services.AddHostedService<AutoBackgroundUpcomingEarningsAnnouncementsScanner>();
 		appBuilder.Services.AddHostedService<AutoBackgroundNewListingAnnouncementsScanner>();
+
+		appBuilder.Services.AddHostedService<AutoBackgroundSendMarketAlerts>();
+
+		appBuilder.Services.AddHostedService<AutoBackgroundOldEventsCleaner>();
 	}
 }
 
@@ -29,7 +33,7 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 		this.Logger = logger;
 	}
 
-	protected async Task<CheckpointEntity?> GetCheckpoint(
+	protected async Task<CheckpointEntity?> GetOrInitCheckpoint(
 		string ownerId,
 		string portfolioId,
 		string marketId,
@@ -61,11 +65,29 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 			var dbresult = await portfolioRepo.CreateCheckpointAsync(checkpoint, cancellationToken);
 			if (dbresult == null)
 			{
-				Logger.LogError("Failed to create checkpoint for market {market}.", marketId);
+				Logger.LogError(
+					"Failed to create checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+					checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+				);
 				checkpoint = null;
 			}
 		}
 		return checkpoint;
+	}
+
+	protected async Task SaveCheckpoint(CheckpointEntity checkpoint, CancellationToken cancellationToken = default)
+	{
+		using var scope = ServiceProvider.CreateScope();
+		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+		checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
+		var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+		if (dbresult == null)
+		{
+			Logger.LogError(
+				"Failed to save checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+				checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+			);
+		}
 	}
 
 	protected async Task SaveEvents(IEnumerable<UpcomingDividendEvent> events, string ownerId, string marketId, CancellationToken cancellationToken = default)
