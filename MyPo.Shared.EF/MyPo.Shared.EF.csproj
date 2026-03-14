@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.82.1" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.83.1" />
     <ProjectReference Include="..\MyPo.Shared\MyPo.Shared.csproj" />
   </ItemGroup>
 
