@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
+using MyPo.Libs.Tempus;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
@@ -111,17 +112,19 @@ public partial class Dashboard : BasePage
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		foreach (var e in events)
 		{
-			// Console.WriteLine($"Fetching pre-ex-dividend price for {e.ItemCode}...");
-			var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, e.EventTime.DateTime, await GetAuthTokenAsync(), ApiBaseUrl);
+			var tz = e.MarketId.ToUpper() switch
+			{
+				"AU" => "Australia/Sydney",
+				"VN" => "Asia/Ho_Chi_Minh",
+				"US" => "America/New_York",
+				_ => "UTC"
+			};
+			var dateAt = (e.EventTime.ToTimeZoneSilently(tz) ?? e.EventTime).AddDays(-1).Date;
+			var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
 			{
 				PreExDivPrice[e.ItemCode] = quoteAtResp.Data.CloseValue;
-				// Console.WriteLine(JsonSerializer.Serialize(quoteAtResp.Data));
 				StateHasChanged();
-			}
-			else
-			{
-				// Console.WriteLine($"Failed to fetch pre-ex-dividend price for {e.ItemCode}. Status: {quoteAtResp.Status}, Message: {quoteAtResp.Message}");
 			}
 		}
 	}
