@@ -136,9 +136,10 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			var msg = new StringBuilder($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
 			foreach (var e in eventsDividend.Where(e => e.MarketId == market))
 			{
+				var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 				var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 				var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"\n📊 <code>{yieldsMap[e.ItemCode]:P2}</code> -💲<code>{quote.MarketPrice:F2}</code>" : "";
-				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Amount??0:F2}</code> - 📅 <code>{e.EventTime:yyyy-MM-dd}</code>{quoteInfo}\n");
+				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Amount??0:F2}</code> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code>{quoteInfo}\n");
 				if (preExDivPrices.TryGetValue(e.ItemCode, out var prePrice))
 				{
 					var delta = (quotesMap[ticker].MarketPrice+e.Metadata?.Amount??0 - prePrice) / prePrice - 1;
@@ -179,9 +180,10 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		var message = "<strong>🆕 New listings:</strong>\n<blockquote>";
 		foreach (var e in eventsListing)
 		{
+			var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(current price: <code>{quote.MarketPrice:F2}</code>)" : "";
-			message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime:yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
+			message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
 		}
 		message += "</blockquote><preview disabled />";
 

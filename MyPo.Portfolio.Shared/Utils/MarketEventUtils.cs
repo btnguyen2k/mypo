@@ -54,9 +54,9 @@ public static class MarketEventUtils
 	{
 		return marketId.ToUpper() switch
 		{
+			"AU" => "Australia/Sydney",
 			"US" => "America/New_York",
 			"VN" => "Asia/Ho_Chi_Minh",
-			"HK" => "Asia/Hong_Kong",
 			_ => "UTC"
 		};
 	}
