@@ -1,7 +1,9 @@
-﻿using MyPo.Libs.Tempus;
+﻿using System.Text;
+using System.Text.Json;
+using MyPo.Libs.Tempus;
 using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
@@ -34,34 +36,19 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 				{
 					var userId = user.UserName!.ToLower();
 					Logger.LogInformation("Processing market alerts for user {userId}...", userId);
-					if (!(user.Metadata?.MarketAlertViaTelegram??false))
+					if (!(user.Metadata?.MarketAlertViaTelegram??false)					// market alert is not enabled
+						|| string.IsNullOrEmpty(user.Metadata?.GetTelegramBotApiKey())	// Telegram bot API key is not configured
+						|| !(user.Metadata?.GetTelegramChatIDs()??[]).Any()				// No Telegram chat IDs are configured
+					)
 					{
-						Logger.LogInformation("User {userId} has not enabled market alerts via Telegram. Skipping...", userId);
-						continue;
-					}
-					if (string.IsNullOrEmpty(user.Metadata?.GetTelegramBotApiKey()??string.Empty))
-					{
-						Logger.LogInformation("User {userId} has not configured Telegram bot API key for market alerts. Skipping...", userId);
-						continue;
-					}
-					if (!(user.Metadata?.GetTelegramChatIDs()??[]).Any())
-					{
-						Logger.LogInformation("User {userId} has not configured any Telegram chat IDs for market alerts. Skipping...", userId);
 						continue;
 					}
 					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata?.MarketAlertTimezone??"");
-					if (now == null)
+					if (now == null																// invalid timezone
+						|| !now.Value.WithinDowList(user.Metadata?.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
+						|| !now.Value.WithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue)
+					)
 					{
-						Logger.LogInformation("User {userId} has an invalid market alert timezone configured. Skipping...", userId);
-						continue;
-					}
-					if (!now.Value.WithinDowList(user.Metadata?.MarketAlertDaysOfWeek??[]))
-					{
-						Logger.LogInformation("Today is {dayOfWeek}, which is now in the user's market alert time window. Skipping...", now.Value.DayOfWeek.ToString());
-					}
-					if (!now.Value.WithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue))
-					{
-						Logger.LogInformation("Current time {currentTime} is not within the user's market alert time window. Skipping...", now.Value.ToString("HH:mm"));
 						continue;
 					}
 					var checkpoint = await GetOrInitCheckpoint(
@@ -75,7 +62,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 					var alertDelay = TimeSpan.FromMinutes(user.Metadata?.MarketAlertDelayMinutes??60);
 					if (checkpoint == null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow-checkpoint.CheckpointTime < alertDelay))
 					{
-						Logger.LogInformation("Checkpoint for user {userId} is not ready for sending market alerts. Last checkpoint time: {checkpointTime}, alert delay: {alertDelay}. Skipping...", userId, checkpoint?.CheckpointTime.ToString("o")??"null", alertDelay);
+						// checkpoint is not ready for sending alerts yet
 						continue;
 					}
 
@@ -86,14 +73,14 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 					await MarketAlertNewListings(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
 
 					checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
-					var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
-					if (dbresult == null)
-					{
-						Logger.LogError(
-							"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
-							checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
-						);
-					}
+					// var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+					// if (dbresult == null)
+					// {
+					// 	Logger.LogError(
+					// 		"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+					// 		checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+					// 	);
+					// }
 				}
 				catch (Exception ex)
 				{
@@ -115,67 +102,6 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
         }
 	}
 
-	private async Task<IDictionary<string, StockQuote>> FetchQuotesForTickers(IEnumerable<string> tickers, IFinHubClient finHubClient, CancellationToken cancellationToken)
-	{
-		var clonedTickers = tickers.Select(YFUtils.BuildYFTicker).ToList();
-		var quotesMap = new Dictionary<string, StockQuote>();
-		while (clonedTickers.Count > 0)
-		{
-			var currentChunk = clonedTickers.Take(5).ToList();
-			clonedTickers = [.. clonedTickers.Skip(5)];
-
-			var tickersAsCommaSeparatedList = string.Join(",", currentChunk);
-			try
-			{
-				var finhubQuotesResult = await finHubClient.GetStockQuotesAsync(tickersAsCommaSeparatedList, cancellationToken: cancellationToken);
-				foreach (var quote in finhubQuotesResult.Data ?? new Dictionary<string, StockQuote>())
-				{
-					quotesMap[quote.Key] = quote.Value;
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.LogWarning(ex, "Failed to fetch quotes for tickers: {tickers}. Error: {errorMessage}", tickersAsCommaSeparatedList, ex.Message);
-			}
-		}
-		return quotesMap;
-	}
-
-	private static int AttentionLevel(MarketEventEntity e, IDictionary<string, decimal> yieldsMap)
-	{
-		if (e.MarketId=="VN")
-		{
-			if (e.Metadata?.Amount >= 3000)
-			{
-				return 3;
-			}
-			else if (yieldsMap.TryGetValue(e.ItemCode, out var yield) && yield >= 0.04m)
-			{
-				return 2;
-			}
-		}
-		else if (yieldsMap.TryGetValue(e.ItemCode, out var yield))
-		{
-			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
-			{
-				return 3;
-			}
-			if (e.Metadata?.Amount >= 5.00m && yield >= 0.02m)
-			{
-				return 2;
-			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
-			{
-				return 2;
-			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
-			{
-				return 1;
-			}
-		}
-		return 0;
-	}
-
 	private async Task MarketAlertDividendEvents(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient teleBot, IEnumerable<string> chatIDs, CancellationToken cancellationToken)
 	{
 		var today = DateTimeOffset.UtcNow.StartOfDay();
@@ -185,9 +111,12 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			MarketEventEntity.NON_OWNER,
 			startDateDiv, endDateDiv,
 			[MarketEventEntity.EVENT_DIVIDEND, MarketEventEntity.EVENT_DISTRIBUTION],
-			cancellationToken: cancellationToken) ?? []).ToList();
+			cancellationToken: cancellationToken)).ToList();
+		if (eventsDividend.Count <= 0) return;
 
-		var quotesMap = await FetchQuotesForTickers(eventsDividend.Select(e => e.ItemCode).Distinct(), finHubClient, cancellationToken);
+		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
+			eventsDividend.Select(e => e.ItemCode).Distinct(),
+			finHubClient, cancellationToken: cancellationToken);
 		var yieldsMap = eventsDividend.Select(e => e.ItemCode).Distinct().ToDictionary(symbol => symbol, symbol => {
 			var e = eventsDividend.First(ev => ev.ItemCode == symbol);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
@@ -195,20 +124,29 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			return result ?? 0;
 		});
 
-		eventsDividend = [.. eventsDividend.OrderBy(e => e.EventTime).ThenByDescending(e => AttentionLevel(e, yieldsMap)).Where(e => AttentionLevel(e, yieldsMap) > 0)];
+		eventsDividend = [.. eventsDividend
+			.OrderBy(e => e.EventTime).ThenByDescending(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap))
+			.Where(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap) > 0)];
+		var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
+
 		var distinctMarkets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
 		var messages = new List<string>();
 		foreach (var market in distinctMarkets)
 		{
-			var message = $"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>";
+			var msg = new StringBuilder($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
 			foreach (var e in eventsDividend.Where(e => e.MarketId == market))
 			{
 				var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 				var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"\n📊 <code>{yieldsMap[e.ItemCode]:P2}</code> -💲<code>{quote.MarketPrice:F2}</code>" : "";
-				message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Amount??0:F2}</code> - 📅 <code>{e.EventTime:yyyy-MM-dd}</code>{quoteInfo}\n";
+				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Amount??0:F2}</code> - 📅 <code>{e.EventTime:yyyy-MM-dd}</code>{quoteInfo}\n");
+				if (preExDivPrices.TryGetValue(e.ItemCode, out var prePrice))
+				{
+					var delta = (quotesMap[ticker].MarketPrice+e.Metadata?.Amount??0 - prePrice) / prePrice - 1;
+					msg.Append($"vs Pre-ex-div price: <code>{prePrice:F2} ({(delta>0?"+":"")}{delta:P2})</code>\n\n");
+				}
 			}
-			message += "</blockquote><preview disabled />";
-			messages.Add(message);
+			msg.Append("</blockquote><preview disabled />");
+			messages.Add(msg.ToString());
 		}
 
 		foreach (var chatId in chatIDs)
@@ -230,13 +168,14 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		var today = DateTimeOffset.UtcNow.StartOfDay();
 		var startDateListing = today.AddDays(-21);
 		var endDateListing = today.AddDays(14);
-		var eventsListing = await portfolioRepo.GetMarketEventsAsync(
+		var eventsListing = (await portfolioRepo.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
 			startDateListing, endDateListing,
 			[MarketEventEntity.EVENT_LISTING],
-			cancellationToken: cancellationToken);
+			cancellationToken: cancellationToken)).ToList();
+		if (eventsListing.Count <= 0) return;
 
-		var quotesMap = await FetchQuotesForTickers(eventsListing.Select(e => e.ItemCode).Distinct(), finHubClient, cancellationToken);
+		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(eventsListing.Select(e => e.ItemCode).Distinct(), finHubClient, cancellationToken: cancellationToken);
 		var message = "<strong>🆕 New listings:</strong>\n<blockquote>";
 		foreach (var e in eventsListing)
 		{

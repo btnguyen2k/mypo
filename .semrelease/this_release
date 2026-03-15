@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Patch) Fix CodeQL warnings.
 - (Fix) Dashboard - Check Pre-Ex.Div price.
+- (Improvement) Enhance sending Market alerts via Telegram.
