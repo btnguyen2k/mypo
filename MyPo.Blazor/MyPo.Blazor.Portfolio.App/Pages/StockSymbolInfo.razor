@@ -1,4 +1,4 @@
-@using MyPo.Blazor.App.Shared;
+﻿@using MyPo.Blazor.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets;
 @using MyPo.Blazor.App.Layout;
@@ -32,7 +32,7 @@
 					<div class="row float-start">
 						<h4 class="card-title">
 							@(SymbolInfo==null?"Stock Symbol Info":SymbolCode)
-							<small class="text-muted">@(SymbolInfo?.Overview?.LongName??"")</small>
+							<small class="text-muted">@(SymbolInfo?.LongName??"")</small>
 						</h4>
 					</div>
 					<div class="row float-end">

@@ -70,8 +70,8 @@ public sealed class MarketEventMetadata
 	[JsonPropertyName("price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public decimal? Price { get; set; }
 
-	[JsonPropertyName("capital"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Capital { get; set; }
+	[JsonPropertyName("capital")]
+	public long Capital { get; set; }
 
 	[JsonIgnore]
 	public string CurrencySymbol => Currency?.ToUpper() switch

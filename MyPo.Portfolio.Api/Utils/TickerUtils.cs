@@ -83,7 +83,7 @@ public static class TickerUtils
 				cancellationToken: cancellationToken);
 			if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
 			{
-				preExDivPrices[e.ItemCode] = quoteAtResp.Data.CloseValue;
+				preExDivPrices[e.ItemCode] = quoteAtResp.Data.Close;
 			}
 		}
 		return preExDivPrices;

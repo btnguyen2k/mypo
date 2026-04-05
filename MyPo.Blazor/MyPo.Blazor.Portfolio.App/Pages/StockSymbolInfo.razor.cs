@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
@@ -70,23 +70,23 @@ public sealed partial class StockSymbolInfo : BasePage
 		## Company Classification
 
 		- Currency: {SymbolInfo?.Currency??"USD"}
-		- Quote type: {SymbolInfo?.Overview?.QuoteType??"N/A"}
-		- Industry: {SymbolInfo?.Overview?.Industry??"N/A"}
-		- Sector: {SymbolInfo?.Overview?.Sector??"N/A"}
+		- Quote type: {SymbolInfo?.QuoteType??"N/A"}
+		- Industry: {SymbolInfo?.Industry??"N/A"}
+		- Sector: {SymbolInfo?.Sector??"N/A"}
 
 
 		## Financials
 
-		- Total cash: {((SymbolInfo?.Overview?.TotalCash??0)>0?SymbolInfo?.Overview?.TotalCash.ToString("F0"):"N/A")}
-		- Total debt: {((SymbolInfo?.Overview?.TotalDebt??0)>0?SymbolInfo?.Overview?.TotalDebt.ToString("F0"):"N/A")}
-		- Total revenue: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.TotalRevenue.ToString("F0"):"N/A")}
-		- Revenue growth: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.RevenueGrowth.ToString("P2"):"N/A")}
-		- Earnings growth: {((SymbolInfo?.Overview?.TotalRevenue??0)>0?SymbolInfo?.Overview?.EarningsGrowth.ToString("P2"):"N/A")}
-		- EBITDA: {((SymbolInfo?.Overview?.Ebitda??0)>0?SymbolInfo?.Overview?.Ebitda.ToString("F0"):"N/A")}
-		- EBITDA margins: {((SymbolInfo?.Overview?.Ebitda??0)>0?SymbolInfo?.Overview?.EbitdaMargins.ToString("P2"):"N/A")}
-		- Gross margins: {SymbolInfo?.Overview?.GrossMargins.ToString("P2")??"N/A"}
-		- Operating margins: {SymbolInfo?.Overview?.OperatingMargins.ToString("P2")??"N/A"}
-		- Profit margins: {SymbolInfo?.Overview?.ProfitMargins.ToString("P2")??"N/A"}
+		- Total cash: {((SymbolInfo?.TotalCash??0)>0?SymbolInfo?.TotalCash.ToString("F0"):"N/A")}
+		- Total debt: {((SymbolInfo?.TotalDebt??0)>0?SymbolInfo?.TotalDebt.ToString("F0"):"N/A")}
+		- Total revenue: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.TotalRevenue.ToString("F0"):"N/A")}
+		- Revenue growth: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.RevenueGrowth.ToString("P2"):"N/A")}
+		- Earnings growth: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.EarningsGrowth.ToString("P2"):"N/A")}
+		- EBITDA: {((SymbolInfo?.Ebitda??0)>0?SymbolInfo?.Ebitda.ToString("F0"):"N/A")}
+		- EBITDA margins: {((SymbolInfo?.Ebitda??0)>0?SymbolInfo?.EbitdaMargins.ToString("P2"):"N/A")}
+		- Gross margins: {SymbolInfo?.GrossMargins.ToString("P2")??"N/A"}
+		- Operating margins: {SymbolInfo?.OperatingMargins.ToString("P2")??"N/A"}
+		- Profit margins: {SymbolInfo?.ProfitMargins.ToString("P2")??"N/A"}
 
 
 		## Valuation
@@ -127,7 +127,7 @@ public sealed partial class StockSymbolInfo : BasePage
 			""";
 			foreach(var h in historyData)
 			{
-				inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp):yyyy-MMM-dd} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n";
+				inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp):yyyy-MMM-dd} | {h.Open:N2} | {h.High:N2} | {h.Low:N2} | {h.Close:N2} | {h.Volume} | {h.RSI14:N2} |\n";
 			}
 		}
 

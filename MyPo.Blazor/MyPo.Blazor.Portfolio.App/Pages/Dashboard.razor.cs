@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
@@ -123,7 +122,7 @@ public partial class Dashboard : BasePage
 			var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
 			{
-				PreExDivPrice[e.ItemCode] = quoteAtResp.Data.CloseValue;
+				PreExDivPrice[e.ItemCode] = quoteAtResp.Data.Close;
 				StateHasChanged();
 			}
 		}
@@ -150,8 +149,8 @@ public partial class Dashboard : BasePage
 				else
 				{
 					CloseAlert();
-					await Task.Run(GetStocksQuotesBackground);
-					await Task.Run(GetPricePreExDivBackground);
+					// await Task.Run(GetStocksQuotesBackground);
+					// await Task.Run(GetPricePreExDivBackground);
 				}
 			}
 			else

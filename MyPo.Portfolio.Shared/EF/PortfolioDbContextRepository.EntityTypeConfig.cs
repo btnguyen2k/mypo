@@ -3,6 +3,7 @@ using MyPo.Shared.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Text.Json;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Portfolio.Shared.EF;
 sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioEntity, string>
@@ -21,7 +22,7 @@ sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<P
 		builder.Property(e => e.Metadata).HasColumnName("portfolio_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<PortfolioMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<PortfolioMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -72,7 +73,7 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
 		builder.Property(e => e.Metadata).HasColumnName("item_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<AssetMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<AssetMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -122,7 +123,7 @@ sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfigurat
 		builder.Property(e => e.Metadata).HasColumnName("analysis_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<SymbolAnalysisMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -147,7 +148,7 @@ sealed class CheckpointEntityTypeConfiguration : GenericEntityTypeConfiguration<
 		builder.Property(e => e.Metadata).HasColumnName("checkpoint_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<CheckpointMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<CheckpointMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -171,7 +172,7 @@ sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration
 		builder.Property(e => e.Metadata).HasColumnName("event_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<MarketEventMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<MarketEventMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 		builder.Property(e => e.CreatedAt).HasColumnName("created_at");

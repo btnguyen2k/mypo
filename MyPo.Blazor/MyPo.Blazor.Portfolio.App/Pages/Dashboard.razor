@@ -137,7 +137,7 @@
 															<td>@(e.Metadata?.Industry??"--")</td>
 															<td class="text-end">@((e.Metadata?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
-															<td class="text-end">@(e.Metadata?.Capital??"--")</td>
+															<td class="text-end">@(e.Metadata?.Capital.ToString("N0")??"--")</td>
 														</tr>
 													}
 												</tbody>
