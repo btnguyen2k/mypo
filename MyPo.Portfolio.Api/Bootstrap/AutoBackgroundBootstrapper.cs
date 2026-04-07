@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Models;
+﻿using System.Text.Json;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Bootstrap;
 
@@ -110,10 +111,14 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					SourceName = e.SourceName,
 					Link = e.Link,
 					Status = e.Status,
-					Amount = e.Amount,
-					DividendYield = e.DividendYield,
 					Currency = e.Currency,
-					PaymentDate = e.PaymentDate,
+					Dividend = new()
+					{
+						PaymentDate = e.PaymentDate,
+						Amount = e.Amount,
+						DividendYield = e.DividendYield,
+						Analysis = e.Analysis,
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -144,7 +149,10 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					SourceName = e.SourceName,
 					Link = e.Link,
 					Status = e.Status.Trim().ToLower(),
-					ReportPeriod = e.ReportPeriod.Trim().ToLower(),
+					Earnings = new()
+					{
+						ReportPeriod = e.ReportPeriod.Trim().ToLower(),
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -161,6 +169,7 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 		foreach (var e in events)
 		{
+			Console.WriteLine(JsonSerializer.Serialize(e));
 			var marketEvent = new MarketEventEntity
 			{
 				OwnerId = ownerId.Trim().ToLower(),
@@ -174,10 +183,15 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
+					Sector = e.Sector,
 					Industry = e.Industry,
-					Price = e.Price,
 					Currency = e.Currency,
 					Capital = e.Capital,
+					Listing = new()
+					{
+						Price = e.Price,
+						Analysis = e.Analysis,
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);

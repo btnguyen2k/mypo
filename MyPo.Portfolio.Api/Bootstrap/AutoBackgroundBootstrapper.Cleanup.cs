@@ -10,6 +10,7 @@ sealed class AutoBackgroundOldEventsCleaner : AutoBackgroundAnnouncementScanner
 	{
 	}
 
+	// Run task ~one per day.
 	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24);
 
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)

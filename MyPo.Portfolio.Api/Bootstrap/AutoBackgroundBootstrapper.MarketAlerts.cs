@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.Json;
 using MyPo.Libs.Tempus;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Api.Utils;
@@ -69,7 +68,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 					var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 					var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
 					var teleBot = new TelegramBotClient(user.Metadata!.GetTelegramBotApiKey()!);
-					await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
+					// await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
 					await MarketAlertNewListings(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
 
 					checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
@@ -120,7 +119,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		var yieldsMap = eventsDividend.Select(e => e.ItemCode).Distinct().ToDictionary(symbol => symbol, symbol => {
 			var e = eventsDividend.First(ev => ev.ItemCode == symbol);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
-			var result = quotesMap.TryGetValue(ticker, out var quote) && e.Metadata?.Amount > 0 && quote.MarketPrice > 0 ? e.Metadata.Amount/quote.MarketPrice : 0;
+			var result = quotesMap.TryGetValue(ticker, out var quote) && e.Metadata?.Dividend?.Amount > 0 && quote.MarketPrice > 0 ? e.Metadata.Dividend.Amount/quote.MarketPrice : 0;
 			return result ?? 0;
 		});
 
@@ -139,10 +138,10 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 				var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 				var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 				var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"\n📊 <code>{yieldsMap[e.ItemCode]:P2}</code> -💲<code>{quote.MarketPrice:F2}</code>" : "";
-				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Amount??0:F2}</code> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code>{quoteInfo}\n");
+				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Dividend?.Amount??0:F2}</code> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code>{quoteInfo}\n");
 				if (preExDivPrices.TryGetValue(e.ItemCode, out var prePrice))
 				{
-					var delta = (quotesMap[ticker].MarketPrice+e.Metadata?.Amount??0 - prePrice) / prePrice - 1;
+					var delta = (quotesMap[ticker].MarketPrice+e.Metadata?.Dividend?.Amount??0 - prePrice) / prePrice - 1;
 					msg.Append($"vs Pre-ex-div price: <code>{prePrice:F2} ({(delta>0?"+":"")}{delta:P2})</code>\n\n");
 				}
 			}
@@ -182,10 +181,12 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		{
 			var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
-			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(current price: <code>{quote.MarketPrice:F2}</code>)" : "";
-			message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
+			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
+			// message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
+			message += $"{e.ItemCode} - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
 		}
-		message += "</blockquote><preview disabled />";
+		// message += "</blockquote><preview disabled />";
+		message += "</blockquote>";
 
 		foreach (var chatId in chatIDs)
 		try

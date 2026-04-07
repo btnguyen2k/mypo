@@ -82,7 +82,7 @@
 															<td class="text-nowrap">@(PaymentDateStr(e))</td>
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-															<td class="text-end">@((e.Metadata?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td class="text-end">@((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
 															<td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
 															<td class="text-end text-nowrap">
@@ -135,7 +135,7 @@
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
 															<td>@(e.Metadata?.Industry??"--")</td>
-															<td class="text-end">@((e.Metadata?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td class="text-end">@((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
 															<td class="text-end">@(e.Metadata?.Capital.ToString("N0")??"--")</td>
 														</tr>
@@ -177,7 +177,7 @@
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
 															<td>@(e.Metadata?.Status??"--")</td>
-															<td class="text-end">@(e.Metadata?.ReportPeriod??"--")</td>
+															<td class="text-end">@(e.Metadata?.Earnings?.ReportPeriod??"--")</td>
 														</tr>
 													}
 												</tbody>
@@ -212,9 +212,9 @@
 @code {
 	private static string PaymentDateStr(MarketEventResp e)
 	{
-		if (!string.IsNullOrEmpty(e.Metadata?.PaymentDate??null) && e.Metadata!.PaymentDate!.Length >= 10)
+		if (!string.IsNullOrEmpty(e.Metadata?.Dividend?.PaymentDate??null) && e.Metadata!.Dividend!.PaymentDate!.Length >= 10)
 		{
-			return e.Metadata.PaymentDate.Substring(0, 10);
+			return e.Metadata.Dividend.PaymentDate.Substring(0, 10);
 		}
 		return "--";
 	}
@@ -224,7 +224,7 @@
 		{
 			if (quote.MarketPrice > 0)
 			{
-				return (quote.MarketPrice+e.Metadata?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
+				return (quote.MarketPrice+e.Metadata?.Dividend?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
 			}
 		}
 		return 0;
@@ -243,7 +243,7 @@
 	{
 		if (e.MarketId=="VN")
 		{
-			if (e.Metadata?.Amount >= 3000)
+			if (e.Metadata?.Dividend?.Amount >= 3000)
 			{
 				return "table-danger";
 			}
@@ -254,19 +254,19 @@
 		}
 		else if (YieldsMap.TryGetValue(e.ItemCode, out var yield))
 		{
-			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
+			if (e.Metadata?.Dividend?.Amount >= 1.00m && yield >= 0.04m)
 			{
 				return "table-danger";
 			}
-			if (e.Metadata?.Amount >= 5.00m && yield >= 0.02m)
+			if (e.Metadata?.Dividend?.Amount >= 5.00m && yield >= 0.02m)
 			{
 				return "table-danger";
 			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
+			if (e.Metadata?.Dividend?.Amount >= 0.03m && yield >= 0.07m)
 			{
 				return "table-success";
 			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
+			if (e.Metadata?.Dividend?.Amount >= 0.03m && yield >= 0.03m)
 			{
 				return "table-info";
 			}

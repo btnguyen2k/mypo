@@ -13,7 +13,9 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 
 	// TODO: move this to configuration
 	private static readonly List<string> COUNTRIES = ["AU"];
-	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(18);
+
+	// Run task ~every 2 days per market
+	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(43);
 
 	private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 
@@ -28,6 +30,7 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 			try
 			{
 				var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
+				if (currentCountryIndex > 1000) currentCountryIndex %= COUNTRIES.Count;
 				var checkpoint = await GetOrInitCheckpoint(
 					ownerId: CheckpointEntity.NON_OWNER,
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,

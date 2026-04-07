@@ -14,7 +14,7 @@ public static class MarketEventUtils
 	{
 		if (e.MarketId.Equals("VN", StringComparison.OrdinalIgnoreCase))
 		{
-			if (e.Metadata?.Amount >= 3000)
+			if (e.Metadata?.Dividend?.Amount >= 3000)
 			{
 				return 3;
 			}
@@ -25,19 +25,19 @@ public static class MarketEventUtils
 		}
 		else if (yieldsMap.TryGetValue(e.ItemCode, out var yield))
 		{
-			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
+			if (e.Metadata?.Dividend?.Amount >= 1.00m && yield >= 0.04m)
 			{
 				return 3;
 			}
-			if (e.Metadata?.Amount >= 5.00m && yield >= 0.02m)
+			if (e.Metadata?.Dividend?.Amount >= 5.00m && yield >= 0.02m)
 			{
 				return 2;
 			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
+			if (e.Metadata?.Dividend?.Amount >= 0.03m && yield >= 0.07m)
 			{
 				return 2;
 			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
+			if (e.Metadata?.Dividend?.Amount >= 0.03m && yield >= 0.03m)
 			{
 				return 1;
 			}

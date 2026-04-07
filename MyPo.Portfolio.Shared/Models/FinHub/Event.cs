@@ -83,4 +83,43 @@ public sealed class ListingEvent : EventBase
 
 	[JsonPropertyName("capital")]
 	public long Capital { get; set; }
+
+	[JsonPropertyName("analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public ListingEventAnalysis? Analysis { get; set; }
+}
+
+public sealed class ListingEventAnalysis
+{
+	[JsonPropertyName("status")]
+	public string Status { get; set; } = string.Empty;
+
+	[JsonPropertyName("data_quality")]
+	public string DataQuality { get; set; } = string.Empty;
+
+	[JsonPropertyName("search_findings")]
+	public string SearchFindings { get; set; } = string.Empty;
+
+	[JsonPropertyName("stance")]
+	public string Stance { get; set; } = string.Empty;
+
+	[JsonPropertyName("catalyst")]
+	public string Catalyst { get; set; } = string.Empty;
+
+	[JsonPropertyName("risks"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public IList<string>? Risks { get; set; }
+
+	[JsonPropertyName("outlook"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public IDictionary<string, ListingOutlook>? Outlook { get; set; }
+}
+
+public sealed class ListingOutlook
+{
+	[JsonPropertyName("direction")]
+	public string Direction { get; set; } = string.Empty;
+
+	[JsonPropertyName("reason")]
+	public string Reason { get; set; } = string.Empty;
+
+	[JsonPropertyName("confidence")]
+	public int Confidence { get; set; }
 }

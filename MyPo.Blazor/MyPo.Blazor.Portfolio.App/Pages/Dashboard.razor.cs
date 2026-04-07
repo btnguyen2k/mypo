@@ -15,7 +15,7 @@ public partial class Dashboard : BasePage
 	private List<MarketEventResp>? MarketEventsList { get; set; }
 	private List<MarketEventResp> EventsDistribution => MarketEventsList?.Where(e =>MarketEventEntity.EVENT_DIVIDEND.Equals(e.EventType, StringComparison.OrdinalIgnoreCase)
 			|| MarketEventEntity.EVENT_DISTRIBUTION.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
-		.Where(e => e.Metadata?.Amount >= 0.03m)
+		.Where(e => e.Metadata?.Dividend?.Amount >= 0.03m)
 		.OrderBy(e => e.EventTime)
 		.ToList() ?? [];
 	private List<MarketEventResp> EventsEarnings => MarketEventsList?.Where(e =>MarketEventEntity.EVENT_EARNINGS.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
@@ -86,7 +86,7 @@ public partial class Dashboard : BasePage
 					{
 						QuotesMap[quote.Key] = quote.Value;
 						var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-						var amount = eventInfo?.Metadata?.Amount ?? 0;
+						var amount = eventInfo?.Metadata?.Dividend?.Amount ?? 0;
 						YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
 					}
 					StateHasChanged();
