@@ -184,6 +184,27 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
 			// message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
 			message += $"{e.ItemCode} - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
+			// if (e.Metadata?.Listing?.Analysis != null)
+			// {
+			// 	message += $"🔍 {e.Metadata.Listing.Analysis.Stance} ({e.Metadata.Listing.Analysis.DataQuality})";
+			// }
+			if (e.Metadata?.Listing?.Analysis?.Outlook != null)
+			{
+				// message += $" - 🔭 {(e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v2)?v2.Direction:"-")}:{(e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m1)?m1.Direction:"-")}:{(e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m3)?m3.Direction:"-")}\n";
+				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
+				{
+					message += $"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n";
+				}
+				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m11))
+				{
+					message += $"📈 1m: {m11.Direction} ({m11.Confidence}%), {m11.Reason}\n";
+				}
+				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m31))
+				{
+					message += $"📈 3m: {m31.Direction} ({m31.Confidence}%), {m31.Reason}\n";
+				}
+			}
+			message += "\n";
 		}
 		// message += "</blockquote><preview disabled />";
 		message += "</blockquote>";

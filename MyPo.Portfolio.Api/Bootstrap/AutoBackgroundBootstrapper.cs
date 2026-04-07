@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using MyPo.Portfolio.Shared.Models;
+﻿using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Bootstrap;
 
@@ -169,7 +168,6 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 		var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 		foreach (var e in events)
 		{
-			Console.WriteLine(JsonSerializer.Serialize(e));
 			var marketEvent = new MarketEventEntity
 			{
 				OwnerId = ownerId.Trim().ToLower(),
