@@ -111,6 +111,7 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					Link = e.Link,
 					Status = e.Status,
 					Currency = e.Currency,
+					Capital = e.Analysis?.Overview?.MarketCap ?? 0,
 					Dividend = new()
 					{
 						PaymentDate = e.PaymentDate,

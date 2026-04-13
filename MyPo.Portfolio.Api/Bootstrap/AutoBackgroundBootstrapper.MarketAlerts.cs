@@ -68,18 +68,18 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 					var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 					var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
 					var teleBot = new TelegramBotClient(user.Metadata!.GetTelegramBotApiKey()!);
-					// await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
+					await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
 					await MarketAlertNewListings(portfolioRepo, finHubClient, teleBot, user.Metadata.GetTelegramChatIDs()??[], cancellationToken);
 
 					checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
-					// var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
-					// if (dbresult == null)
-					// {
-					// 	Logger.LogError(
-					// 		"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
-					// 		checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
-					// 	);
-					// }
+					var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+					if (dbresult == null)
+					{
+						Logger.LogError(
+							"Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+							checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+						);
+					}
 				}
 				catch (Exception ex)
 				{
@@ -105,7 +105,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 	{
 		var today = DateTimeOffset.UtcNow.StartOfDay();
 		var startDateDiv = today.PrevWeekDay().PrevWeekDay();
-		var endDateDiv = today.AddDays(6);
+		var endDateDiv = today.AddDays(14);
 		var eventsDividend = (await portfolioRepo.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
 			startDateDiv, endDateDiv,
@@ -113,36 +113,43 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			cancellationToken: cancellationToken)).ToList();
 		if (eventsDividend.Count <= 0) return;
 
-		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
-			eventsDividend.Select(e => e.ItemCode).Distinct(),
-			finHubClient, cancellationToken: cancellationToken);
-		var yieldsMap = eventsDividend.Select(e => e.ItemCode).Distinct().ToDictionary(symbol => symbol, symbol => {
+		var symbolsDistincted = eventsDividend.Select(e => e.ItemCode).Distinct().ToList();
+		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(symbolsDistincted, finHubClient, cancellationToken: cancellationToken);
+		var yieldsMap = symbolsDistincted.ToDictionary(symbol => symbol, symbol => {
 			var e = eventsDividend.First(ev => ev.ItemCode == symbol);
-			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
-			var result = quotesMap.TryGetValue(ticker, out var quote) && e.Metadata?.Dividend?.Amount > 0 && quote.MarketPrice > 0 ? e.Metadata.Dividend.Amount/quote.MarketPrice : 0;
-			return result ?? 0;
+			return e.Metadata?.Dividend?.DividendYield ?? 0;
 		});
 
+		// only look at dividend events that we should pay attention to, sorted by event time and attention level
 		eventsDividend = [.. eventsDividend
 			.OrderBy(e => e.EventTime).ThenByDescending(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap))
 			.Where(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap) > 0)];
 		var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
 
-		var distinctMarkets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
+		var markets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
 		var messages = new List<string>();
-		foreach (var market in distinctMarkets)
+		foreach (var market in markets)
 		{
 			var msg = new StringBuilder($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
 			foreach (var e in eventsDividend.Where(e => e.MarketId == market))
 			{
 				var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 				var ticker = YFUtils.BuildYFTicker(e.ItemCode);
-				var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"\n📊 <code>{yieldsMap[e.ItemCode]:P2}</code> -💲<code>{quote.MarketPrice:F2}</code>" : "";
-				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - <code>{e.Metadata?.Dividend?.Amount??0:F2}</code> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code>{quoteInfo}\n");
-				if (preExDivPrices.TryGetValue(e.ItemCode, out var prePrice))
+				var formatValue = market=="VN" ? "F0" : "F2";
+				var formatPercent = market=="VN" ? "P0" : "P2";
+				msg.Append($"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{(e.Metadata?.Dividend?.Amount??0).ToString(formatValue)} ({yieldsMap[e.ItemCode].ToString(formatPercent)}</code>)\n");
+				if (e.Metadata?.Dividend?.Analysis != null)
 				{
-					var delta = (quotesMap[ticker].MarketPrice+e.Metadata?.Dividend?.Amount??0 - prePrice) / prePrice - 1;
-					msg.Append($"vs Pre-ex-div price: <code>{prePrice:F2} ({(delta>0?"+":"")}{delta:P2})</code>\n\n");
+					msg.Append($"📈 Recov: {e.Metadata.Dividend.Analysis.RecoveryProb:P0} ({e.Metadata.Dividend.Analysis.RecoveryDaysMin}-{e.Metadata.Dividend.Analysis.RecoveryDaysMax} days)\n");
+					if (quotesMap.TryGetValue(ticker, out var quote))
+					{
+						msg.Append(quote.MarketPrice.ToString(formatValue));
+					}
+					msg.Append(" → ");
+					msg.Append($"({e.Metadata.Dividend.Analysis.DropPriceMin.ToString(formatValue)} - {e.Metadata.Dividend.Analysis.DropPriceMax.ToString(formatValue)})");
+					msg.Append(" → ");
+					msg.Append($"({e.Metadata.Dividend.Analysis.RecoveryPriceMin.ToString(formatValue)} - {e.Metadata.Dividend.Analysis.RecoveryPriceMax.ToString(formatValue)})\n");
+					msg.Append('\n');
 				}
 			}
 			msg.Append("</blockquote><preview disabled />");
@@ -175,22 +182,18 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			cancellationToken: cancellationToken)).ToList();
 		if (eventsListing.Count <= 0) return;
 
-		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(eventsListing.Select(e => e.ItemCode).Distinct(), finHubClient, cancellationToken: cancellationToken);
+		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
+			eventsListing.Select(e => e.ItemCode).Distinct(),
+			finHubClient, cancellationToken: cancellationToken);
 		var message = "<strong>🆕 New listings:</strong>\n<blockquote>";
 		foreach (var e in eventsListing)
 		{
 			var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
-			// message += $"<a href=\"{e.Metadata!.Link??""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Price??0:F2}</code> {quoteInfo}\n";
-			message += $"{e.ItemCode} - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):yyyy-MM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
-			// if (e.Metadata?.Listing?.Analysis != null)
-			// {
-			// 	message += $"🔍 {e.Metadata.Listing.Analysis.Stance} ({e.Metadata.Listing.Analysis.DataQuality})";
-			// }
+			message += $"{e.ItemCode} - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
 			if (e.Metadata?.Listing?.Analysis?.Outlook != null)
 			{
-				// message += $" - 🔭 {(e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v2)?v2.Direction:"-")}:{(e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m1)?m1.Direction:"-")}:{(e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m3)?m3.Direction:"-")}\n";
 				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
 				{
 					message += $"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n";

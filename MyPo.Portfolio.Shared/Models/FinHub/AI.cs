@@ -71,7 +71,7 @@ public sealed class DividendEventAnalysis
 {
 	/* base info */
 
-	[JsonPropertyName("Overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public SymbolOverview? Overview { get; set; }
 
 	[JsonPropertyName("price")]

@@ -4,3 +4,4 @@
 - (Patch) Fix CodeQL warnings.
 - (Fix) Dashboard - Check Pre-ExDiv price.
 - (Impr) Market alerts (new listings) via Telegram.
+- (Impr) Market alerts (dividend events) via Telegram.
