@@ -1,5 +1,6 @@
 ﻿using MyPo.Api.Helpers;
 using MyPo.Shared.Bootstrap;
+using MyPo.Shared.Logger;
 using System.Reflection;
 
 namespace MyPo.Api;
@@ -9,7 +10,7 @@ namespace MyPo.Api;
 /// </summary>
 public sealed class AppBootstrapper
 {
-	private static readonly ILogger<AppBootstrapper> logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<AppBootstrapper>();
+	// private static readonly ILogger<AppBootstrapper> logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<AppBootstrapper>();
 
 	private static readonly string[] methodNamesConfigureServices = ["ConfigureServices", "ConfiguresServices", "ConfigureService", "ConfiguresService"];
 	private static readonly string[] methodNamesConfigureServicesAsync = ["ConfigureServicesAsync", "ConfiguresServicesAsync", "ConfigureServiceAsync", "ConfiguresServiceAsync"];
@@ -22,6 +23,8 @@ public sealed class AppBootstrapper
 
 	public static ICollection<Task> Bootstrap(out WebApplication app, WebApplicationBuilder appBuilder, IEnumerable<Assembly>? assemblies = default)
 	{
+		var logger = LoggerFactory.Create(b => b.AddSimpleConsoleLogger()).CreateLogger<AppBootstrapper>();
+
 		assemblies = assemblies?.Distinct() ?? AppDomain.CurrentDomain.GetAssemblies();
 
 		var bootstrappersInfo = new List<BootstrapperStruct>();
@@ -89,7 +92,7 @@ public sealed class AppBootstrapper
 		});
 
 		bootstrappersInfo.Sort((a, b) => a.priority.CompareTo(b.priority));
-		var backgroundBootstrappingTasks = Array.Empty<Task>();
+		ICollection<Task> backgroundBootstrappingTasks = [];
 
 		logger.LogInformation("========== [Bootstrapping] Configuring services...");
 		foreach (var bootstrapper in bootstrappersInfo)
@@ -106,7 +109,7 @@ public sealed class AppBootstrapper
 
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(appBuilder, bootstrapper.type, bootstrapper.methodConfigureServicesAsync);
-				backgroundBootstrappingTasks.Append(task);
+				backgroundBootstrappingTasks.Add(task);
 			}
 			else
 			{
@@ -131,7 +134,7 @@ public sealed class AppBootstrapper
 
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(appBuilder, bootstrapper.type, bootstrapper.methodConfigureBuilderAsync);
-				backgroundBootstrappingTasks.Append(task);
+				backgroundBootstrappingTasks.Add(task);
 			}
 			else
 			{
@@ -157,7 +160,7 @@ public sealed class AppBootstrapper
 					bootstrapper.priority, bootstrapper.type.FullName, bootstrapper.methodInitializeServicesAsync.Name);
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(app, bootstrapper.type, bootstrapper.methodInitializeServicesAsync);
-				backgroundBootstrappingTasks.Append(task);
+				backgroundBootstrappingTasks.Add(task);
 			}
 			else
 			{
@@ -181,7 +184,7 @@ public sealed class AppBootstrapper
 					bootstrapper.priority, bootstrapper.type.FullName, bootstrapper.methodDecorateAppAsync.Name);
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(app, bootstrapper.type, bootstrapper.methodDecorateAppAsync);
-				backgroundBootstrappingTasks.Append(task);
+				backgroundBootstrappingTasks.Add(task);
 			}
 			else
 			{

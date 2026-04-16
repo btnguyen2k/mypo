@@ -2,6 +2,6 @@
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Patch) Fix CodeQL warnings.
-- (Fix) Dashboard - Check Pre-ExDiv price.
+- (Refactor) Dashboard rework.
 - (Impr) Market alerts (new listings) via Telegram.
 - (Impr) Market alerts (dividend events) via Telegram.

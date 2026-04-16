@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\\*.json" />
-    <EmbeddedResource Include="Resources\\indices\\*.json" />
   </ItemGroup>
 
   <ItemGroup>

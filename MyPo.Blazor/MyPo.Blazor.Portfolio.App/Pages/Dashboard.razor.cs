@@ -86,8 +86,10 @@ public partial class Dashboard : BasePage
 					{
 						QuotesMap[quote.Key] = quote.Value;
 						var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-						var amount = eventInfo?.Metadata?.Dividend?.Amount ?? 0;
-						YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
+						// Console.WriteLine($"[DEBUG] {quote.Key}: {JsonSerializer.Serialize(eventInfo)}");
+						// var amount = eventInfo?.Metadata?.Dividend?.Amount ?? 0;
+						// YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
+						YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
 					}
 					StateHasChanged();
 				}
@@ -149,7 +151,7 @@ public partial class Dashboard : BasePage
 				else
 				{
 					CloseAlert();
-					// await Task.Run(GetStocksQuotesBackground);
+					await Task.Run(GetStocksQuotesBackground);
 					// await Task.Run(GetPricePreExDivBackground);
 				}
 			}
