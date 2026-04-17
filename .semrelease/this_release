@@ -5,3 +5,4 @@
 - (Refactor) Dashboard rework.
 - (Impr) Market alerts (new listings) via Telegram.
 - (Impr) Market alerts (dividend events) via Telegram.
+- (Impr) Cache index constituents locally.

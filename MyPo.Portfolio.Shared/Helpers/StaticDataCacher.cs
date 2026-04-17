@@ -7,6 +7,37 @@ namespace MyPo.Portfolio.Shared.Helpers;
 
 public class StaticDataCacher
 {
+	private static async Task CacheIndexConstituentsWithRetryAsync(HttpClient httpCLient, string index, string resourceUrl, ILogger? logger, int maxRetries = 3, int delayMs = 1000)
+	{
+		var indexData = GlobalRegistry.INDEX_CONSTITUENTS.GetValueOrDefault(index, new HashSet<string>());
+		GlobalRegistry.INDEX_CONSTITUENTS[index] = indexData;
+
+		for (var attempt = 1; attempt <= maxRetries; attempt++)
+		{
+			try
+			{
+				logger?.LogInformation("Loading cached index constituents '{index}' from '{resourceUrl}'...", index, resourceUrl);
+				var data = await JsonSerializer.DeserializeAsync<IDictionary<string, object>>(await httpCLient.GetStreamAsync(resourceUrl));
+				var symbolList = data!["data"] as JsonElement?;
+				lock (indexData)
+				{
+					symbolList?.EnumerateArray().ToList().ForEach(e => indexData.Add(e.GetProperty("symbol").GetString()!));
+				}
+				return;
+			}
+			catch (Exception ex)
+			{
+				logger?.LogError(ex, "Attempt {attempt} - Failed to load cached index constituents for '{index}' from '{resourceUrl}'", attempt, index, resourceUrl);
+				if (attempt == maxRetries)
+				{
+					logger?.LogError("Exceeded maximum retry attempts ({maxRetries}) for loading index constituents for '{index}'", maxRetries, index);
+					return;
+				}
+				await Task.Delay(delayMs);
+			}
+		}
+	}
+
 	public static async Task CacheIndexConstituentsAsync(IServiceProvider serviceProvider, string resourcesBaseUrl)
 	{
 		var logger = serviceProvider.GetService<ILogger<StaticDataCacher>>();
@@ -30,22 +61,9 @@ public class StaticDataCacher
 		};
 		foreach (var kvp in indexMapping)
 		{
-			var indexData = new HashSet<string>();
-			GlobalRegistry.INDEX_CONSTITUENTS[kvp.Key] = indexData;
-
 			var index = kvp.Key;
-			var resourceName = kvp.Value;
-			logger?.LogInformation("Loading cached index constituents '{index}' from '{resourceName}'...", index, resourceName);
-			try
-			{
-				var data = await JsonSerializer.DeserializeAsync<IDictionary<string, object>>(await httpClient.GetStreamAsync(resourceName));
-				var symbolList = data!["data"] as JsonElement?;
-				symbolList?.EnumerateArray().ToList().ForEach(e => indexData.Add(e.GetProperty("symbol").GetString()!));
-			}
-			catch (Exception ex)
-			{
-				logger?.LogError(ex, "Failed to load cached index constituents for '{index}' from '{resourceName}'", index, resourceName);
-			}
+			var resourceUrl = kvp.Value;
+			await CacheIndexConstituentsWithRetryAsync(httpClient, index, resourceUrl, logger);
 		}
 	}
 }

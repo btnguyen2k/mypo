@@ -6,8 +6,6 @@ namespace MyPo.Portfolio.Api;
 
 public sealed class Globals
 {
-	public static readonly Dictionary<string, ISet<string>> IndexConstituents = new(StringComparer.OrdinalIgnoreCase);
-
 	private sealed class MarketDefComparer : IComparer<MarketDef>
 	{
 		public static readonly MarketDefComparer Instance = new();

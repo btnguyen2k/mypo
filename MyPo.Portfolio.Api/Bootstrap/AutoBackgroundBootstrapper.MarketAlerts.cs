@@ -191,7 +191,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
-			message += $"{e.ItemCode} - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
+			message += $"<a href=\"{e.Metadata?.Link}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
 			if (e.Metadata?.Listing?.Analysis?.Outlook != null)
 			{
 				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
@@ -209,8 +209,8 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 			}
 			message += "\n";
 		}
-		// message += "</blockquote><preview disabled />";
-		message += "</blockquote>";
+		message += "</blockquote><preview disabled />";
+		// message += "</blockquote>";
 
 		foreach (var chatId in chatIDs)
 		try

@@ -158,6 +158,7 @@ public sealed class AppBootstrapper
 			{
 				logger.LogInformation("--[{priority}] Invoking async method {type}.{method}...",
 					bootstrapper.priority, bootstrapper.type.FullName, bootstrapper.methodInitializeServicesAsync.Name);
+
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(app, bootstrapper.type, bootstrapper.methodInitializeServicesAsync);
 				backgroundBootstrappingTasks.Add(task);
@@ -182,6 +183,7 @@ public sealed class AppBootstrapper
 			{
 				logger.LogInformation("-- [{priority}] Invoking async method {type}.{method}...",
 					bootstrapper.priority, bootstrapper.type.FullName, bootstrapper.methodDecorateAppAsync.Name);
+
 				// async method takes priority
 				var task = WebReflectionHelper.InvokeAsyncMethod(app, bootstrapper.type, bootstrapper.methodDecorateAppAsync);
 				backgroundBootstrappingTasks.Add(task);

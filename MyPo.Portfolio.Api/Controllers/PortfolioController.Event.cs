@@ -17,7 +17,7 @@ public partial class PortfolioController
 	{
 		var currentDate = DateTimeOffset.UtcNow.StartOfDay();
 
-		var startDateDiv = currentDate.AddDays(-14);
+		var startDateDiv = currentDate.AddDays(-7);
 		var endDateDiv = currentDate.AddDays(14);
 		var eventsDividend = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,

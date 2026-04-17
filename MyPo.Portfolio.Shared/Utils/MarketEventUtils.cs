@@ -1,6 +1,8 @@
-﻿using MyPo.Portfolio.Shared.Models;
+﻿using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Models;
+using MyPo.Shared.Global;
 
-namespace MyPo.Portfolio.Api.Utils;
+namespace MyPo.Portfolio.Shared.Utils;
 
 public static class MarketEventUtils
 {
@@ -12,6 +14,17 @@ public static class MarketEventUtils
 	/// <returns>The attention level: 0 (no attention), 1 (low), 2 (medium), 3 (high)</returns>
 	public static int AttentionLevelForDividend(MarketEventEntity e, IDictionary<string, decimal> yieldsMap)
 	{
+		return AttentionLevelForDividend(MarketEventResp.BuildFrom(e), yieldsMap);
+	}
+
+	/// <summary>
+	/// Determine the attention level of a Dividend/Distribution event based on its amount and yield.
+	/// </summary>
+	/// <param name="e"></param>
+	/// <param name="yieldsMap"></param>
+	/// <returns>The attention level: 0 (no attention), 1 (low), 2 (medium), 3 (high)</returns>
+	public static int AttentionLevelForDividend(MarketEventResp e, IDictionary<string, decimal> yieldsMap)
+	{
 		if (e.MarketId.Equals("VN", StringComparison.OrdinalIgnoreCase))
 		{
 			if (e.Metadata?.Dividend?.Amount >= 3500)
@@ -20,15 +33,15 @@ public static class MarketEventUtils
 			}
 			if (yieldsMap.TryGetValue(e.ItemCode, out var yieldVN))
 			{
-				if (Globals.IndexConstituents.TryGetValue("VN30", out var vn30) && (vn30?.Contains(e.ItemCode)??false))
+				if (GlobalRegistry.INDEX_CONSTITUENTS.TryGetValue("VN30", out var vn30) && (vn30?.Contains(e.ItemCode)??false))
 				{
 					return yieldVN >= 0.04m ? 2 : yieldVN >= 0.02m ? 1 : 0;
 				}
-				if (Globals.IndexConstituents.TryGetValue("VN100", out var vn100) && (vn100?.Contains(e.ItemCode)??false))
+				if (GlobalRegistry.INDEX_CONSTITUENTS.TryGetValue("VN100", out var vn100) && (vn100?.Contains(e.ItemCode)??false))
 				{
 					return yieldVN >= 0.06m ? 2 : yieldVN >= 0.03m ? 1 : 0;
 				}
-				if (Globals.IndexConstituents.TryGetValue("HNX30", out var hnx30) && (hnx30?.Contains(e.ItemCode)??false))
+				if (GlobalRegistry.INDEX_CONSTITUENTS.TryGetValue("HNX30", out var hnx30) && (hnx30?.Contains(e.ItemCode)??false))
 				{
 					return yieldVN >= 0.05m ? 2 : yieldVN >= 0.025m ? 1 : 0;
 				}
