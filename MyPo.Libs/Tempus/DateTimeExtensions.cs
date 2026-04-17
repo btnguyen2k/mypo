@@ -53,14 +53,9 @@ public static class DateTimeExtensions
 	public static bool WithinTimeWindow(this DateTime dateTime, TimeOnly start, TimeOnly end)
 	{
 		var time = TimeOnly.FromDateTime(dateTime);
-		if (start <= end)
-		{
-			return time >= start && time < end;
-		}
-		else
-		{
-			return time >= start || time < end;
-		}
+		return start <= end
+			? time >= start && time < end
+			: time >= start || time < end;
 	}
 
 	/// <summary>

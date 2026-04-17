@@ -1,5 +1,4 @@
 ﻿using System.ClientModel;
-using Microsoft.VisualBasic;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using OpenAI;
 using OpenAI.Chat;

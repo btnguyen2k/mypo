@@ -1,4 +1,4 @@
-# Automatically release a new version when a PR is merged to branch `release`
+﻿# Automatically release a new version when a PR is merged to branch `release`
 
 name: 'release'
 on:
@@ -82,6 +82,10 @@ jobs:
 
             echo ========== update .md files ==========
             sed -i -E "s/<<VERSION>>/v${VERSION}/" ./*.md
+
+            echo ========== update appsettings.json files ==========
+            DATE=`date +%Y%m%d%H%M%S`
+            sed -i -E "s/^(\s*\"Version\"\s*:\s*)\"[^\"]+\"/\1\"${VERSION}-${DATE}\"/" MyPo.Blazor/MyPo.Blazor/appsettings.json
 
             echo ========== commit updates ==========
             git config --global user.email "<>"
@@ -182,7 +186,6 @@ jobs:
       - name: Update version metadata
         run: |
           DATE=`date +%Y%m%d%H%M%S`
-          # sed -i -E "s/^(\s*\"Version\"\s*:\s*)\"[^\"]+\"/\1\"${{ env.VERSION }}-${DATE}\"/" MyPo.Api/appsettings.json
           sed -i -E "s/^(\s*\"Version\"\s*:\s*)\"[^\"]+\"/\1\"${{ env.VERSION }}-${DATE}\"/" MyPo.Blazor/MyPo.Blazor/appsettings.json
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

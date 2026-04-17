@@ -8,13 +8,93 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 {
 	public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl) { }
 
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> {
+			{ "symbol", symbol },
+			{ "ex_date", exDate },
+			{ "div_amount", divAmount.ToString("F2") },
+		};
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<DividendEventAnalysis>(httpResult, cancellationToken);
+	}
+
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<UpcomingDividendEvent>>> GetUpcomingDividendAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> { { "country", country } };
+		if (!string.IsNullOrWhiteSpace(index))
+		{
+			queryParams["index"] = index;
+		}
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_DIVIDENDS, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<UpcomingDividendEvent>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<UpcomingEarningsEvent>>> GetUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> { { "country", country } };
+		if (!string.IsNullOrWhiteSpace(index))
+		{
+			queryParams["index"] = index;
+		}
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<UpcomingEarningsEvent>>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<ListingEvent>>> GetNewListingAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> { { "country", country } };
+		if (!string.IsNullOrWhiteSpace(index))
+		{
+			queryParams["index"] = index;
+		}
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<ListingEvent>>(httpResult, cancellationToken);
+	}
+
+	/*----------------------------------------------------------------------*/
+
 	/// <inheritdoc/>
 	public async Task<ApiResp<IDictionary<string, StockQuote>>> GetStockQuotesAsync(string symbols, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var endpoint = QueryHelpers.AddQueryString(
-			IFinHubClient.API_FINHUB_ENDPOINT_STOCK_QUOTES,
-			new Dictionary<string, string?> { { "symbols", symbols } }
-		);
+		var queryParams = new Dictionary<string, string?> { { "symbols", symbols } };
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_STOCK_QUOTES, queryParams);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -74,14 +154,10 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	/*----------------------------------------------------------------------*/
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IEnumerable<UpcomingDividendEvent>>> GetUpcomingDividendAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<StockQuote>> GetGoldQuoteAsync(string? currency = "USD", string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var queryParams = new Dictionary<string, string?> { { "country", country } };
-		if (!string.IsNullOrWhiteSpace(index))
-		{
-			queryParams["index"] = index;
-		}
-		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_AI_EVENT_UPCOMING_DIVIDENDS, queryParams);
+		var queryParams = new Dictionary<string, string?> { { "currency", currency??"USD" } };
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_TOZ_GOLD_QUOTE, queryParams);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -89,18 +165,17 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IEnumerable<UpcomingDividendEvent>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<StockQuote>(httpResult, cancellationToken);
 	}
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IEnumerable<UpcomingEarningsEvent>>> GetUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<IEnumerable<HistoryPoint>>> GetGoldPriceHistoryAsync(string? currency = "USD", int? days = 30, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var queryParams = new Dictionary<string, string?> { { "country", country } };
-		if (!string.IsNullOrWhiteSpace(index))
-		{
-			queryParams["index"] = index;
-		}
-		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_AI_EVENT_UPCOMING_EARNINGS, queryParams);
+		var queryParams = new Dictionary<string, string?> {
+			{ "currency", currency??"USD" },
+			{ "days", days?.ToString() ?? "30" },
+		};
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_TOZ_GOLD_HISTORY, queryParams);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -108,18 +183,14 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IEnumerable<UpcomingEarningsEvent>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<IEnumerable<HistoryPoint>>(httpResult, cancellationToken);
 	}
 
 	/// <inheritdoc/>
-	public async Task<ApiResp<IEnumerable<ListingEvent>>> GetNewListingAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	public async Task<ApiResp<StockQuote>> GetSilverQuoteAsync(string? currency = "USD", string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
-		var queryParams = new Dictionary<string, string?> { { "country", country } };
-		if (!string.IsNullOrWhiteSpace(index))
-		{
-			queryParams["index"] = index;
-		}
-		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_AI_EVENT_NEW_LISTINGS, queryParams);
+		var queryParams = new Dictionary<string, string?> { { "currency", currency??"USD" } };
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_TOZ_SILVER_QUOTE, queryParams);
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Get, baseUrl, endpoint,
@@ -127,6 +198,24 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 			NoData,
 			cancellationToken
 		);
-		return await ReadAndCloseResponseAsync<IEnumerable<ListingEvent>>(httpResult, cancellationToken);
+		return await ReadAndCloseResponseAsync<StockQuote>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
+	public async Task<ApiResp<IEnumerable<HistoryPoint>>> GetSilverPriceHistoryAsync(string? currency = "USD", int? days = 30, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var queryParams = new Dictionary<string, string?> {
+			{ "currency", currency??"USD" },
+			{ "days", days?.ToString() ?? "30" },
+		};
+		var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_ENDPOINT_TOZ_SILVER_HISTORY, queryParams);
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Get, baseUrl, endpoint,
+			NoAuth,
+			NoData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<IEnumerable<HistoryPoint>>(httpResult, cancellationToken);
 	}
 }

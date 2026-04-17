@@ -1,6 +1,4 @@
-using System.Text.Json;
-
-namespace MyPo.Shared.Global;
+﻿namespace MyPo.Shared.Global;
 
 /// <summary>
 /// Global registry to hold global/shared objects.
@@ -12,14 +10,12 @@ public sealed partial class GlobalRegistry
 	public static bool EnableToggleFlag(string flag)
 	{
 		var result = TOGGLE_FLAGS.TryAdd(flag, true);
-		Console.WriteLine($"[==========] Enabled toggle flag: {flag}, result: {JsonSerializer.Serialize(TOGGLE_FLAGS)}");
 		return result;
 	}
 
 	public static bool DisableToggleFlag(string flag)
 	{
 		var result = TOGGLE_FLAGS.Remove(flag);
-		Console.WriteLine($"[==========] Disabled toggle flag: {flag}, result: {JsonSerializer.Serialize(TOGGLE_FLAGS)}");
 		return result;
 	}
 
@@ -27,4 +23,8 @@ public sealed partial class GlobalRegistry
 	{
 		return TOGGLE_FLAGS.ContainsKey(flag);
 	}
+
+	/*----------------------------------------------------------------------*/
+
+	public static readonly Dictionary<string, ISet<string>> INDEX_CONSTITUENTS = new(StringComparer.OrdinalIgnoreCase);
 }

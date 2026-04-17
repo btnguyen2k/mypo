@@ -3,6 +3,7 @@
 @using System.Reflection
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
+@using MyPo.Portfolio.Shared.Utils
 
 @attribute [Route(UIGlobals.ROUTE_HOME)]
 @inherits BasePage
@@ -61,38 +62,74 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0" id="tblDividendEvents">
+											<table class="table table-sm mb-0 small" id="tblDividendEvents">
 												<thead>
 													<tr>
 														<th>Ex-Date</th>
-														<th>Pay Date</th>
+														@* <th>Pay Date</th> *@
 														<th class="text-center">Market</th>
 														<th>Item</th>
 														<th class="text-end">Amount</th>
+														<th class="text-end">Yield</th>
 														<th class="text-end">Cur.Price</th>
-														<th class="text-end">This Yield</th>
-														<th class="text-end">Pre.Price</th>
+														<th class="text-center">Drop</th>
+														<th class="text-center" colspan="3">Recovery</th>
 													</tr>
 												</thead>
-												<tbody>
+												<tbody class="table-group-divider">
 													@foreach (var e in EventsDistribution)
 													{
 														<tr class="@(TextFormatDivident(e))">
-															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-															<td class="text-nowrap">@(PaymentDateStr(e))</td>
+															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("MMM dd")</td>
+															@* <td class="text-nowrap">@(PaymentDateStr(e))</td> *@
 															<td class="text-center">@e.MarketId</td>
-															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-															<td class="text-end">@((e.Metadata?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
-															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
+															<td class="text-nowrap"><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
+															<td class="text-end">@((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
-															<td class="text-end text-nowrap">
-																@(PreExDivPrice.TryGetValue(e.ItemCode, out var quote9364)?$"{quote9364.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")
-																@((MarkupString)(PreExDivPriceVsCurrentPrice(e) > 0
-																	? $" <small class='text-success'>(+{PreExDivPriceVsCurrentPrice(e).ToString("P2")})</small>"
-																	: PreExDivPriceVsCurrentPrice(e) < 0
-																	  ? $" <small class='text-danger'>({PreExDivPriceVsCurrentPrice(e).ToString("P2")})</small>"
-																	  : "")
-																)
+															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
+															<td class="text-center text-nowrap">
+																@if (e.Metadata?.Dividend?.Analysis != null)
+																{
+																	@(e.Metadata.Dividend.Analysis.DropPriceMin.ToString(DecimalFormatForMarket(e.MarketId)))
+																	@("-")
+																	@(e.Metadata.Dividend.Analysis.DropPriceMax.ToString(DecimalFormatForMarket(e.MarketId)))
+																}
+																else
+																{
+																	@("--")
+																}
+															</td>
+															<td class="text-center text-nowrap">
+																@if (e.Metadata?.Dividend?.Analysis != null)
+																{
+																	@(e.Metadata.Dividend.Analysis.RecoveryPriceMin.ToString(DecimalFormatForMarket(e.MarketId)))
+																	@("-")
+																	@(e.Metadata.Dividend.Analysis.RecoveryPriceMax.ToString(DecimalFormatForMarket(e.MarketId)))
+																}
+																else
+																{
+																	@("--")
+																}
+															</td>
+															<td class="text-center text-nowrap">
+																@if (e.Metadata?.Dividend?.Analysis != null)
+																{
+																	@($"{e.Metadata.Dividend.Analysis.RecoveryDaysMin}-{e.Metadata.Dividend.Analysis.RecoveryDaysMax} d")
+																}
+																else
+																{
+																	@("--")
+																}
+															</td>
+															<td class="text-center text-nowrap">
+																@if (e.Metadata?.Dividend?.Analysis != null)
+																{
+																	@($"{e.Metadata.Dividend.Analysis.RecoveryProb:P0}")
+																}
+																else
+																{
+																	@("--")
+																}
 															</td>
 														</tr>
 													}
@@ -115,29 +152,110 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0" id="tblListingEvents">
+											<table class="table table-sm mb-0 small" id="tblListingEvents">
 												<thead>
 													<tr>
 														<th>Date</th>
 														<th class="text-center">Market</th>
 														<th>Item</th>
-														<th>Industry</th>
 														<th class="text-end">Price</th>
 														<th class="text-end">Cur.Price</th>
 														<th class="text-end">Capital</th>
+														@* <th class="text-center">Analysis</th> *@
 													</tr>
 												</thead>
-												<tbody>
+												<tbody class="table-group-divider align-middle">
 													@foreach (var e in EventsListing)
 													{
 														<tr>
-															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td>@e.EventTimeLocalTz.ToString("MMM dd")</td>
 															<td class="text-center">@e.MarketId</td>
-															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-															<td>@(e.Metadata?.Industry??"--")</td>
-															<td class="text-end">@((e.Metadata?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td>
+																<a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small>
+																@if (e.Metadata?.Listing?.Analysis != null)
+																{
+																	<br />
+																	<small class="text-muted">
+																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false && w2 != null)
+																	{
+																		@((MarkupString)$"<code>{w2.Direction}</code>: {w2.Confidence} - {w2.Reason}")
+																	}
+																	else
+																	{
+																		@("--")
+																	}
+																	</small>
+
+																	<br />
+																	<small class="text-muted">
+																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false && m1 != null)
+																	{
+																		@((MarkupString)$"<code>{m1.Direction}</code>: {m1.Confidence} - {m1.Reason}")
+																	}
+																	else
+																	{
+																		@("--")
+																	}
+																	</small>
+
+																	<br />
+																	<small class="text-muted">
+																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false && m3 != null)
+																	{
+																		@((MarkupString)$"<code>{m3.Direction}</code>: {m3.Confidence} - {m3.Reason}")
+																	}
+																	else
+																	{
+																		@("--")
+																	}
+																	</small>
+																}
+															</td>
+															<td class="text-end">@((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
 															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
-															<td class="text-end">@(e.Metadata?.Capital??"--")</td>
+															<td class="text-end">@(e.Metadata?.Capital.ToString("N0")??"--")</td>
+															@* <td class="text-center text-nowrap">
+																@if (e.Metadata?.Listing?.Analysis != null)
+																{
+																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false && w2 != null)
+																	{
+																		<button title="@(w2.Confidence) - @(w2.Reason)" style="width:30px !important;"
+																			class="btn btn-sm me-2 @(w2.Confidence>=80?"btn-outline-danger":w2.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
+																			@(w2.Direction)
+																		</button>
+																	}
+																	else
+																	{
+																		@("-")
+																	}
+																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false && m1 != null)
+																	{
+																		<button title="@(m1.Confidence) - @(m1.Reason)" style="width:30px !important;"
+																			class="btn btn-sm me-2 @(m1.Confidence>=80?"btn-outline-danger":m1.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
+																			@(m1.Direction)
+																		</button>
+																	}
+																	else
+																	{
+																		@("-")
+																	}
+																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false && m3 != null)
+																	{
+																		<button title="@(m3.Confidence) - @(m3.Reason)" style="width:30px !important;"
+																			class="btn btn-sm me-2 @(m3.Confidence>=80?"btn-outline-danger":m3.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
+																			@(m3.Direction)
+																		</button>
+																	}
+																	else
+																	{
+																		@("-")
+																	}
+																}
+																else
+																{
+																	@("--")
+																}
+															</td> *@
 														</tr>
 													}
 												</tbody>
@@ -159,7 +277,7 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0" id="tblEarningsEvents">
+											<table class="table table-sm mb-0 small" id="tblEarningsEvents">
 												<thead>
 													<tr>
 														<th>Date</th>
@@ -169,15 +287,15 @@
 														<th class="text-end">Period</th>
 													</tr>
 												</thead>
-												<tbody>
+												<tbody class="table-group-divider">
 													@foreach (var e in EventsEarnings)
 													{
 														<tr>
-															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+															<td>@e.EventTimeLocalTz.ToString("MMM dd")</td>
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
 															<td>@(e.Metadata?.Status??"--")</td>
-															<td class="text-end">@(e.Metadata?.ReportPeriod??"--")</td>
+															<td class="text-end">@(e.Metadata?.Earnings?.ReportPeriod??"--")</td>
 														</tr>
 													}
 												</tbody>
@@ -212,9 +330,9 @@
 @code {
 	private static string PaymentDateStr(MarketEventResp e)
 	{
-		if (!string.IsNullOrEmpty(e.Metadata?.PaymentDate??null) && e.Metadata!.PaymentDate!.Length >= 10)
+		if (!string.IsNullOrEmpty(e.Metadata?.Dividend?.PaymentDate??null) && e.Metadata!.Dividend!.PaymentDate!.Length >= 10)
 		{
-			return e.Metadata.PaymentDate.Substring(0, 10);
+			return DateTime.Parse(e.Metadata.Dividend.PaymentDate.Substring(0, 10)).ToString("MMM dd");
 		}
 		return "--";
 	}
@@ -224,7 +342,7 @@
 		{
 			if (quote.MarketPrice > 0)
 			{
-				return (quote.MarketPrice+e.Metadata?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
+				return (quote.MarketPrice+e.Metadata?.Dividend?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
 			}
 		}
 		return 0;
@@ -241,36 +359,7 @@
 
 	private string TextFormatDivident(MarketEventResp e)
 	{
-		if (e.MarketId=="VN")
-		{
-			if (e.Metadata?.Amount >= 3000)
-			{
-				return "table-danger";
-			}
-			else if (YieldsMap.TryGetValue(e.ItemCode, out var yield) && yield >= 0.04m)
-			{
-				return "table-success";
-			}
-		}
-		else if (YieldsMap.TryGetValue(e.ItemCode, out var yield))
-		{
-			if (e.Metadata?.Amount >= 1.00m && yield >= 0.04m)
-			{
-				return "table-danger";
-			}
-			if (e.Metadata?.Amount >= 5.00m && yield >= 0.02m)
-			{
-				return "table-danger";
-			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.07m)
-			{
-				return "table-success";
-			}
-			if (e.Metadata?.Amount >= 0.03m && yield >= 0.03m)
-			{
-				return "table-info";
-			}
-		}
-		return "";
+		var attLevel = MarketEventUtils.AttentionLevelForDividend(e, YieldsMap);
+		return attLevel > 2 ? "table-danger" : attLevel == 2 ? "table-success" : attLevel == 1 ? "table-info" : string.Empty;
 	}
 }

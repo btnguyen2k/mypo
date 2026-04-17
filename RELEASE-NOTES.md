@@ -1,5 +1,18 @@
 # My Portfolio Tracker release notes
 
+## 2026-04-17 - v1.4.0
+
+### Added/Refactoring/Deprecation
+
+- (Refactor) Dashboard rework.
+
+### Fixed/Improvements
+
+- (Patch) Fix CodeQL warnings.
+- (Impr) Market alerts (new listings) via Telegram.
+- (Impr) Market alerts (dividend events) via Telegram.
+- (Impr) Cache index constituents locally.
+
 ## 2026-03-13 - v1.3.0
 
 ### Added/Refactoring/Deprecation

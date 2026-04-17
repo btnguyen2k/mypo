@@ -17,15 +17,15 @@ public partial class PortfolioController
 	{
 		var currentDate = DateTimeOffset.UtcNow.StartOfDay();
 
-		var startDateDiv = currentDate.PrevWeekDay().PrevWeekDay().PrevWeekDay();
-		var endDateDiv = currentDate.AddDays(6);
+		var startDateDiv = currentDate.AddDays(-7);
+		var endDateDiv = currentDate.AddDays(14);
 		var eventsDividend = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
 			startDateDiv, endDateDiv,
 			[MarketEventEntity.EVENT_DIVIDEND, MarketEventEntity.EVENT_DISTRIBUTION]);
 
-		var startDateEarnings = currentDate;
-		var endDateEarnings = currentDate.AddDays(3);
+		var startDateEarnings = currentDate.PrevWeekDay();
+		var endDateEarnings = currentDate.AddDays(5);
 		var eventsEarnings = await PortfolioRepository.GetMarketEventsAsync(
 			MarketEventEntity.NON_OWNER,
 			startDateEarnings, endDateEarnings,

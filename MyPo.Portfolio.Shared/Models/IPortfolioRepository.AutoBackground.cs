@@ -28,6 +28,11 @@ public partial interface IPortfolioRepository
 	public ValueTask<MarketEventEntity?> UpsertMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Deletes an existing <see cref="MarketEventEntity" /> record.
+	/// </summary>
+	public ValueTask<bool> DeleteMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// Deletes <see cref="MarketEventEntity" /> records that are older than the specified cutoff date.
 	/// </summary>
 	public ValueTask<int> DeleteMarketEventsOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default);

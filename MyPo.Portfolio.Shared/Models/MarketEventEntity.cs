@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
@@ -33,6 +34,7 @@ public sealed class MarketEventEntity : Entity<string>
 
 public sealed class MarketEventMetadata
 {
+	/* Common Attrs */
 
 	[JsonPropertyName("exchange"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Exchange { get; set; }
@@ -40,8 +42,14 @@ public sealed class MarketEventMetadata
 	[JsonPropertyName("company_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? CompanyName { get; set; }
 
+	[JsonPropertyName("sector"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Sector { get; set; }
+
 	[JsonPropertyName("industry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Industry { get; set; }
+
+	[JsonPropertyName("capital")]
+	public long Capital { get; set; }
 
 	[JsonPropertyName("source_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? SourceName { get; set; }
@@ -52,26 +60,8 @@ public sealed class MarketEventMetadata
 	[JsonPropertyName("status"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Status { get; set; }
 
-	[JsonPropertyName("report_period"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? ReportPeriod { get; set; }
-
-	[JsonPropertyName("amount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? Amount { get; set; }
-
-	[JsonPropertyName("dividend_yield"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? DividendYield { get; set; }
-
 	[JsonPropertyName("currency"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Currency { get; set; }
-
-	[JsonPropertyName("payment_date"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? PaymentDate { get; set; }
-
-	[JsonPropertyName("price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? Price { get; set; }
-
-	[JsonPropertyName("capital"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Capital { get; set; }
 
 	[JsonIgnore]
 	public string CurrencySymbol => Currency?.ToUpper() switch
@@ -81,4 +71,45 @@ public sealed class MarketEventMetadata
 		"DONG" or "VND" => "₫",
 		_ => string.Empty
 	};
+
+	/* END Common Attrs */
+
+	[JsonPropertyName("earnings"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public MarketEventEarningsMetadata? Earnings { get; set; }
+
+	[JsonPropertyName("dividend"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public MarketEventDividendMetadata? Dividend { get; set; }
+
+	[JsonPropertyName("listing"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public MarketEventListingMetadata? Listing { get; set; }
+}
+
+public sealed class MarketEventEarningsMetadata
+{
+	[JsonPropertyName("report_period"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? ReportPeriod { get; set; }
+}
+
+public sealed class MarketEventDividendMetadata
+{
+	[JsonPropertyName("amount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? Amount { get; set; }
+
+	[JsonPropertyName("dividend_yield"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? DividendYield { get; set; }
+
+	[JsonPropertyName("payment_date"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? PaymentDate { get; set; }
+
+	[JsonPropertyName("analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public DividendEventAnalysis? Analysis { get; set; }
+}
+
+public sealed class MarketEventListingMetadata
+{
+	[JsonPropertyName("price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? Price { get; set; }
+
+	[JsonPropertyName("analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public ListingEventAnalysis? Analysis { get; set; }
 }
