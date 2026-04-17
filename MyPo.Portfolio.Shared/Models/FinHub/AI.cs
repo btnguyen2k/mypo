@@ -67,75 +67,105 @@ sealed class AIModelCapacity
 	public List<Dictionary<string, string>> ToolChain { get; set; } = [];
 }
 
-public class EventBase
+public sealed class DividendEventAnalysis
 {
-	[JsonPropertyName("symbol")]
-	public string Symbol { get; set; } = string.Empty;
+	/* base info */
 
-	[JsonPropertyName("exchange")]
-	public string Exchange { get; set; } = string.Empty;
-
-	[JsonPropertyName("company_name")]
-	public string CompanyName { get; set; } = string.Empty;
-
-	[JsonPropertyName("timestamp")]
-	public int Timestamp { get; set; }
-	[JsonPropertyName("date")]
-	public string TimestampStr { get; set; } = string.Empty;
-
-	[JsonIgnore]
-	public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
-		? DateTimeOffset.TryParse(TimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime()
-		: DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime();
-
-	[JsonPropertyName("event_category")]
-	public string EventCategory { get; set; } = string.Empty;
-
-	[JsonPropertyName("source_name")]
-	public string SourceName { get; set; } = string.Empty;
-
-	[JsonPropertyName("link")]
-	public string Link { get; set; } = string.Empty;
-}
-
-public sealed class UpcomingDividendEvent : EventBase
-{
-	[JsonPropertyName("status")]
-	public string Status { get; set; } = string.Empty;
-
-	[JsonPropertyName("amount")]
-	public decimal Amount { get; set; }
-
-	[JsonPropertyName("dividend_yield")]
-	public decimal DividendYield { get; set; }
-
-	[JsonPropertyName("currency")]
-	public string Currency { get; set; } = string.Empty;
-
-	[JsonPropertyName("payment_date")]
-	public string PaymentDate { get; set; } = string.Empty;
-}
-
-public sealed class UpcomingEarningsEvent : EventBase
-{
-	[JsonPropertyName("report_period")]
-	public string ReportPeriod { get; set; } = string.Empty;
-
-	[JsonPropertyName("status")]
-	public string Status { get; set; } = string.Empty;
-}
-
-public sealed class ListingEvent : EventBase
-{
-	[JsonPropertyName("industry")]
-	public string Industry { get; set; } = string.Empty;
+	[JsonPropertyName("overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public SymbolOverview? Overview { get; set; }
 
 	[JsonPropertyName("price")]
 	public decimal Price { get; set; }
 
-	[JsonPropertyName("currency")]
-	public string Currency { get; set; } = string.Empty;
+	[JsonPropertyName("ex_div_date_timestamp")]
+	public int ExDivTimestamp { get; set; }
 
-	[JsonPropertyName("capital")]
-	public string Capital { get; set; } = string.Empty;
+	[JsonPropertyName("ex_div_date")]
+	public string ExDivTimestampStr { get; set; } = string.Empty;
+
+	[JsonIgnore]
+	public DateTimeOffset ExDivDate => !string.IsNullOrEmpty(ExDivTimestampStr)
+		? DateTimeOffset.TryParse(ExDivTimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime()
+		: DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime();
+
+	[JsonPropertyName("div_amount")]
+	public decimal DivAmount { get; set; }
+
+	[JsonPropertyName("div_yield")]
+	public decimal DivYield { get; set; }
+
+	/* analysis result */
+
+	[JsonPropertyName("num_samples")]
+	public int NumSamples { get; set; }
+
+	[JsonPropertyName("drop_price_min")]
+	public decimal DropPriceMin { get; set; }
+
+	[JsonPropertyName("drop_price_max")]
+	public decimal DropPriceMax { get; set; }
+
+	[JsonIgnore]
+	public decimal DropPriceMean => (DropPriceMin + DropPriceMax) / 2;
+
+	[JsonPropertyName("recovery_probability")]
+	public decimal RecoveryProb { get; set; }
+
+	[JsonPropertyName("recovery_days_min")]
+	public int RecoveryDaysMin { get; set; }
+
+	[JsonPropertyName("recovery_days_max")]
+	public int RecoveryDaysMax { get; set; }
+
+	[JsonPropertyName("recovery_price_min")]
+	public decimal RecoveryPriceMin { get; set; }
+
+	[JsonPropertyName("recovery_price_max")]
+	public decimal RecoveryPriceMax { get; set; }
+
+	[JsonIgnore]
+	public decimal RecoveryPriceMean => (RecoveryPriceMin + RecoveryPriceMax) / 2;
+
+	/* technical data, used for further analysis with AI */
+
+    /* analysis result from AI */
+
+	[JsonPropertyName("llm_error")]
+	public bool LLMError { get; set; } = false;
+
+	[JsonPropertyName("llm_error_msg"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? LLMErrorMsg { get; set; }
+
+	[JsonPropertyName("search_summary"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? SearchSummary { get; set; }
+
+	[JsonPropertyName("strategy"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Strategy { get; set; }
+
+	[JsonPropertyName("reasoning"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Reasoning { get; set; }
+
+	[JsonPropertyName("sentiment_score")]
+	public decimal SentimentScore { get; set; }
+
+	[JsonPropertyName("recovery_probability_adj")]
+	public decimal RecoveryProbAdj { get; set; }
+
+	[JsonPropertyName("recovery_days_adj"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RecoveryDaysAdj { get; set; }
+
+	[JsonPropertyName("drop_price_adj"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? DropPriceAdj { get; set; }
+
+	[JsonPropertyName("recovery_price_adj"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? RecoveryPriceAdj { get; set; }
+
+	[JsonPropertyName("expected_pl")]
+	public decimal ExpectedPL { get; set; }
+
+	[JsonPropertyName("confidence_level")]
+	public decimal ConfidenceLevel { get; set; }
+
+	[JsonPropertyName("risk_level")]
+	public decimal RiskLevel { get; set; }
 }

@@ -30,10 +30,10 @@ MyPo.Blazor.App.Globals.ApiBaseUrl = string.IsNullOrEmpty(wasmAppBuilder.Configu
 var tasks = WasmAppBootstrapper.Bootstrap(out var app, wasmAppBuilder, assemblies);
 await Task.Run(() =>
 {
-	var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Program");
-	logger.LogInformation("Waiting for background bootstrapping tasks...");
+	var logger = app.Services.GetService<ILogger<Program>>();
+	logger?.LogInformation("Waiting for {n} background bootstrapping task(s)...", tasks.Count);
 	AsyncHelper.WaitForBackgroundTasks(tasks, logger);
-	logger.LogInformation("Background bootstrapping completed.");
+	logger?.LogInformation("Background bootstrapping completed.");
 });
 
 await app.RunAsync();

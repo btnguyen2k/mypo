@@ -87,6 +87,13 @@ public sealed partial class PortfolioDbContextRepository
 	}
 
 	/// <inheritdoc />
+	public async ValueTask<bool> DeleteMarketEventAsync(MarketEventEntity marketEvent, CancellationToken cancellationToken = default)
+	{
+		MarketEventStore.Remove(marketEvent);
+		return await SaveChangesAsync(cancellationToken) > 0;
+	}
+
+	/// <inheritdoc />
 	public async ValueTask<int> DeleteMarketEventsOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
 	{
 		var cutoff = cutoffDate.ToUniversalTime();

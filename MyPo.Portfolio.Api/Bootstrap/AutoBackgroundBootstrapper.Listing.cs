@@ -13,7 +13,9 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 
 	// TODO: move this to configuration
 	private static readonly List<string> COUNTRIES = ["AU"];
-	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(18);
+
+	// Run task ~every 2 days per market
+	private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(13);
 
 	private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 
@@ -28,6 +30,7 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 			try
 			{
 				var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
+				if (currentCountryIndex > 1000) currentCountryIndex %= COUNTRIES.Count;
 				var checkpoint = await GetOrInitCheckpoint(
 					ownerId: CheckpointEntity.NON_OWNER,
 					portfolioId: CheckpointEntity.NON_PORTFOLIO,
@@ -48,8 +51,13 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
 					}
 					else
 					{
-						Logger.LogInformation("New listing announcements for market {market}: {event}", country, (events.Data??[]).Count());
-						await SaveEvents(events.Data??[], CheckpointEntity.NON_OWNER, country, cancellationToken);
+						var eventsList = events.Data??[];
+						Logger.LogInformation("New listing announcements for market {market}: {event}", country, eventsList.Count());
+						foreach (var e in eventsList)
+						{
+							Logger.LogInformation("- {date} - {symbol} {name}", e.Date, e.Symbol, e.CompanyName);
+						}
+						await SaveEvents(eventsList, CheckpointEntity.NON_OWNER, country, cancellationToken);
 
 						checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
 						var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();

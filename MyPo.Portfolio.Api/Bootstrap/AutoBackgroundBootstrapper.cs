@@ -110,10 +110,15 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					SourceName = e.SourceName,
 					Link = e.Link,
 					Status = e.Status,
-					Amount = e.Amount,
-					DividendYield = e.DividendYield,
 					Currency = e.Currency,
-					PaymentDate = e.PaymentDate,
+					Capital = e.Analysis?.Overview?.MarketCap ?? 0,
+					Dividend = new()
+					{
+						PaymentDate = e.PaymentDate,
+						Amount = e.Amount,
+						DividendYield = e.DividendYield,
+						Analysis = e.Analysis,
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -144,7 +149,10 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					SourceName = e.SourceName,
 					Link = e.Link,
 					Status = e.Status.Trim().ToLower(),
-					ReportPeriod = e.ReportPeriod.Trim().ToLower(),
+					Earnings = new()
+					{
+						ReportPeriod = e.ReportPeriod.Trim().ToLower(),
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -174,10 +182,15 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
+					Sector = e.Sector,
 					Industry = e.Industry,
-					Price = e.Price,
 					Currency = e.Currency,
 					Capital = e.Capital,
+					Listing = new()
+					{
+						Price = e.Price,
+						Analysis = e.Analysis,
+					},
 				},
 			};
 			var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Text.Json;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Shared.EF.Identity;
 
@@ -69,7 +70,7 @@ sealed class IdentityUserEntityTypeConfiguration : IEntityTypeConfiguration<MyPo
 		builder.Property(e => e.Metadata).HasColumnName("user_metadata")
 			.HasConversion(
 				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonSerializer.Deserialize<MyPoUserMetadata>(v, (JsonSerializerOptions?)null)
+				v => JsonHelper.SafeDeserialize<MyPoUserMetadata>(v)
 			)
 			.HasColumnType("jsonb");
 
