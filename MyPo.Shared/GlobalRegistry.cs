@@ -1,4 +1,6 @@
-﻿namespace MyPo.Shared.Global;
+﻿using System.Collections.Concurrent;
+
+namespace MyPo.Shared.Global;
 
 /// <summary>
 /// Global registry to hold global/shared objects.
@@ -26,5 +28,5 @@ public sealed partial class GlobalRegistry
 
 	/*----------------------------------------------------------------------*/
 
-	public static readonly Dictionary<string, ISet<string>> INDEX_CONSTITUENTS = new(StringComparer.OrdinalIgnoreCase);
+	public static readonly ConcurrentDictionary<string, ISet<string>> INDEX_CONSTITUENTS = new(StringComparer.OrdinalIgnoreCase);
 }

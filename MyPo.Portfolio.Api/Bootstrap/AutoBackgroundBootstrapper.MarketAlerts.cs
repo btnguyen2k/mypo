@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using MyPo.Libs.Tempus;
+using Ddth.Utilities.Tempus;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Models;
@@ -44,8 +44,8 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 					}
 					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata?.MarketAlertTimezone??"");
 					if (now == null																// invalid timezone
-						|| !now.Value.WithinDowList(user.Metadata?.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
-						|| !now.Value.WithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue)
+						|| !now.Value.IsOnDayOfWeek(user.Metadata?.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
+						|| !now.Value.IsWithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue)
 					)
 					{
 						continue;
