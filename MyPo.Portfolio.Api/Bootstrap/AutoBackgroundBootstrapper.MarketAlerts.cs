@@ -124,7 +124,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		eventsDividend = [.. eventsDividend
 			.OrderBy(e => e.EventTime).ThenByDescending(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap))
 			.Where(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap) > 0)];
-		var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
+		// var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
 
 		var markets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
 		var messages = new List<string>();
