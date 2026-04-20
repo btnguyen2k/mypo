@@ -128,9 +128,11 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 
 		var markets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
 		var messages = new List<string>();
+		var msg = new StringBuilder();
 		foreach (var market in markets)
 		{
-			var msg = new StringBuilder($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
+			msg.Clear();
+			msg.Append($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
 			foreach (var e in eventsDividend.Where(e => e.MarketId == market))
 			{
 				var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
