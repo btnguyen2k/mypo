@@ -176,7 +176,7 @@
 																{
 																	<br />
 																	<small class="text-muted">
-																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false && w2 != null)
+																	@if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false) && w2 != null)
 																	{
 																		@((MarkupString)$"<code>{w2.Direction}</code>: {w2.Confidence} - {w2.Reason}")
 																	}
@@ -188,7 +188,7 @@
 
 																	<br />
 																	<small class="text-muted">
-																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false && m1 != null)
+																	@if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false) && m1 != null)
 																	{
 																		@((MarkupString)$"<code>{m1.Direction}</code>: {m1.Confidence} - {m1.Reason}")
 																	}
@@ -200,7 +200,7 @@
 
 																	<br />
 																	<small class="text-muted">
-																	@if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false && m3 != null)
+																	@if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false) && m3 != null)
 																	{
 																		@((MarkupString)$"<code>{m3.Direction}</code>: {m3.Confidence} - {m3.Reason}")
 																	}
