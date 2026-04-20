@@ -35,17 +35,17 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 				{
 					var userId = user.UserName!.ToLower();
 					Logger.LogInformation("Processing market alerts for user {userId}...", userId);
-					if (!(user.Metadata?.MarketAlertViaTelegram??false)					// market alert is not enabled
-						|| string.IsNullOrEmpty(user.Metadata?.GetTelegramBotApiKey())	// Telegram bot API key is not configured
-						|| !(user.Metadata?.GetTelegramChatIDs()??[]).Any()				// No Telegram chat IDs are configured
+					if (user.Metadata == null || !user.Metadata.MarketAlertViaTelegram  // market alert is not enabled
+						|| string.IsNullOrEmpty(user.Metadata.GetTelegramBotApiKey())	// Telegram bot API key is not configured
+						|| !(user.Metadata.GetTelegramChatIDs()??[]).Any()				// No Telegram chat IDs are configured
 					)
 					{
 						continue;
 					}
-					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata?.MarketAlertTimezone??"");
+					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata.MarketAlertTimezone??"");
 					if (now == null																// invalid timezone
-						|| !now.Value.IsOnDayOfWeek(user.Metadata?.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
-						|| !now.Value.IsWithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue)
+						|| !now.Value.IsOnDayOfWeek(user.Metadata.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
+						|| !now.Value.IsWithinTimeWindow(user.Metadata.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata.MarketAlertEndTime??TimeOnly.MaxValue)
 					)
 					{
 						continue;
@@ -58,7 +58,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 						checkpointType: CheckpointEntity.CHECKPOINT_MARKET_ALERTS,
 						cancellationToken
 					);
-					var alertDelay = TimeSpan.FromMinutes(user.Metadata?.MarketAlertDelayMinutes??60);
+					var alertDelay = TimeSpan.FromMinutes(user.Metadata.MarketAlertDelayMinutes);
 					if (checkpoint == null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow-checkpoint.CheckpointTime < alertDelay))
 					{
 						// checkpoint is not ready for sending alerts yet
