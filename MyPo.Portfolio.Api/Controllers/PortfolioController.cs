@@ -77,4 +77,12 @@ public partial class PortfolioController : ApiBaseController
 			? portfolioRec
 			: null;
 	}
+
+	private async ValueTask<PortfolioPlanEntity?> GetPortfolioPlanIfOwnedByUser(MyPoUser user, string portfolioId)
+	{
+		var portfolioPlanRec = await PortfolioRepository.GetPortfolioPlanByIdAsync(portfolioId);
+		return portfolioPlanRec != null && portfolioPlanRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+			? portfolioPlanRec
+			: null;
+	}
 }
