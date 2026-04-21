@@ -329,7 +329,7 @@
 			<span class="small text-muted">
 				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				Total fee+tax: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
 				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
@@ -443,7 +443,7 @@
 			<span class="small text-muted">
 				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				Total fee+tax: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
 				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
