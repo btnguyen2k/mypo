@@ -1,8 +1,5 @@
-﻿using System.Text.Json;
-using Markdig.Extensions.SelfPipeline;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
@@ -108,7 +105,6 @@ public partial class MyPortfolioPlans : BasePage
 
 	private void BtnClickDeletePlan(string id)
 	{
-		Console.WriteLine($"BtnClickDeletePlan: id={id}");
 		SelectedPortfolioPlan = PortfolioPlansMap?[id];
 		if (SelectedPortfolioPlan == null)
 		{

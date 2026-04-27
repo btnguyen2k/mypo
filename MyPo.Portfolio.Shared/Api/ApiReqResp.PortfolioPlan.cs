@@ -65,4 +65,41 @@ public sealed class PortfolioPlanResp
 		var m = market ?? Market;
 		return $"{m?.CurrencySymbol??""}{FormatUtils.FormatValueWithScale(TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??"")}";
 	}
+
+	public string NumSharesStr(HoldingTicker ticker) => FormatUtils.FormatValueMaxDecimals(ticker.Shares, 4);
+
+	public string MarketPriceStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(ticker.MarketPrice, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public string MarketValueStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var marketValue = ticker.Shares * ticker.MarketPrice;
+		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(marketValue, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public decimal CurrentAllocationPct(HoldingTicker ticker) => TotalMarketValue > 0 ? ticker.Shares * ticker.MarketPrice / TotalMarketValue * 100 : 0;
+	public decimal TargetAllocationPct(HoldingTicker ticker) => ticker.TargetAllocation;
+	public decimal AllocationDiffPct(HoldingTicker ticker) => CurrentAllocationPct(ticker) - TargetAllocationPct(ticker);
+
+	[JsonIgnore]
+	public decimal MaxAllocationDiffPct => Metadata?.HoldingTickers.Max(AllocationDiffPct) ?? 0;
+
+	public string MaxAllocationDiffPctStr()
+	{
+		var diffPct = MaxAllocationDiffPct;
+		return $"{(diffPct>=0?"+":"")}{diffPct:N1}%";
+	}
+
+	[JsonIgnore]
+	public decimal MinAllocationDiffPct => Metadata?.HoldingTickers.Min(AllocationDiffPct) ?? 0;
+
+	public string MinAllocationDiffPctStr()
+	{
+		var diffPct = MinAllocationDiffPct;
+		return $"{(diffPct>=0?"+":"")}{diffPct:N1}%";
+	}
 }

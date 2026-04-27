@@ -53,31 +53,25 @@ public static partial class FormatUtils
 		return dt != null ? new DateTimeOffset(dt.Value) : null;
 	}
 
-	// public static decimal EstimateTxFee(MarketDef? market)
-	// {
-	// 	return EstimateTxFee(0, market);
-	// }
+	public static string FormatValueMaxDecimals(double value, int maxDecimals = 4)
+	{
+		return FormatValueMaxDecimals((decimal)value, maxDecimals);
+	}
 
-	// public static decimal EstimateTxFee(MarketDefResp? market)
-	// {
-	// 	return EstimateTxFee(0, market);
-	// }
-
-	// public static decimal EstimateTxFee(decimal txValue, MarketDefResp? market)
-	// {
-	// 	return EstimateTxFee(txValue, market?.ToModel());
-	// }
-
-	// public static decimal EstimateTxFee(decimal txValue, MarketDef? market)
-	// {
-	// 	return (market?.Country) switch
-	// 	{
-	// 		"VN" => txValue * 0.15m/100, // 0.15% for Vietnam market
-	// 		"AU" => txValue <= 1000m ? 5.0m : (txValue <= 3000m ? 10.0m : (txValue <= 10000m ? 19.95m : (txValue <= 25000m ? 29.95m : txValue*0.12m/100))), // https://www.commsec.com.au/support/rates-and-fees.html
-	// 		"US" => Math.Max(5.0m, txValue*0.12m/100), // https://www.commsec.com.au/support/rates-and-fees.html
-	// 		_ => 0,
-	// 	};
-	// }
+	public static string FormatValueMaxDecimals(decimal value, int maxDecimals = 4)
+	{
+		if (maxDecimals < 0) maxDecimals = 0;
+		for (var numDecimals = 0; numDecimals <= maxDecimals; numDecimals++)
+		{
+			if (Math.Round(value, numDecimals) == value)
+			{
+				maxDecimals = numDecimals;
+				break;
+			}
+		}
+		var format = "N" + maxDecimals;
+		return value.ToString(format, System.Globalization.CultureInfo.CurrentCulture);
+	}
 
 	public static string FormatValueWithScale(double value, decimal scale = 1, string? format = null)
 	{

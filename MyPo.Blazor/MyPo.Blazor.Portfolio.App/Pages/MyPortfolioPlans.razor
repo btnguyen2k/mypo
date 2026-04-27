@@ -32,7 +32,7 @@
 					{
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<ChildContent Context="ctx_add_portfolio_plan">
-								<button class="btn btn-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> New Plan</button>
+								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> New Plan</button>
 							</ChildContent>
 						</AuthorizeView>
 					}
@@ -43,7 +43,7 @@
 					{
 						@if (PortfolioPlansMap.Count == 0)
 						{
-							<div id="empty-plan-state" class="text-center py-5">
+							<div class="text-center py-5">
 								<BIcon icon="bi-folder2-open" extraClassName="display-3 text-secondary" />
 								<p class="mt-3 text-secondary">No plans yet. Create your first portfolio plan to get started.</p>
 								<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
@@ -68,22 +68,22 @@
 								box-shadow: 0 .25rem 1rem rgba(255, 255, 255, .1);
 							}
 							</style>
-							<div id="plans-grid" class="row g-4">
+							<div class="row g-4">
 								@foreach (var plan in PortfolioPlansMap.OrderBy(kv => kv.Value.Name).Select(kv => kv.Value))
 								{
-									<div class="col-md-6 col-lg-4">
-										<div class="card plan-card h-100"> @*onclick="location.href='plan-detail.html?id=${plan.id}'">*@
+									<div class="col-md-6 col-lg-4" @onclick="()=>BtnClickViewPlan(plan.Id)">
+										<div class="card plan-card h-100">
 											<div class="card-body">
 												<div class="d-flex justify-content-between align-items-start mb-2">
 													<h5 class="card-title mb-0">@(plan.Name)</h5>
-													<div class="dropdown"> @*onclick="event.stopPropagation()">*@
-														<button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown" aria-expanded="false">
+													<div class="dropdown">
+														<button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown" aria-expanded="false" @onclick:stopPropagation>
 															<BIcon icon="bi-three-dots-vertical" />
 														</button>
 														<ul class="dropdown-menu dropdown-menu-end">
-															<li><a class="dropdown-item" href="#" @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:preventDefault><BIcon icon="bi-pencil" extraClassName="me-2" />Edit</a></li>
+															<li><a class="dropdown-item" href="#" @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-pencil" extraClassName="me-2" />Edit</a></li>
 															<li><hr class="dropdown-divider"></li>
-															<li><a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:preventDefault><BIcon icon="bi-trash" extraClassName="me-2" />Delete</a></li>
+															<li><a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-trash" extraClassName="me-2" />Delete</a></li>
 														</ul>
 													</div>
 												</div>
