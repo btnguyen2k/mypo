@@ -118,6 +118,28 @@
 										</tr>
 									</thead>
 									<tbody>
+										<style>
+										.allocation-bar {
+											position: relative;
+											height: 16px;
+											border-radius: 4px;
+											overflow: hidden;
+											background: var(--cui-secondary-bg);
+										}
+
+										.allocation-bar .bar-current {
+											height: 100%;
+											transition: width .4s ease;
+										}
+
+										.allocation-bar .bar-target {
+											position: absolute;
+											top: 0;
+											height: 100%;
+											width: 2px;
+											background: var(--cui-dark);
+										}
+										</style>
 										@foreach (var ht in SelectedPortfolioPlan?.Metadata?.HoldingTickers??[])
 										{
 											<tr>
@@ -126,12 +148,18 @@
 												<td class="text-end">@SelectedPortfolioPlan?.MarketPriceStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketValueStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.CurrentAllocationPct(ht).ToString("N1")%</td>
-												<td class="text-end">@SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N1")%</td>
+												<td class="text-end">@SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0")%</td>
 												<td class="text-end @(devCssClass(SelectedPortfolioPlan?.AllocationDiffPct(ht)??0))">@SelectedPortfolioPlan?.AllocationDiffPct(ht).ToString("N1")%</td>
 												<td>
-													<div class="progress" style="height: 8px;">
-														<div class="progress-bar bg-primary" role="progressbar" style="width: h.CurrentAllocationPct%" aria-valuenow="h.CurrentAllocationPct" aria-valuemin="0" aria-valuemax="100"></div>
-														<div class="progress-bar bg-secondary" role="progressbar" style="width: h.TargetAllocationPct%" aria-valuenow="h.TargetAllocationPct" aria-valuemin="0" aria-valuemax="100"></div>
+													@*
+													<div class="progress" style="height: 16px;">
+														<div class="progress-bar bg-primary" role="progressbar" style="width: @(SelectedPortfolioPlan?.CurrentAllocationPct(ht)??0)%" aria-valuenow="@(SelectedPortfolioPlan?.CurrentAllocationPct(ht)??0)" aria-valuemin="0" aria-valuemax="100"></div>
+														<div class="progress-bar bg-secondary" role="progressbar" style="width: @(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)%" aria-valuenow="@(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)" aria-valuemin="0" aria-valuemax="100"></div>
+													</div>
+													*@
+													<div class="allocation-bar" title="Current @(SelectedPortfolioPlan?.CurrentAllocationPct(ht).ToString("N1"))% / Target @(SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0"))%">
+														<div class="bar-current @(barCssClass(SelectedPortfolioPlan?.AllocationDiffPct(ht)??0))" style="width:@(SelectedPortfolioPlan?.CurrentAllocationPct(ht)??0)%"></div>
+														<div class="bar-target" style="left:@(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)%" title="Target @(SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0"))%"></div>
 													</div>
 												</td>
 											</tr>
@@ -150,9 +178,23 @@
 @code {
     private const string PAGE_TITLE = "My Portfolio Plan";
 
-	private string devCssClass(decimal value)
+	private string barCssClass(decimal dev)
 	{
-		var v = Math.Abs(value);
+		var v = Math.Abs(dev);
+		if (v <= 5)
+		{
+			return "bg-success bg-opacity-50";
+		}
+		if (v <= 11)
+		{
+			return "bg-info bg-opacity-75";
+		}
+		return "bg-danger bg-opacity-50";
+	}
+
+	private string devCssClass(decimal dev)
+	{
+		var v = Math.Abs(dev);
 		if (v <= 3)
 		{
 			return "text-muted";
@@ -163,7 +205,7 @@
 		}
 		if (v <= 11)
 		{
-			return "text-warning";
+			return "text-info";
 		}
 		return "text-danger";
 	}
