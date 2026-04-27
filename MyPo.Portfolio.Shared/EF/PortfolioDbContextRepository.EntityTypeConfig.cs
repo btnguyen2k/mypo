@@ -36,7 +36,7 @@ sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfigurati
 	public override void Configure(EntityTypeBuilder<PortfolioPlanEntity> builder)
 	{
 		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio_plan"); // change table name if needed
+		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio_plans"); // change table name if needed
 		builder.Property(e => e.Id).HasColumnName("plan_id");
 		builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
 		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");

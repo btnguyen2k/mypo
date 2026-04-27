@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Api;
+using MyPo.Shared.Identity;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -28,13 +30,134 @@ public partial class PortfolioController
 		var myPortfolioPlanList = await PortfolioRepository.GetPortfolioPlansAccessibleByUserAsync(currentUser);
 		foreach (var plan in myPortfolioPlanList)
 		{
-			result.Add(PortfolioPlanResp.BuildFrom(plan));
+			var planResp = PortfolioPlanResp.BuildFrom(plan);
+			var portfolio = plan.PortfolioId != null ? await PortfolioRepository.GetPortfolioByIdAsync(plan.PortfolioId) : null;
+			planResp.Portfolio = portfolio != null ? PortfolioResp.BuildFrom(portfolio) : null;
+			result.Add(planResp);
 		}
 		return ResponseOk(result);
 	}
 
 	/// <summary>
-	/// Creates a new portfolio plan record for the current user.
+	/// Gets a portfolio plan record by ID. The portfolio plan must be owned by the current user.
+	/// </summary>
+	/// <param name="id"></param>
+	/// <returns></returns>
+	/// <remarks>The user is identified by the auth token.</remarks>
+	[HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_PLANS_ID)]
+	public async ValueTask<ActionResult<ApiResp<PortfolioPlanResp>>> GetByPortfolioPlanById([FromRoute] string id)
+	{
+		var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+		if (authErrorResult != null)
+		{
+			// current auth token and signed-in user should all be valid
+			return authErrorResult;
+		}
+
+		var portfolioPlan = await GetPortfolioPlanIfOwnedByUser(currentUser, id);
+		if (portfolioPlan == null)
+		{
+			return ResponseNoData(404, "Portfolio plan not found.");
+		}
+		var planResp = PortfolioPlanResp.BuildFrom(portfolioPlan);
+		var portfolio = portfolioPlan.PortfolioId != null ? await PortfolioRepository.GetPortfolioByIdAsync(portfolioPlan.PortfolioId) : null;
+		planResp.Portfolio = portfolio != null ? PortfolioResp.BuildFrom(portfolio) : null;
+		return ResponseOk(planResp);
+	}
+
+	private async ValueTask<ObjectResult?> ValidateCreateOrUpdatePortfolioPlanReq(CreateOrUpdatePortfolioPlanReq req, MyPoUser user)
+	{
+		// validate linked portfolio
+		if (!string.IsNullOrWhiteSpace(req.PortfolioId))
+		{
+			var portfolio = await PortfolioRepository.GetPortfolioByIdAsync(req.PortfolioId);
+			if (portfolio == null || !portfolio.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase))
+			{
+				return ResponseNoData(400, "Invalid linked portfolio ID.");
+			}
+		}
+
+		// validate name
+		if (string.IsNullOrWhiteSpace(req.Name))
+		{
+			return ResponseNoData(400, "Name is required.");
+		}
+
+		// validate tickers
+		if (req.Metadata != null && req.Metadata.HoldingTickers != null)
+		{
+			foreach (var ticker in req.Metadata.HoldingTickers)
+			{
+				if (string.IsNullOrWhiteSpace(ticker.Ticker))
+				{
+					return ResponseNoData(400, "Ticker is required for all holding tickers.");
+				}
+				if (ticker.TargetAllocation <= 0)
+				{
+					return ResponseNoData(400, "Target allocation must be greater than 0 for all holding tickers.");
+				}
+			}
+			var totalAllocation = req.Metadata.HoldingTickers.Sum(ht => ht.TargetAllocation);
+			if (totalAllocation != 100)
+			{
+				return ResponseNoData(400, "Total allocation must be 100% for all holding tickers.");
+			}
+		}
+
+		return null;
+	}
+
+	private async ValueTask<IDictionary<string, AssetEntity>> GetAssetsMapByPortfolioId(string? portfolioId)
+	{
+		if (string.IsNullOrWhiteSpace(portfolioId))
+		{
+			return new Dictionary<string, AssetEntity>();
+		}
+
+		var assetsMap = new Dictionary<string, AssetEntity>();
+		var assets = await PortfolioRepository.GetAssetsByPortfolioIdAsync(portfolioId);
+		foreach (var asset in assets)
+		{
+			if (Globals.MarketsMap.TryGetValue(asset.MarketId?.ToUpper() ?? string.Empty, out var market))
+			{
+				var symbol = SymbolUtils.NormalizeSymbol(asset.ItemCode, market);
+				assetsMap[symbol] = asset;
+			};
+		}
+		return assetsMap;
+	}
+
+	private async ValueTask<(ObjectResult?, IList<HoldingTicker>?)> BuildHoldingTickers(CreateOrUpdatePortfolioPlanReq req)
+	{
+		var holdings = new List<HoldingTicker>();
+		if (req.Metadata != null && req.Metadata.HoldingTickers != null)
+		{
+			var assetsMap = await GetAssetsMapByPortfolioId(req.PortfolioId);
+			foreach (var ticker in req.Metadata.HoldingTickers)
+			{
+				var tickerInfoResp = await FinHubClient.GetStockSymbolInfoAsync(ticker.Ticker);
+				if (tickerInfoResp.Status != 200 || tickerInfoResp.Data == null)
+				{
+					return (ResponseNoData(400, $"Cannot fetch info for ticker '{ticker.Ticker}'."), null);
+				}
+				holdings.Add(new HoldingTicker
+				{
+					Id = Guid.NewGuid().ToString(),
+					Ticker = tickerInfoResp.Data.NormalizedSymbol(),
+					TargetAllocation = ticker.TargetAllocation,
+					Tags = ticker.Tags?.Trim() ?? string.Empty,
+					Shares = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol(), out var asset) ? asset.Quantity : 0,
+					MarketPrice = tickerInfoResp.Data.StockQuote?.MarketPrice ?? 0,
+					DividendYield = tickerInfoResp.Data.Dividend?.DividendYield ?? 0,
+					PayoutFrequency = tickerInfoResp.Data.Dividend?.PayoutFrequency ?? 0,
+				});
+			}
+		}
+		return (null, holdings);
+	}
+
+	/// <summary>
+	/// Creates a new portfolio plan record.
 	/// </summary>
 	/// <param name="req">The create portfolio plan request.</param>
 	/// <returns>The created portfolio plan record.</returns>
@@ -50,20 +173,17 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		// validate linked portfolio
-		if (!string.IsNullOrWhiteSpace(req.PortfolioId))
+		var validationResult = await ValidateCreateOrUpdatePortfolioPlanReq(req, currentUser);
+		if (validationResult != null)
 		{
-			var portfolio = await PortfolioRepository.GetPortfolioByIdAsync(req.PortfolioId);
-			if (portfolio == null || !portfolio.OwnerUserId.Equals(currentUser.Id, StringComparison.OrdinalIgnoreCase))
-			{
-				return ResponseNoData(400, "Invalid linked portfolio ID.");
-			}
+			return validationResult;
 		}
 
-		// validate name
-		if (string.IsNullOrWhiteSpace(req.Name))
+		IList<HoldingTicker>? holdings;
+		(validationResult, holdings) = await BuildHoldingTickers(req);
+		if (validationResult != null)
 		{
-			return ResponseNoData(400, "Name is required.");
+			return validationResult;
 		}
 
 		// Create new portfolio plan record
@@ -73,17 +193,31 @@ public partial class PortfolioController
 			OwnerUserId = currentUser.Id,
 			PortfolioId = string.IsNullOrWhiteSpace(req.PortfolioId) ? null : req.PortfolioId.Trim(),
 			Name = req.Name.Trim(),
-			Metadata = req.Metadata,
+			Metadata = new()
+			{
+				MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+				HoldingTickers = holdings ?? [],
+			},
 		};
-		var result = await PortfolioRepository.CreatePortfolioPlanAsync(portfolioPlanRec);
-		if (result == null)
+		var plan = await PortfolioRepository.CreatePortfolioPlanAsync(portfolioPlanRec);
+		if (plan == null)
 		{
 			return ResponseNoData(500, "Failed to create new portfolio plan.");
 		}
-		return ResponseOk(PortfolioPlanResp.BuildFrom(result));
+		var planResp = PortfolioPlanResp.BuildFrom(plan);
+		var portfolio = plan.PortfolioId != null ? await PortfolioRepository.GetPortfolioByIdAsync(plan.PortfolioId) : null;
+		planResp.Portfolio = portfolio != null ? PortfolioResp.BuildFrom(portfolio) : null;
+		return ResponseOk(planResp);
 	}
 
-	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_PORTFOLIO_PLAN_ID)]
+	/// <summary>
+	/// Updates an existing portfolio plan record. The portfolio plan must be owned by the current user.
+	/// </summary>
+	/// <param name="id"></param>
+	/// <param name="req"></param>
+	/// <returns></returns>
+	/// <remarks>The user is identified by the auth token.</remarks>
+	[HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_PLANS_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
 	public async ValueTask<ActionResult<ApiResp<PortfolioPlanResp>>> UpdateMyPortfolioPlan([FromRoute] string id, [FromBody] CreateOrUpdatePortfolioPlanReq req)
 	{
@@ -94,20 +228,17 @@ public partial class PortfolioController
 			return authErrorResult;
 		}
 
-		// validate linked portfolio
-		if (!string.IsNullOrWhiteSpace(req.PortfolioId))
+		var validationResult = await ValidateCreateOrUpdatePortfolioPlanReq(req, currentUser);
+		if (validationResult != null)
 		{
-			var portfolio = await PortfolioRepository.GetPortfolioByIdAsync(req.PortfolioId);
-			if (portfolio == null || !portfolio.OwnerUserId.Equals(currentUser.Id, StringComparison.OrdinalIgnoreCase))
-			{
-				return ResponseNoData(400, "Invalid linked portfolio ID.");
-			}
+			return validationResult;
 		}
 
-		// validate name
-		if (string.IsNullOrWhiteSpace(req.Name))
+		IList<HoldingTicker>? holdings;
+		(validationResult, holdings) = await BuildHoldingTickers(req);
+		if (validationResult != null)
 		{
-			return ResponseNoData(400, "Name is required.");
+			return validationResult;
 		}
 
 		var existingPortfolioPlan = await GetPortfolioPlanIfOwnedByUser(currentUser, id);
@@ -118,17 +249,30 @@ public partial class PortfolioController
 
 		existingPortfolioPlan.PortfolioId = string.IsNullOrWhiteSpace(req.PortfolioId) ? null : req.PortfolioId.Trim();
 		existingPortfolioPlan.Name = req.Name.Trim();
-		existingPortfolioPlan.Metadata = req.Metadata;
+		existingPortfolioPlan.Metadata = new()
+		{
+			MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+			HoldingTickers = holdings ?? [],
+		};
 
 		existingPortfolioPlan = await PortfolioRepository.UpdatePortfolioPlanAsync(existingPortfolioPlan);
 		if (existingPortfolioPlan == null)
 		{
 			return ResponseNoData(500, $"Failed to update portfolio plan '{id}'.");
 		}
-		return ResponseOk(PortfolioPlanResp.BuildFrom(existingPortfolioPlan));
+		var planResp = PortfolioPlanResp.BuildFrom(existingPortfolioPlan);
+		var portfolio = existingPortfolioPlan.PortfolioId != null ? await PortfolioRepository.GetPortfolioByIdAsync(existingPortfolioPlan.PortfolioId) : null;
+		planResp.Portfolio = portfolio != null ? PortfolioResp.BuildFrom(portfolio) : null;
+		return ResponseOk(planResp);
 	}
 
-	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_PORTFOLIO_PLAN_ID)]
+	/// <summary>
+	/// Deletes an existing portfolio plan record. The portfolio plan must be owned by the current user.
+	/// </summary>
+	/// <param name="id"></param>
+	/// <returns></returns>
+	/// <remarks>The user is identified by the auth token.</remarks>
+	[HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_PLANS_ID)]
 	[Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
 	public async ValueTask<ActionResult<ApiResp<PortfolioPlanResp>>> DeleteMyPortfolioPlan([FromRoute] string id)
 	{

@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Shared.Api;
 
@@ -41,11 +42,27 @@ public sealed class PortfolioPlanResp
 	[JsonPropertyName("portfolio_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? PortfolioId { get; set; }
 
-	[JsonIgnore]
+	[JsonPropertyName("portfolio"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public PortfolioResp? Portfolio { get; set; }
 
 	[JsonPropertyName("name")]
 	public string Name { get; set; } = default!;
 
+	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public PortfolioPlanMetadata? Metadata { get; set; }
+
+	[JsonIgnore]
+	public MarketDefResp? Market { get; set; }
+
+	[JsonIgnore]
+	public string HoldingSymbols => Metadata?.HoldingTickers.Select(ht => ht.Ticker).Aggregate((a, b) => $"{a}, {b}") ?? string.Empty;
+
+	[JsonIgnore]
+	public decimal TotalMarketValue => Metadata?.HoldingTickers.Sum(ht => ht.Shares * ht.MarketPrice) ?? 0;
+
+	public string TotalMarketValueStr(MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		return $"{m?.CurrencySymbol??""}{FormatUtils.FormatValueWithScale(TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??"")}";
+	}
 }

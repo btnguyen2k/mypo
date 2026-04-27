@@ -21,6 +21,11 @@ public class PortfolioUIGlobals : UIGlobals
 
 	public const string ROUTE_PORTFOLIO_MY_PREFERENCES = $"{ROUTE_BASE}/my_preferences";
 
+	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS = $"{ROUTE_BASE}/my_portfolio_plans";
+	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW = $"{ROUTE_BASE}/my_portfolio_plans/{{PlanId}}";
+	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_ADD = $"{ROUTE_BASE}/my_portfolio_plans/add";
+	public const string ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT = $"{ROUTE_BASE}/my_portfolio_plans/edit/{{PlanId}}";
+
 	public static List<TimeZoneGroup> TIME_ZONE_GROUPS = [
 		new TimeZoneGroup()
 		{

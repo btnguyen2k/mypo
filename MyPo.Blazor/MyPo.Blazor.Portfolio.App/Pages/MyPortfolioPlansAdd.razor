@@ -1,0 +1,125 @@
+﻿@using MyPo.Blazor.App.Layout
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_ADD)]
+@inherits BasePage
+
+<SectionContent SectionId="MainLayout.Breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+    </li>
+	<li class="breadcrumb-item">
+        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <span>@PAGE_TITLE</span>
+    </li>
+</SectionContent>
+
+<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+	<Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-info border-top-3 mb-4">
+                <div class="card-header">
+                    <h4 class="card-title">@PAGE_TITLE</h4>
+                </div>
+                <div class="card-body">
+					<CAlert @ref="@Alert" />
+					@if (!HideUI)
+					{
+						<form>
+							<div class="row mb-2">
+								<div class="col-md-6 col-sm-12">
+									<div class="form-floating">
+										<input type="text" class="form-control" id="pName" placeholder="e.g. Long-Term Growth" @bind-value="Name">
+										<label for="pName">Name: (*)</label>
+									</div>
+								</div>
+								<div class="col-md-6 col-sm-12">
+									<div class="form-floating mb-2">
+										<select class="form-select" id="pPortfolioId" aria-label="Linked Portfolio" @bind="PortfolioId">
+											<option value="@(string.Empty)">&nbsp;--Select Portfolio--</option>
+											@foreach (var p in MyPortfolioTree??[])
+											{
+												if (p.IsActive)
+												{
+													<option value="@p.Id">@p.Name</option>
+													foreach (var c in p.Children??[])
+													{
+														<option value="@c.Id">&nbsp;-- @c.Name</option>
+													}
+												}
+											}
+										</select>
+										<label for="pPortfolioId">Linked Portfolio:</label>
+									</div>
+								</div>
+							</div>
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<h2 class="h5 mb-0">Holdings</h2>
+								<span class="badge bg-secondary">Total: @(TotalHoldingsPercent.ToString("P1"))</span>
+							</div>
+							<div class="table-responsive mb-3">
+								<table class="table table-sm align-middle mb-0">
+									<thead>
+										<tr>
+											<th class="col-4">Ticker</th>
+											<th class="col-3">Target Allocation %</th>
+											<th class="col-4">Tags</th>
+											<th class="col-1">&nbsp;</th>
+										</tr>
+									</thead>
+									<tbody>
+										@foreach (var ht in HoldingTickers)
+										{
+											<tr>
+												<td>
+													<input type="text" class="form-control form-control-sm @(InvalidLine==ht.Id&&InvalidComponent=="Ticker"?"is-invalid":"")" placeholder="e.g. AAPL or ASX:CBA or AAA.VN" @bind="@ht.Ticker" />
+												</td>
+												<td>
+													<div class="input-group input-group-sm">
+														<input type="number" class="form-control form-control-sm @(InvalidLine==ht.Id&&InvalidComponent=="Allocation"?"is-invalid":"")" min="0" max="100" step="0.1" placeholder="0" @bind="@ht.TargetAllocation" />
+														<span class="input-group-text">%</span>
+													</div>
+												</td>
+												<td>
+													<input type="text" class="form-control form-control-sm" placeholder="e.g. 🚀 Yield Boosters" @bind="@ht.Tags" />
+												</td>
+												<td class="text-center">
+													<button class="btn btn-sm btn-outline-danger border-0" title="Remove" @onclick="()=>BtnClickRemoveTicker(ht.Id)"><BIcon icon="bi-x-lg" /></button>
+												</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						</form>
+						<button class="btn btn-outline-primary btn-sm mb-4" @onclick="()=>BtnClickAddTicker()">
+							<BIcon icon="bi-plus-lg" extraClassName="me-1" />Add Ticker
+						</button>
+						<div class="d-flex gap-2">
+							<button class="btn btn-outline-secondary" @onclick="()=>BtnClickCancel()">Cancel</button>
+							<button class="btn btn-primary" @onclick="()=>BtnClickSave()">
+								<BIcon icon="bi-floppy" extraClassName="me-1" />Save Plan
+							</button>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</Authorized>
+</AuthorizeView>
+
+@code {
+    private const string PAGE_TITLE = "Add Plan";
+}
