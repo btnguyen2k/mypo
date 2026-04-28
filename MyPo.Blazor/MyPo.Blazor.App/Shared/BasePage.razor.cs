@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.WebUtilities;
+﻿using Microsoft.AspNetCore.WebUtilities;
 using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.App.Shared;
@@ -17,6 +17,12 @@ public abstract class BasePage : BaseComponent
 	protected void SetBackgroundMsg(string msg)
 	{
 		BackgroundMsg = msg;
+		StateHasChanged();
+	}
+
+	protected void ClearBackgroundMsg()
+	{
+		BackgroundMsg = string.Empty;
 		StateHasChanged();
 	}
 
@@ -55,5 +61,28 @@ public abstract class BasePage : BaseComponent
 		var alertType = queryParameters.TryGetValue(QUERY_PARM_ALERT_TYPE, out var alertTypeValue) ? alertTypeValue.ToString().Trim() : string.Empty;
 		var alertMessage = queryParameters.TryGetValue(QUERY_PARM_ALERT_MESSAGE, out var alertMessageValue) ? alertMessageValue.ToString().Trim() : string.Empty;
 		return (alertType, alertMessage);
+	}
+
+	protected void ShowPassedMessageOrCloseAlert()
+	{
+		var (alertType, alertMessage) = GetPassedMessageFromQuery();
+		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+		{
+			var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
+			// remove the alert query parameters to prevent showing the same message again on next page load/refresh
+			queryParams.Remove(QUERY_PARM_ALERT_TYPE);
+			queryParams.Remove(QUERY_PARM_ALERT_MESSAGE);
+			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
+			{
+				Query = queryParams.ToString() ?? string.Empty
+			};
+			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
+
+			ShowAlert(alertType, alertMessage, autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+		}
+		else
+		{
+			CloseAlert();
+		}
 	}
 }

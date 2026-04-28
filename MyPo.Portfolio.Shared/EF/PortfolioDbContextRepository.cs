@@ -34,6 +34,7 @@ public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolio
 	{
 		base.OnModelCreating(modelBuilder);
 		new PortfolioEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioEntity>());
+		new PortfolioPlanEntityTypeConfiguration().Configure(modelBuilder.Entity<PortfolioPlanEntity>());
 		new TxBuySellEntityTypeConfiguration().Configure(modelBuilder.Entity<TxBuySellEntity>());
 		new AssetEntityTypeConfiguration().Configure(modelBuilder.Entity<AssetEntity>());
 		new TxSettlementEntityTypeConfiguration().Configure(modelBuilder.Entity<TxSettlementEntity>());

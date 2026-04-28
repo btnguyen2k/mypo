@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using MyPo.Libs.Tempus;
+using Ddth.Utilities.Tempus;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Models;
@@ -35,17 +35,17 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 				{
 					var userId = user.UserName!.ToLower();
 					Logger.LogInformation("Processing market alerts for user {userId}...", userId);
-					if (!(user.Metadata?.MarketAlertViaTelegram??false)					// market alert is not enabled
-						|| string.IsNullOrEmpty(user.Metadata?.GetTelegramBotApiKey())	// Telegram bot API key is not configured
-						|| !(user.Metadata?.GetTelegramChatIDs()??[]).Any()				// No Telegram chat IDs are configured
+					if (user.Metadata == null || !user.Metadata.MarketAlertViaTelegram  // market alert is not enabled
+						|| string.IsNullOrEmpty(user.Metadata.GetTelegramBotApiKey())	// Telegram bot API key is not configured
+						|| !(user.Metadata.GetTelegramChatIDs()??[]).Any()				// No Telegram chat IDs are configured
 					)
 					{
 						continue;
 					}
-					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata?.MarketAlertTimezone??"");
+					var now = DateTimeOffset.Now.ToTimeZoneSilently(user.Metadata.MarketAlertTimezone??"");
 					if (now == null																// invalid timezone
-						|| !now.Value.WithinDowList(user.Metadata?.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
-						|| !now.Value.WithinTimeWindow(user.Metadata?.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata?.MarketAlertEndTime??TimeOnly.MaxValue)
+						|| !now.Value.IsOnDayOfWeek(user.Metadata.MarketAlertDaysOfWeek??[])	// not in the configured days to send alerts
+						|| !now.Value.IsWithinTimeWindow(user.Metadata.MarketAlertStartTime??TimeOnly.MinValue, user.Metadata.MarketAlertEndTime??TimeOnly.MaxValue)
 					)
 					{
 						continue;
@@ -58,7 +58,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 						checkpointType: CheckpointEntity.CHECKPOINT_MARKET_ALERTS,
 						cancellationToken
 					);
-					var alertDelay = TimeSpan.FromMinutes(user.Metadata?.MarketAlertDelayMinutes??60);
+					var alertDelay = TimeSpan.FromMinutes(user.Metadata.MarketAlertDelayMinutes);
 					if (checkpoint == null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow-checkpoint.CheckpointTime < alertDelay))
 					{
 						// checkpoint is not ready for sending alerts yet
@@ -124,13 +124,15 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		eventsDividend = [.. eventsDividend
 			.OrderBy(e => e.EventTime).ThenByDescending(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap))
 			.Where(e => MarketEventUtils.AttentionLevelForDividend(e, yieldsMap) > 0)];
-		var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
+		// var preExDivPrices = (await TickerUtils.FetchPreExDivPricesAsync(eventsDividend, finHubClient, cancellationToken)).ToDictionary();
 
 		var markets = eventsDividend.Select(e => e.MarketId).Distinct().OrderBy(m => m).ToList();
 		var messages = new List<string>();
+		var msg = new StringBuilder();
 		foreach (var market in markets)
 		{
-			var msg = new StringBuilder($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
+			msg.Clear();
+			msg.Append($"<strong>💰 {market} - Dividends/distributions events:</strong>\n<blockquote>");
 			foreach (var e in eventsDividend.Where(e => e.MarketId == market))
 			{
 				var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
@@ -185,41 +187,41 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
 		var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
 			eventsListing.Select(e => e.ItemCode).Distinct(),
 			finHubClient, cancellationToken: cancellationToken);
-		var message = "<strong>🆕 New listings:</strong>\n<blockquote>";
+		var message = new StringBuilder("<strong>🆕 New listings:</strong>\n<blockquote>");
 		foreach (var e in eventsListing)
 		{
 			var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
 			var ticker = YFUtils.BuildYFTicker(e.ItemCode);
 			var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
-			message += $"<a href=\"{e.Metadata?.Link}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n";
+			message.Append($"<a href=\"{e.Metadata?.Link}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price??0:F2}</code> {quoteInfo}\n");
 			if (e.Metadata?.Listing?.Analysis?.Outlook != null)
 			{
 				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
 				{
-					message += $"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n";
+					message.Append($"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n");
 				}
 				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m11))
 				{
-					message += $"📈 1m: {m11.Direction} ({m11.Confidence}%), {m11.Reason}\n";
+					message.Append($"📈 1m: {m11.Direction} ({m11.Confidence}%), {m11.Reason}\n");
 				}
 				if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m31))
 				{
-					message += $"📈 3m: {m31.Direction} ({m31.Confidence}%), {m31.Reason}\n";
+					message.Append($"📈 3m: {m31.Direction} ({m31.Confidence}%), {m31.Reason}\n");
 				}
 			}
-			message += "\n";
+			message.Append('\n');
 		}
-		message += "</blockquote><preview disabled />";
-		// message += "</blockquote>";
+		message.Append("</blockquote><preview disabled />");
+		// message.Append("</blockquote>");
 
 		foreach (var chatId in chatIDs)
 		try
 		{
-			await teleBot.SendHtml(chatId, message);
+			await teleBot.SendHtml(chatId, message.ToString());
 		}
 		catch (Exception ex)
 		{
-			Logger.LogError(ex, "Failed to send market alert for chat ID {chatId}: {message}", chatId, message);
+			Logger.LogError(ex, "Failed to send market alert for chat ID {chatId}: {message}", chatId, message.ToString());
 		}
 	}
 }

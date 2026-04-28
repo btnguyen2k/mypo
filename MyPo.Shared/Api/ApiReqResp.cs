@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace MyPo.Shared.Api;
 
@@ -12,6 +12,9 @@ public class ApiResp
 	/// </summary>
 	[JsonPropertyName("status")]
 	public int Status { get; set; }
+
+	[JsonIgnore]
+	public bool IsSuccess => Status >= 200 && Status < 300;
 
 	/// <summary>
 	/// Extra information if any (e.g. the detailed error message).

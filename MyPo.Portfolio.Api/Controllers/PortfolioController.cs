@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api.Controller;
 using MyPo.Shared.Api.Services;
@@ -17,13 +18,16 @@ public partial class PortfolioController : ApiBaseController
 	private readonly IIdentityRepository IdentityRepository;
 	private readonly IdentityOptions IdentityOptions;
 	private readonly IPortfolioRepository PortfolioRepository;
+	private readonly IFinHubClient FinHubClient;
 
 	public PortfolioController(
 		IIdentityRepository identityRepository,
 		IOptions<IdentityOptions> identityOptions,
 		IAuthenticator? authenticator,
 		IAuthenticatorAsync? authenticatorAsync,
-		IPortfolioRepository portfolioRepository)
+		IPortfolioRepository portfolioRepository,
+		IFinHubClient finHubClient
+	)
 	{
 		ArgumentNullException.ThrowIfNull(identityRepository, nameof(identityRepository));
 		ArgumentNullException.ThrowIfNull(identityOptions, nameof(identityOptions));
@@ -32,12 +36,14 @@ public partial class PortfolioController : ApiBaseController
 			throw new ArgumentNullException("No authenticator defined.");
 		}
 		ArgumentNullException.ThrowIfNull(portfolioRepository, nameof(portfolioRepository));
+			ArgumentNullException.ThrowIfNull(finHubClient, nameof(finHubClient));
 
 		IdentityRepository = identityRepository;
 		IdentityOptions = identityOptions.Value;
 		Authenticator = authenticator;
 		AuthenticatorAsync = authenticatorAsync;
 		PortfolioRepository = portfolioRepository;
+		FinHubClient = finHubClient;
 	}
 
 	private async ValueTask<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()
@@ -75,6 +81,14 @@ public partial class PortfolioController : ApiBaseController
 			&& (portfolioRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
 				|| (portfolioRec.Metadata?.Viewers?.Contains(user.Email, StringComparer.OrdinalIgnoreCase)??false))
 			? portfolioRec
+			: null;
+	}
+
+	private async ValueTask<PortfolioPlanEntity?> GetPortfolioPlanIfOwnedByUser(MyPoUser user, string portfolioId)
+	{
+		var portfolioPlanRec = await PortfolioRepository.GetPortfolioPlanByIdAsync(portfolioId);
+		return portfolioPlanRec != null && portfolioPlanRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+			? portfolioPlanRec
 			: null;
 	}
 }
