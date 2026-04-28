@@ -49,15 +49,12 @@
 									<div class="form-floating mb-2">
 										<select class="form-select" id="pPortfolioId" aria-label="Linked Portfolio" @bind="PortfolioId">
 											<option value="@(string.Empty)">&nbsp;--Select Portfolio--</option>
-											@foreach (var p in MyPortfolioTree??[])
+											@foreach (var p in (MyPortfolioTree??[]).Where(p => p.IsActive))
 											{
-												if (p.IsActive)
+												<option value="@p.Id">@p.Name</option>
+												foreach (var c in p.Children??[])
 												{
-													<option value="@p.Id">@p.Name</option>
-													foreach (var c in p.Children??[])
-													{
-														<option value="@c.Id">&nbsp;-- @c.Name</option>
-													}
+													<option value="@c.Id">&nbsp;-- @c.Name</option>
 												}
 											}
 										</select>

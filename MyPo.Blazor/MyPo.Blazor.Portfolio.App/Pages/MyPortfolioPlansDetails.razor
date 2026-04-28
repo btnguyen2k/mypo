@@ -4,6 +4,7 @@
 @using MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Utils
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW)]
 @inherits BasePage
@@ -143,7 +144,7 @@
 										@foreach (var ht in SelectedPortfolioPlan?.Metadata?.HoldingTickers??[])
 										{
 											<tr>
-												<td>@ht.Ticker</td>
+												<td>@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
 												<td class="text-end">@SelectedPortfolioPlan?.NumSharesStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketPriceStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketValueStr(ht)</td>

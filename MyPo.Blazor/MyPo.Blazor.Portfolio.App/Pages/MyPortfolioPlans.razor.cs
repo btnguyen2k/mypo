@@ -81,7 +81,7 @@ public partial class MyPortfolioPlans : BasePage
 				return;
 			}
 			var updatedPlan = updateResp.Data!;
-			updatedPlan.Market = MarketsMap.GetValueOrDefault(plan.Portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty);
+			updatedPlan.Market = MarketsMap.GetValueOrDefault(plan.Portfolio.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty);
 			PortfolioPlansMap[plan.Id] = updatedPlan;
 			StateHasChanged();
 		}

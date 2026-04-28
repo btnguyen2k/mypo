@@ -1,6 +1,7 @@
 ﻿using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace MyPo.Portfolio.Shared.Utils;
@@ -32,14 +33,9 @@ public static partial class FormatUtils
 		dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
 		dateTimeStr = MyRegexPaddingDayAndMonth().Replace(dateTimeStr, "0$1");
 
-		foreach (var format in DATETIME_PICKER_FORMATS)
-		{
-			if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
-			{
-				return dt;
-			}
-		}
-		return null;
+		return DATETIME_PICKER_FORMATS
+    		.Select(format => DateTime.TryParseExact(dateTimeStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : (DateTime?)null)
+    		.FirstOrDefault(dt => dt.HasValue);
 	}
 
 	/// <summary>
@@ -158,48 +154,39 @@ public static partial class FormatUtils
 		return pnl;
 	}
 
-	// public static string BootstrapCssClassForAnalystRecommendation(string ar)
-	// {
-	// 	return ar switch
-	// 	{
-	// 		"strong_buy" => "text-success fw-semibold",
-	// 		"buy" => "text-success",
-	// 		"hold" => "text-warning",
-	// 		"sell" => "text-danger",
-	// 		"strong_sell" => "text-danger fw-semibold",
-	// 		_ => "text-muted",
-	// 	};
-	// }
+	public static string ExtractFirstCharIfEmoji(string? input)
+	{
+		if (string.IsNullOrEmpty(input)) return string.Empty;
+		var enumerator = StringInfo.GetTextElementEnumerator(input);
+    	if (!enumerator.MoveNext()) return string.Empty;
+		var firstElement = enumerator.GetTextElement();
+		return IsEmoji(firstElement) ? firstElement : string.Empty;
+	}
 
-	// public static string BootstrapCssClassForTargetValue(decimal target, decimal current, decimal low, decimal high)
-	// {
-	// 	if (target < low)
-	// 	{
-	// 		return "text-danger";
-	// 	}
-	// 	if (target > high)
-	// 	{
-	// 		return "text-success";
-	// 	}
-	// 	if (target < current)
-	// 	{
-	// 		return "text-warning";
-	// 	}
-	// 	if (target > current)
-	// 	{
-	// 		return "text-info";
-	// 	}
-	// 	return "text-muted";
-	// }
-
-	// public static decimal Delta(decimal? oldValue, decimal? newValue)
-	// {
-	// 	return (newValue??0) - (oldValue??0);
-	// }
-
-	// public static string BootstrapCssClassForDelta(decimal? oldValue, decimal? newValue)
-	// {
-	// 	var delta = Delta(oldValue, newValue);
-	// 	return delta > 0 ? "text-success" : (delta < 0 ? "text-danger" : "text-muted");
-	// }
+	public static bool IsEmoji(string textElement)
+	{
+		var codePoint = char.ConvertToUtf32(textElement, 0);
+		return codePoint == 0x200D ||         // Zero Width Joiner (used in sequences)
+			codePoint == 0x20E3 ||            // Combining Enclosing Keycap
+			codePoint is
+				>= 0x1F600 and <= 0x1F64F or  // Emoticons
+				>= 0x1F300 and <= 0x1F5FF or  // Misc Symbols & Pictographs
+				>= 0x1F680 and <= 0x1F6FF or  // Transport & Map
+				>= 0x1F700 and <= 0x1F77F or  // Alchemical Symbols
+				>= 0x1F780 and <= 0x1F7FF or  // Geometric Shapes Extended
+				>= 0x1F800 and <= 0x1F8FF or  // Supplemental Arrows-C
+				>= 0x1F900 and <= 0x1F9FF or  // Supplemental Symbols & Pictographs
+				>= 0x1FA00 and <= 0x1FA6F or  // Chess Symbols
+				>= 0x1FA70 and <= 0x1FAFF or  // Symbols & Pictographs Extended-A
+				>= 0x2600 and <= 0x26FF or    // Misc Symbols (☀, ☁, ❤, etc.)
+				>= 0x2700 and <= 0x27BF or    // Dingbats
+				>= 0x231A and <= 0x231B or    // Watch, Hourglass
+				>= 0x23E9 and <= 0x23F3 or    // Various clock/timer symbols
+				>= 0x23F8 and <= 0x23FA or    // Pause, stop, record
+				>= 0x25AA and <= 0x25AB or    // Small squares
+				>= 0x25B6 and <= 0x25C0 or    // Triangles
+				>= 0x25FB and <= 0x25FE or    // Medium squares
+				>= 0xFE00 and <= 0xFE0F       // Variation Selectors
+			;
+	}
 }
