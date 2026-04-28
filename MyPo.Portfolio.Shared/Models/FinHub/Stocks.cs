@@ -15,6 +15,18 @@ public class SymbolBase
 
 	[JsonPropertyName("country")]
 	public string Country { get; set; } = string.Empty;
+
+	public string NormalizedSymbol()
+	{
+		var exchange = Exchange.ToUpper();
+		var symbol = Symbol.ToUpper();
+		// remove YF's trailing exchange suffixes
+		if (symbol.EndsWith(".AX") || symbol.EndsWith(".VN"))
+		{
+			return $"{exchange}:{symbol.Substring(0, symbol.Length - 3)}";
+		}
+		return $"{exchange}:{symbol}";
+	}
 }
 
 public sealed class HistoryPoint
@@ -137,6 +149,9 @@ public sealed class SymbolDividend
 
 	[JsonPropertyName("dividend_yield")]
 	public decimal DividendYield { get; set; }
+
+	[JsonPropertyName("payout_frequency")]
+	public int PayoutFrequency { get; set; }
 
 	[JsonPropertyName("ex_dividend_date")]
 	public long ExDividendTimestamp { get; set; }

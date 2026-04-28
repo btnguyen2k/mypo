@@ -31,6 +31,28 @@ sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<P
 	}
 }
 
+sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioPlanEntity, string>
+{
+	public override void Configure(EntityTypeBuilder<PortfolioPlanEntity> builder)
+	{
+		base.Configure(builder);
+		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio_plans"); // change table name if needed
+		builder.Property(e => e.Id).HasColumnName("plan_id");
+		builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
+		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+		builder.Property(e => e.Name).HasColumnName("plan_name");
+		builder.Property(e => e.Metadata).HasColumnName("plan_metadata")
+			.HasConversion(
+				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+				v => JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(v)
+			)
+			.HasColumnType("jsonb");
+		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+	}
+}
+
 sealed class TxBuySellEntityTypeConfiguration : GenericEntityTypeConfiguration<TxBuySellEntity, string>
 {
 	public override void Configure(EntityTypeBuilder<TxBuySellEntity> builder)

@@ -50,7 +50,7 @@ public struct CreateOrUpdateTxBuySellReq
 	public readonly decimal TxValue => Price * Quantity;
 
 	[JsonIgnore]
-	public readonly decimal TotalFees => FeeTx??0 + FeeTax??0 + FeeOther??0;
+	public readonly decimal TotalFees => (FeeTx??0) + (FeeTax??0) + (FeeOther??0);
 }
 
 public struct TxBuySellResp

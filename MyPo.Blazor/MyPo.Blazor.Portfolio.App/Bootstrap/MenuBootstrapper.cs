@@ -42,6 +42,13 @@ public class MenuBootstrapper
 				},
 				new Sidebar.SidebarItem
 				{
+					Id = "myportfolioplans",
+					Label = "My Portfolio Plans",
+					Icon = "bi-distribute-vertical",
+					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS,
+				},
+				new Sidebar.SidebarItem
+				{
 					Id = "mypreferences",
 					Label = "My Preferences",
 					Icon = "bi-sliders",
