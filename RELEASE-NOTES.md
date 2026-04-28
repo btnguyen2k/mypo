@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-04-28 - v1.5.0
+
+### Added/Refactoring/Deprecation
+
+- (Feat) Portfolio Planning.
+
+### Fixed/Improvements
+
+- (Patch) Resolve CodeQL warnings.
+- (Fix) Incorrect preview total cost when creating new/updating existing Tx.
+
 ## 2026-04-17 - v1.4.0
 
 ### Added/Refactoring/Deprecation
