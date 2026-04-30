@@ -75,8 +75,8 @@
 							<div class="col-sm-6 col-lg-3">
 								<div class="card text-center">
 									<div class="card-body py-3">
-										<div class="text-muted small">Holdings</div>
-										<div class="h5 mb-0">@(SelectedPortfolioPlan?.Metadata?.HoldingTickers?.Count)</div>
+										<div class="text-muted small">Est. Yearly Dividend</div>
+										<div class="h5 mb-0">@(SelectedPortfolioPlan?.EstTotalYearlyDividendStr())</div>
 									</div>
 								</div>
 							</div>
@@ -105,6 +105,28 @@
 								<span class="badge bg-secondary">@(SelectedPortfolioPlan?.Metadata?.HoldingTickers?.Count) symbols</span>
 							</div>
 							<div class="table-responsive">
+								<style>
+								.allocation-bar {
+									position: relative;
+									height: 16px;
+									border-radius: 4px;
+									overflow: hidden;
+									background: var(--cui-secondary-bg);
+								}
+
+								.allocation-bar .bar-current {
+									height: 100%;
+									transition: width .4s ease;
+								}
+
+								.allocation-bar .bar-target {
+									position: absolute;
+									top: 0;
+									height: 100%;
+									width: 2px;
+									background: var(--cui-dark);
+								}
+								</style>
 								<table class="table table-hover align-middle mb-0">
 									<thead class="table-light">
 										<tr>
@@ -112,6 +134,8 @@
 											<th class="text-end">Shares</th>
 											<th class="text-end">Price</th>
 											<th class="text-end">Market Value</th>
+											<th class="text-end">Div Yield</th>
+            								<th class="text-end">Est. Yearly Div</th>
 											<th class="text-end">Current %</th>
 											<th class="text-end">Target %</th>
 											<th class="text-end">Deviation</th>
@@ -119,28 +143,6 @@
 										</tr>
 									</thead>
 									<tbody>
-										<style>
-										.allocation-bar {
-											position: relative;
-											height: 16px;
-											border-radius: 4px;
-											overflow: hidden;
-											background: var(--cui-secondary-bg);
-										}
-
-										.allocation-bar .bar-current {
-											height: 100%;
-											transition: width .4s ease;
-										}
-
-										.allocation-bar .bar-target {
-											position: absolute;
-											top: 0;
-											height: 100%;
-											width: 2px;
-											background: var(--cui-dark);
-										}
-										</style>
 										@foreach (var ht in SelectedPortfolioPlan?.Metadata?.HoldingTickers??[])
 										{
 											<tr>
@@ -148,6 +150,8 @@
 												<td class="text-end">@SelectedPortfolioPlan?.NumSharesStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketPriceStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketValueStr(ht)</td>
+												<td class="text-end">@($"{ht.DividendYield:N1}%")</td>
+												<td class="text-end">@SelectedPortfolioPlan?.EstYearlyDividendStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.CurrentAllocationPct(ht).ToString("N1")%</td>
 												<td class="text-end">@SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0")%</td>
 												<td class="text-end @(devCssClass(SelectedPortfolioPlan?.AllocationDiffPct(ht)??0))">@SelectedPortfolioPlan?.AllocationDiffPct(ht).ToString("N1")%</td>
