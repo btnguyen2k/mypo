@@ -32,7 +32,7 @@
 					{
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<ChildContent Context="ctx_add_portfolio_plan">
-								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> New Plan</button>
+								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Plan</button>
 							</ChildContent>
 						</AuthorizeView>
 					}

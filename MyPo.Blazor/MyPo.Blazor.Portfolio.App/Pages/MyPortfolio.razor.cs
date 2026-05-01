@@ -10,8 +10,11 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolio : BasePage
 {
 	private CModal ModalDialogDelete { get; set; } = default!;
+	private IEnumerable<PortfolioResp>? MyPortfolioList { get; set; }
 	private IEnumerable<PortfolioResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioResp>? MyInactivePortfolioList { get; set; }
+
+	private Dictionary<string, IEnumerable<AssetResp>> PortfolioAssetsMap { get; set; } = [];
 
 	private Dictionary<string, PortfolioResp>? MyPortfolioMap { get; set; }
 	private PortfolioResp? SelectedPortfolio { get; set; }
@@ -24,21 +27,44 @@ public partial class MyPortfolio : BasePage
 
 	private async void FetchPortfolioPnlSummaryInBackground()
 	{
+		PortfolioPnlSummaryMap.Clear();
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		foreach (var portfolio in MyPortfolioMap!.Values)
 		{
 			await Task.Run(async () =>
 			{
 				var result = await apiClient.GetMyPortfolioPnlSummaryAsync(portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (result.Status == 200)
-				{
-					PortfolioPnlSummaryMap[portfolio.Id] = result.Data;
-				}
-				else
+				if (!result.IsSuccess)
 				{
 					Logger?.LogWarning("Failed to fetch PnL summary for portfolio {PortfolioId}: {ErrorMessage}", portfolio.Id, result.Message);
 				}
-				StateHasChanged();
+				else
+				{
+					PortfolioPnlSummaryMap[portfolio.Id] = result.Data;
+					StateHasChanged();
+				}
+			});
+		}
+	}
+
+	private async void FetchPortfolioAssetsInBackground()
+	{
+		PortfolioAssetsMap.Clear();
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		foreach (var portfolio in MyPortfolioMap!.Values)
+		{
+			await Task.Run(async () =>
+			{
+				var result = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+				if (!result.IsSuccess)
+				{
+					Logger?.LogWarning("Failed to fetch PnL summary for portfolio {PortfolioId}: {ErrorMessage}", portfolio.Id, result.Message);
+				}
+				else
+				{
+					PortfolioAssetsMap[portfolio.Id] = result.Data ?? [];
+					StateHasChanged();
+				}
 			});
 		}
 	}
@@ -67,9 +93,9 @@ public partial class MyPortfolio : BasePage
 				HideUI = false;
 				var allPortfolios = resultPortfolio.Data ?? [];
 				MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
-				var portfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
-				MyActivePortfolioList = portfolioTree.Where(p => p.IsActive);
-				MyInactivePortfolioList = portfolioTree.Where(p => !p.IsActive);
+				MyPortfolioList = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+				MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
+				MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
 
 				var (alertType, alertMessage) = GetPassedMessageFromQuery();
 				if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
@@ -81,6 +107,7 @@ public partial class MyPortfolio : BasePage
 					CloseAlert();
 				}
 				await Task.Run(FetchPortfolioPnlSummaryInBackground);
+				await Task.Run(FetchPortfolioAssetsInBackground);
 			}
 			else
 			{
@@ -89,27 +116,27 @@ public partial class MyPortfolio : BasePage
 		}
 	}
 
-	private MarketDefResp? DefaultMarket(PortfolioResp portfolio)
-	{
-		return Markets.FirstOrDefault(m => m.Id.Equals(portfolio.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
-	}
+	// private MarketDefResp? DefaultMarket(PortfolioResp portfolio)
+	// {
+	// 	return Markets.FirstOrDefault(m => m.Id.Equals(portfolio.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
+	// }
 
 	private void BtnClickAdd()
 	{
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD);
 	}
 
-	private void BtnClickInfo(string pid)
-	{
-		SelectedPortfolio = MyPortfolioMap?[pid];
-		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
-	}
+	// private void BtnClickInfo(string pid)
+	// {
+	// 	SelectedPortfolio = MyPortfolioMap?[pid];
+	// 	NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
+	// }
 
-	private void BtnClickModify(string pid)
-	{
-		SelectedPortfolio = MyPortfolioMap?[pid];
-		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
-	}
+	// private void BtnClickModify(string pid)
+	// {
+	// 	SelectedPortfolio = MyPortfolioMap?[pid];
+	// 	NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
+	// }
 
 	private void BtnClickDelete(string pid)
 	{

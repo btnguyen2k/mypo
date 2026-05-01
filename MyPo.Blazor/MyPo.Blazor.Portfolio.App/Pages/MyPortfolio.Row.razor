@@ -1,0 +1,135 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+@{
+	var _indent = (MarkupString)(Level > 0 ? $"<span style=\"padding-left:{Level*1.25}rem\" class=\"d-inline-block\"></span>" : "");
+	var _noShowIconIfNoChildren = Portfolio.Children?.Any()??false ? "" : "d-none";
+	var _noShowIfActive = Portfolio.IsActive ? "d-none" : "";
+	var p = Portfolio;
+}
+
+<tr class="@(p.IsActive?"":"text-muted opacity-50")" style="cursor:pointer;" @onclick="()=>BtnClickInfo(p.Id)">
+	<td>
+		@_indent<BIcon icon="bi-diagram-3" extraClassName="@($"text-muted me-1 {_noShowIconIfNoChildren}")"/><strong>@p.Name</strong><span class="badge bg-secondary badge-sm ms-1 @_noShowIfActive">Inactive</span>
+		<br>
+		@_indent<small class="text-muted">@(PortfolioUtils.Excerpt(p.Description))</small>
+	</td>
+	<td class="text-center w-auto"><CBadgeRandom Text="@p.Currency" /></td>
+	@if(PortfolioPnlSummaryMap.TryGetValue(p.Id, out var pnlSummary))
+	{
+		<td class="text-end w-auto small">
+			@((DefaultMarket(p)?.CurrencySymbol??"-")+" ")
+			@(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut == 0
+				? "-"
+				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+			)
+		</td>
+		<td class="text-end w-auto small">
+			@((DefaultMarket(p)?.CurrencySymbol??"-")+" ")
+			@(pnlSummary.TotalIncome == 0
+				? "-"
+				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalIncome, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+			)
+		</td>
+		<td class="text-end w-auto small">
+			@((DefaultMarket(p)?.CurrencySymbol??"-")+" ")
+			@(pnlSummary.TotalCosts == 0
+				? "-"
+				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalCosts, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+			)
+		</td>
+		<td class="text-end w-auto small">
+			@((DefaultMarket(p)?.CurrencySymbol??"-")+" ")
+			@(pnlSummary.TotalBuyValue == 0
+				? "-"
+				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalBuyValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+			)
+		</td>
+		<td class="text-end w-auto small">
+			@((DefaultMarket(p)?.CurrencySymbol??"-")+" ")
+			@(pnlSummary.TotalSellValue == 0
+				? "-"
+				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalSellValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+			)
+		</td>
+	}
+	else
+	{
+		<td colspan="5" class="text-center">--</td>
+	}
+	<td class="text-center w-auto">
+		<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(p.Id))">
+			<CIcon icon="cil-info" />
+		</button>
+		<button class="btn btn-sm @(p.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+				disabled="@(p.OwnerUserId!=CurrentUser?.Id)"
+				@onclick="(()=>BtnClickModify(p.Id))">
+			<CIcon icon="cil-pencil" />
+		</button>
+		<button class="btn btn-sm @(p.OwnerUserId==CurrentUser?.Id?"btn-outline-danger":"btn-outline-secondary")"
+				disabled="@(p.OwnerUserId!=CurrentUser?.Id)"
+				@onclick="(()=>BtnClickDelete(p.Id))">
+			<CIcon icon="cil-x" />
+		</button>
+	</td>
+</tr>
+@foreach (var child in p.Children??[])
+{
+	<MyPortfolio_Row
+		Portfolio="child"
+		Level="@(Level+1)"
+		PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
+		Markets="Markets" />
+}
+
+@code {
+	[Parameter]
+	public PortfolioResp Portfolio { get; set; } = default!;
+
+	[Parameter]
+	public int Level { get; set; } = 0;
+
+	[Parameter]
+	public  Dictionary<string, PnlSummaryResp> PortfolioPnlSummaryMap { get; set; } = default!;
+
+	[Parameter]
+	public List<MarketDefResp> Markets { get; set; } = default!;
+
+	private MarketDefResp? DefaultMarket(PortfolioResp p)
+	{
+		return Markets.FirstOrDefault(m => m.Id.Equals(p.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
+	}
+
+	private void BtnClickInfo(string pid)
+	{
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private void BtnClickModify(string pid)
+	{
+		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private void BtnClickDelete(string portfolioId)
+	{
+		@* if (await CDialog.Confirm("Are you sure you want to delete this portfolio?"))
+		{
+			var result = await PortfolioApi.DeletePortfolioAsync(portfolioId);
+			if (result.IsSuccessStatusCode)
+			{
+				CToast.ShowSuccess("Portfolio deleted successfully.");
+				await OnDeleted.InvokeAsync(portfolioId);
+			}
+			else
+			{
+				CToast.ShowError("Failed to delete portfolio.");
+			}
+		} *@
+	}
+}
