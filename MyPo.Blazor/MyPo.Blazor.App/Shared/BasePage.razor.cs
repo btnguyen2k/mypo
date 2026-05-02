@@ -44,7 +44,7 @@ public abstract class BasePage : BaseComponent
 		StateHasChanged();
 	}
 
-	protected void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
+	public void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
 	{
 		if (Alert == null) return;
 		Alert.Show(type, message, autoCloseAfterMs);

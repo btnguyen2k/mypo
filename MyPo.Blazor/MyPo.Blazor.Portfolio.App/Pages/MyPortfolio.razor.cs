@@ -9,7 +9,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolio : BasePage
 {
-	private CModal ModalDialogDelete { get; set; } = default!;
 	private IEnumerable<PortfolioResp>? MyPortfolioList { get; set; }
 	private IEnumerable<PortfolioResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioResp>? MyInactivePortfolioList { get; set; }
@@ -19,6 +18,8 @@ public partial class MyPortfolio : BasePage
 	private Dictionary<string, PortfolioResp>? MyPortfolioMap { get; set; }
 	private PortfolioResp? SelectedPortfolio { get; set; }
 	private Dictionary<string, PnlSummaryResp> PortfolioPnlSummaryMap { get; set; } = [];
+
+	private CModal ModalDialogDelete { get; set; } = default!;
 
 	[Inject]
 	private ILogger<MyPortfolio>? Logger { get; set; }
@@ -116,41 +117,14 @@ public partial class MyPortfolio : BasePage
 		}
 	}
 
-	// private MarketDefResp? DefaultMarket(PortfolioResp portfolio)
-	// {
-	// 	return Markets.FirstOrDefault(m => m.Id.Equals(portfolio.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
-	// }
-
 	private void BtnClickAdd()
 	{
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD);
 	}
 
-	// private void BtnClickInfo(string pid)
-	// {
-	// 	SelectedPortfolio = MyPortfolioMap?[pid];
-	// 	NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
-	// }
-
-	// private void BtnClickModify(string pid)
-	// {
-	// 	SelectedPortfolio = MyPortfolioMap?[pid];
-	// 	NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
-	// }
-
-	private void BtnClickDelete(string pid)
+	public void OnClickDeletePortfolio(PortfolioResp p)
 	{
-		SelectedPortfolio = MyPortfolioMap?[pid];
-		if (SelectedPortfolio == null)
-		{
-			ShowAlert("danger", "Selected portfolio not found.");
-			return;
-		}
-		if (SelectedPortfolio.OwnerUserId != CurrentUser?.Id)
-		{
-			ShowAlert("danger", "You are not authorized to delete this portfolio.");
-			return;
-		}
+		SelectedPortfolio = p;
 		ModalDialogDelete.Open();
 	}
 
@@ -162,19 +136,19 @@ public partial class MyPortfolio : BasePage
 	private async void BtnClickDeleteConfirm()
 	{
 		ModalDialogDelete.Close();
-		HideUI = true;
+		@HideUI = true;
 		ShowAlert("info", $"Deleting portfolio '{SelectedPortfolio?.Name}', please wait...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var result = await apiClient.DeleteMyPortfolioAsync(SelectedPortfolio?.Id ?? string.Empty, await GetAuthTokenAsync(), ApiBaseUrl);
 		HideUI = false;
-		if (result.Status == 200)
+		if (!result.IsSuccess)
 		{
-			await OnAfterRenderAsync(true);
-			ShowAlert("success", $"Portfolio '{SelectedPortfolio?.Name}' deleted successfully.");
+			ShowAlert("danger", result.Message ?? "Error deleting portfolio.");
 		}
 		else
 		{
-			ShowAlert("danger", result.Message ?? "Unknown error");
+			await OnAfterRenderAsync(true);
+			ShowAlert("success", $"Portfolio '{SelectedPortfolio?.Name}' deleted successfully.", ALERT_AUTO_CLOSE_MS);
 		}
 	}
 }

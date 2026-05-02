@@ -64,18 +64,18 @@
 		<td colspan="5" class="text-center">--</td>
 	}
 	<td class="text-center w-auto">
-		<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(p.Id))">
-			<CIcon icon="cil-info" />
+		<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickInfo(p.Id)" @onclick:preventDefault @onclick:stopPropagation>
+			<BIcon icon="bi-info-lg" />
 		</button>
 		<button class="btn btn-sm @(p.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
 				disabled="@(p.OwnerUserId!=CurrentUser?.Id)"
-				@onclick="(()=>BtnClickModify(p.Id))">
-			<CIcon icon="cil-pencil" />
+				@onclick="()=>BtnClickModify(p.Id)" @onclick:preventDefault @onclick:stopPropagation>
+			<BIcon icon="bi-pencil" />
 		</button>
 		<button class="btn btn-sm @(p.OwnerUserId==CurrentUser?.Id?"btn-outline-danger":"btn-outline-secondary")"
 				disabled="@(p.OwnerUserId!=CurrentUser?.Id)"
-				@onclick="(()=>BtnClickDelete(p.Id))">
-			<CIcon icon="cil-x" />
+				@onclick="BtnClickDelete" @onclick:preventDefault @onclick:stopPropagation>
+			<BIcon icon="bi-trash" />
 		</button>
 	</td>
 </tr>
@@ -101,6 +101,9 @@
 	[Parameter]
 	public List<MarketDefResp> Markets { get; set; } = default!;
 
+	[Parameter]
+	public MyPortfolio Page { get; set; } = default!;
+
 	private MarketDefResp? DefaultMarket(PortfolioResp p)
 	{
 		return Markets.FirstOrDefault(m => m.Id.Equals(p.Metadata?.DefaultMarketId??"", StringComparison.OrdinalIgnoreCase));
@@ -116,20 +119,8 @@
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
 	}
 
-	private void BtnClickDelete(string portfolioId)
+	private void BtnClickDelete()
 	{
-		@* if (await CDialog.Confirm("Are you sure you want to delete this portfolio?"))
-		{
-			var result = await PortfolioApi.DeletePortfolioAsync(portfolioId);
-			if (result.IsSuccessStatusCode)
-			{
-				CToast.ShowSuccess("Portfolio deleted successfully.");
-				await OnDeleted.InvokeAsync(portfolioId);
-			}
-			else
-			{
-				CToast.ShowError("Failed to delete portfolio.");
-			}
-		} *@
+		Page.OnClickDeletePortfolio(Portfolio);
 	}
 }

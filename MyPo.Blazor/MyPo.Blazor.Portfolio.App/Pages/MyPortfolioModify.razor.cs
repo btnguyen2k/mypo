@@ -104,7 +104,12 @@ public partial class MyPortfolioModify : BasePage
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
 	}
 
-	private async Task BtnClickSave()
+	private async Task BtnClickSaveAndOpen()
+	{
+		await BtnClickSave(true);
+	}
+
+	private async Task BtnClickSave(bool openAfterCreate = false)
 	{
 		HideUI = true;
 		ShowAlert("info", "Saving portfolio...");
@@ -151,6 +156,16 @@ public partial class MyPortfolioModify : BasePage
 		var passAlertMessage = $"Portfolio '{req.Name}' updated successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
-		NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}");
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}";
+		if (openAfterCreate)
+		{
+			var pid = resp.Data?.Id ?? string.Empty;
+			nextUrl = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase);
+			NavigationManager.NavigateTo($"{nextUrl}?alertMessage={passAlertMessage}&alertType={passAlertType}");
+		}
+		else
+		{
+			NavigationManager.NavigateTo(nextUrl);
+		}
 	}
 }
