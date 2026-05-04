@@ -8,6 +8,7 @@ using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Blazor.Portfolio.App.Shared;
+using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -41,41 +42,56 @@ public partial class MyPortfolioDetails : BasePage
 		base.Dispose(disposing);
 	}
 
-	private async Task<ApiResp<IDictionary<string, StockQuote>>> FetchQuotesForSymbols(List<string> symbolsList)
-	{
-		var symbols = string.Join(",", symbolsList);
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		return await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
-	}
-
 	private async void GetStocksQuotesBackground(List<string> symbolsList, int myTaskId)
 	{
+		var hasError = false;
+
+		void prefetchCallback(IEnumerable<string> symbols)
+		{
+			SetBackgroundMsg($"⌛Fetching quotes for symbols: {string.Join(",", symbols)}");
+		}
+
+		bool postfetchCallback(ApiResp<IDictionary<string, StockQuote>> quotesResp)
+		{
+			var emptyDict = new Dictionary<string, StockQuote>();
+			if (!quotesResp.IsSuccess)
+			{
+				hasError = true;
+				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {string.Join(",", symbolsList)}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+			}
+			else
+			{
+				foreach (var quote in quotesResp.Data ?? emptyDict)
+				{
+					QuotesMap[quote.Key] = quote.Value;
+				}
+				StateHasChanged();
+			}
+			return myTaskId == RefreshBackgroundTaskId;
+		}
+
 		if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
 		{
-			// fech stock quotes chunk by chunk to avoid too long query string issue
-			// each chunk is 5 symbols max
-			var cloneSymbolList = new List<string>(symbolsList.OrderBy(_ => Random.Shared.Next()));
-			while (cloneSymbolList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
-			{
-				var currentChunk = cloneSymbolList.Take(5).ToList();
-				cloneSymbolList = [.. cloneSymbolList.Skip(5)];
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var authToken = await GetAuthTokenAsync();
+			await TickerUtils.FetchQuotesForTickers(symbolsList, apiClient, authToken, ApiBaseUrl, prefetchCallback, postfetchCallback);
 
-				var symbols = string.Join(",", currentChunk);
-				SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
-				var quotesResp = await FetchQuotesForSymbols(currentChunk);
-				if (quotesResp.Status == 200)
-				{
-					foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
-					{
-						QuotesMap[quote.Key] = quote.Value;
-					}
-					StateHasChanged();
-				}
-				else
-				{
-					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
-				}
+			if (!hasError)
+			{
+				// calculate base cost and market value for the portfolio
+				var baseCost = Assets?
+					.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+					.Sum(a => a.AveragePrice*a.Quantity) ?? 0;
+				var marketValue = Assets?
+					.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+					.Sum(a => {
+						var m = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+						var symbol = $"{m?.Code??string.Empty}:{a.ItemCode}";
+						return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
+					}) ?? 0;
+				// TODO
 			}
+
 			if (myTaskId == RefreshBackgroundTaskId)
 			{
 				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
@@ -239,7 +255,11 @@ public partial class MyPortfolioDetails : BasePage
 		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 		if (SelectedPortfolio == null) return;
 
-		var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		// var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		var symbolsList = Assets?.Select(a => {
+			var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+			return $"{market?.Code??string.Empty}:{a.ItemCode}";
+		}).Distinct().ToList() ?? [];
 		SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
 		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
 		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
@@ -247,36 +267,16 @@ public partial class MyPortfolioDetails : BasePage
 
 		HideUI = false;
 
-		var (alertType, alertMessage) = GetPassedMessageFromQuery();
-		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-			ShowAlert(alertType, alertMessage, autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
-		else
-			CloseAlert();
+		ShowPassedMessageOrCloseAlert();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
 
-		if (firstRender)
-		{
-			InitializePage();
-		}
+		if (firstRender) InitializePage();
 
-		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
-		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))
-		{
-			// rebuild the URL without the refresh query parameter
-			queryParams.Remove(QUERY_PARM_REFRESH);
-			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
-			{
-				Query = queryParams.ToString() ?? string.Empty
-			};
-			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
-
-			// reload page data in the background
-			await Task.Run(InitializePage);
-		}
+		if (IsRefreshRequested()) await Task.Run(InitializePage);
 	}
 
 	private string ActiveTab { get; set; } = TabIdSummary;

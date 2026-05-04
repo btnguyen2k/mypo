@@ -140,13 +140,13 @@
 						<div class="row">
 							<div class="col-8">
 								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio!.Name)">
+									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name??string.Empty)">
 									<label for="pName">Name</label>
 								</div>
 							</div>
 							<div class="col-4">
 								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio!.Currency)">
+									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency??string.Empty)">
 									<label for="pCurrency">Currency</label>
 								</div>
 							</div>
@@ -154,7 +154,7 @@
 						<div class="row">
 							<div class="col-sm-12">
 								<div class="form-floating mb-1">
-									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio!.Description)</textarea>
+									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description??string.Empty)</textarea>
 									<label for="pDesc">Description</label>
 								</div>
 							</div>

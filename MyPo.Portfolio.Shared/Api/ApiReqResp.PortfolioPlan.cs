@@ -87,7 +87,6 @@ public sealed class PortfolioPlanResp
 	{
 		var m = market ?? Market;
 		var yearlyDividend = ticker.EstYearlyDividend;
-		Console.WriteLine($"[DeBUG] ticker {ticker.Ticker} est yearly dividend: {yearlyDividend}");
 		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(yearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 

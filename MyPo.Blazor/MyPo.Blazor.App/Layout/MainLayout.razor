@@ -9,7 +9,7 @@
     <header class="header header-sticky p-0 mb-4">
         <div class="container-fluid border-bottom px-4">
             <button class="header-toggler" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()" style="margin-inline-start: -14px;">
-                <CIcon icon="cil-menu" className="icon icon-lg" />
+                <CIcon icon="cil-menu" extraClassName="icon-lg" />
             </button>
             <ul class="header-nav d-none d-lg-flex">
                 <li class="nav-item"><a class="nav-link" href="@UIGlobals.ROUTE_HOME">Dashboard</a></li>
@@ -37,17 +37,17 @@
             <ul class="header-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="javascript:void(0);" @onclick="ShowModalNotImplemented">
-                        <CIcon icon="cil-bell" className="icon icon-lg" />
+                        <CIcon icon="cil-bell" extraClassName="icon-lg" />
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="javascript:void(0);" @onclick="ShowModalNotImplemented">
-                        <CIcon icon="cil-list-rich" className="icon icon-lg" />
+                        <CIcon icon="cil-list-rich" extraClassName="icon-lg" />
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="javascript:void(0);" @onclick="ShowModalNotImplemented">
-                        <CIcon icon="cil-envelope-open" className="icon icon-lg" />
+                        <CIcon icon="cil-envelope-open" extraClassName="icon-lg" />
                     </a>
                 </li>
             </ul>
@@ -57,22 +57,22 @@
                 </li>
                 <li class="nav-item dropdown">
                     <button class="btn btn-link nav-link py-2 px-2 d-flex align-items-center" type="button" aria-expanded="false" data-coreui-toggle="dropdown">
-                        <CIcon icon="cil-contrast" className="icon icon-lg theme-icon-active" />
+                        <CIcon icon="cil-contrast" extraClassName="icon-lg theme-icon-active" />
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" style="--cui-dropdown-min-width: 8rem;">
                         <li>
                             <button class="dropdown-item d-flex align-items-center" type="button" data-coreui-theme-value="light">
-                                <CIcon icon="cil-sun" className="icon icon-lg me-3" />Light
+                                <CIcon icon="cil-sun" extraClassName="icon-lg me-3" />Light
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item d-flex align-items-center" type="button" data-coreui-theme-value="dark">
-                                <CIcon icon="cil-moon" className="icon icon-lg me-3" />Dark
+                                <CIcon icon="cil-moon" extraClassName="icon-lg me-3" />Dark
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item d-flex align-items-center active" type="button" data-coreui-theme-value="auto">
-                                <CIcon icon="cil-contrast" className="icon icon-lg me-3" />Auto
+                                <CIcon icon="cil-contrast" extraClassName="icon-lg me-3" />Auto
                             </button>
                         </li>
                     </ul>
@@ -86,49 +86,12 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div>
-						<!--
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-bell" className="icon me-2" /> Updates<span class="badge badge-sm bg-info ms-2">42</span>
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-envelope-open" className="icon me-2" /> Messages<span class="badge badge-sm bg-success ms-2">42</span>
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-task" className="icon me-2" /> Tasks<span class="badge badge-sm bg-danger ms-2">42</span>
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-comment-square" className="icon me-2" /> Comments<span class="badge badge-sm bg-warning ms-2">42</span>
-                        </a>
-                        <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold my-2">
-                            <div class="fw-semibold">Settings</div>
-                        </div>
-						-->
                         <a class="dropdown-item" href="@UIGlobals.ROUTE_PROFILE">
-                            <CIcon icon="cil-user" className="icon me-2" /> Profile
+                            <CIcon icon="cil-user" extraClassName="me-2" /> Profile
                         </a>
-						<!--
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-settings" className="icon me-2" /> Settings
-                        </a>
-						-->
-                        <!--
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-credit-card" className="icon me-2" /> Payments<span class="badge badge-sm bg-secondary ms-2">42</span>
-                        </a>
-                        -->
-                        <!--
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-file" className="icon me-2" /> Projects<span class="badge badge-sm bg-primary ms-2">42</span>
-                        </a>
-                        -->
                         <div class="dropdown-divider"></div>
-                        <!--
-                        <a class="dropdown-item" href="#">
-                            <CIcon icon="cil-lock-locked" className="icon me-2" /> Lock Account
-                        </a>
-                        -->
                         <a class="dropdown-item" href="@UIGlobals.ROUTE_LOGOUT">
-                            <CIcon icon="cil-account-logout" className="icon me-2" /> Logout
+                            <CIcon icon="cil-account-logout" extraClassName="me-2" /> Logout
                         </a>
                     </div>
                 </li>

@@ -22,41 +22,55 @@ else
 	<CAlert @ref="@Alert" />
 
 	<div class="row mb-2">
-		<div class="col-12">
-			<div class="card text-bg-light">
-				<div class="card-body">
-					<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
-						<tr>
-							<td class="fs-5 fw-semibold col-4 text-center">
-								Total Cost:
-								@(DefaultMarket?.CurrencySymbol??"")
-								@(TotalCost<=0?"--":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-							</td>
-							<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
-								Market Value:
-								@(DefaultMarket?.CurrencySymbol??"")
-								@(TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-							</td>
-							<td class="fs-5 fw-semibold @(TotalCost<=0||TotalMarketValue<=0?"":(TotalCost<=TotalMarketValue?"text-success":"text-danger")) col-4 text-center">
-								Unsettled P/L:
-								@(DefaultMarket?.CurrencySymbol??"")
-								@(TotalCost<=0||TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-								(@(
-									TotalCost>0&&TotalMarketValue>0
-										? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
-										: "--"
-								))
-							</td>
-						</tr>
-					</table>
+		<div class="col-auto">
+			<input type="checkbox" @bind="ShowOnlyOpenPositions" class="form-check-input" /> Show only open positions
+		</div>
+	</div>
+
+	<div class="row mb-2">
+		<div class="col-sm-4">
+			<div class="card text-center">
+				<div class="card-body py-3">
+					<div class="text-muted small">Total Cost</div>
+					<div class="h5 mb-0">
+						@(DefaultMarket?.CurrencySymbol??"")
+						@(TotalCost<=0?"--":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<div class="card text-center">
+				<div class="card-body py-3">
+					<div class="text-muted small">Market Value</div>
+					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+						@(DefaultMarket?.CurrencySymbol??"")
+						@(TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<div class="card text-center">
+				<div class="card-body py-3">
+					<div class="text-muted small">Unsettled P/L</div>
+					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+						@(DefaultMarket?.CurrencySymbol??"")
+						@(TotalCost<=0||TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+						(@(
+							TotalCost>0&&TotalMarketValue>0
+								? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
+								: "--"
+						))
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="row mb-2">
-		<div class="col-12">
-			<table class="table table-sm table-bordered table-striped table-hover">
+		<div class="table-responsive">
+			<table class="table table-sm table-hover">
 				<thead>
 					<tr>
 						<th scope="col" class="text-center text-nowrap w-auto">Item</th>
@@ -71,10 +85,10 @@ else
 						<th scope="col" class="text-center text-nowrap w-auto">Actions</th>
 					</tr>
 				</thead>
-				<tbody>
-					@foreach (var asset in Assets)
+				<tbody class="table-group-divider">
+					@foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
 					{
-						<tr>
+						<tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
 							<td class="text-start text-nowrap w-auto">
 								<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
 								<button type="button" class="btn btn-link p-0 pb-1" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
@@ -128,17 +142,17 @@ else
 							<td class="text-start w-auto">
 								@foreach (var tag in asset.TagsList)
 								{
-									<CBadgeRandom Text="@tag" />
+									<CBadgeRandom Text="@tag" extraClassName="me-1" />
 								}
 							</td>
 							<td class="text-center text-nowrap w-auto">
 								<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)">
 									<BIcon icon="graph-up-arrow" />
 								</button>
-								<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)">
+								<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)" @onclick:stopPropagation>
 									<BIcon icon="calculator" />
 								</button>
-								<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)">
+								<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)" @onclick:stopPropagation>
 									<BIcon icon="pencil" />
 								</button>
 							</td>
