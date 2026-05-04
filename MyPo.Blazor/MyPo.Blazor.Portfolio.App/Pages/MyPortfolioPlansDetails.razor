@@ -76,7 +76,7 @@
 								<div class="card text-center">
 									<div class="card-body py-3">
 										<div class="text-muted small">Est. Yearly Dividend</div>
-										<div class="h5 mb-0">@(SelectedPortfolioPlan?.EstTotalYearlyDividendStr())</div>
+										<div class="h5 mb-0">@SelectedPortfolioPlan?.EstTotalYearlyDividendStr() (@SelectedPortfolioPlan?.EstTotalYearlyDividendYieldStr())</div>
 									</div>
 								</div>
 							</div>
@@ -221,15 +221,15 @@
 	private string devCssClass(decimal dev)
 	{
 		var v = Math.Abs(dev);
-		if (v <= 3)
+		if (v <= 1)
 		{
 			return "text-muted";
 		}
-		if (v <= 5)
+		if (v <= 3)
 		{
 			return "text-success";
 		}
-		if (v <= 11)
+		if (v <= 7)
 		{
 			return "text-info";
 		}
