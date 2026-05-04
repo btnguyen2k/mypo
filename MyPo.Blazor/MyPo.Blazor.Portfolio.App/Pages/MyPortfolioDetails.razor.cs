@@ -41,41 +41,72 @@ public partial class MyPortfolioDetails : BasePage
 		base.Dispose(disposing);
 	}
 
-	private async Task<ApiResp<IDictionary<string, StockQuote>>> FetchQuotesForSymbols(List<string> symbolsList)
-	{
-		var symbols = string.Join(",", symbolsList);
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		return await apiClient.GetStocksQuotesAsync(symbols, await GetAuthTokenAsync(), ApiBaseUrl);
-	}
-
 	private async void GetStocksQuotesBackground(List<string> symbolsList, int myTaskId)
 	{
+		var hasError = false;
+
+		void prefetchCallback(IEnumerable<string> symbols)
+		{
+			SetBackgroundMsg($"⌛Fetching quotes for symbols: {string.Join(",", symbols)}");
+		}
+
+		bool postfetchCallback(ApiResp<IDictionary<string, StockQuote>> quotesResp)
+		{
+			var emptyDict = new Dictionary<string, StockQuote>();
+			if (!quotesResp.IsSuccess)
+			{
+				hasError = true;
+				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {string.Join(",", symbolsList)}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+			}
+			else
+			{
+				foreach (var quote in quotesResp.Data ?? emptyDict)
+				{
+					QuotesMap[quote.Key] = quote.Value;
+				}
+				StateHasChanged();
+			}
+			return myTaskId == RefreshBackgroundTaskId;
+		}
+
 		if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
 		{
-			// fech stock quotes chunk by chunk to avoid too long query string issue
-			// each chunk is 5 symbols max
-			var cloneSymbolList = new List<string>(symbolsList.OrderBy(_ => Random.Shared.Next()));
-			while (cloneSymbolList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
-			{
-				var currentChunk = cloneSymbolList.Take(5).ToList();
-				cloneSymbolList = [.. cloneSymbolList.Skip(5)];
+			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+			var authToken = await GetAuthTokenAsync();
+			await TickerUtils.FetchQuotesForTickers(symbolsList, apiClient, authToken, ApiBaseUrl, prefetchCallback, postfetchCallback);
 
-				var symbols = string.Join(",", currentChunk);
-				SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
-				var quotesResp = await FetchQuotesForSymbols(currentChunk);
-				if (quotesResp.Status == 200)
+			if (!hasError)
+			{
+				var now = DateTimeOffset.UtcNow;
+				if (now.ToUnixTimeSeconds()-3600 > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp??0))
 				{
-					foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
+					// calculate base cost and market value for the portfolio
+					var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
+					req.Metadata!.TotalCosts = Assets?
+						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+						.Sum(a => a.AveragePrice*a.Quantity) ?? 0;
+					req.Metadata!.TotalMarketValue = Assets?
+						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+						.Sum(a => {
+							var symbol = $"{a.Market?.Code??string.Empty}:{a.ItemCode}";
+							return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
+						}) ?? 0;
+					var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
+					if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
 					{
-						QuotesMap[quote.Key] = quote.Value;
+						// special case
+						req.Metadata!.TotalMarketValue /= 1000;
 					}
-					StateHasChanged();
-				}
-				else
-				{
-					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+					req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+					var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
+					if (resp.IsSuccess)
+					{
+						SelectedPortfolio = resp.Data;
+						StateHasChanged();
+					}
 				}
 			}
+
 			if (myTaskId == RefreshBackgroundTaskId)
 			{
 				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
@@ -118,7 +149,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio, please wait...");
 		var apiRespPortfolio = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
-		if (apiRespPortfolio.Status != 200)
+		if (!apiRespPortfolio.IsSuccess)
 		{
 			ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
 			return null;
@@ -133,7 +164,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
 		var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespTx.Status != 200)
+		if (!apiRespTx.IsSuccess)
 		{
 			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio buy/sell transactions.");
 			return null;
@@ -142,7 +173,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio assets, please wait...");
 		var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespAssets.Status != 200)
+		if (!apiRespAssets.IsSuccess)
 		{
 			ShowAlert("danger", apiRespAssets.Message ?? $"Error while loading portfolio assets.");
 			return null;
@@ -150,13 +181,13 @@ public partial class MyPortfolioDetails : BasePage
 		Assets = apiRespAssets.Data ?? [];
 
 		ShowAlert("info", "Loading portfolio settlement records, please wait...");
-		var apiRespRoiRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespRoiRecs.Status != 200)
+		var apiRespTxSettlementRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		if (!apiRespTxSettlementRecs.IsSuccess)
 		{
-			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio settlement records.");
+			ShowAlert("danger", apiRespTxSettlementRecs.Message ?? $"Error while loading portfolio settlement records.");
 			return null;
 		}
-		TxSettlements = apiRespRoiRecs.Data ?? [];
+		TxSettlements = apiRespTxSettlementRecs.Data ?? [];
 
 		return portfolio;
 	}
@@ -166,7 +197,7 @@ public partial class MyPortfolioDetails : BasePage
 		ShowAlert("info", "Loading markets metadata...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var result = await apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
-		if (result.Status == 200)
+		if (result.IsSuccess)
 		{
 			return result.Data ?? [];
 		}
@@ -177,14 +208,14 @@ public partial class MyPortfolioDetails : BasePage
 	private async void AutoPopulateAssetMetadata()
 	{
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var asset in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
+		foreach (var a in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
 				|| string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)
 				|| a.Metadata.Tags == null || a.Metadata.Tags.Count == 0))
 		{
-			var symbol = $"{asset.ItemCode}:{asset.MarketId}";
+			var symbol = $"{a.Market?.Code}:{a.ItemCode}";
 			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
 			var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (apiResp.Status != 200)
+			if (!apiResp.IsSuccess)
 			{
 				SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
 			}
@@ -193,30 +224,20 @@ public partial class MyPortfolioDetails : BasePage
 				var overview = apiResp.Data;
 				if (overview != null)
 				{
-					asset.Metadata ??= new AssetMetadata();
-					asset.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
-					asset.Metadata.Industry = overview.Industry ?? "";
-					asset.Metadata.Sector = overview.Sector ?? "";
-					asset.Metadata.Tags ??= new HashSet<string>();
-					if (!string.IsNullOrEmpty(asset.Metadata.Industry))
+					a.Metadata ??= new AssetMetadata();
+					a.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
+					a.Metadata.Industry = overview.Industry ?? "";
+					a.Metadata.Sector = overview.Sector ?? "";
+					a.Metadata.Tags ??= new HashSet<string>();
+					if (!string.IsNullOrEmpty(a.Metadata.Industry))
 					{
-						asset.Metadata.Tags.Add(asset.Metadata.Industry);
+						a.Metadata.Tags.Add(a.Metadata.Industry);
 					}
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
-				var updateReq = new CreateOrUpdateAssetReq()
-				{
-					Id = asset.Id,
-					PortfolioId = asset.PortfolioId,
-					ItemType = asset.ItemType,
-					ItemCode = asset.ItemCode,
-					Quantity = asset.Quantity,
-					AveragePrice = asset.AveragePrice,
-					MarketId = asset.MarketId,
-					Metadata = asset.Metadata,
-				};
+				var updateReq = CreateOrUpdateAssetReq.NewRequest(a);
 				var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (updateResp.Status != 200)
+				if (!updateResp.IsSuccess)
 				{
 					SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
 				}
@@ -239,7 +260,11 @@ public partial class MyPortfolioDetails : BasePage
 		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
 		if (SelectedPortfolio == null) return;
 
-		var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		// var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+		var symbolsList = Assets?.Select(a => {
+			var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+			return $"{market?.Code??string.Empty}:{a.ItemCode}";
+		}).Distinct().ToList() ?? [];
 		SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
 		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
 		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
@@ -247,36 +272,16 @@ public partial class MyPortfolioDetails : BasePage
 
 		HideUI = false;
 
-		var (alertType, alertMessage) = GetPassedMessageFromQuery();
-		if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-			ShowAlert(alertType, alertMessage, autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
-		else
-			CloseAlert();
+		ShowPassedMessageOrCloseAlert();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
 
-		if (firstRender)
-		{
-			InitializePage();
-		}
+		if (firstRender) InitializePage();
 
-		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
-		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))
-		{
-			// rebuild the URL without the refresh query parameter
-			queryParams.Remove(QUERY_PARM_REFRESH);
-			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
-			{
-				Query = queryParams.ToString() ?? string.Empty
-			};
-			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
-
-			// reload page data in the background
-			await Task.Run(InitializePage);
-		}
+		if (IsRefreshRequested()) await Task.Run(InitializePage);
 	}
 
 	private string ActiveTab { get; set; } = TabIdSummary;

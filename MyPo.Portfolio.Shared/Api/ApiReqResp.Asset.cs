@@ -5,6 +5,26 @@ namespace MyPo.Portfolio.Shared.Api;
 
 public struct CreateOrUpdateAssetReq
 {
+	public static CreateOrUpdateAssetReq NewRequest(AssetEntity asset)
+	{
+		return NewRequest(AssetResp.BuildFrom(asset));
+	}
+
+	public static CreateOrUpdateAssetReq NewRequest(AssetResp asset)
+	{
+		return new CreateOrUpdateAssetReq()
+		{
+			Id = asset.Id,
+			PortfolioId = asset.PortfolioId,
+			ItemType = asset.ItemType,
+			ItemCode = asset.ItemCode,
+			Quantity = asset.Quantity,
+			AveragePrice = asset.AveragePrice,
+			MarketId = asset.MarketId,
+			Metadata = asset.Metadata,
+		};
+	}
+
 	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Id { get; set; }
 
@@ -28,9 +48,6 @@ public struct CreateOrUpdateAssetReq
 
 	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public AssetMetadata? Metadata { get; set; }
-
-	// [JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	// public string? Tags { get; set; }
 }
 
 public sealed class AssetResp

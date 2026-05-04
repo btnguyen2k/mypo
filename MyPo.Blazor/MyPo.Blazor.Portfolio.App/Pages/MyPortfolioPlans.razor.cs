@@ -140,11 +140,5 @@ public partial class MyPortfolioPlans : BasePage
 
 		await OnAfterRenderAsync(true);
 		ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan?.Name}' deleted successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
-		// ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan?.Name}' deleted successfully. Navigating to my portfolio plans page...");
-		// var passAlertMessage = $"Portfolio plan '{SelectedPortfolioPlan?.Name}' created successfully.";
-		// var passAlertType = "success";
-		// await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
-		// var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS}?alertMessage={passAlertMessage}&alertType={passAlertType}";
-		// NavigationManager.NavigateTo(nextUrl);
 	}
 }

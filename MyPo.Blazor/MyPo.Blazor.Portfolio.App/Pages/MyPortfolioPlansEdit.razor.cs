@@ -83,7 +83,12 @@ public partial class MyPortfolioPlansEdit : BasePage
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS);
 	}
 
-	private async Task BtnClickSave()
+	private async Task BtnClickSaveAndOpen()
+	{
+		await BtnClickSave(true);
+	}
+
+	private async Task BtnClickSave(bool openAfterSave = false)
 	{
 		HideUI = true;
 		ShowAlert("info", "Saving portfolio plan...");
@@ -144,6 +149,15 @@ public partial class MyPortfolioPlansEdit : BasePage
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS}?alertMessage={passAlertMessage}&alertType={passAlertType}";
-		NavigationManager.NavigateTo(nextUrl);
+		if (openAfterSave)
+		{
+			var pid = resp.Data?.Id ?? string.Empty;
+			nextUrl = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", pid, StringComparison.OrdinalIgnoreCase);
+			NavigationManager.NavigateTo($"{nextUrl}?alertMessage={passAlertMessage}&alertType={passAlertType}");
+		}
+		else
+		{
+			NavigationManager.NavigateTo(nextUrl);
+		}
 	}
 }

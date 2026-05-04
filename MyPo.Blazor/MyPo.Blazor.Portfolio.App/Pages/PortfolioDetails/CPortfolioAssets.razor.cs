@@ -42,6 +42,8 @@ public partial class CPortfolioAssets : CBase
 	public PortfolioResp? Portfolio { get; set; }
 	private MarketDefResp? DefaultMarket => Markets?.FirstOrDefault(m => m.Id == Portfolio?.Metadata?.DefaultMarketId);
 
+	private bool ShowOnlyOpenPositions { get; set; } = true;
+
 	private CModal ModalDialogAssetUpdateTags { get; set; } = default!;
 	private CModal ModalDialogBuySellAssetCalculator { get; set; } = default!;
 
@@ -61,11 +63,12 @@ public partial class CPortfolioAssets : CBase
 	protected override async Task OnParametersSetAsync()
 	{
 		await base.OnParametersSetAsync();
-		if (Assets != null && Markets != null && QuotesMap != null)
+		if (Assets is not null && QuotesMap is not null)
 		{
-			foreach (var asset in Assets ?? [])
+			MarketPricesMap.Clear();
+			foreach (var asset in Assets)
 			{
-				var symbolKey = $"{asset.ItemCode}:{asset.MarketId}".ToUpper();
+				var symbolKey = $"{asset.Market?.Code??string.Empty}:{asset.ItemCode}".ToUpper();
 				if (QuotesMap.TryGetValue(symbolKey, out var quote))
 				{
 					var latestPrice = quote.MarketPrice;

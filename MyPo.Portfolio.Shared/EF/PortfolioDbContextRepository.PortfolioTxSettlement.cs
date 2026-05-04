@@ -5,25 +5,25 @@ namespace MyPo.Portfolio.Shared.EF;
 
 public sealed partial class PortfolioDbContextRepository
 {
-	private DbSet<TxSettlementEntity> RoiRecStore { get; set; }
+	private DbSet<TxSettlementEntity> TxSettlementStore { get; set; }
 
 	/// <inheritdoc />
 	public async ValueTask<TxSettlementEntity?> CreateTxSettlementAsync(TxSettlementEntity tx, CancellationToken cancellationToken = default)
 	{
-		var entry = await RoiRecStore.AddAsync(tx, cancellationToken);
+		var entry = await TxSettlementStore.AddAsync(tx, cancellationToken);
 		return await SaveChangesAsync(cancellationToken) > 0 ? entry.Entity : null;
 	}
 
 	/// <inheritdoc />
 	public async ValueTask<TxSettlementEntity?> GetTxSettlementByIdAsync(string txid, CancellationToken cancellationToken = default)
 	{
-		return await RoiRecStore.AsNoTracking().FirstOrDefaultAsync(rr => rr.Id == txid, cancellationToken);
+		return await TxSettlementStore.AsNoTracking().FirstOrDefaultAsync(rr => rr.Id == txid, cancellationToken);
 	}
 
 	/// <inheritdoc />
 	public async ValueTask<TxSettlementEntity?> UpdateTxSettlementAsync(TxSettlementEntity tx, CancellationToken cancellationToken = default)
 	{
-		var existingEntry = await RoiRecStore.FindAsync([tx.Id], cancellationToken);
+		var existingEntry = await TxSettlementStore.FindAsync([tx.Id], cancellationToken);
 		if (existingEntry == null)
 		{
 			return null;
@@ -35,7 +35,7 @@ public sealed partial class PortfolioDbContextRepository
 	/// <inheritdoc />
 	public async ValueTask<bool> DeleteTxSettlementAsync(TxSettlementEntity tx, CancellationToken cancellationToken = default)
 	{
-		RoiRecStore.Remove(tx);
+		TxSettlementStore.Remove(tx);
 		return await SaveChangesAsync(cancellationToken) > 0;
 	}
 
@@ -55,7 +55,7 @@ public sealed partial class PortfolioDbContextRepository
 			TotalCashOut = 0.0m,
 			TotalInterest = 0.0m,
 		};
-		var rows = await RoiRecStore.AsNoTracking()
+		var rows = await TxSettlementStore.AsNoTracking()
 			.Where(rr => rr.PortfolioId == portfolioId)
 			.Where(rr => rr.Status != TxSettlementEntity.STATUS_ARCHIVED)
 			.GroupBy(rr => rr.TxType)
@@ -105,7 +105,7 @@ public sealed partial class PortfolioDbContextRepository
 	/// <inheritdoc />
 	public async ValueTask<IEnumerable<TxSettlementEntity>> GetTxSettlementsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
 	{
-		return await RoiRecStore.AsNoTracking()
+		return await TxSettlementStore.AsNoTracking()
 			.Where(rr => rr.PortfolioId == portfolioId).Where(rr => rr.Status != TxSettlementEntity.STATUS_ARCHIVED)
 			.OrderByDescending(rr => rr.TxTime)
 			.ToListAsync(cancellationToken);

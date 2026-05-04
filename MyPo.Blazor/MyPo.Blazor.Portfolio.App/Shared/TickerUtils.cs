@@ -34,7 +34,7 @@ public static class TickerUtils
 	/// <param name="authToken"></param>
 	/// <param name="apiBaseUrl"></param>
 	/// <param name="callbackPrefetch">Optional callback function to be called before each API call.</param>
-	/// <param name="callbackPostfetch">Optional callback function to be called after each API call.</param>
+	/// <param name="callbackPostfetch">Optional callback function to be called after each API call. Return true to continue, false to stop.</param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	public static async Task<IDictionary<string, StockQuote>> FetchQuotesForTickers(
@@ -43,7 +43,7 @@ public static class TickerUtils
 		string authToken,
 		string apiBaseUrl,
 		Action<IEnumerable<string>>? callbackPrefetch = null,
-		Action<ApiResp<IDictionary<string, StockQuote>>>? callbackPostfetch = null,
+		Func<ApiResp<IDictionary<string, StockQuote>>, bool>? callbackPostfetch = null,
 		CancellationToken cancellationToken = default)
 	{
 		var emptyDict = new Dictionary<string, StockQuote>();
@@ -55,7 +55,7 @@ public static class TickerUtils
 			clonedTickers = [.. clonedTickers.Skip(5)];
 			callbackPrefetch?.Invoke(currentChunk);
 			var apiResult = await FetchQuotesForTickersRaw(currentChunk, apiClient, authToken, apiBaseUrl, cancellationToken);
-			callbackPostfetch?.Invoke(apiResult);
+			if (callbackPostfetch != null && !callbackPostfetch(apiResult)) break;
 			foreach (var quote in apiResult.Data ?? emptyDict)
 			{
 				quotesMap[quote.Key] = quote.Value;

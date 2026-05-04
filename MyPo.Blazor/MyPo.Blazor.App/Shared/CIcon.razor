@@ -9,7 +9,7 @@ Sample usage:
     Free: <CIcon icon="cil-user"/> or <CIcon icon="user"/>
 
 Custom class & style:
-    <CIcon icon="cil-user" style="font-size: 2rem; color: cornflowerblue;" className="big"/>
+    <CIcon icon="cil-user" style="font-size: 2rem; color: cornflowerblue;" extraClassName="big"/>
 
 Ref: to workaround the issue where icons disappear after switching to client mode https://stackoverflow.com/a/66255451
 -->
@@ -26,7 +26,7 @@ Ref: to workaround the issue where icons disappear after switching to client mod
     public string style { get; set; } = string.Empty;
 
     [Parameter]
-    public string className { get; set; } = "icon";
+    public string extraClassName { get; set; } = string.Empty;
 
     private static readonly string SpriteFree = $"{UIGlobals.COREUI_BASE }/vendors/@coreui/icons/svg/free.svg";
     private static readonly string SpriteFlag = $"{UIGlobals.COREUI_BASE}/vendors/@coreui/icons/svg/flag.svg";
@@ -34,7 +34,7 @@ Ref: to workaround the issue where icons disappear after switching to client mod
 
     private string IconClass
     {
-        get => string.IsNullOrWhiteSpace(className) ? "icon" : className;
+		get => $"icon {extraClassName}";
     }
 
     private string? IconStyle

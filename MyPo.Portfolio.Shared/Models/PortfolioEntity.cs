@@ -47,4 +47,22 @@ public sealed class PortfolioMetadata
 
 	[JsonPropertyName("default_market_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? DefaultMarketId { get; set; }
+
+	[JsonPropertyName("refresh_timestamp")]
+	public long MetadataRefreshTimestamp { get; set; }
+
+	[JsonIgnore]
+	public DateTime MetadataRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(MetadataRefreshTimestamp).UtcDateTime;
+
+	[JsonPropertyName("total_costs")]
+	public decimal TotalCosts { get; set; } = 0;
+
+	[JsonPropertyName("total_market_value")]
+	public decimal TotalMarketValue { get; set; } = 0;
+
+	[JsonIgnore]
+	public decimal TotalPnl => TotalCosts > 0 && TotalMarketValue > 0 ? TotalMarketValue - TotalCosts : 0;
+
+	[JsonIgnore]
+	public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
 }

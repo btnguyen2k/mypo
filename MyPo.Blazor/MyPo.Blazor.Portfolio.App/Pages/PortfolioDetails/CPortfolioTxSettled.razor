@@ -11,78 +11,80 @@
 <CAlert @ref="@Alert" />
 
 <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-	<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-primary":"btn-outline-secondary") btn-sm mb-3"
+	<button class="btn @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-primary":"btn-outline-secondary") btn-sm mb-3"
 		disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
 		@onclick="()=>BtnClickAddRecord()"><CIcon icon="cil-plus" /> New Record</button>
 </AuthorizeView>
 
-<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
-	<thead>
-		<tr>
-			<th scope="col" class="text-center w-auto">✔</th>
-			<th scope="col" class="text-center w-auto">Tx Time</th>
-			<th scope="col" class="text-center w-auto">Tx Type</th>
-			<th scope="col" class="text-center w-auto">Ref Item</th>
-			<th scope="col" class="text-center w-auto">Tx Value</th>
-			<th scope="col" class="text-center w-auto">Currency</th>
-			<th scope="col" class="text-begin w-auto">Description</th>
-			<th scope="col" class="text-center w-auto">Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		@if (TxSettlements==null || TxSettlements.Count()==0)
-		{
+<div class="table-responsive">
+	<table class="table table-sm table-hover align-middle">
+		<thead>
 			<tr>
-				<td colspan="8" class="text-center">No data found. Settle buy/sell transactions to update this list.</td>
+				<th scope="col" class="text-center w-auto">✔</th>
+				<th scope="col" class="text-center w-auto">Tx Time</th>
+				<th scope="col" class="text-center w-auto">Tx Type</th>
+				<th scope="col" class="text-center w-auto">Ref Item</th>
+				<th scope="col" class="text-center w-auto">Tx Value</th>
+				<th scope="col" class="text-center w-auto">Currency</th>
+				<th scope="col" class="text-begin w-auto">Description</th>
+				<th scope="col" class="text-center w-auto">Actions</th>
 			</tr>
-		}
-		@foreach (var tx in TxSettlements??[])
-		{
-			<tr>
-				<td class="text-center w-auto">
-					@(tx.Status==TxSettlementEntity.STATUS_FINAL?"✔":" ")
-				</td>
-				<td class="text-center w-auto">
-					@(tx.TxTime.ToString("yyyy-MM-dd HH:mm"))
-				</td>
-				<td class="text-center w-auto">
-					<CBadgeTxType Text="@(tx.TxType)" />
-				</td>
-				<td class="text-center w-auto">
-					@(tx.RefItemType??"-") / @(tx.RefItemCode??"-")
-				</td>
-				<td class="text-end w-auto">
-					@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1))
-				</td>
-				<td class="text-center w-auto">
-					@(tx.Market?.Currency??"-")
-				</td>
-				<td class="w-auto">
-					@(tx.TxDesc)
-				</td>
-				<td class="text-center">
-					<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-						<Authorized>
-							<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
-									disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
-									title="Update record" @onclick="(()=>BtnClickUpdateRecord(tx.Id))">
-								<CIcon icon="cil-pencil" />
-							</button>
-							<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status)?"btn-outline-secondary":"btn-outline-danger")"
-									disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status))"
-									title="Delete record" @onclick="(()=>BtnClickDeleteRecord(tx.Id))">
-								<CIcon icon="cil-x" />
-							</button>
-						</Authorized>
-						<NotAuthorized>
-							<span>-</span>
-						</NotAuthorized>
-					</AuthorizeView>
-				</td>
-			</tr>
-		}
-	</tbody>
-</table>
+		</thead>
+		<tbody class="table-group-divider">
+			@if (TxSettlements==null || TxSettlements.Count()==0)
+			{
+				<tr>
+					<td colspan="8" class="text-center">No data found. Settle buy/sell transactions to update this list.</td>
+				</tr>
+			}
+			@foreach (var tx in TxSettlements??[])
+			{
+				<tr>
+					<td class="text-center w-auto">
+						@(tx.Status==TxSettlementEntity.STATUS_FINAL?"✔":" ")
+					</td>
+					<td class="text-center w-auto">
+						@(tx.TxTime.ToString("yyyy-MM-dd HH:mm"))
+					</td>
+					<td class="text-center w-auto small">
+						<CBadgeTxType Text="@(tx.TxType)" />
+					</td>
+					<td class="text-center w-auto">
+						@(tx.RefItemType??"-") / @(tx.RefItemCode??"-")
+					</td>
+					<td class="text-end w-auto">
+						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1))
+					</td>
+					<td class="text-center w-auto">
+						@(tx.Market?.Currency??"-")
+					</td>
+					<td class="w-auto">
+						@(tx.TxDesc)
+					</td>
+					<td class="text-center">
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<Authorized>
+								<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+										title="Update record" @onclick="(()=>BtnClickUpdateRecord(tx.Id))">
+									<CIcon icon="cil-pencil" />
+								</button>
+								<button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status)?"btn-outline-secondary":"btn-outline-danger")"
+										disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || TxSettlementEntity.ImmutableStatuses.Contains(tx.Status))"
+										title="Delete record" @onclick="(()=>BtnClickDeleteRecord(tx.Id))">
+									<CIcon icon="cil-x" />
+								</button>
+							</Authorized>
+							<NotAuthorized>
+								<span>-</span>
+							</NotAuthorized>
+						</AuthorizeView>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
 
 <CModal @ref="@ModalDialogAddRecord" title="Add Record" centered="false" type="primary" size="extra-large">
 	<div class="card">
