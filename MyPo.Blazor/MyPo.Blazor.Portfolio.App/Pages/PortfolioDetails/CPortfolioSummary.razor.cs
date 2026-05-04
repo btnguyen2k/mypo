@@ -62,7 +62,7 @@ public partial class CPortfolioSummary : CBase
 		if (Assets is not null && QuotesMap is not null)
 		{
 			MarketPricesMap.Clear();
-			foreach (var asset in Assets ?? [])
+			foreach (var asset in Assets)
 			{
 				var symbolKey = $"{asset.Market?.Code??string.Empty}:{asset.ItemCode}".ToUpper();
 				if (QuotesMap.TryGetValue(symbolKey, out var quote))
