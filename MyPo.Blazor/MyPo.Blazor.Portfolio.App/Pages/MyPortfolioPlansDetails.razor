@@ -40,7 +40,7 @@
 							<ChildContent Context="ctx_edit_delete_portfolio_plan">
 								<div class="float-end">
 									<button class="btn btn-outline-primary btn-sm" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
-									<button class="btn btn-outline-danger btn-sm" onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
+									<button class="btn btn-outline-danger btn-sm" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
 								</div>
 							</ChildContent>
 						</AuthorizeView>
@@ -177,6 +177,27 @@
 				</div>
 			</div>
 		</div>
+
+		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio Plan" centered="false" type="danger" size="large">
+			<div class="card">
+				<div class="card-body">
+					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio plan?</span></CAlert>
+					<form>
+						<div class="row">
+							<div class="col-12">
+								<div class="form-floating mb-1">
+									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolioPlan?.Name)">
+									<label for="pName">Name</label>
+								</div>
+							</div>
+						</div>
+					</form>
+					<hr />
+					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
+				</div>
+			</div>
+		</CModal>
 	</Authorized>
 </AuthorizeView>
 
