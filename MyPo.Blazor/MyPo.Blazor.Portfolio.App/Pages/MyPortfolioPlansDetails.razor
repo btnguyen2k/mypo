@@ -76,7 +76,7 @@
 								<div class="card text-center">
 									<div class="card-body py-3">
 										<div class="text-muted small">Est. Yearly Dividend</div>
-										<div class="h5 mb-0">@(SelectedPortfolioPlan?.EstTotalYearlyDividendStr())</div>
+										<div class="h5 mb-0">@SelectedPortfolioPlan?.EstTotalYearlyDividendStr() (@SelectedPortfolioPlan?.EstTotalYearlyDividendYieldStr())</div>
 									</div>
 								</div>
 							</div>
@@ -127,8 +127,8 @@
 									background: var(--cui-dark);
 								}
 								</style>
-								<table class="table table-hover align-middle mb-0">
-									<thead class="table-light">
+								<table class="table table-hover align-middle mb-0 small">
+									<thead>
 										<tr>
 											<th>Ticker</th>
 											<th class="text-end">Shares</th>
@@ -142,11 +142,11 @@
 											<th style="width:200px">Allocation</th>
 										</tr>
 									</thead>
-									<tbody>
+									<tbody class="table-group-divider">
 										@foreach (var ht in SelectedPortfolioPlan?.Metadata?.HoldingTickers??[])
 										{
 											<tr>
-												<td>@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
+												<td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
 												<td class="text-end">@SelectedPortfolioPlan?.NumSharesStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketPriceStr(ht)</td>
 												<td class="text-end">@SelectedPortfolioPlan?.MarketValueStr(ht)</td>
@@ -162,7 +162,7 @@
 														<div class="progress-bar bg-secondary" role="progressbar" style="width: @(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)%" aria-valuenow="@(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)" aria-valuemin="0" aria-valuemax="100"></div>
 													</div>
 													*@
-													<div class="allocation-bar" title="Current @(SelectedPortfolioPlan?.CurrentAllocationPct(ht).ToString("N1"))% / Target @(SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0"))%">
+													<div class="allocation-bar" title="Current @(SelectedPortfolioPlan?.CurrentAllocationPct(ht).ToString("N1"))% / Target @(SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0"))% / Need @(SelectedPortfolioPlan?.AmoutNeededToFillDeviationStr(ht)) (@SelectedPortfolioPlan?.SharesNeededToFillDeviationStr(ht) shares)">
 														<div class="bar-current @(barCssClass(SelectedPortfolioPlan?.AllocationDiffPct(ht)??0))" style="width:@(SelectedPortfolioPlan?.CurrentAllocationPct(ht)??0)%"></div>
 														<div class="bar-target" style="left:@(SelectedPortfolioPlan?.TargetAllocationPct(ht)??0)%" title="Target @(SelectedPortfolioPlan?.TargetAllocationPct(ht).ToString("N0"))%"></div>
 													</div>
@@ -221,15 +221,15 @@
 	private string devCssClass(decimal dev)
 	{
 		var v = Math.Abs(dev);
-		if (v <= 3)
+		if (v <= 1)
 		{
 			return "text-muted";
 		}
-		if (v <= 5)
+		if (v <= 3)
 		{
 			return "text-success";
 		}
-		if (v <= 11)
+		if (v <= 7)
 		{
 			return "text-info";
 		}
