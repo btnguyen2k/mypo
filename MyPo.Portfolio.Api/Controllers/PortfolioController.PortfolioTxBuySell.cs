@@ -307,6 +307,12 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(500, "Failed to settle transaction record.");
 		}
+
+		// clear portfolio's metadata refresh timestamp
+		existingPortfolio.Metadata ??= new PortfolioMetadata();
+		existingPortfolio.Metadata.MetadataRefreshTimestamp = 0;
+		await PortfolioRepository.UpdatePortfolioAsync(existingPortfolio);
+
 		return ResponseOk(TxBuySellResp.BuildFrom(existingTx));
 	}
 }

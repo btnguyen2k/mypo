@@ -78,18 +78,29 @@ public partial class MyPortfolioDetails : BasePage
 
 			if (!hasError)
 			{
-				// calculate base cost and market value for the portfolio
-				var baseCost = Assets?
-					.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
-					.Sum(a => a.AveragePrice*a.Quantity) ?? 0;
-				var marketValue = Assets?
-					.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
-					.Sum(a => {
-						var m = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
-						var symbol = $"{m?.Code??string.Empty}:{a.ItemCode}";
-						return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
-					}) ?? 0;
-				// TODO
+				var now = DateTimeOffset.UtcNow;
+				if (now.ToUnixTimeSeconds()-3600 > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp??0))
+				{
+					// calculate base cost and market value for the portfolio
+					var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
+					req.Metadata!.TotalCosts = Assets?
+						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+						.Sum(a => a.AveragePrice*a.Quantity) ?? 0;
+					req.Metadata!.TotalMarketValue = Assets?
+						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
+						.Sum(a => {
+							var m = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+							var symbol = $"{m?.Code??string.Empty}:{a.ItemCode}";
+							return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
+						}) ?? 0;
+					req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+					var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
+					if (resp.IsSuccess)
+					{
+						SelectedPortfolio = resp.Data;
+						StateHasChanged();
+					}
+				}
 			}
 
 			if (myTaskId == RefreshBackgroundTaskId)
@@ -200,7 +211,7 @@ public partial class MyPortfolioDetails : BasePage
 			var symbol = $"{asset.ItemCode}:{asset.MarketId}";
 			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
 			var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (apiResp.Status != 200)
+			if (!apiResp.IsSuccess)
 			{
 				SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
 			}
@@ -220,19 +231,9 @@ public partial class MyPortfolioDetails : BasePage
 					}
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
-				var updateReq = new CreateOrUpdateAssetReq()
-				{
-					Id = asset.Id,
-					PortfolioId = asset.PortfolioId,
-					ItemType = asset.ItemType,
-					ItemCode = asset.ItemCode,
-					Quantity = asset.Quantity,
-					AveragePrice = asset.AveragePrice,
-					MarketId = asset.MarketId,
-					Metadata = asset.Metadata,
-				};
+				var updateReq = CreateOrUpdateAssetReq.NewRequest(asset);
 				var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (updateResp.Status != 200)
+				if (!updateResp.IsSuccess)
 				{
 					SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
 				}
