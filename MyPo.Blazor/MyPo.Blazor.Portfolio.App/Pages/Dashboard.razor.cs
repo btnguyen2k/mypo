@@ -1,5 +1,4 @@
-﻿using Ddth.Utilities.Tempus;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
@@ -80,15 +79,12 @@ public partial class Dashboard : BasePage
 			},
 			callbackPostfetch: (quotesResp) =>
 			{
-				if (quotesResp.Status == 200)
+				if (quotesResp.IsSuccess)
 				{
 					foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
 					{
 						QuotesMap[quote.Key] = quote.Value;
 						var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-						// Console.WriteLine($"[DEBUG] {quote.Key}: {JsonSerializer.Serialize(eventInfo)}");
-						// var amount = eventInfo?.Metadata?.Dividend?.Amount ?? 0;
-						// YieldsMap[quote.Key] = amount > 0 && quote.Value.MarketPrice > 0 ? amount/quote.Value.MarketPrice : 0;
 						YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
 					}
 					StateHasChanged();
@@ -98,37 +94,38 @@ public partial class Dashboard : BasePage
 					var symbols = string.Join(",", quotesResp.Data?.Keys ?? []);
 					SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
 				}
+				return true;
 			}
 		);
 		SetBackgroundMsg(string.Empty);
 	}
 
-	private async void GetPricePreExDivBackground()
-	{
-		var now = DateTimeOffset.UtcNow;
-		var events = MarketEventsList?
-			.Where(e => e.EventType.Equals(MarketEventEntity.EVENT_DIVIDEND, StringComparison.CurrentCultureIgnoreCase)
-				|| e.EventType.Equals(MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.CurrentCultureIgnoreCase))
-			.Where(e => e.EventTime < now) ?? [];
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var e in events)
-		{
-			var tz = e.MarketId.ToUpper() switch
-			{
-				"AU" => "Australia/Sydney",
-				"VN" => "Asia/Ho_Chi_Minh",
-				"US" => "America/New_York",
-				_ => "UTC"
-			};
-			var dateAt = (e.EventTime.ToTimeZoneSilently(tz) ?? e.EventTime).AddDays(-1).Date;
-			var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
-			{
-				PreExDivPrice[e.ItemCode] = quoteAtResp.Data.Close;
-				StateHasChanged();
-			}
-		}
-	}
+	// private async void GetPricePreExDivBackground()
+	// {
+	// 	var now = DateTimeOffset.UtcNow;
+	// 	var events = MarketEventsList?
+	// 		.Where(e => e.EventType.Equals(MarketEventEntity.EVENT_DIVIDEND, StringComparison.CurrentCultureIgnoreCase)
+	// 			|| e.EventType.Equals(MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.CurrentCultureIgnoreCase))
+	// 		.Where(e => e.EventTime < now) ?? [];
+	// 	var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+	// 	foreach (var e in events)
+	// 	{
+	// 		var tz = e.MarketId.ToUpper() switch
+	// 		{
+	// 			"AU" => "Australia/Sydney",
+	// 			"VN" => "Asia/Ho_Chi_Minh",
+	// 			"US" => "America/New_York",
+	// 			_ => "UTC"
+	// 		};
+	// 		var dateAt = (e.EventTime.ToTimeZoneSilently(tz) ?? e.EventTime).AddDays(-1).Date;
+	// 		var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
+	// 		if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
+	// 		{
+	// 			PreExDivPrice[e.ItemCode] = quoteAtResp.Data.Close;
+	// 			StateHasChanged();
+	// 		}
+	// 	}
+	// }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

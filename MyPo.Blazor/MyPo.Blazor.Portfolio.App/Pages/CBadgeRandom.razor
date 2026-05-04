@@ -1,7 +1,10 @@
-<span class="badge rounded-pill me-1 @BadgeColorClass()">@Text</span>
+﻿<span class="badge rounded-pill @extraClassName @BadgeColorClass()">@Text</span>
 @code {
 	[Parameter]
 	public string Text { get; set; } = "Badge";
+
+	[Parameter]
+	public string extraClassName { get; set; } = string.Empty;
 
 	private readonly List<string> availableClasses = ["text-bg-primary", "text-bg-success", "text-bg-danger", "text-bg-warning", "text-bg-info"];
 

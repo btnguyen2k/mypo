@@ -27,179 +27,66 @@
         <div class="container-lg px-4">
             <div class="card border-top-primary border-top-3 mb-4">
                 <div class="card-header">
-                    <h4 class="card-title">My Portfolios</h4>
+                    <h4 class="card-title float-start">Active Portfolios</h4>
+					@if (!HideUI)
+					{
+						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+							<ChildContent Context="ctx_add_portfolio">
+								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+							</ChildContent>
+						</AuthorizeView>
+					}
                 </div>
                 <div class="card-body">
 					<CAlert @ref="@Alert" />
 					@if (!HideUI)
 					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="ctx_add_portfolio">
-								<button class="btn btn-primary btn-sm mb-3" @onclick="BtnClickAdd"><CIcon icon="cil-plus" /> New Portfolio</button>
-							</ChildContent>
-						</AuthorizeView>
-                        <table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
-                            <thead>
-                                <tr>
-									<th scope="col" class="text-center w-auto">&nbsp;</th>
-                                    <th scope="col" class="text-center w-auto">Currency</th>
-                                    <th scope="col" class="text-center">Name</th>
-									<th scope="col" class="text-center w-auto">Capital</th>
-									<th scope="col" class="text-center w-auto">Income</th>
-									<th scope="col" class="text-center w-auto">Costs</th>
-									<th scope="col" class="text-center w-auto">Buy</th>
-									<th scope="col" class="text-center w-auto">Sell</th>
-									<th scope="col" class="text-center w-auto">Actions</th>
-                                </tr>
-                            </thead>
-							@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
-							{
-								<tbody>
-									<tr>
-										<td colspan="9" class="text-center">No data found.</td>
-									</tr>
-								</tbody>
-							}
-							else
-							{
-								<tbody>
-									@foreach (var item in MyActivePortfolioList)
-									{
+						@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
+						{
+							<div class="text-center">
+								<BIcon icon="bi-briefcase" extraClassName="fs-1" />
+								<h3>No Portfolios Yet</h3>
+								<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+									<ChildContent Context="ctx_add_portfolio">
+										<p>Create your first portfolio to get started.</p>
+										<button class="btn btn-primary btn-lg" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+									</ChildContent>
+								</AuthorizeView>
+							</div>
+						}
+						else
+						{
+							<div class="table-responsive">
+								<table class="table table-sm table-hover align-middle">
+									<thead>
 										<tr>
-											<td class="text-center w-auto"><BIcon icon="diagram-2" /></td>
-											<td class="text-center w-auto"><CBadgeRandom Text="@item.Currency" /></td>
-											<td>
-												<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(item.Id))">@item.Name</button>
-												<br/>
-												<span class="small">@item.Description</span>
-											</td>
-											@if(PortfolioPnlSummaryMap.TryGetValue(item.Id, out var pnlSummary))
-											{
-												<td class="text-end w-auto">
-													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
-													@(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut == 0
-														? "-"
-														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalMoneyIn-pnlSummary.TotalMoneyOut, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-													)
-												</td>
-												<td class="text-end w-auto">
-													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
-													@(pnlSummary.TotalIncome == 0
-														? "-"
-														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalIncome, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-													)
-												</td>
-												<td class="text-end w-auto">
-													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
-													@(pnlSummary.TotalCosts == 0
-														? "-"
-														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalCosts, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-													)
-												</td>
-												<td class="text-end w-auto">
-													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
-													@(pnlSummary.TotalBuyValue == 0
-														? "-"
-														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalBuyValue, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-													)
-												</td>
-												<td class="text-end w-auto">
-													@((DefaultMarket(item)?.CurrencySymbol??"-")+" ")
-													@(pnlSummary.TotalSellValue == 0
-														? "-"
-														: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalSellValue, DefaultMarket(item)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-													)
-												</td>
-											}
-											else
-											{
-												<td colspan="5" style="text-center">-</td>
-											}
-											<td class="text-center w-auto">
-												<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
-													<CIcon icon="cil-info" />
-												</button>
-												<button class="btn btn-sm @(item.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
-														disabled="@(item.OwnerUserId!=CurrentUser?.Id)"
-														@onclick="(()=>BtnClickModify(item.Id))">
-													<CIcon icon="cil-pencil" />
-												</button>
-												<button class="btn btn-sm @(item.OwnerUserId==CurrentUser?.Id?"btn-outline-danger":"btn-outline-secondary")"
-														disabled="@(item.OwnerUserId!=CurrentUser?.Id)"
-														@onclick="(()=>BtnClickDelete(item.Id))">
-													<CIcon icon="cil-x" />
-												</button>
-											</td>
+											<th>Portfolio</th>
+											<th class="text-center">Currency</th>
+											<th scope="col" class="text-center w-auto">Returns</th>
+											<th scope="col" class="text-center w-auto">Fees+Tax</th>
+											<th scope="col" class="text-center w-auto">Buy</th>
+											<th scope="col" class="text-center w-auto">Sell</th>
+											<th scope="col" class="text-center w-auto">Costs</th>
+											<th scope="col" class="text-center w-auto">Mkt. Value</th>
+											<th scope="col" class="text-center w-auto">P/L</th>
+											<th scope="col" class="text-center w-auto">Actions</th>
 										</tr>
-										@foreach (var child in item.Children??[])
+									</thead>
+									<tbody class="table-group-divider">
+										@foreach (var p in MyActivePortfolioList)
 										{
-											<tr>
-												<td class="text-center w-auto">&nbsp;@*↳*@</td>
-												<td class="text-center w-auto"><CBadgeRandom Text="@child.Currency" /></td>
-												<td>
-													<button type="button" class="btn btn-link p-0" @onclick="(()=>BtnClickInfo(child.Id))">@child.Name</button>
-													<br/>
-													<span class="small">@child.Description</span>
-												</td>
-												@if(PortfolioPnlSummaryMap.TryGetValue(child.Id, out var pnlSummaryChild))
-												{
-													<td class="text-end w-auto">
-														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
-														@(pnlSummaryChild.TotalMoneyIn-pnlSummaryChild.TotalMoneyOut == 0
-															? "-"
-															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalMoneyIn-pnlSummaryChild.TotalMoneyOut, DefaultMarket(child)?.PriceScale??1, DefaultMarket(item)?.ValueFormat??"")
-														)
-													</td>
-													<td class="text-end w-auto">
-														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
-														@(pnlSummaryChild.TotalIncome == 0
-															? "-"
-															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalIncome, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
-														)
-													</td>
-													<td class="text-end w-auto">
-														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
-														@(pnlSummaryChild.TotalCosts == 0
-															? "-"
-															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalCosts, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
-														)
-													</td>
-													<td class="text-end w-auto">
-														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
-														@(pnlSummaryChild.TotalBuyValue == 0
-															? "-"
-															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalBuyValue, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
-														)
-													</td>
-													<td class="text-end w-auto">
-														@((DefaultMarket(child)?.CurrencySymbol??"-")+" ")
-														@(pnlSummaryChild.TotalSellValue == 0
-															? "-"
-															: @PortfolioUtils.FormatValueWithScale(pnlSummaryChild.TotalSellValue, DefaultMarket(child)?.PriceScale??1, DefaultMarket(child)?.ValueFormat??"")
-														)
-													</td>
-												}
-												else
-												{
-													<td colspan="5" style="text-center">-</td>
-												}
-												<td class="text-center w-auto">
-													<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(child.Id))">
-														<CIcon icon="cil-info" />
-													</button>
-													<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(child.Id))">
-														<CIcon icon="cil-pencil" />
-													</button>
-													<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(child.Id))">
-														<CIcon icon="cil-x" />
-													</button>
-												</td>
-											</tr>
+											<MyPortfolio_Row
+												Page="this"
+												Markets="Markets"
+												Portfolio="p"
+												Level="0"
+												PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
+											/>
 										}
-									}
-								</tbody>
-							}
-                        </table>
+									</tbody>
+								</table>
+							</div>
+						}
                     }
                 </div>
             </div>
@@ -207,49 +94,43 @@
 			@if (!HideUI && MyInactivePortfolioList != null && MyInactivePortfolioList.Count() > 0)
 			{
 				<div class="card border-top-secondary border-top-3 mb-4">
-					<div class="card-header">
-						<h4 class="card-title">My Inactive Portfolios</h4>
+					<div class="card-header" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#inactive-section" aria-expanded="false">
+						<h4 class="card-title float-start">Inactive Portfolios</h4>
+						<h5 class="text-muted float-end">
+							<BIcon icon="bi-chevron-down" />
+						</h5>
 					</div>
-					<div class="card-body">
-						<table class="table table-sm table-bordered border-primary table-striped table-hover align-middle">
-							<thead>
-								<tr>
-									<th scope="col" class="text-center w-auto">&nbsp;</th>
-									<th scope="col" class="text-center w-auto">Currency</th>
-									<th scope="col" class="text-center">Name</th>
-									<th scope="col" class="text-center w-auto">Investment</th>
-									<th scope="col" class="text-center w-auto">Return</th>
-									<th scope="col" class="text-center w-auto">Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								@foreach (var item in MyInactivePortfolioList)
-								{
+					<div class="card-body collapse" id="inactive-section">
+						<div class="table-responsive">
+							<table class="table table-sm table-hover align-middle">
+								<thead>
 									<tr>
-										<td class="text-center w-auto"><BIcon icon="diagram-2" /></td>
-										<td class="text-center w-auto">@item.Currency</td>
-										<td>
-											@item.Name
-											<br/>
-											<span class="small">@item.Description</span>
-										</td>
-										<td class="text-center w-auto">-</td>
-										<td class="text-center w-auto">-</td>
-										<td class="text-center w-auto">
-											<button class="btn btn-sm btn-outline-primary" @onclick="(()=>BtnClickInfo(item.Id))">
-												<CIcon icon="cil-info" />
-											</button>
-											<button class="btn btn-sm btn-outline-info" @onclick="(()=>BtnClickModify(item.Id))">
-												<CIcon icon="cil-pencil" />
-											</button>
-											<button class="btn btn-sm btn-outline-danger" @onclick="(()=>BtnClickDelete(item.Id))">
-												<CIcon icon="cil-x" />
-											</button>
-										</td>
+										<th>Portfolio</th>
+										<th class="text-center">Currency</th>
+										<th scope="col" class="text-center w-auto">Returns</th>
+										<th scope="col" class="text-center w-auto">Fees+Tax</th>
+										<th scope="col" class="text-center w-auto">Buy</th>
+										<th scope="col" class="text-center w-auto">Sell</th>
+										<th scope="col" class="text-center w-auto">Costs</th>
+										<th scope="col" class="text-center w-auto">Mkt. Value</th>
+										<th scope="col" class="text-center w-auto">P/L</th>
+										<th scope="col" class="text-center w-auto">Actions</th>
 									</tr>
-								}
-							</tbody>
-						</table>
+								</thead>
+								<tbody class="table-group-divider">
+									@foreach (var p in MyInactivePortfolioList)
+									{
+										<MyPortfolio_Row
+											Page="this"
+											Markets="Markets"
+											Portfolio="p"
+											Level="0"
+											PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
+										/>
+									}
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			}
@@ -263,13 +144,13 @@
 						<div class="row">
 							<div class="col-8">
 								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name)">
+									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name??string.Empty)">
 									<label for="pName">Name</label>
 								</div>
 							</div>
 							<div class="col-4">
 								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency)">
+									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency??string.Empty)">
 									<label for="pCurrency">Currency</label>
 								</div>
 							</div>
@@ -277,15 +158,15 @@
 						<div class="row">
 							<div class="col-sm-12">
 								<div class="form-floating mb-1">
-									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description)</textarea>
+									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description??string.Empty)</textarea>
 									<label for="pDesc">Description</label>
 								</div>
 							</div>
 						</div>
 					</form>
 					<hr />
-					<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeleteClose()"><CIcon icon="x-circle" /> Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><CIcon icon="x" /> Delete</button>
+					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
 				</div>
 			</div>
 		</CModal>

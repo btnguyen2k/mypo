@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Identity;
@@ -140,7 +141,7 @@ public partial class PortfolioController
 				{
 					return (ResponseNoData(400, $"Cannot fetch info for ticker '{ticker.Ticker}'."), null);
 				}
-				holdings.Add(new HoldingTicker
+				var ht = new HoldingTicker
 				{
 					Id = Guid.NewGuid().ToString(),
 					Ticker = tickerInfoResp.Data.NormalizedSymbol(),
@@ -150,7 +151,14 @@ public partial class PortfolioController
 					MarketPrice = tickerInfoResp.Data.StockQuote?.MarketPrice ?? 0,
 					DividendYield = tickerInfoResp.Data.Dividend?.DividendYield ?? 0,
 					PayoutFrequency = tickerInfoResp.Data.Dividend?.PayoutFrequency ?? 0,
-				});
+				};
+				var country = tickerInfoResp.Data.Country.ToUpper();
+				if (country == "VN" || country == "VIETNAM")
+				{
+					// special case
+					ht.MarketPrice /= 1000;
+				}
+				holdings.Add(ht);
 			}
 		}
 		return (null, holdings);

@@ -81,6 +81,24 @@ public sealed class PortfolioPlanResp
 		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(marketValue, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
+	public decimal EstYearlyDividend(HoldingTicker ticker) => ticker.EstYearlyDividend;
+
+	public string EstYearlyDividendStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var yearlyDividend = ticker.EstYearlyDividend;
+		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(yearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	[JsonIgnore]
+	public decimal EstTotalYearlyDividend => Metadata?.HoldingTickers.Sum(ht => ht.EstYearlyDividend) ?? 0;
+
+	public string EstTotalYearlyDividendStr(MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(EstTotalYearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
 	public decimal CurrentAllocationPct(HoldingTicker ticker) => TotalMarketValue > 0 ? ticker.Shares * ticker.MarketPrice / TotalMarketValue * 100 : 0;
 	public decimal TargetAllocationPct(HoldingTicker ticker) => ticker.TargetAllocation;
 	public decimal AllocationDiffPct(HoldingTicker ticker) => CurrentAllocationPct(ticker) - TargetAllocationPct(ticker);

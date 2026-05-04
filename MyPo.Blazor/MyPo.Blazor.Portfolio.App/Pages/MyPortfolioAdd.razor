@@ -1,4 +1,4 @@
-@using MyPo.Blazor.App.Layout
+﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Identity
@@ -28,7 +28,7 @@
     <Authorized>
         <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
-            <div class="card border-top-3 mb-4">
+			<div class="card border-top-info border-top-3 mb-4">
                 <div class="card-header">
                     <h4 class="card-title">@PAGE_TITLE</h4>
                 </div>
@@ -101,11 +101,11 @@
 					}
                 </div>
 				<div class="card-footer">
-					<button class="btn btn-secondary" @onclick="(()=>BtnClickCancel())"><CIcon icon="cil-x-circle" /> Cancel</button>
+					<button class="btn btn-outline-secondary" @onclick="()=>BtnClickCancel()">Cancel</button>
 					@if (!HideUI)
 					{
-						<button class="btn btn-primary ms-2" @onclick="(()=>BtnClickSave())"><CIcon icon="cil-save" /> Add Portfolio</button>
-						<button class="btn btn-info text-light" @onclick="(()=>BtnClickSaveAndOpen())"><BIcon icon="bi-save" /> Add and Open</button>
+						<button class="btn btn-primary ms-2" @onclick="()=>BtnClickSave()"><BIcon icon="bi-floppy" extraClassName="me-1"/>Save Portfolio</button>
+						<button class="btn btn-info text-light" @onclick="()=>BtnClickSaveAndOpen()"><BIcon icon="bi-save" extraClassName="me-1"/>Save and Open</button>
 					}
 				</div>
             </div>

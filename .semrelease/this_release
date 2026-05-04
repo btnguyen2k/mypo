@@ -1,3 +1,5 @@
-# This file has been cleaned up post-releasing version 1.5.0.
+﻿# This file has been cleaned up post-releasing version 1.5.0.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+- (Impr) Portfolio Plan - UI improvements.
+- (Impr) My Portfolio - UI rework.

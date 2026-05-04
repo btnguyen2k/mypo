@@ -32,7 +32,7 @@
 					{
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<ChildContent Context="ctx_add_portfolio_plan">
-								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> New Plan</button>
+								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Plan</button>
 							</ChildContent>
 						</AuthorizeView>
 					}
@@ -91,7 +91,7 @@
 												<p class="text-secondary small mb-2">
 													<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
 												</p>
-												<p class="h5 mb-1">@(plan.TotalMarketValueStr())</p>
+												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@(plan.EstTotalYearlyDividendStr())</span></p>
 												<p class="text-muted small mb-0">Updated @((plan.Metadata?.MetadataRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
 											</div>
 										</div>
@@ -125,8 +125,8 @@
 						</div>
 					</form>
 					<hr />
-					<button type="button" class="btn btn-secondary" @onclick="()=>BtnClickDeletePlanClose()"><CIcon icon="x-circle" /> Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeletePlanConfirm()"><CIcon icon="x" /> Delete</button>
+					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeletePlanClose()">Cancel</button>
+					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeletePlanConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
 				</div>
 			</div>
 		</CModal>

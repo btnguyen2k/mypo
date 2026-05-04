@@ -44,7 +44,7 @@ public abstract class BasePage : BaseComponent
 		StateHasChanged();
 	}
 
-	protected void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
+	public void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
 	{
 		if (Alert == null) return;
 		Alert.Show(type, message, autoCloseAfterMs);
@@ -54,6 +54,23 @@ public abstract class BasePage : BaseComponent
 	public const string QUERY_PARM_ALERT_TYPE = "alertType";
 	public const string QUERY_PARM_ALERT_MESSAGE = "alertMessage";
 	public const string QUERY_PARM_REFRESH = "refresh";
+
+	protected bool IsRefreshRequested()
+	{
+		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
+		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))
+		{
+			// remove the refresh query parameter
+			queryParams.Remove(QUERY_PARM_REFRESH);
+			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
+			{
+				Query = queryParams.ToString() ?? string.Empty
+			};
+			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
+			return true;
+		}
+		return false;
+	}
 
 	protected (string, string) GetPassedMessageFromQuery()
 	{

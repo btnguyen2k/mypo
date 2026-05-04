@@ -51,6 +51,15 @@ public static partial class PortfolioUtils
 		return jsLocalDatatable;
 	}
 
+	public static string Excerpt(string? input, int maxLength = 60)
+	{
+		if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+		{
+			return input ?? string.Empty;
+		}
+		return input.Substring(0, maxLength - 3) + "...";
+	}
+
 	public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";
 	public static readonly List<string> DATETIME_PICKER_FORMATS =
 	[

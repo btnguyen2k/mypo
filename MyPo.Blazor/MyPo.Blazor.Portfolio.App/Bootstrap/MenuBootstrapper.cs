@@ -37,7 +37,7 @@ public class MenuBootstrapper
 				{
 					Id = "myportfolio",
 					Label = "My Portfolio",
-					Icon = "bi-building",
+					Icon = "bi-briefcase",
 					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO,
 				},
 				new Sidebar.SidebarItem

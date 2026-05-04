@@ -65,4 +65,7 @@ public sealed class HoldingTicker
 
 	[JsonPropertyName("payout_frequency")]
 	public int PayoutFrequency { get; set; }
+
+	[JsonIgnore]
+	public decimal EstYearlyDividend => MarketPrice * DividendYield/100m * Shares;
 }

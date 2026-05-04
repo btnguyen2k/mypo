@@ -72,7 +72,7 @@ public partial class MyPortfolioAdd : BasePage
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var resp = await apiClient.CreatePortfolioAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
-		if (resp.Status != 200)
+		if (!resp.IsSuccess)
 		{
 			HideUI = false;
 			ShowAlert("danger", resp.Message ?? "Error creating the portfolio.");
@@ -105,7 +105,7 @@ public partial class MyPortfolioAdd : BasePage
 
 			ShowAlert("info", "Loading market info...");
 			var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			if (marketResult.Status == 200)
+			if (marketResult.IsSuccess)
 			{
 				AllMarkets = marketResult.Data ?? [];
 			}
@@ -117,7 +117,7 @@ public partial class MyPortfolioAdd : BasePage
 
 			ShowAlert("info", "Loading portfolio...");
 			var portfolioResult = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			if (portfolioResult.Status == 200)
+			if (portfolioResult.IsSuccess)
 			{
 				var allPortfolios = portfolioResult.Data ?? [];
 				MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
