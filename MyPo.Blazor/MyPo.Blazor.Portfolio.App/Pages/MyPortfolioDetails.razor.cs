@@ -8,7 +8,6 @@ using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Blazor.Portfolio.App.Shared;
-using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -89,10 +88,15 @@ public partial class MyPortfolioDetails : BasePage
 					req.Metadata!.TotalMarketValue = Assets?
 						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
 						.Sum(a => {
-							var m = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
-							var symbol = $"{m?.Code??string.Empty}:{a.ItemCode}";
+							var symbol = $"{a.Market?.Code??string.Empty}:{a.ItemCode}";
 							return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
 						}) ?? 0;
+					var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
+					if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
+					{
+						// special case
+						req.Metadata!.TotalMarketValue /= 1000;
+					}
 					req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 					var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
 					if (resp.IsSuccess)
@@ -145,7 +149,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio, please wait...");
 		var apiRespPortfolio = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
-		if (apiRespPortfolio.Status != 200)
+		if (!apiRespPortfolio.IsSuccess)
 		{
 			ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
 			return null;
@@ -160,7 +164,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
 		var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespTx.Status != 200)
+		if (!apiRespTx.IsSuccess)
 		{
 			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio buy/sell transactions.");
 			return null;
@@ -169,7 +173,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		ShowAlert("info", "Loading portfolio assets, please wait...");
 		var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespAssets.Status != 200)
+		if (!apiRespAssets.IsSuccess)
 		{
 			ShowAlert("danger", apiRespAssets.Message ?? $"Error while loading portfolio assets.");
 			return null;
@@ -177,13 +181,13 @@ public partial class MyPortfolioDetails : BasePage
 		Assets = apiRespAssets.Data ?? [];
 
 		ShowAlert("info", "Loading portfolio settlement records, please wait...");
-		var apiRespRoiRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (apiRespRoiRecs.Status != 200)
+		var apiRespTxSettlementRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
+		if (!apiRespTxSettlementRecs.IsSuccess)
 		{
-			ShowAlert("danger", apiRespRoiRecs.Message ?? $"Error while loading portfolio settlement records.");
+			ShowAlert("danger", apiRespTxSettlementRecs.Message ?? $"Error while loading portfolio settlement records.");
 			return null;
 		}
-		TxSettlements = apiRespRoiRecs.Data ?? [];
+		TxSettlements = apiRespTxSettlementRecs.Data ?? [];
 
 		return portfolio;
 	}
@@ -193,7 +197,7 @@ public partial class MyPortfolioDetails : BasePage
 		ShowAlert("info", "Loading markets metadata...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var result = await apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
-		if (result.Status == 200)
+		if (result.IsSuccess)
 		{
 			return result.Data ?? [];
 		}
@@ -204,11 +208,11 @@ public partial class MyPortfolioDetails : BasePage
 	private async void AutoPopulateAssetMetadata()
 	{
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var asset in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
+		foreach (var a in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
 				|| string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)
 				|| a.Metadata.Tags == null || a.Metadata.Tags.Count == 0))
 		{
-			var symbol = $"{asset.ItemCode}:{asset.MarketId}";
+			var symbol = $"{a.Market?.Code}:{a.ItemCode}";
 			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
 			var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (!apiResp.IsSuccess)
@@ -220,18 +224,18 @@ public partial class MyPortfolioDetails : BasePage
 				var overview = apiResp.Data;
 				if (overview != null)
 				{
-					asset.Metadata ??= new AssetMetadata();
-					asset.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
-					asset.Metadata.Industry = overview.Industry ?? "";
-					asset.Metadata.Sector = overview.Sector ?? "";
-					asset.Metadata.Tags ??= new HashSet<string>();
-					if (!string.IsNullOrEmpty(asset.Metadata.Industry))
+					a.Metadata ??= new AssetMetadata();
+					a.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
+					a.Metadata.Industry = overview.Industry ?? "";
+					a.Metadata.Sector = overview.Sector ?? "";
+					a.Metadata.Tags ??= new HashSet<string>();
+					if (!string.IsNullOrEmpty(a.Metadata.Industry))
 					{
-						asset.Metadata.Tags.Add(asset.Metadata.Industry);
+						a.Metadata.Tags.Add(a.Metadata.Industry);
 					}
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
-				var updateReq = CreateOrUpdateAssetReq.NewRequest(asset);
+				var updateReq = CreateOrUpdateAssetReq.NewRequest(a);
 				var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
 				if (!updateResp.IsSuccess)
 				{
