@@ -103,6 +103,31 @@ public sealed class PortfolioPlanResp
 	public decimal TargetAllocationPct(HoldingTicker ticker) => ticker.TargetAllocation;
 	public decimal AllocationDiffPct(HoldingTicker ticker) => CurrentAllocationPct(ticker) - TargetAllocationPct(ticker);
 
+	public decimal AmoutNeededToFillDeviation(HoldingTicker ticker)
+	{
+		var a = ticker.MarketPrice * ticker.Shares;
+		var b = TotalMarketValue - a;
+		var c = ticker.TargetAllocation / 100m;
+		return b*c / (1 - c) - a;
+	}
+
+	public string AmoutNeededToFillDeviationStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var amount = AmoutNeededToFillDeviation(ticker);
+		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(amount, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public decimal SharesNeededToFillDeviation(HoldingTicker ticker)
+	{
+		return ticker.MarketPrice > 0 ? AmoutNeededToFillDeviation(ticker) / ticker.MarketPrice : 0;
+	}
+
+	public string SharesNeededToFillDeviationStr(HoldingTicker ticker)
+	{
+		return SharesNeededToFillDeviation(ticker).ToString("N2");
+	}
+
 	[JsonIgnore]
 	public decimal MaxAllocationDiffPct => Metadata?.HoldingTickers.Max(AllocationDiffPct) ?? 0;
 
