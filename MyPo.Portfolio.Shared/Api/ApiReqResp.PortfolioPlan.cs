@@ -99,6 +99,12 @@ public sealed class PortfolioPlanResp
 		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(EstTotalYearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
+	public string EstTotalYearlyDividendYieldStr()
+	{
+		var yield = TotalMarketValue > 0 ? EstTotalYearlyDividend / TotalMarketValue * 100 : 0;
+		return $"{yield:N1}%";
+	}
+
 	public decimal CurrentAllocationPct(HoldingTicker ticker) => TotalMarketValue > 0 ? ticker.Shares * ticker.MarketPrice / TotalMarketValue * 100 : 0;
 	public decimal TargetAllocationPct(HoldingTicker ticker) => ticker.TargetAllocation;
 	public decimal AllocationDiffPct(HoldingTicker ticker) => CurrentAllocationPct(ticker) - TargetAllocationPct(ticker);

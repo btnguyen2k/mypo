@@ -91,7 +91,7 @@
 												<p class="text-secondary small mb-2">
 													<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
 												</p>
-												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@(plan.EstTotalYearlyDividendStr())</span></p>
+												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@plan.EstTotalYearlyDividendStr() (@plan.EstTotalYearlyDividendYieldStr()%)</span></p>
 												<p class="text-muted small mb-0">Updated @((plan.Metadata?.MetadataRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
 											</div>
 										</div>
