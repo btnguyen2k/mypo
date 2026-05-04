@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-05-04 - v1.5.2
+
+### Fixed/Improvements
+
+- (Patch) Minor UI/UX fix.
+
 ## 2026-05-04 - v1.5.1
 
 ### Fixed/Improvements
