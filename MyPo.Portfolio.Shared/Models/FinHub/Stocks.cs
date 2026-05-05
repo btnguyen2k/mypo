@@ -93,6 +93,9 @@ public class SymbolOverview : SymbolBase
 	[JsonPropertyName("quote_type"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? QuoteType { get; set; }
 
+	[JsonPropertyName("asset_type"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? AssetType { get; set; }
+
 	[JsonPropertyName("total_cash")]
 	public long TotalCash { get; set; }
 
