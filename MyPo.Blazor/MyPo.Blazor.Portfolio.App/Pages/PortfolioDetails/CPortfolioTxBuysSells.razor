@@ -69,10 +69,10 @@
 						<td class="text-center text-nowrap w-auto">@(tx.Time.ToString("yyyy-MM-dd HH:mm"))</td>
 						<td class="text-start">@(tx.Market?.Code??"--"):@(tx.ItemCode)</td>
 						<td class="text-end w-auto">@(tx.QuantityStr)</td>
-						<td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty}{PortfolioUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty}{PortfolioUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty}{PortfolioUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty}{PortfolioUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
 						<td class="text-center text-nowrap w-auto">
 							<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 								<Authorized>
