@@ -64,11 +64,6 @@ public partial class PortfolioController
 		{
 			return ResponseNoData(404, "Asset not found.");
 		}
-		// var (reqTx, validationResult) = ValidateAsset(req, existingAsset);
-		// if (validationResult != null)
-		// {
-		// 	return validationResult;
-		// }
 
 		// validate portfolio, must be current user's portfolio
 		var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
@@ -79,16 +74,12 @@ public partial class PortfolioController
 
 		// only asset's metadata can be updated
 		existingAsset.Metadata ??= new AssetMetadata();
-		existingAsset.Metadata.Tags = req.Metadata?.Tags ?? existingAsset.Metadata.Tags ?? new HashSet<string>();
+		// sort tags alphabetically for better readability
+		existingAsset.Metadata.Tags = new SortedSet<string>(existingAsset.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 		existingAsset.Metadata.CorpName = req.Metadata?.CorpName ?? existingAsset.Metadata.CorpName;
 		existingAsset.Metadata.Industry = req.Metadata?.Industry ?? existingAsset.Metadata.Industry;
 		existingAsset.Metadata.Sector = req.Metadata?.Sector ?? existingAsset.Metadata.Sector;
-
-		// sort tags alphabetically for better readability
-		if (existingAsset.Metadata.Tags != null)
-		{
-			existingAsset.Metadata.Tags = new SortedSet<string>(existingAsset.Metadata.Tags);
-		}
+		existingAsset.Metadata.AssetType = req.Metadata?.AssetType ?? existingAsset.Metadata.AssetType;
 
 		existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
 		if (existingAsset == null)

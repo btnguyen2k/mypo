@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Shared.Api;
 
@@ -96,6 +97,9 @@ public struct TxBuySellResp
 
 	[JsonPropertyName("quantity")]
 	public decimal Quantity { get; set; }
+
+	[JsonIgnore]
+	public readonly string QuantityStr => FormatUtils.FormatValueMaxDecimals(Quantity, 4);
 
 	[JsonPropertyName("price")]
 	public decimal Price { get; set; }
