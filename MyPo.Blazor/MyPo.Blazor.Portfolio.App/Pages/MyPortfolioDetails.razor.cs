@@ -8,6 +8,7 @@ using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Blazor.Portfolio.App.Shared;
+using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -225,22 +226,21 @@ public partial class MyPortfolioDetails : BasePage
 			else
 			{
 				var overview = apiResp.Data;
-				if (overview != null)
+				if (overview is null) continue;
+
+				a.Metadata ??= new AssetMetadata();
+				a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
+				a.Metadata.Industry = overview.Industry?.Trim() ?? "";
+				a.Metadata.Sector = overview.Sector?.Trim() ?? "";
+				a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
+				a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
+				if (!string.IsNullOrEmpty(a.Metadata.Industry))
 				{
-					a.Metadata ??= new AssetMetadata();
-					a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
-					a.Metadata.Industry = overview.Industry?.Trim() ?? "";
-					a.Metadata.Sector = overview.Sector?.Trim() ?? "";
-					a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
-					a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
-					if (!string.IsNullOrEmpty(a.Metadata.Industry))
-					{
-						a.Metadata.Tags.Add(a.Metadata.Industry);
-					}
-					if (a.Metadata.AssetType == "ETF")
-					{
-						a.Metadata.Tags.Add("ETF");
-					}
+					a.Metadata.Tags.Add(a.Metadata.Industry);
+				}
+				if (a.Metadata.AssetType == "ETF")
+				{
+					a.Metadata.Tags.Add("ETF");
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
 				var updateReq = CreateOrUpdateAssetReq.NewRequest(a);

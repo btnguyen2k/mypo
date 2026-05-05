@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Fix) Incorrect link on Edit Plan page.
 - (Patch) UI fixes/improvements.
+- (Fix) Auto-populate asset metadata.
