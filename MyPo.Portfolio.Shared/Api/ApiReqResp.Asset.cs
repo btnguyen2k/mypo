@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Shared.Api;
 
@@ -84,6 +85,9 @@ public sealed class AssetResp
 
 	[JsonPropertyName("quantity")]
 	public decimal Quantity { get; set; }
+
+	[JsonIgnore]
+	public string QuantityStr => FormatUtils.FormatValueMaxDecimals(Quantity, 4);
 
 	[JsonPropertyName("average_price")]
 	public decimal AveragePrice { get; set; }

@@ -30,7 +30,7 @@
 				<th scope="col" class="text-center w-auto">Actions</th>
 			</tr>
 		</thead>
-		<tbody class="table-group-divider">
+		<tbody class="table-group-divider small">
 			@if (TxSettlements==null || TxSettlements.Count()==0)
 			{
 				<tr>
@@ -43,25 +43,25 @@
 					<td class="text-center w-auto">
 						@(tx.Status==TxSettlementEntity.STATUS_FINAL?"✔":" ")
 					</td>
-					<td class="text-center w-auto">
+					<td class="text-center text-nowrap w-auto">
 						@(tx.TxTime.ToString("yyyy-MM-dd HH:mm"))
 					</td>
-					<td class="text-center w-auto small">
+					<td class="text-center w-auto">
 						<CBadgeTxType Text="@(tx.TxType)" />
 					</td>
 					<td class="text-center w-auto">
-						@(tx.RefItemType??"-") / @(tx.RefItemCode??"-")
+						@(tx.RefItemCode??"--")
 					</td>
 					<td class="text-end w-auto">
-						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1))
+						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null))
 					</td>
 					<td class="text-center w-auto">
-						@(tx.Market?.Currency??"-")
+						@(tx.Market?.Currency??"--")
 					</td>
 					<td class="w-auto">
 						@(tx.TxDesc)
 					</td>
-					<td class="text-center">
+					<td class="text-center text-nowrap w-auto">
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<Authorized>
 								<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"

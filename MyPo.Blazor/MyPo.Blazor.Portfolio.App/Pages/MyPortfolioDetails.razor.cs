@@ -208,9 +208,12 @@ public partial class MyPortfolioDetails : BasePage
 	private async void AutoPopulateAssetMetadata()
 	{
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var a in (Assets ?? []).Where(a => a.Metadata==null || string.IsNullOrEmpty(a.Metadata.CorpName)
-				|| string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)
-				|| a.Metadata.Tags == null || a.Metadata.Tags.Count == 0))
+		foreach (var a in (Assets ?? []).Where(a => a.Metadata is null || string.IsNullOrEmpty(a.Metadata.CorpName)
+				|| string.IsNullOrEmpty(a.Metadata.AssetType)
+				|| a.Metadata.Tags is null || a.Metadata.Tags.Count == 0
+				|| (a.Metadata.AssetType != "ETF" && (string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)))
+			)
+		)
 		{
 			var symbol = $"{a.Market?.Code}:{a.ItemCode}";
 			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
@@ -225,13 +228,18 @@ public partial class MyPortfolioDetails : BasePage
 				if (overview != null)
 				{
 					a.Metadata ??= new AssetMetadata();
-					a.Metadata.CorpName = overview.LongName ?? overview.ShortName ?? "";
-					a.Metadata.Industry = overview.Industry ?? "";
-					a.Metadata.Sector = overview.Sector ?? "";
-					a.Metadata.Tags ??= new HashSet<string>();
+					a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
+					a.Metadata.Industry = overview.Industry?.Trim() ?? "";
+					a.Metadata.Sector = overview.Sector?.Trim() ?? "";
+					a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
+					a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
 					if (!string.IsNullOrEmpty(a.Metadata.Industry))
 					{
 						a.Metadata.Tags.Add(a.Metadata.Industry);
+					}
+					if (a.Metadata.AssetType == "ETF")
+					{
+						a.Metadata.Tags.Add("ETF");
 					}
 				}
 				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");

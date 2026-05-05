@@ -66,7 +66,7 @@ public static partial class FormatUtils
 			}
 		}
 		var format = "N" + maxDecimals;
-		return value.ToString(format, System.Globalization.CultureInfo.CurrentCulture);
+		return value.ToString(format, CultureInfo.CurrentCulture);
 	}
 
 	public static string FormatValueWithScale(double value, decimal scale = 1, string? format = null)
@@ -90,17 +90,17 @@ public static partial class FormatUtils
 		if (scale <= 0) scale = 1;
 		if (scale >= 1000)
 		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N1", System.Globalization.CultureInfo.CurrentCulture);
+			return value.ToString(!string.IsNullOrEmpty(format)?format:"N1", CultureInfo.CurrentCulture);
 		}
 		if (scale >= 100)
 		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N2", System.Globalization.CultureInfo.CurrentCulture);
+			return value.ToString(!string.IsNullOrEmpty(format)?format:"N2", CultureInfo.CurrentCulture);
 		}
 		if (scale > 1)
 		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N3", System.Globalization.CultureInfo.CurrentCulture);
+			return value.ToString(!string.IsNullOrEmpty(format)?format:"N3", CultureInfo.CurrentCulture);
 		}
-		return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", System.Globalization.CultureInfo.CurrentCulture);
+		return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", CultureInfo.CurrentCulture);
 	}
 
 	public static string FormatVolume(int volume)
@@ -112,21 +112,21 @@ public static partial class FormatUtils
 	{
 		if (volume >= 1_000_000_000_000)
 		{
-			return $"{(volume / 1_000_000_000_000m):N2}T";
+			return $"{volume / 1_000_000_000_000m:N2}T";
 		}
 		if (volume >= 1_000_000_000)
 		{
-			return $"{(volume / 1_000_000_000m):N2}B";
+			return $"{volume / 1_000_000_000m:N2}B";
 		}
 		if (volume >= 1_000_000)
 		{
-			return $"{(volume / 1_000_000m):N2}M";
+			return $"{volume / 1_000_000m:N2}M";
 		}
 		if (volume >= 1_000)
 		{
-			return $"{(volume / 1_000m):N2}K";
+			return $"{volume / 1_000m:N2}K";
 		}
-		return volume.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
+		return volume.ToString("N0", CultureInfo.CurrentCulture);
 	}
 
 	public static decimal CalculatePercentageChange(decimal oldValue, decimal newValue)
@@ -135,7 +135,7 @@ public static partial class FormatUtils
 		{
 			return newValue == 0 ? 0 : 100;
 		}
-		return ((newValue - oldValue) / Math.Abs(oldValue)) * 100;
+		return (newValue - oldValue) / Math.Abs(oldValue) * 100;
 	}
 
 	public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
@@ -188,5 +188,23 @@ public static partial class FormatUtils
 				>= 0x25FB and <= 0x25FE or    // Medium squares
 				>= 0xFE00 and <= 0xFE0F       // Variation Selectors
 			;
+	}
+
+	public static string EmojiForAssetType(string assetType)
+	{
+		return assetType.ToUpper() switch
+		{
+			"ETF" => "📦",
+			"MUTUAL FUND" => "🧺",
+			"CRYPTO" => "🪙",
+			"REIT" => "🏢",
+			"LIC" => "🏛️",
+			"HYBRID" => "⚖️",
+			"STANDARD" => "📈",
+			"GOLD" => "🥇",
+			"SILVER" => "🥈",
+			"OTHER COMMODITY" => "🧱",
+			_ => "🗂️",
+		};
 	}
 }
