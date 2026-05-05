@@ -37,9 +37,11 @@ public partial class CPortfolioTxBuysSells : CBase
 		await base.OnAfterRenderAsync(firstRender);
 		if (firstRender)
 		{
-			Lazy<Task<IJSObjectReference>> moduleTask = new (() => JS.InvokeAsync<IJSObjectReference>("import", $"./_content/{typeof(CPortfolioTxBuysSells).Assembly.GetName().Name!}/js/datetime-picker.js").AsTask());
-			var module = await moduleTask.Value;
-        	await module.InvokeAsync<string>("InitDatetimePickers");
+			var jsDatetimePicker = await PortfolioUtils.LoadJSDatetimePicker(JS);
+        	await jsDatetimePicker.InvokeAsync<string>("InitDatetimePickers");
+
+			var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+			await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblTxBuysSells");
 		}
 	}
 

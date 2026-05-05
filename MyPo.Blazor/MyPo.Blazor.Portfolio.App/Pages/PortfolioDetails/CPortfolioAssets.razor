@@ -86,7 +86,7 @@ else
 						<th scope="col" class="text-center text-nowrap w-auto">Actions</th>
 					</tr>
 				</thead>
-				<tbody class="table-group-divider small">
+				<tbody class="table-group-divider">
 					@foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
 					{
 						<tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
@@ -140,7 +140,7 @@ else
 									: "--"
 								)
 							</td>
-							<td class="text-start w-auto">
+							<td class="text-start w-auto small">
 								@foreach (var tag in asset.TagsList)
 								{
 									<CBadgeRandom Text="@tag" extraClassName="me-1" />

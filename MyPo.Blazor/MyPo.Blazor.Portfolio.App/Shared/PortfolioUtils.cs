@@ -31,7 +31,8 @@ public static partial class PortfolioUtils
     }
 
 	private static IJSObjectReference? jsLocalStorage;
-	private static IJSObjectReference? jsLocalDatatable;
+	private static IJSObjectReference? jsDatatable;
+	private static IJSObjectReference? jsDatetimePicker;
 
 	public static async ValueTask<IJSObjectReference> LoadJSLocalStorage(IJSRuntime JS)
 	{
@@ -44,11 +45,20 @@ public static partial class PortfolioUtils
 
 	public static async ValueTask<IJSObjectReference> LoadJSDatatable(IJSRuntime JS)
 	{
-		jsLocalDatatable ??= await JS.InvokeAsync<IJSObjectReference>(
+		jsDatatable ??= await JS.InvokeAsync<IJSObjectReference>(
 			"import",
 			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/datatable.js"
 		);
-		return jsLocalDatatable;
+		return jsDatatable;
+	}
+
+	public static async ValueTask<IJSObjectReference> LoadJSDatetimePicker(IJSRuntime JS)
+	{
+		jsDatetimePicker ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/datetime-picker.js"
+		);
+		return jsDatetimePicker;
 	}
 
 	public static string Excerpt(string? input, int maxLength = 60)

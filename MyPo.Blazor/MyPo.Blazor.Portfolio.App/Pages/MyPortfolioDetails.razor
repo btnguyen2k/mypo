@@ -8,6 +8,11 @@
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS)]
 @inherits BasePage
 
+<HeadContent>
+    <!-- Plugins and styles required by this page-->
+	<link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.min.css" />
+</HeadContent>
+
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
         <a href="@UIGlobals.ROUTE_HOME">Home</a>
@@ -115,6 +120,10 @@
 <!-- Tempus Dominus Styles -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
 
+<!-- Datatables  -->
+<script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.bootstrap5.min.js"></script>
 @code {
     private const string PAGE_TITLE = "My Portfolio";
 }
