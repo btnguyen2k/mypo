@@ -10,6 +10,7 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class MyPortfolioPlansAdd : BasePage
 {
 	private string Name { get; set; } = string.Empty;
+	private string Description { get; set; } = string.Empty;
 	private string PortfolioId { get; set; } = string.Empty;
 	private IEnumerable<PortfolioResp> MyPortfolioTree { get; set; } = [];
 	private List<HoldingTicker> HoldingTickers { get; set; } = [new HoldingTicker()];
@@ -112,6 +113,7 @@ public partial class MyPortfolioPlansAdd : BasePage
 			Metadata = new()
 			{
 				HoldingTickers = HoldingTickers,
+				Description = Description.Trim(),
 			},
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();

@@ -30,14 +30,26 @@ public sealed class PortfolioPlanEntity : Entity<string>
 
 public sealed class PortfolioPlanMetadata
 {
-	[JsonPropertyName("refresh_timestamp")]
-	public long MetadataRefreshTimestamp { get; set; }
+	[JsonPropertyName("trefresh_holdings")]
+	public long HoldingsRefreshTimestamp { get; set; }
 
 	[JsonIgnore]
-	public DateTime MetadataRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(MetadataRefreshTimestamp).UtcDateTime;
+	public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
 
 	[JsonPropertyName("holdings")]
 	public IList<HoldingTicker> HoldingTickers { get; set; } = [];
+
+	[JsonPropertyName("desc")]
+	public string Description { get; set; } = string.Empty;
+
+	[JsonPropertyName("trefresh_analysis")]
+	public long AnalysisRefreshTimestsmp { get; set; }
+
+	[JsonIgnore]
+	public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestsmp).UtcDateTime;
+
+	[JsonPropertyName("analysis")]
+	public string Analysis { get; set; } = string.Empty;
 }
 
 public sealed class HoldingTicker

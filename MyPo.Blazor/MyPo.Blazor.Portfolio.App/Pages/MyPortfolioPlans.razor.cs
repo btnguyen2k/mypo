@@ -62,7 +62,7 @@ public partial class MyPortfolioPlans : BasePage
 		foreach (var plan in plansList)
 		{
 			var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-			if (plan.Portfolio == null || plan.Metadata == null || now-plan.Metadata.MetadataRefreshTimestamp < 24*3600)
+			if (plan.Portfolio == null || plan.Metadata == null || now-plan.Metadata.HoldingsRefreshTimestamp < 24*3600)
 			{
 				continue;
 			}

@@ -203,8 +203,9 @@ public partial class PortfolioController
 			Name = req.Name.Trim(),
 			Metadata = new()
 			{
-				MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+				HoldingsRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
 				HoldingTickers = holdings ?? [],
+				Description = req.Metadata?.Description?.Trim() ?? string.Empty,
 			},
 		};
 		var plan = await PortfolioRepository.CreatePortfolioPlanAsync(portfolioPlanRec);
@@ -257,11 +258,10 @@ public partial class PortfolioController
 
 		existingPortfolioPlan.PortfolioId = string.IsNullOrWhiteSpace(req.PortfolioId) ? null : req.PortfolioId.Trim();
 		existingPortfolioPlan.Name = req.Name.Trim();
-		existingPortfolioPlan.Metadata = new()
-		{
-			MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-			HoldingTickers = holdings ?? [],
-		};
+		existingPortfolioPlan.Metadata ??= new PortfolioPlanMetadata();
+		existingPortfolioPlan.Metadata.HoldingsRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		existingPortfolioPlan.Metadata.HoldingTickers = holdings ?? [];
+		existingPortfolioPlan.Metadata.Description = req.Metadata?.Description?.Trim() ?? string.Empty;
 
 		existingPortfolioPlan = await PortfolioRepository.UpdatePortfolioPlanAsync(existingPortfolioPlan);
 		if (existingPortfolioPlan == null)

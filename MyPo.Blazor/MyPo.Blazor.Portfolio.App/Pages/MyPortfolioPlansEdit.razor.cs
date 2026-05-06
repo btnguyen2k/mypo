@@ -14,6 +14,7 @@ public partial class MyPortfolioPlansEdit : BasePage
 	private PortfolioPlanResp? SelectedPortfolioPlan { get; set; }
 
 	private string Name { get; set; } = string.Empty;
+	private string Description { get; set; } = string.Empty;
 	private string PortfolioId { get; set; } = string.Empty;
 	private IEnumerable<PortfolioResp> MyPortfolioTree { get; set; } = [];
 	private List<HoldingTicker> HoldingTickers { get; set; } = [new HoldingTicker()];
@@ -44,6 +45,7 @@ public partial class MyPortfolioPlansEdit : BasePage
 				return;
 			}
 			Name = SelectedPortfolioPlan.Name;
+			Description = SelectedPortfolioPlan.Metadata?.Description ?? string.Empty;
 			PortfolioId = SelectedPortfolioPlan.PortfolioId ?? string.Empty;
 			HoldingTickers = SelectedPortfolioPlan.Metadata?.HoldingTickers?.ToList() ?? [new HoldingTicker()];
 
@@ -133,6 +135,7 @@ public partial class MyPortfolioPlansEdit : BasePage
 			Metadata = new()
 			{
 				HoldingTickers = HoldingTickers,
+				Description = Description.Trim(),
 			},
 		};
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();

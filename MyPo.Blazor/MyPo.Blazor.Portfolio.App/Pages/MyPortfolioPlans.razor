@@ -1,4 +1,5 @@
-﻿@using MyPo.Blazor.App.Shared;
+﻿@using MyPo.Libs;
+@using MyPo.Blazor.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Shared;
 @using MyPo.Blazor.App.Layout;
 @using MyPo.Portfolio.Shared.Identity;
@@ -88,11 +89,15 @@
 													</div>
 												</div>
 												<p class="text-secondary small mb-2">@(plan.HoldingSymbols)</p>
+												@if(plan.Metadata is not null && !string.IsNullOrEmpty(plan.Metadata.Description))
+												{
+													<p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine())</p>
+												}
 												<p class="text-secondary small mb-2">
 													<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
 												</p>
 												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@plan.EstTotalYearlyDividendStr() (@plan.EstTotalYearlyDividendYieldStr())</span></p>
-												<p class="text-muted small mb-0">Updated @((plan.Metadata?.MetadataRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
+												<p class="text-muted small mb-0">Updated @((plan.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
 											</div>
 										</div>
 									</div>

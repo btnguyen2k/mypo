@@ -63,7 +63,7 @@ public sealed class PortfolioPlanResp
 	public string TotalMarketValueStr(MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
-		return $"{m?.CurrencySymbol??""}{FormatUtils.FormatValueWithScale(TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??"")}";
+		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??"")}";
 	}
 
 	public string NumSharesStr(HoldingTicker ticker) => FormatUtils.FormatValueMaxDecimals(ticker.Shares, 4);
@@ -71,14 +71,14 @@ public sealed class PortfolioPlanResp
 	public string MarketPriceStr(HoldingTicker ticker, MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
-		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(ticker.MarketPrice, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(ticker.MarketPrice, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	public string MarketValueStr(HoldingTicker ticker, MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
 		var marketValue = ticker.Shares * ticker.MarketPrice;
-		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(marketValue, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(marketValue, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	public decimal EstYearlyDividend(HoldingTicker ticker) => ticker.EstYearlyDividend;
@@ -87,7 +87,7 @@ public sealed class PortfolioPlanResp
 	{
 		var m = market ?? Market;
 		var yearlyDividend = ticker.EstYearlyDividend;
-		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(yearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(yearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	[JsonIgnore]
@@ -96,7 +96,7 @@ public sealed class PortfolioPlanResp
 	public string EstTotalYearlyDividendStr(MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
-		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(EstTotalYearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(EstTotalYearlyDividend, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	public string EstTotalYearlyDividendYieldStr()
@@ -114,14 +114,14 @@ public sealed class PortfolioPlanResp
 		var a = ticker.MarketPrice * ticker.Shares;
 		var b = TotalMarketValue - a;
 		var c = ticker.TargetAllocation / 100m;
-		return b*c / (1 - c) - a;
+		return 1 - c != 0 ? b*c / (1 - c) - a : 0;
 	}
 
 	public string AmoutNeededToFillDeviationStr(HoldingTicker ticker, MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
 		var amount = AmoutNeededToFillDeviation(ticker);
-		return $"{m?.CurrencySymbol ?? ""}{FormatUtils.FormatValueWithScale(amount, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(amount, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	public decimal SharesNeededToFillDeviation(HoldingTicker ticker)
