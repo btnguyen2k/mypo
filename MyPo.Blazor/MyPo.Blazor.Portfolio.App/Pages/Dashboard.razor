@@ -10,8 +10,7 @@
 
 <HeadContent>
     <!-- Plugins and styles required by this page-->
-    <!--<link href="@UIGlobals.COREUI_BASE/vendors/@@coreui/chartjs/css/coreui-chartjs.css" rel="stylesheet">-->
-	<link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
+	<link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.min.css" />
 </HeadContent>
 
 <PageTitle>Home | @AppInfo?.Name</PageTitle>
@@ -62,31 +61,29 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0 small" id="tblDividendEvents">
+											<table class="table table-sm mb-0 small" id="tblDividendEvents" data-order='[[ 0, "asc" ]]'>
 												<thead>
 													<tr>
 														<th>Ex-Date</th>
-														@* <th>Pay Date</th> *@
-														<th class="text-center">Market</th>
-														<th>Item</th>
-														<th class="text-end">Amount</th>
-														<th class="text-end">Yield</th>
-														<th class="text-end">Cur.Price</th>
-														<th class="text-center">Drop</th>
-														<th class="text-center" colspan="3">Recovery</th>
+														<th class="text-center" data-dt-order="disable">Market</th>
+														<th data-dt-order="disable">Item</th>
+														<th class="text-end" data-dt-order="disable">Amount</th>
+														<th class="text-end" data-dt-order="disable">Yield</th>
+														<th class="text-end" data-dt-order="disable">Cur.Price</th>
+														<th class="text-center" data-dt-order="disable">Drop</th>
+														<th class="text-center" colspan="3" data-dt-order="disable">Recovery</th>
 													</tr>
 												</thead>
 												<tbody class="table-group-divider">
 													@foreach (var e in EventsDistribution)
 													{
 														<tr class="@(TextFormatDivident(e))">
-															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("MMM dd")</td>
-															@* <td class="text-nowrap">@(PaymentDateStr(e))</td> *@
+															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
 															<td class="text-center">@e.MarketId</td>
 															<td class="text-nowrap"><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-															<td class="text-end">@((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
+															<td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
 															<td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
-															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
+															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{e.Metadata?.CurrencySymbol??"--"} {quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
 															<td class="text-center text-nowrap">
 																@if (e.Metadata?.Dividend?.Analysis != null)
 																{
@@ -152,23 +149,22 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0 small" id="tblListingEvents">
+											<table class="table table-sm mb-0 small" id="tblListingEvents" data-order='[[ 0, "asc" ]]'>
 												<thead>
 													<tr>
 														<th>Date</th>
-														<th class="text-center">Market</th>
-														<th>Item</th>
-														<th class="text-end">Price</th>
-														<th class="text-end">Cur.Price</th>
-														<th class="text-end">Capital</th>
-														@* <th class="text-center">Analysis</th> *@
+														<th class="text-center" data-dt-order="disable">Market</th>
+														<th data-dt-order="disable">Item</th>
+														<th class="text-end" data-dt-order="disable">Price</th>
+														<th class="text-end" data-dt-order="disable">Cur.Price</th>
+														<th class="text-end" data-dt-order="disable">Capital</th>
 													</tr>
 												</thead>
 												<tbody class="table-group-divider align-middle">
 													@foreach (var e in EventsListing)
 													{
 														<tr>
-															<td>@e.EventTimeLocalTz.ToString("MMM dd")</td>
+															<td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
 															<td class="text-center">@e.MarketId</td>
 															<td>
 																<a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small>
@@ -211,51 +207,9 @@
 																	</small>
 																}
 															</td>
-															<td class="text-end">@((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId))) @(e.Metadata?.CurrencySymbol??"--")</td>
-															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))} {e.Metadata?.CurrencySymbol}":"--")</td>
-															<td class="text-end">@(e.Metadata?.Capital.ToString("N0")??"--")</td>
-															@* <td class="text-center text-nowrap">
-																@if (e.Metadata?.Listing?.Analysis != null)
-																{
-																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false && w2 != null)
-																	{
-																		<button title="@(w2.Confidence) - @(w2.Reason)" style="width:30px !important;"
-																			class="btn btn-sm me-2 @(w2.Confidence>=80?"btn-outline-danger":w2.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
-																			@(w2.Direction)
-																		</button>
-																	}
-																	else
-																	{
-																		@("-")
-																	}
-																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false && m1 != null)
-																	{
-																		<button title="@(m1.Confidence) - @(m1.Reason)" style="width:30px !important;"
-																			class="btn btn-sm me-2 @(m1.Confidence>=80?"btn-outline-danger":m1.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
-																			@(m1.Direction)
-																		</button>
-																	}
-																	else
-																	{
-																		@("-")
-																	}
-																	if (e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false && m3 != null)
-																	{
-																		<button title="@(m3.Confidence) - @(m3.Reason)" style="width:30px !important;"
-																			class="btn btn-sm me-2 @(m3.Confidence>=80?"btn-outline-danger":m3.Confidence>=65?"btn-outline-success":"btn-outline-secondary")">
-																			@(m3.Direction)
-																		</button>
-																	}
-																	else
-																	{
-																		@("-")
-																	}
-																}
-																else
-																{
-																	@("--")
-																}
-															</td> *@
+															<td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
+															<td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{e.Metadata?.CurrencySymbol??"--"} {quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
+															<td class="text-end">@(FormatUtils.FormatVolume(e.Metadata?.Capital??0))</td>
 														</tr>
 													}
 												</tbody>
@@ -277,21 +231,21 @@
 										}
 										else
 										{
-											<table class="table table-sm mb-0 small" id="tblEarningsEvents">
+											<table class="table table-sm mb-0 small" id="tblEarningsEvents" data-order='[[ 0, "asc" ]]'>
 												<thead>
 													<tr>
 														<th>Date</th>
-														<th class="text-center">Market</th>
-														<th>Item</th>
-														<th>Status</th>
-														<th class="text-end">Period</th>
+														<th class="text-center" data-dt-order="disable">Market</th>
+														<th data-dt-order="disable">Item</th>
+														<th data-dt-order="disable">Status</th>
+														<th class="text-end" data-dt-order="disable">Period</th>
 													</tr>
 												</thead>
 												<tbody class="table-group-divider">
 													@foreach (var e in EventsEarnings)
 													{
 														<tr>
-															<td>@e.EventTimeLocalTz.ToString("MMM dd")</td>
+															<td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
 															<td class="text-center">@e.MarketId</td>
 															<td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
 															<td>@(e.Metadata?.Status??"--")</td>
@@ -325,8 +279,11 @@
 -->
 <!--<script src="@UIGlobals.COREUI_BASE/js/colors.js"></script>-->
 <!--<script src="@UIGlobals.COREUI_BASE/js/main.js"></script>-->
+
+<!-- Datatables  -->
 <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.bootstrap5.min.js"></script>
 @code {
 	private static string PaymentDateStr(MarketEventResp e)
 	{
@@ -360,6 +317,6 @@
 	private string TextFormatDivident(MarketEventResp e)
 	{
 		var attLevel = MarketEventUtils.AttentionLevelForDividend(e, YieldsMap);
-		return attLevel > 2 ? "table-danger" : attLevel == 2 ? "table-success" : attLevel == 1 ? "table-info" : string.Empty;
+		return attLevel > 2 ? "bg-danger" : attLevel == 2 ? "bg-success" : attLevel == 1 ? "bg-info" : string.Empty;
 	}
 }

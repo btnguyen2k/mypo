@@ -1,5 +1,13 @@
 # My Portfolio Tracker release notes
 
+## 2026-05-05 - v1.5.3
+
+### Fixed/Improvements
+
+- (Fix) Incorrect link on Edit Plan page.
+- (Patch) UI fixes/improvements.
+- (Fix) Auto-populate asset metadata.
+
 ## 2026-05-04 - v1.5.2
 
 ### Fixed/Improvements

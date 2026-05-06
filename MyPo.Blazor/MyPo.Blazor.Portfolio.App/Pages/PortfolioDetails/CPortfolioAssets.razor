@@ -4,6 +4,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
+@using MyPo.Portfolio.Shared.Utils
 
 @inherits CBase
 
@@ -90,13 +91,13 @@ else
 					{
 						<tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
 							<td class="text-start text-nowrap w-auto">
-								<BIcon icon="@(asset.ItemType==AssetEntity.ASSET_TYPE_STOCK?"cash-stack":"wallet")" />
-								<button type="button" class="btn btn-link p-0 pb-1" @onclick="(()=>BtnClickAssetInfo(asset.Id))">
+								@(FormatUtils.EmojiForAssetType(asset.Metadata?.AssetType??""))
+								<button type="button" class="btn btn-link p-0 pb-1" @onclick="()=>BtnClickAssetInfo(asset.Id)">
 									@(asset.ItemCode)
 								</button>
 							</td>
 							<td class="text-end text-nowrap w-auto">
-								@(asset.Quantity.ToString(asset.Market?.QuantityFormat??"N2"))
+								@(asset.QuantityStr)
 							</td>
 							<td class="text-end text-nowrap w-auto">
 								@(asset.Market?.CurrencySymbol??"")
@@ -139,7 +140,7 @@ else
 									: "--"
 								)
 							</td>
-							<td class="text-start w-auto">
+							<td class="text-start w-auto small">
 								@foreach (var tag in asset.TagsList)
 								{
 									<CBadgeRandom Text="@tag" extraClassName="me-1" />

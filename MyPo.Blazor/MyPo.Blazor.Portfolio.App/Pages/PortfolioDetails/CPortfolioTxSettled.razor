@@ -17,17 +17,17 @@
 </AuthorizeView>
 
 <div class="table-responsive">
-	<table class="table table-sm table-hover align-middle">
+	<table class="table table-sm table-hover align-middle" id="tblTxSettlements" data-order='[[ 1, "desc" ]]'>
 		<thead>
 			<tr>
-				<th scope="col" class="text-center w-auto">✔</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">✔</th>
 				<th scope="col" class="text-center w-auto">Tx Time</th>
-				<th scope="col" class="text-center w-auto">Tx Type</th>
-				<th scope="col" class="text-center w-auto">Ref Item</th>
-				<th scope="col" class="text-center w-auto">Tx Value</th>
-				<th scope="col" class="text-center w-auto">Currency</th>
-				<th scope="col" class="text-begin w-auto">Description</th>
-				<th scope="col" class="text-center w-auto">Actions</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">Tx Type</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">Ref Item</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">Tx Value</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">Currency</th>
+				<th scope="col" class="text-begin w-auto" data-dt-order="disable">Description</th>
+				<th scope="col" class="text-center w-auto" data-dt-order="disable">Actions</th>
 			</tr>
 		</thead>
 		<tbody class="table-group-divider">
@@ -43,25 +43,26 @@
 					<td class="text-center w-auto">
 						@(tx.Status==TxSettlementEntity.STATUS_FINAL?"✔":" ")
 					</td>
-					<td class="text-center w-auto">
+					<td class="text-center text-nowrap w-auto">
 						@(tx.TxTime.ToString("yyyy-MM-dd HH:mm"))
 					</td>
 					<td class="text-center w-auto small">
 						<CBadgeTxType Text="@(tx.TxType)" />
 					</td>
 					<td class="text-center w-auto">
-						@(tx.RefItemType??"-") / @(tx.RefItemCode??"-")
+						@(tx.RefItemCode??"--")
 					</td>
-					<td class="text-end w-auto">
-						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1))
+					<td class="text-end w-auto text-nowrap">
+						@(tx.Market?.CurrencySymbol??"")
+						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null))
 					</td>
 					<td class="text-center w-auto">
-						@(tx.Market?.Currency??"-")
+						@(tx.Market?.Currency??"--")
 					</td>
-					<td class="w-auto">
+					<td class="w-auto small">
 						@(tx.TxDesc)
 					</td>
-					<td class="text-center">
+					<td class="text-center text-nowrap w-auto">
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<Authorized>
 								<button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
