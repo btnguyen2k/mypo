@@ -2,7 +2,7 @@
 @using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
-@using MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Identity
 @using MyPo.Portfolio.Shared.Utils
@@ -40,8 +40,8 @@
 						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 							<ChildContent Context="ctx_edit_delete_portfolio_plan">
 								<div class="float-end">
-									<button class="btn btn-outline-primary btn-sm" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
-									<button class="btn btn-outline-danger btn-sm" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
+									<button class="btn btn-sm btn-outline-primary" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
+									<button class="btn btn-sm btn-outline-danger" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
 								</div>
 							</ChildContent>
 						</AuthorizeView>
@@ -64,14 +64,6 @@
 									}
 									Refreshed @((SelectedPortfolioPlan?.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")
 								</p>
-								@*
-								@if (SelectedPortfolioPlan?.Portfolio is not null)
-								{
-									<p class="text-muted small mb-0 mt-1">
-										<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(SelectedPortfolioPlan.Portfolio.Name)
-									</p>
-								}
-								*@
 							</div>
 						</div>
 
@@ -113,8 +105,20 @@
 
 						<!-- Holdings detail table -->
 						<div class="card">
-							<div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-								<h2 class="h6 mb-0">Holdings Breakdown</h2>
+							<div class="card-header d-flex justify-content-between align-items-center">
+								<div class="d-flex align-items-center">
+									<h5 class="mb-0">Holdings Breakdown</h5>
+									@if(string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Description))
+									{
+										<div title="Add plan description to enable analysis">
+											<button class="btn btn-sm btn-outline-secondary ms-1" disabled><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+										</div>
+									}
+									else
+									{
+										<button class="btn btn-sm btn-outline-info ms-1" @onclick="BtnClickAnalyze"><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+									}
+								</div>
 								<span class="badge bg-secondary">@(SelectedPortfolioPlan?.Metadata?.HoldingTickers?.Count) symbols</span>
 							</div>
 							<div class="table-responsive">
@@ -186,6 +190,25 @@
 								</table>
 							</div>
 						</div>
+
+						@if(!string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis))
+						{
+							<style>
+							#analysis-result.h1 {font-size: 1.5rem !important;}
+							#analysis-result.h2 {font-size: 1.4rem !important;}
+							#analysis-result.h3 {font-size: 1.3rem !important;}
+							#analysis-result.h4 {font-size: 1.2rem !important;}
+							#analysis-result.h5 {font-size: 1.1rem !important;}
+							</style>
+							<div class="card mt-4">
+								<div class="card-header">
+									<h5 class="mb-0">📊Analysis <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span></h5>
+								</div>
+								<div class="card-body" id="analysis-result">
+									<WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+								</div>
+							</div>
+						}
 					}
 				</div>
 			</div>

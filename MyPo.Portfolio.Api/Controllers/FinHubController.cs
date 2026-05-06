@@ -1,0 +1,76 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Shared.Models;
+using MyPo.Shared.Api.Controller;
+using MyPo.Shared.Api.Services;
+using MyPo.Shared.Identity;
+
+namespace MyPo.Portfolio.Api.Controllers;
+
+[Authorize]
+public partial class FinHubController : ApiBaseController
+{
+	private readonly IAuthenticator? Authenticator;
+	private readonly IAuthenticatorAsync? AuthenticatorAsync;
+	private readonly IIdentityRepository IdentityRepository;
+	private readonly IdentityOptions IdentityOptions;
+	private readonly IPortfolioRepository PortfolioRepository;
+	private readonly IFinHubClient FinHubClient;
+
+	public FinHubController(
+		IIdentityRepository identityRepository,
+		IOptions<IdentityOptions> identityOptions,
+		IAuthenticator? authenticator,
+		IAuthenticatorAsync? authenticatorAsync,
+		IPortfolioRepository portfolioRepository,
+		IFinHubClient finHubClient
+	)
+	{
+		ArgumentNullException.ThrowIfNull(identityRepository, nameof(identityRepository));
+		ArgumentNullException.ThrowIfNull(identityOptions, nameof(identityOptions));
+		if (authenticator == null && authenticatorAsync == null)
+		{
+			throw new ArgumentNullException("No authenticator defined.");
+		}
+		ArgumentNullException.ThrowIfNull(portfolioRepository, nameof(portfolioRepository));
+			ArgumentNullException.ThrowIfNull(finHubClient, nameof(finHubClient));
+
+		IdentityRepository = identityRepository;
+		IdentityOptions = identityOptions.Value;
+		Authenticator = authenticator;
+		AuthenticatorAsync = authenticatorAsync;
+		PortfolioRepository = portfolioRepository;
+		FinHubClient = finHubClient;
+	}
+
+	private async ValueTask<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()
+	{
+		var jwtToken = GetAuthToken();
+		var tokenValidationResult = await ValidateAuthTokenAsync(Authenticator, AuthenticatorAsync, jwtToken);
+		if (tokenValidationResult.Status != 200)
+		{
+			// the auth token should still be valid
+			return (ResponseNoData(403, tokenValidationResult.Error), null!);
+		}
+
+		var currentUser = await GetCurrentUserAsync(IdentityOptions, IdentityRepository);
+		if (currentUser == null)
+		{
+			// should not happen
+			return (_respAuthenticationRequired, null!);
+		}
+
+		return (null, currentUser);
+	}
+
+	private async ValueTask<PortfolioPlanEntity?> GetPortfolioPlanIfOwnedByUser(MyPoUser user, string portfolioId)
+	{
+		var portfolioPlanRec = await PortfolioRepository.GetPortfolioPlanByIdAsync(portfolioId);
+		return portfolioPlanRec != null && portfolioPlanRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+			? portfolioPlanRec
+			: null;
+	}
+}

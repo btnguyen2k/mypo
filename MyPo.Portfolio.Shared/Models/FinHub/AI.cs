@@ -67,6 +67,24 @@ sealed class AIModelCapacity
 	public List<Dictionary<string, string>> ToolChain { get; set; } = [];
 }
 
+public abstract class BaseAIResult
+{
+	[JsonPropertyName("llm_error")]
+	public bool LLMError { get; set; } = false;
+
+	[JsonPropertyName("llm_error_msg"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? LLMErrorMsg { get; set; }
+
+	[JsonPropertyName("llm_response"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? LLMResponse { get; set; }
+}
+
+public sealed class PortfolioAnalysis : BaseAIResult
+{
+	[JsonPropertyName("analysis")]
+	public string Analysis { get; set; } = string.Empty;
+}
+
 public sealed class DividendEventAnalysis
 {
 	/* base info */

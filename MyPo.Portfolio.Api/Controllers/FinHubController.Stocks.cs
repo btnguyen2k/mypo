@@ -9,14 +9,14 @@ using MyPo.Shared.Api;
 namespace MyPo.Portfolio.Api.Controllers;
 
 [Authorize]
-public partial class MarketsController
+public partial class FinHubController
 {
 	/// <summary>
 	/// Get stock quotes for the given comma-separated symbols.
 	/// </summary>
 	/// <param name="symbols">Comma-separated list of symbols. Each symbol is in the following format CODE:market-id, or EXCHANGE:TICKER</param>
 	/// <returns></returns>
-	[HttpGet(IPortfolioApiClient.API_STOCKS_GET_QUOTES)]
+	[HttpGet(IPortfolioApiClient.API_FINHUB_STOCKS_GET_QUOTES)]
 	public async ValueTask<ActionResult<ApiResp<IDictionary<string, StockQuote>>>> GetStockQuotes([FromQuery] string symbols, IFinHubClient finHubClient)
 	{
 		var yfSymbolMap = new Dictionary<string, string>();
@@ -52,7 +52,7 @@ public partial class MarketsController
 	/// </summary>
 	/// <param name="symbol">Symbol in the following format CODE:market-id, or EXCHANGE:TICKER</param>
 	/// <returns></returns>
-	[HttpGet(IPortfolioApiClient.API_STOCKS_SYMBOL_OVERVIEW)]
+	[HttpGet(IPortfolioApiClient.API_FINHUB_STOCKS_SYMBOL_OVERVIEW)]
 	public async ValueTask<ActionResult<ApiResp<SymbolOverview>>> GetStockSymbolOverview([FromRoute] string symbol, IFinHubClient finHubClient)
 	{
 		var (code, marketId) = symbol.Split(':', 2) switch
@@ -76,7 +76,7 @@ public partial class MarketsController
 	/// </summary>
 	/// <param name="symbol">Symbol in the following format CODE:market-id, or EXCHANGE:TICKER</param>
 	/// <returns></returns>
-	[HttpGet(IPortfolioApiClient.API_STOCKS_SYMBOL_INFO)]
+	[HttpGet(IPortfolioApiClient.API_FINHUB_STOCKS_SYMBOL_INFO)]
 	public async ValueTask<ActionResult<ApiResp<SymbolInfo>>> GetStockSymbolInfo([FromRoute] string symbol, IFinHubClient finHubClient)
 	{
 		var (code, marketId) = symbol.Split(':', 2) switch
@@ -101,7 +101,7 @@ public partial class MarketsController
 	/// <param name="symbol">Symbol in the following format CODE:market-id, or EXCHANGE:TICKER</param>
 	/// <param name="date">Date in the format of yyyy-MM-dd</param>
 	/// <returns></returns>
-	[HttpGet(IPortfolioApiClient.API_STOCKS_SYMBOL_QUOTE_AT_DATE)]
+	[HttpGet(IPortfolioApiClient.API_FINHUB_STOCKS_SYMBOL_QUOTE_AT_DATE)]
 	public async ValueTask<ActionResult<ApiResp<HistoryPoint>>> GetStockSymbolQuoteAtDate([FromRoute] string symbol, [FromRoute] string date, IFinHubClient finHubClient)
 	{
 		var (code, marketId) = symbol.Split(':', 2) switch

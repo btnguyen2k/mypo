@@ -6,6 +6,7 @@ namespace MyPo.Portfolio.Api.Services;
 public interface IFinHubClient
 {
 	public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT = "/ai/analyze_dividend_event";
+	public const string API_FINHUB_AI_ANALYZE_PORTFOLIO = "/ai/analyze_portfolio";
 
 	/// <summary>
 	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/> to analyze a dividend event.
@@ -18,6 +19,18 @@ public interface IFinHubClient
 	/// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
 	/// <returns></returns>
 	public Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a portfolio.
+	/// </summary>
+	/// <param name="holdings">Current holdings, format {ticker:allocation}</param>
+	/// <param name="country"></param>
+	/// <param name="investorTheme"></param>
+	/// <param name="baseUrl"></param>
+	/// <param name="httpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(IDictionary<string, decimal> holdings, string country, string? investorTheme, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
 	/*----------------------------------------------------------------------*/
 

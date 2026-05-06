@@ -29,6 +29,26 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 		return await ReadAndCloseResponseAsync<DividendEventAnalysis>(httpResult, cancellationToken);
 	}
 
+    /// <inheritdoc/>
+    public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(IDictionary<string, decimal> holdings, string country, string? investorTheme, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO;
+        var requestData = new
+        {
+            current_allocation = holdings,
+            country = country,
+            investor_theme = investorTheme
+        };
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			NoAuth,
+			requestData,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+    }
+
 	/*----------------------------------------------------------------------*/
 
 	/// <inheritdoc/>

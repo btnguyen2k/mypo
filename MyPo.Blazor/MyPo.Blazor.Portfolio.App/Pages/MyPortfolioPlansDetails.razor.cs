@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
+using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -10,7 +11,7 @@ public partial class MyPortfolioPlansDetails : BasePage
 {
 	[Parameter]
 	public string PlanId { get; set; } = string.Empty;
-	private PortfolioPlanResp? SelectedPortfolioPlan { get; set; }
+	private PortfolioPlanResp SelectedPortfolioPlan { get; set; } = default!;
 
 	private CModal ModalDialogDelete { get; set; } = default!;
 
@@ -47,13 +48,13 @@ public partial class MyPortfolioPlansDetails : BasePage
 
 	private void BtnClickEdit()
 	{
-		var id = SelectedPortfolioPlan?.Id;
+		var id = SelectedPortfolioPlan.Id;
 		NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", id, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private void BtnClickDelete()
 	{
-		if (SelectedPortfolioPlan!.OwnerUserId != CurrentUser?.Id)
+		if (SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
 		{
 			ShowAlert("danger", "You are not authorized to delete this portfolio.");
 			return;
@@ -70,9 +71,9 @@ public partial class MyPortfolioPlansDetails : BasePage
 	{
 		ModalDialogDelete.Close();
 		HideUI = true;
-		ShowAlert("info", $"Deleting portfolio plan '{SelectedPortfolioPlan?.Name}', please wait...");
+		ShowAlert("info", $"Deleting portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var result = await apiClient.DeleteMyPortfolioPlanAsync(SelectedPortfolioPlan?.Id ?? string.Empty, await GetAuthTokenAsync(), ApiBaseUrl);
+		var result = await apiClient.DeleteMyPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
 		if (!result.IsSuccess)
 		{
 			HideUI = false;
@@ -80,11 +81,28 @@ public partial class MyPortfolioPlansDetails : BasePage
 			return;
 		}
 
-		ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan!.Name}' deleted successfully. Navigating to my portfolio plans page...");
-		var passAlertMessage = $"Portfolio plan '{SelectedPortfolioPlan!.Name}' deleted successfully.";
+		ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' deleted successfully. Navigating to my portfolio plans page...");
+		var passAlertMessage = $"Portfolio plan '{SelectedPortfolioPlan.Name}' deleted successfully.";
 		var passAlertType = "success";
 		await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS}?alertMessage={passAlertMessage}&alertType={passAlertType}";
 		NavigationManager.NavigateTo(nextUrl);
+	}
+
+	private async void BtnClickAnalyze()
+	{
+		ShowAlert("info", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
+		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+		var result = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+		if (!result.IsSuccess || result.Data is null)
+		{
+			ShowAlert("danger", result.Message ?? "Error analyzing portfolio plan.");
+			return;
+		}
+
+		SelectedPortfolioPlan.Metadata ??= new();
+		SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestsmp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		SelectedPortfolioPlan.Metadata.Analysis = result.Data.Analysis;
+		ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.");
 	}
 }
