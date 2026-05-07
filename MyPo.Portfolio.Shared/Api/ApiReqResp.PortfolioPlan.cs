@@ -9,6 +9,9 @@ public struct CreateOrUpdatePortfolioPlanReq
 	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Id { get; set; }
 
+	[JsonPropertyName("type")]
+	public string Type { get; set; }
+
 	[JsonPropertyName("portfolio_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? PortfolioId { get; set; }
 
@@ -26,6 +29,7 @@ public sealed class PortfolioPlanResp
 		return new PortfolioPlanResp
 		{
 			Id = pr.Id,
+			Type = pr.Type,
 			OwnerUserId = pr.OwnerUserId,
 			PortfolioId = pr.PortfolioId,
 			Name = pr.Name,
@@ -35,6 +39,9 @@ public sealed class PortfolioPlanResp
 
 	[JsonPropertyName("id")]
 	public string Id { get; set; } = default!;
+
+	[JsonPropertyName("type")]
+	public string Type { get; set; } = default!;
 
 	[JsonPropertyName("owner_id")]
 	public string OwnerUserId { get; set; } = default!;

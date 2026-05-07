@@ -3,4 +3,3 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Feat) Add Description to Portfolio Plan.
 - (Feat) Analyze portfolio plan using FinHub API.
-

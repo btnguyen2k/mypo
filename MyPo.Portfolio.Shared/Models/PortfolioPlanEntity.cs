@@ -3,10 +3,20 @@ using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
+
+
 public sealed class PortfolioPlanEntity : Entity<string>
 {
+	public const string PLAN_TYPE_ALLOCATION = "ALLOCATION";
+	public const string PLAN_TYPE_PL = "PL";
+
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
+
+	/// <summary>
+	/// Type of the plan, which can be either <see cref="PLAN_TYPE_ALLOCATION"/> or <see cref="PLAN_TYPE_PL"/>.
+	/// </summary>
+	public string Type { get; set; } = PLAN_TYPE_ALLOCATION;
 
 	/// <summary>
 	/// Id of the portfolio owner, which is the user id.
