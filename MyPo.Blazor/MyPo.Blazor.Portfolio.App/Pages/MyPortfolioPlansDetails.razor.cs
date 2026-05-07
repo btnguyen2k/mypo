@@ -89,11 +89,17 @@ public partial class MyPortfolioPlansDetails : BasePage
 		NavigationManager.NavigateTo(nextUrl);
 	}
 
+	private bool analyzing = false;
+
 	private async void BtnClickAnalyze()
 	{
+		if (analyzing) return;
+		analyzing = true;
+
 		ShowAlert("info", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var result = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+		analyzing = false;
 		if (!result.IsSuccess || result.Data is null)
 		{
 			ShowAlert("danger", result.Message ?? "Error analyzing portfolio plan.");
