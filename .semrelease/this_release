@@ -3,3 +3,5 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - (Feat) Add Description to Portfolio Plan.
 - (Feat) Analyze portfolio plan using FinHub API.
+- (Feat) Add P&L Portfolio Plan type.
+- (Deps) Migrate to CoreUI-Free-Bootrap v5.5.0

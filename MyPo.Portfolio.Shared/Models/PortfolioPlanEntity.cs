@@ -4,11 +4,12 @@ using MyPo.Shared.Models;
 namespace MyPo.Portfolio.Shared.Models;
 
 
-
 public sealed class PortfolioPlanEntity : Entity<string>
 {
 	public const string PLAN_TYPE_ALLOCATION = "ALLOCATION";
-	public const string PLAN_TYPE_PL = "PL";
+	public const string PLAN_TYPE_PL = "P&L";
+
+	public static readonly IEnumerable<string> ValidPlanTypes = [PLAN_TYPE_ALLOCATION, PLAN_TYPE_PL];
 
 	/// <inheritdoc />
 	public override string Id { get; set; } = Guid.NewGuid().ToString();
@@ -78,6 +79,9 @@ public sealed class HoldingTicker
 
 	[JsonPropertyName("shares")]
 	public decimal Shares { get; set; }
+
+	[JsonPropertyName("avg_price")]
+	public decimal AveragePrice { get; set; }
 
 	[JsonPropertyName("market_price")]
 	public decimal MarketPrice { get; set; }

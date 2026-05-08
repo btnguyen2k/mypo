@@ -9,6 +9,7 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolioPlansAdd : BasePage
 {
+	private string Type { get; set; } = PortfolioPlanEntity.PLAN_TYPE_ALLOCATION;
 	private string Name { get; set; } = string.Empty;
 	private string Description { get; set; } = string.Empty;
 	private string PortfolioId { get; set; } = string.Empty;
@@ -91,23 +92,24 @@ public partial class MyPortfolioPlansAdd : BasePage
 				ShowAlert("warning", "Ticker is required.");
 				return;
 			}
-			if (ticker.TargetAllocation <= 0)
+			if (ticker.TargetAllocation < 0)
 			{
 				HideUI = false;
 				(InvalidLine, InvalidComponent) = (ticker.Id, "Allocation");
-				ShowAlert("warning", "Target allocation must be greater than 0.");
+				ShowAlert("warning", "Target allocation must be >= 0.");
 				return;
 			}
 		}
-		if (TotalHoldingsPercent != 1.0m)
-		{
-			HideUI = false;
-			ShowAlert("warning", "Total allocation must be 100%.");
-			return;
-		}
+		// if (TotalHoldingsPercent != 1.0m)
+		// {
+		// 	HideUI = false;
+		// 	ShowAlert("warning", "Total allocation must be 100%.");
+		// 	return;
+		// }
 
 		var req = new CreateOrUpdatePortfolioPlanReq
 		{
+			Type = Type,
 			PortfolioId = PortfolioId,
 			Name = Name.Trim(),
 			Metadata = new()

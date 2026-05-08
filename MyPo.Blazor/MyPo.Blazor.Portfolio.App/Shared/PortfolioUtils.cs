@@ -31,8 +31,6 @@ public static partial class PortfolioUtils
     }
 
 	private static IJSObjectReference? jsLocalStorage;
-	private static IJSObjectReference? jsDatatable;
-	private static IJSObjectReference? jsDatetimePicker;
 
 	public static async ValueTask<IJSObjectReference> LoadJSLocalStorage(IJSRuntime JS)
 	{
@@ -43,6 +41,7 @@ public static partial class PortfolioUtils
 		return jsLocalStorage;
 	}
 
+	private static IJSObjectReference? jsDatatable;
 	public static async ValueTask<IJSObjectReference> LoadJSDatatable(IJSRuntime JS)
 	{
 		jsDatatable ??= await JS.InvokeAsync<IJSObjectReference>(
@@ -52,6 +51,7 @@ public static partial class PortfolioUtils
 		return jsDatatable;
 	}
 
+	private static IJSObjectReference? jsDatetimePicker;
 	public static async ValueTask<IJSObjectReference> LoadJSDatetimePicker(IJSRuntime JS)
 	{
 		jsDatetimePicker ??= await JS.InvokeAsync<IJSObjectReference>(
@@ -59,6 +59,16 @@ public static partial class PortfolioUtils
 			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/datetime-picker.js"
 		);
 		return jsDatetimePicker;
+	}
+
+	private static IJSObjectReference? jsCoreUIChipInput;
+	public static async ValueTask<IJSObjectReference> LoadJSCoreUIChipInput(IJSRuntime JS)
+	{
+		jsCoreUIChipInput ??= await JS.InvokeAsync<IJSObjectReference>(
+			"import",
+			$"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/coreui-chip-input.js"
+		);
+		return jsCoreUIChipInput;
 	}
 
 	public static string Excerpt(string? input, int maxLength = 60)

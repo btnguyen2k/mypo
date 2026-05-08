@@ -84,6 +84,12 @@ public partial class PortfolioController
 			return ResponseNoData(400, "Name is required.");
 		}
 
+		// validate type
+		if (!PortfolioPlanEntity.ValidPlanTypes.Contains(req.Type))
+		{
+			return ResponseNoData(400, $"Invalid plan type '{req.Type}'.");
+		}
+
 		// validate tickers
 		if (req.Metadata != null && req.Metadata.HoldingTickers != null)
 		{
@@ -93,16 +99,16 @@ public partial class PortfolioController
 				{
 					return ResponseNoData(400, "Ticker is required for all holding tickers.");
 				}
-				if (ticker.TargetAllocation <= 0)
+				if (ticker.TargetAllocation < 0)
 				{
-					return ResponseNoData(400, "Target allocation must be greater than 0 for all holding tickers.");
+					return ResponseNoData(400, "Target allocation must be >= 0 for all holding tickers.");
 				}
 			}
-			var totalAllocation = req.Metadata.HoldingTickers.Sum(ht => ht.TargetAllocation);
-			if (totalAllocation != 100)
-			{
-				return ResponseNoData(400, "Total allocation must be 100% for all holding tickers.");
-			}
+			// var totalAllocation = req.Metadata.HoldingTickers.Sum(ht => ht.TargetAllocation);
+			// if (totalAllocation != 100)
+			// {
+			// 	return ResponseNoData(400, "Total allocation must be 100% for all holding tickers.");
+			// }
 		}
 
 		return null;
@@ -148,6 +154,7 @@ public partial class PortfolioController
 					TargetAllocation = ticker.TargetAllocation,
 					Tags = ticker.Tags?.Trim() ?? string.Empty,
 					Shares = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol(), out var asset) ? asset.Quantity : 0,
+					AveragePrice = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol(), out var asset2) ? asset2.AveragePrice : 0,
 					MarketPrice = tickerInfoResp.Data.StockQuote?.MarketPrice ?? 0,
 					DividendYield = tickerInfoResp.Data.Dividend?.DividendYield ?? 0,
 					PayoutFrequency = tickerInfoResp.Data.Dividend?.PayoutFrequency ?? 0,
@@ -198,6 +205,7 @@ public partial class PortfolioController
 		var portfolioPlanRec = new PortfolioPlanEntity
 		{
 			// Id = Guid.NewGuid().ToString(),
+			Type = req.Type,
 			OwnerUserId = currentUser.Id,
 			PortfolioId = string.IsNullOrWhiteSpace(req.PortfolioId) ? null : req.PortfolioId.Trim(),
 			Name = req.Name.Trim(),
@@ -256,6 +264,7 @@ public partial class PortfolioController
 			return ResponseNoData(404, "Portfolio plan not found.");
 		}
 
+		existingPortfolioPlan.Type = req.Type;
 		existingPortfolioPlan.PortfolioId = string.IsNullOrWhiteSpace(req.PortfolioId) ? null : req.PortfolioId.Trim();
 		existingPortfolioPlan.Name = req.Name.Trim();
 		existingPortfolioPlan.Metadata ??= new PortfolioPlanMetadata();
