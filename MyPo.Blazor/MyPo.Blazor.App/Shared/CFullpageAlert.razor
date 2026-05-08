@@ -1,0 +1,71 @@
+﻿@namespace MyPo.Blazor.App.Shared
+
+<!--
+Razor component to render full-page CoreUI alert. Ref: https://coreui.io/bootstrap/docs/components/alerts/
+
+Sample usage:
+    <CAlert type="info" title="Alert Title">
+        <span>Alert body text goes here.</span>
+    </CAlert>
+-->
+
+<div class="container d-flex align-items-center min-vh-100">
+	<main class="container" style="max-width: 640px;">
+        <div class="alert @alertClass text-center" role="alert">
+			@if (!string.IsNullOrEmpty(title))
+			{
+            	<h1 class="alert-heading">
+					@if(type.ToLower() == "wait" || type.ToLower() == "waiting")
+					{
+						<span class="spinner-border me-2" role="status"></span>
+					}
+					else
+					{
+						<BIcon icon="@icon" extraClassName="me-2"/>
+					}
+					@title
+				</h1>
+			}
+			<div class="mb-0">
+				@ChildContent
+			</div>
+        </div>
+    </main>
+</div>
+
+@code {
+    /// <summary>
+    /// Alert type, one of "wait"/"waiting", "info", "warning", "error"/"danger", "success", "primary", "secondary", "auth"/"unauth"/"unauthorize"/"unauthorized". Default is "info".
+    /// The alert will display an icon corresponding to the type. The icon is taken from Bootstrap Icons.
+    /// </summary>
+    [Parameter]
+    public string type { get; set; } = string.Empty;
+
+	[Parameter]
+	public string title { get; set; } = string.Empty;
+
+    // property name must be ChildContent
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = default!;
+
+    private string icon => type.ToLower() switch
+        {
+            "warning" => "bi-exclamation-triangle",
+            "danger" or "error" => "bi-x-circle-fill",
+            "success" => "bi-check-circle",
+			"wait" or "waiting" => "bi-hourglass-split",
+			"auth" or "unauth" or "unauthorize" or "unauthorized" => "bi-shield-lock-fill",
+            _ => "bi-info-circle"
+        };
+
+    private string alertClass => type.ToLower() switch
+        {
+            "warning" => "alert-warning",
+            "danger" or "error" => "alert-danger",
+            "success" => "alert-success",
+            "primary" => "alert-primary",
+            "secondary" => "alert-secondary",
+			"auth" or "unauth" or "unauthorize" or "unauthorized" => "alert-danger",
+            _ => "alert-info",
+        };
+}
