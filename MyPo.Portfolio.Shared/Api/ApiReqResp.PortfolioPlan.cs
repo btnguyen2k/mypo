@@ -6,6 +6,23 @@ namespace MyPo.Portfolio.Shared.Api;
 
 public struct CreateOrUpdatePortfolioPlanReq
 {
+	public static CreateOrUpdatePortfolioPlanReq NewRequestFrom(PortfolioPlanEntity plan)
+	{
+		return NewRequestFrom(PortfolioPlanResp.BuildFrom(plan));
+	}
+
+	public static CreateOrUpdatePortfolioPlanReq NewRequestFrom(PortfolioPlanResp plan)
+	{
+		return new CreateOrUpdatePortfolioPlanReq
+		{
+			Id = plan.Id,
+			Type = plan.Type,
+			PortfolioId = plan.PortfolioId,
+			Name = plan.Name,
+			Metadata = plan.Metadata,
+		};
+	}
+
 	[JsonPropertyName("id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Id { get; set; }
 
@@ -73,7 +90,60 @@ public sealed class PortfolioPlanResp
 		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??"")}";
 	}
 
+	[JsonIgnore]
+	public decimal TotalBasicCost => Metadata?.HoldingTickers.Sum(ht => ht.Shares * ht.AveragePrice) ?? 0;
+
+	public string TotalBasicCostStr(MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalBasicCost, m?.PriceScale??1, m?.ValueFormat??"")}";
+	}
+
+	[JsonIgnore]
+	public decimal TotalUnsettledPnL => Metadata?.HoldingTickers.Sum(ht => ht.Shares * (ht.MarketPrice - ht.AveragePrice)) ?? 0;
+
+	public string TotalUnsettledPnLStr(MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalUnsettledPnL, m?.PriceScale??1, m?.ValueFormat??"")}";
+	}
+
+	[JsonIgnore]
+	public decimal TotalUnsettledPnLYield => TotalBasicCost > 0 ? TotalUnsettledPnL / TotalBasicCost * 100 : 0;
+
+	public string TotalUnsettledPnLYieldStr()
+	{
+		var yield = TotalUnsettledPnLYield;
+		return $"{(yield>=0?"+":"")}{yield:N1}%";
+	}
+
 	public string NumSharesStr(HoldingTicker ticker) => FormatUtils.FormatValueMaxDecimals(ticker.Shares, 4);
+
+	public decimal BasicCost(HoldingTicker ticker) => ticker.Shares * ticker.AveragePrice;
+
+	public string BasicCostStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var basicCost = BasicCost(ticker);
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(basicCost, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public decimal UnsettledPnL(HoldingTicker ticker) => ticker.Shares * (ticker.MarketPrice - ticker.AveragePrice);
+
+	public string UnsettledPnLStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var pnl = UnsettledPnL(ticker);
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(pnl, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public decimal UnsettledPnLYield(HoldingTicker ticker) => BasicCost(ticker) > 0 ? UnsettledPnL(ticker) / BasicCost(ticker) * 100 : 0;
+
+	public string UnsettledPnLYieldStr(HoldingTicker ticker)
+	{
+		var yield = UnsettledPnLYield(ticker);
+		return $"{(yield>=0?"+":"")}{yield:N1}%";
+	}
 
 	public string MarketPriceStr(HoldingTicker ticker, MarketDefResp? market = null)
 	{

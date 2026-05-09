@@ -67,13 +67,7 @@ public partial class MyPortfolioPlans : BasePage
 				continue;
 			}
 			SetBackgroundMsg($"⌛Updating portfolio plan '{plan.Name}'...");
-			var req = new CreateOrUpdatePortfolioPlanReq()
-			{
-				Id = plan.Id,
-				PortfolioId = plan.PortfolioId,
-				Name = plan.Name,
-				Metadata = plan.Metadata,
-			};
+			var req = CreateOrUpdatePortfolioPlanReq.NewRequestFrom(plan);
 			var updateResp = await apiClient.UpdateMyPortfolioPlanAsync(plan.Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
 			if (!updateResp.IsSuccess)
 			{

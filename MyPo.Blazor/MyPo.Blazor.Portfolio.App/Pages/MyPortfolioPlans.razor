@@ -3,6 +3,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared;
 @using MyPo.Blazor.App.Layout;
 @using MyPo.Portfolio.Shared.Identity;
+@using MyPo.Portfolio.Shared.Models;
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS)]
 @inherits BasePage
@@ -76,7 +77,9 @@
 										<div class="card plan-card h-100">
 											<div class="card-body">
 												<div class="d-flex justify-content-between align-items-start mb-2">
-													<h5 class="card-title mb-0">@(plan.Name)</h5>
+													<h5 class="card-title mb-0">
+														@(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL?"💸":"⚖️")@(plan.Name)
+													</h5>
 													<div class="dropdown">
 														<button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown" aria-expanded="false" @onclick:stopPropagation>
 															<BIcon icon="bi-three-dots-vertical" />
@@ -91,13 +94,29 @@
 												<p class="text-secondary small mb-2">@(plan.HoldingSymbols)</p>
 												@if(plan.Metadata is not null && !string.IsNullOrEmpty(plan.Metadata.Description))
 												{
-													<p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine())</p>
+													<p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine().Excerpt(50))</p>
 												}
 												<p class="text-secondary small mb-2">
 													<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
 												</p>
-												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@plan.EstTotalYearlyDividendStr() (@plan.EstTotalYearlyDividendYieldStr())</span></p>
-												<p class="text-muted small mb-0">Updated @((plan.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
+												<p class="h5 mb-1">
+													🏦@(plan.TotalMarketValueStr())
+													-
+													<span class="small">
+														@if(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL)
+														{
+															@(plan.TotalUnsettledPnL<0?"📉":"📈")
+															<span class="@(plan.TotalUnsettledPnL<0?"text-danger":"text-success")">
+																@($"{plan.TotalUnsettledPnLStr()} ({plan.TotalUnsettledPnLYieldStr()})")
+															</span>
+														}
+														else
+														{
+															@($"📅{plan.EstTotalYearlyDividendStr()} ({plan.EstTotalYearlyDividendYieldStr()})")
+														}
+													</span>
+												</p>
+												<p class="text-muted small mb-0">Refreshed @((plan.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
 											</div>
 										</div>
 									</div>

@@ -7,4 +7,10 @@ public static class StringExtensions
 			.Replace("\r", " ", StringComparison.Ordinal)
 			.Replace("\n", " ", StringComparison.Ordinal);
 	}
+
+	public static string Excerpt(this string str, int maxLength)
+	{
+		if (str.Length <= maxLength) return str;
+		return string.Concat(str.AsSpan(0, maxLength), "...");
+	}
 }
