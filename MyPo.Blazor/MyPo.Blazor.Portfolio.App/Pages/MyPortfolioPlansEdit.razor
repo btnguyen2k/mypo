@@ -39,11 +39,18 @@
 					{
 						<form>
 							<div class="row mb-2">
-								<div class="col-md-6 col-sm-12">
+								<div class="col-lg-4 col-sm-12">
 									<label for="pName">Name: (*)</label>
 									<input type="text" class="form-control" id="pName" placeholder="e.g. Long-Term Growth" @bind-value="Name">
 								</div>
-								<div class="col-md-6 col-sm-12">
+								<div class="col-lg-4 col-sm-12">
+									<label for="pType">Plan Type:</label>
+									<select class="form-select" id="pType" aria-label="Plan Type" @bind="Type">
+										<option value="@PortfolioPlanEntity.PLAN_TYPE_ALLOCATION">⚖️@PortfolioPlanEntity.PLAN_TYPE_ALLOCATION</option>
+										<option value="@PortfolioPlanEntity.PLAN_TYPE_PL">💸@PortfolioPlanEntity.PLAN_TYPE_PL</option>
+									</select>
+								</div>
+								<div class="col-lg-4 col-sm-12">
 									<label for="pPortfolioId">Linked Portfolio:</label>
 									<select class="form-select" id="pPortfolioId" aria-label="Linked Portfolio" @bind="PortfolioId">
 										<option value="@(string.Empty)">&nbsp;--Select Portfolio--</option>
@@ -78,7 +85,6 @@
 											{
 												<th class="col-3">Target Allocation %</th>
 											}
-											<th class="col-3">Target Allocation %</th>
 											<th class="col-4">Tags</th>
 											<th class="col-1">&nbsp;</th>
 										</tr>

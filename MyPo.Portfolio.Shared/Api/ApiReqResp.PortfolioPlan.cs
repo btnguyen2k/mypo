@@ -91,12 +91,12 @@ public sealed class PortfolioPlanResp
 	}
 
 	[JsonIgnore]
-	public decimal TotalBasicCost => Metadata?.HoldingTickers.Sum(ht => ht.Shares * ht.AveragePrice) ?? 0;
+	public decimal TotalCostBasic => Metadata?.HoldingTickers.Sum(ht => ht.Shares * ht.AveragePrice) ?? 0;
 
-	public string TotalBasicCostStr(MarketDefResp? market = null)
+	public string TotalCostBasicStr(MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
-		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalBasicCost, m?.PriceScale??1, m?.ValueFormat??"")}";
+		return $"{m?.CurrencySymbol??""} {FormatUtils.FormatValueWithScale(TotalCostBasic, m?.PriceScale??1, m?.ValueFormat??"")}";
 	}
 
 	[JsonIgnore]
@@ -109,7 +109,7 @@ public sealed class PortfolioPlanResp
 	}
 
 	[JsonIgnore]
-	public decimal TotalUnsettledPnLYield => TotalBasicCost > 0 ? TotalUnsettledPnL / TotalBasicCost * 100 : 0;
+	public decimal TotalUnsettledPnLYield => TotalCostBasic > 0 ? TotalUnsettledPnL / TotalCostBasic * 100 : 0;
 
 	public string TotalUnsettledPnLYieldStr()
 	{
@@ -119,13 +119,21 @@ public sealed class PortfolioPlanResp
 
 	public string NumSharesStr(HoldingTicker ticker) => FormatUtils.FormatValueMaxDecimals(ticker.Shares, 4);
 
-	public decimal BasicCost(HoldingTicker ticker) => ticker.Shares * ticker.AveragePrice;
+	public decimal AveragePrice(HoldingTicker ticker) => ticker.AveragePrice;
 
-	public string BasicCostStr(HoldingTicker ticker, MarketDefResp? market = null)
+	public string AveragePriceStr(HoldingTicker ticker, MarketDefResp? market = null)
 	{
 		var m = market ?? Market;
-		var basicCost = BasicCost(ticker);
-		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(basicCost, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(ticker.AveragePrice, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
+	}
+
+	public decimal CostBasic(HoldingTicker ticker) => ticker.Shares * ticker.AveragePrice;
+
+	public string CostBasicStr(HoldingTicker ticker, MarketDefResp? market = null)
+	{
+		var m = market ?? Market;
+		var costBasic = CostBasic(ticker);
+		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(costBasic, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
 	public decimal UnsettledPnL(HoldingTicker ticker) => ticker.Shares * (ticker.MarketPrice - ticker.AveragePrice);
@@ -137,7 +145,7 @@ public sealed class PortfolioPlanResp
 		return $"{m?.CurrencySymbol ?? ""} {FormatUtils.FormatValueWithScale(pnl, m?.PriceScale ?? 1, m?.ValueFormat ?? "")}";
 	}
 
-	public decimal UnsettledPnLYield(HoldingTicker ticker) => BasicCost(ticker) > 0 ? UnsettledPnL(ticker) / BasicCost(ticker) * 100 : 0;
+	public decimal UnsettledPnLYield(HoldingTicker ticker) => CostBasic(ticker) > 0 ? UnsettledPnL(ticker) / CostBasic(ticker) * 100 : 0;
 
 	public string UnsettledPnLYieldStr(HoldingTicker ticker)
 	{
