@@ -20,17 +20,20 @@ public interface IFinHubClient
 	/// <returns></returns>
 	public Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
+	public const string PORTFOLIO_ANALYSIS_TEMPLATE_ALLOCATION = "allocation";
+	public const string PORTFOLIO_ANALYSIS_TEMPLATE_SWING = "swing";
+	public const string PORTFOLIO_ANALYSIS_TEMPLATE_HYBRID = "hybrid";
+
 	/// <summary>
 	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a portfolio.
 	/// </summary>
-	/// <param name="holdings">Current holdings, format {ticker:allocation}</param>
-	/// <param name="country"></param>
-	/// <param name="investorTheme"></param>
+	/// <param name="portfolio">Current portfolio info</param>
+	/// <param name="template">Optional analysis template to use, either "allocation", "swing" or "hybrid"</param>
 	/// <param name="baseUrl"></param>
 	/// <param name="httpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(IDictionary<string, decimal> holdings, string country, string? investorTheme, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq portfolio, string? template, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
 	/*----------------------------------------------------------------------*/
 

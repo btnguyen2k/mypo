@@ -1,0 +1,33 @@
+﻿using System.Text.Json.Serialization;
+
+namespace MyPo.Portfolio.Api.Services;
+
+public sealed class AnalyzePortfolioReq
+{
+	[JsonPropertyName("country")]
+	public string Country { get; set; } = "";
+
+	[JsonPropertyName("investor_theme")]
+	public string? InvestorTheme { get; set; }
+
+	[JsonPropertyName("current_allocation")]
+	public List<HoldingTickerReq> CurrentAllocation { get; set; } = [];
+}
+
+public sealed class HoldingTickerReq
+{
+	[JsonPropertyName("ticker")]
+	public string Ticker { get; set; } = "";
+
+	[JsonPropertyName("num_shares")]
+	public decimal NumShares { get; set; }
+
+	[JsonPropertyName("avg_price")]
+	public decimal AvgPrice { get; set; }
+
+	[JsonPropertyName("market_price")]
+	public decimal MarketPrice { get; set; }
+
+	[JsonPropertyName("target_allocation")]
+	public decimal TargetAllocation { get; set; }
+}

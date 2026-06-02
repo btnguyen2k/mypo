@@ -6,5 +6,5 @@ namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioPlanDetails;
 public abstract class CBasePlanView : ComponentBase
 {
 	[Parameter]
-	public PortfolioPlanResp Plan { get; set; }
+	public PortfolioPlanResp Plan { get; set; } = default!;
 }

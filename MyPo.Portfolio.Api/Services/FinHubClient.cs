@@ -30,15 +30,15 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	}
 
     /// <inheritdoc/>
-    public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(IDictionary<string, decimal> holdings, string country, string? investorTheme, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq portfolio, string? template, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO;
-        var requestData = new
-        {
-            current_allocation = holdings,
-            country = country,
-            investor_theme = investorTheme
-        };
+		var queryParams = new Dictionary<string, string?> {
+			{ "template", template },
+		};
+        var endpoint = string.IsNullOrEmpty(template)
+			? IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO
+			: QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO, queryParams);
+        var requestData = portfolio;
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Post, baseUrl, endpoint,

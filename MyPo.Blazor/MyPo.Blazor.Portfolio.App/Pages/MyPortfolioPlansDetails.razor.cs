@@ -95,13 +95,31 @@ public partial class MyPortfolioPlansDetails : BasePage
 		if (analyzing) return;
 		analyzing = true;
 
-		ShowAlert("info", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
+		ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
+		_ = Task.Run(async () =>
+		{
+			var start = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			while (analyzing)
+			{
+				await Task.Delay(1000);
+				var delta = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - start;
+				if (analyzing)
+				{
+					ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait... ({delta}s)");
+				}
+			}
+		});
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var result = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
 		analyzing = false;
 		if (!result.IsSuccess || result.Data is null)
 		{
 			ShowAlert("danger", result.Message ?? "Error analyzing portfolio plan.");
+			return;
+		}
+		if (result.Data.LLMError)
+		{
+			ShowAlert("danger", $"Portfolio analysis completed with LLM error: {result.Data.LLMErrorMsg}");
 			return;
 		}
 
