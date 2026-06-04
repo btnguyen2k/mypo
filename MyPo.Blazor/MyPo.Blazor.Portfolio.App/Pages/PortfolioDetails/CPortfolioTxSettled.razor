@@ -54,7 +54,7 @@
 					</td>
 					<td class="text-end w-auto text-nowrap">
 						@(tx.Market?.CurrencySymbol??"")
-						@(PortfolioUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null))
+						@(FormatUtils.FormatValueWithScale(tx.TxValue, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null))
 					</td>
 					<td class="text-center w-auto">
 						@(tx.Market?.Currency??"--")

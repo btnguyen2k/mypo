@@ -29,21 +29,29 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 		return await ReadAndCloseResponseAsync<DividendEventAnalysis>(httpResult, cancellationToken);
 	}
 
-    /// <inheritdoc/>
-    public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq portfolio, string? template, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	/// <inheritdoc/>
+    public async Task<ApiResp<PortfolioAnalysis>> BuildPortfolioAsync(BuildPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-		var queryParams = new Dictionary<string, string?> {
-			{ "template", template },
-		};
-        var endpoint = string.IsNullOrEmpty(template)
-			? IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO
-			: QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO, queryParams);
-        var requestData = portfolio;
+        var endpoint = IFinHubClient.API_FINHUB_AI_BUILD_PORTFOLIO;
 		using var httpResult = await BuildAndSendRequestAsync(
 			httpClient,
 			HttpMethod.Post, baseUrl, endpoint,
 			NoAuth,
-			requestData,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO;
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			NoAuth,
+			req,
 			cancellationToken
 		);
 		return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);

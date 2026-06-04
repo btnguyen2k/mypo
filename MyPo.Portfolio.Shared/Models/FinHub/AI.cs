@@ -79,32 +79,36 @@ public abstract class BaseAIResult
 	public string? LLMResponse { get; set; }
 }
 
-public sealed class PortfolioAnalysis : BaseAIResult
+public class AnalysisResult : BaseAIResult
 {
 	[JsonPropertyName("analysis")]
 	public string Analysis { get; set; } = string.Empty;
 }
 
-public sealed class DividendEventAnalysis
+public sealed class PortfolioAnalysis : AnalysisResult
+{
+}
+
+public sealed class DividendEventAnalysis : EventBase
 {
 	/* base info */
 
-	[JsonPropertyName("overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public SymbolOverview? Overview { get; set; }
+	// [JsonPropertyName("overview"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	// public SymbolOverview? Overview { get; set; }
 
 	[JsonPropertyName("price")]
 	public decimal Price { get; set; }
 
-	[JsonPropertyName("ex_div_date_timestamp")]
-	public int ExDivTimestamp { get; set; }
+	// [JsonPropertyName("ex_div_date_timestamp")]
+	// public int ExDivTimestamp { get; set; }
 
-	[JsonPropertyName("ex_div_date")]
-	public string ExDivTimestampStr { get; set; } = string.Empty;
+	// [JsonPropertyName("ex_div_date")]
+	// public string ExDivTimestampStr { get; set; } = string.Empty;
 
-	[JsonIgnore]
-	public DateTimeOffset ExDivDate => !string.IsNullOrEmpty(ExDivTimestampStr)
-		? DateTimeOffset.TryParse(ExDivTimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime()
-		: DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime();
+	// [JsonIgnore]
+	// public DateTimeOffset ExDivDate => !string.IsNullOrEmpty(ExDivTimestampStr)
+	// 	? DateTimeOffset.TryParse(ExDivTimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime()
+	// 	: DateTimeOffset.FromUnixTimeSeconds(ExDivTimestamp).ToUniversalTime();
 
 	[JsonPropertyName("div_amount")]
 	public decimal DivAmount { get; set; }
@@ -153,6 +157,9 @@ public sealed class DividendEventAnalysis
 
 	[JsonPropertyName("llm_error_msg"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? LLMErrorMsg { get; set; }
+
+	// [JsonPropertyName("llm_response"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	// public string? LLMResponse { get; set; }
 
 	[JsonPropertyName("search_summary"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? SearchSummary { get; set; }

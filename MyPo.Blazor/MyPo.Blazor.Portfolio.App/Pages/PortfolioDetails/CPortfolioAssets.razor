@@ -35,7 +35,7 @@ else
 					<div class="text-muted small">Total Cost</div>
 					<div class="h5 mb-0">
 						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalCost<=0?"--":PortfolioUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+						@(TotalCost<=0?"--":FormatUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 					</div>
 				</div>
 			</div>
@@ -46,7 +46,7 @@ else
 					<div class="text-muted small">Market Value</div>
 					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
 						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+						@(TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 					</div>
 				</div>
 			</div>
@@ -57,7 +57,7 @@ else
 					<div class="text-muted small">Unsettled P/L</div>
 					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
 						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalCost<=0||TotalMarketValue<=0?"--":PortfolioUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+						@(TotalCost<=0||TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
 						(@(
 							TotalCost>0&&TotalMarketValue>0
 								? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
@@ -101,29 +101,29 @@ else
 							</td>
 							<td class="text-end text-nowrap w-auto">
 								@(asset.Market?.CurrencySymbol??"")
-								@(PortfolioUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+								@(FormatUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 							</td>
 							<td class="text-end text-nowrap w-auto">
 								@(asset.Market?.CurrencySymbol??"")
-								@(PortfolioUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+								@(FormatUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 							</td>
 							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
 								@(asset.Market?.CurrencySymbol??"")
 								@(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
-									? $"{PortfolioUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+									? $"{FormatUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
 									: "--"
 								)
 							</td>
 							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
 								@(asset.Market?.CurrencySymbol??"")
 								@(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
-									? $"{PortfolioUtils.FormatValueWithScale(lp8326*asset.Quantity, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+									? $"{FormatUtils.FormatValueWithScale(lp8326*asset.Quantity, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
 									: "--"
 								)
 							</td>
 							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
 								@(asset.Market?.CurrencySymbol??"")
-								@(PortfolioUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+								@(FormatUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
 								(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"--"))
 							</td>
 							<td class="text-center text-nowrap w-auto">
@@ -236,7 +236,7 @@ else
 										</td>
 										<td class="text-end">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(PortfolioUtils.FormatValueWithScale(SelectedAsset.AveragePrice, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+											@(FormatUtils.FormatValueWithScale(SelectedAsset.AveragePrice, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
 										</td>
 									</tr>
 									<tr>
@@ -245,7 +245,7 @@ else
 										</td>
 										<td class="text-end">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(PortfolioUtils.FormatValueWithScale(SelectedAsset.TotalCost, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+											@(FormatUtils.FormatValueWithScale(SelectedAsset.TotalCost, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
 										</td>
 									</tr>
 								</table>
@@ -283,7 +283,7 @@ else
 										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
 											@(UnsettledPnLMap.TryGetValue(SelectedAsset.Id, out var upnl2520)
-												? $"{PortfolioUtils.FormatValueWithScale(upnl2520, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+												? $"{FormatUtils.FormatValueWithScale(upnl2520, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
 												: "--"
 											)
 										</td>
@@ -295,7 +295,7 @@ else
 										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
 											@(SelectedAsset.Market?.CurrencySymbol??"")
 											@(MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
-												? $"{PortfolioUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+												? $"{FormatUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
 												: "--"
 											)
 											(@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var upnl0763)?upnl0763.ToString("N2")+"%":"--"))
@@ -309,7 +309,7 @@ else
 											@(SelectedAsset.Quantity<=0
 												? "--"
 												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
-												  PortfolioUtils.FormatValueWithScale(
+												  FormatUtils.FormatValueWithScale(
 													MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
 														? lp7317 * SelectedAsset.Quantity
 														: 0,

@@ -10,7 +10,7 @@ public static class StringExtensions
 
 	public static string Excerpt(this string str, int maxLength)
 	{
-		if (str.Length <= maxLength) return str;
+		if (str.Length <= maxLength || maxLength < 1) return str;
 		return string.Concat(str.AsSpan(0, maxLength), "...");
 	}
 }

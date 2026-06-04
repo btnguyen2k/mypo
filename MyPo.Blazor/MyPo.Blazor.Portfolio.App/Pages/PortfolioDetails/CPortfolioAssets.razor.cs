@@ -4,6 +4,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
@@ -76,7 +77,7 @@ public partial class CPortfolioAssets : CBase
 					MarketPricesMap[asset.Id] = latestPrice;
 					var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;
 					UnsettledPnLMap[asset.Id] = unsettledPnL;
-					UnsettledPnLPercentMap[asset.Id] = PortfolioUtils.CalculatePercentageChange(
+					UnsettledPnLPercentMap[asset.Id] = FormatUtils.CalculatePercentageChange(
 						asset.AveragePrice,
 						latestPrice
 					);

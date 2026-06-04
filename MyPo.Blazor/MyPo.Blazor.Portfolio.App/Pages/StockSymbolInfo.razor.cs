@@ -7,7 +7,9 @@ using MyPo.Libs.Opurator;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Api;
+using System.Globalization;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -64,6 +66,12 @@ public sealed partial class StockSymbolInfo : BasePage
 		}
 	}
 
+	private static string FormatDecimal(decimal? value, string format) =>
+		value.HasValue ? value.Value.ToString(format, CultureInfo.InvariantCulture) : "N/A";
+
+	private static string FormatLong(long? value) =>
+		value.HasValue ? value.Value.ToString("N0", CultureInfo.InvariantCulture) : "N/A";
+
 	private string BuildAnalysisInputs()
 	{
 		var inputs = $"""
@@ -77,42 +85,42 @@ public sealed partial class StockSymbolInfo : BasePage
 
 		## Financials
 
-		- Total cash: {((SymbolInfo?.TotalCash??0)>0?SymbolInfo?.TotalCash.ToString("F0"):"N/A")}
-		- Total debt: {((SymbolInfo?.TotalDebt??0)>0?SymbolInfo?.TotalDebt.ToString("F0"):"N/A")}
-		- Total revenue: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.TotalRevenue.ToString("F0"):"N/A")}
-		- Revenue growth: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.RevenueGrowth.ToString("P2"):"N/A")}
-		- Earnings growth: {((SymbolInfo?.TotalRevenue??0)>0?SymbolInfo?.EarningsGrowth.ToString("P2"):"N/A")}
-		- EBITDA: {((SymbolInfo?.Ebitda??0)>0?SymbolInfo?.Ebitda.ToString("F0"):"N/A")}
-		- EBITDA margins: {((SymbolInfo?.Ebitda??0)>0?SymbolInfo?.EbitdaMargins.ToString("P2"):"N/A")}
-		- Gross margins: {SymbolInfo?.GrossMargins.ToString("P2")??"N/A"}
-		- Operating margins: {SymbolInfo?.OperatingMargins.ToString("P2")??"N/A"}
-		- Profit margins: {SymbolInfo?.ProfitMargins.ToString("P2")??"N/A"}
+		- Total cash: {FormatLong(SymbolInfo?.TotalCash)}
+		- Total debt: {FormatLong(SymbolInfo?.TotalDebt)}
+		- Total revenue: {FormatLong(SymbolInfo?.TotalRevenue)}
+		- Revenue growth: {FormatDecimal(SymbolInfo?.RevenueGrowth, "P2")}
+		- Earnings growth: {FormatDecimal(SymbolInfo?.EarningsGrowth, "P2")}
+		- EBITDA: {FormatLong(SymbolInfo?.Ebitda)}
+		- EBITDA margins: {FormatDecimal(SymbolInfo?.EbitdaMargins, "P2")}
+		- Gross margins: {FormatDecimal(SymbolInfo?.GrossMargins, "P2")}
+		- Operating margins: {FormatDecimal(SymbolInfo?.OperatingMargins, "P2")}
+		- Profit margins: {FormatDecimal(SymbolInfo?.ProfitMargins, "P2")}
 
 
 		## Valuation
 
-		- Market capitalization: {SymbolInfo?.StockQuote?.MarketCap.ToString("F0")??"N/A"}
-		- Current price: {SymbolInfo?.StockQuote?.MarketPrice.ToString("F2")??"N/A"}
-		- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? (SymbolInfo.StockQuote.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0") : "N/A")}
-		- Trailing EPS: {SymbolInfo?.StockQuote?.TrailingEps.ToString("F2")??"N/A"}
-		- Forward EPS: {SymbolInfo?.StockQuote?.ForwardEps.ToString("F2")??"N/A"}
-		- Trailing P/E: {SymbolInfo?.StockQuote?.TrailingPE.ToString("F2")??"N/A"}
-		- Forward P/E: {SymbolInfo?.StockQuote?.ForwardPE.ToString("F2")??"N/A"}
+		- Market capitalization: {(SymbolInfo?.StockQuote?.MarketCap > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockQuote!.MarketCap.Value) : "N/A")}
+		- Current price: {FormatDecimal(SymbolInfo?.StockQuote?.MarketPrice, "F2")}
+		- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? ((decimal)SymbolInfo.StockQuote!.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0", CultureInfo.InvariantCulture) : "N/A")}
+		- Trailing EPS: {FormatDecimal(SymbolInfo?.StockQuote?.TrailingEps, "F2")}
+		- Forward EPS: {FormatDecimal(SymbolInfo?.StockQuote?.ForwardEps, "F2")}
+		- Trailing P/E: {FormatDecimal(SymbolInfo?.StockQuote?.TrailingPE, "F2")}
+		- Forward P/E: {FormatDecimal(SymbolInfo?.StockQuote?.ForwardPE, "F2")}
 
 
 		## Technical Indicators
 
-		- 52-week low/high: {SymbolInfo?.StockQuote?.FiftyTwoWeekLow.ToString("F2")??"N/A"} / {SymbolInfo?.StockQuote?.FiftyTwoWeekHigh.ToString("F2")??"N/A"}
-		- Beta: {SymbolInfo?.StockQuote?.Beta.ToString("F2")??"N/A"}
-		- MA10: {SymbolInfo?.StockHistory?.MA10.ToString("F2")??"N/A"}
-		- MA20: {SymbolInfo?.StockHistory?.MA20.ToString("F2")??"N/A"}
-		- MA50: {SymbolInfo?.StockHistory?.MA50.ToString("F2")??"N/A"}
-		- MA100: {SymbolInfo?.StockHistory?.MA100.ToString("F2")??"N/A"}
-		- MA200: {SymbolInfo?.StockHistory?.MA200.ToString("F2")??"N/A"}
-		- RSI-14: {SymbolInfo?.StockHistory?.RSI14.ToString("F2")??"N/A"}
-		- Current volume ({((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")}): {SymbolInfo?.StockQuote?.MarketVolume.ToString("F0")??"N/A"}
-		- Yesterday volume: {SymbolInfo?.StockHistory?.YesterdayVolume.ToString("F0")??"N/A"}
-		- 30-day average volume: {SymbolInfo?.StockHistory?.AverageVolume30d.ToString("F0")??"N/A"}
+		- 52-week low/high: {FormatDecimal(SymbolInfo?.StockQuote?.FiftyTwoWeekLow, "F2")} / {FormatDecimal(SymbolInfo?.StockQuote?.FiftyTwoWeekHigh, "F2")}
+		- Beta: {FormatDecimal(SymbolInfo?.StockQuote?.Beta, "F2")}
+		- MA10: {FormatDecimal(SymbolInfo?.StockHistory?.MA10, "F2")}
+		- MA20: {FormatDecimal(SymbolInfo?.StockHistory?.MA20, "F2")}
+		- MA50: {FormatDecimal(SymbolInfo?.StockHistory?.MA50, "F2")}
+		- MA100: {FormatDecimal(SymbolInfo?.StockHistory?.MA100, "F2")}
+		- MA200: {FormatDecimal(SymbolInfo?.StockHistory?.MA200, "F2")}
+		- RSI-14: {FormatDecimal(SymbolInfo?.StockHistory?.RSI14, "F2")}
+		- Current volume ({((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")}) : {(SymbolInfo?.StockQuote?.MarketVolume > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockQuote!.MarketVolume.Value) : "N/A")}
+		- Yesterday volume: {(SymbolInfo?.StockHistory?.YesterdayVolume > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockHistory!.YesterdayVolume) : "N/A")}
+		- 30-day average volume: {(SymbolInfo?.StockHistory?.AverageVolume30d > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockHistory!.AverageVolume30d) : "N/A")}
 		""";
 
 		var historyData = SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[];

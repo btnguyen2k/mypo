@@ -2,6 +2,7 @@
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
@@ -20,7 +21,7 @@ public partial class CPortfolioTxSettled
 			RefItemCode = string.Empty,
 			RefMarketId = string.Empty,
 		};
-		TxTime = Tx.TxTime.ToString(PortfolioUtils.DEFAULT_DATETIME_PICKER_FORMAT);
+		TxTime = Tx.TxTime.ToString(FormatUtils.DEFAULT_DATETIME_PICKER_FORMAT);
 		TxId = string.Empty;
 		CloseAlert();
 	}

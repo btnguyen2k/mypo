@@ -4,6 +4,7 @@ using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
@@ -68,7 +69,7 @@ public partial class CPortfolioTxSettled : CBase
 		}
 
 		// validate time
-		var parsedDatetime = PortfolioUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
+		var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
 		if (parsedDatetime == null)
 		{
 			var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");

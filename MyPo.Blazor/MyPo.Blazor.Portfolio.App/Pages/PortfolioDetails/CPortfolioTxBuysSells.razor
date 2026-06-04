@@ -69,10 +69,10 @@
 						<td class="text-center text-nowrap w-auto">@(tx.Time.ToString("yyyy-MM-dd HH:mm"))</td>
 						<td class="text-start">@(tx.Market?.Code??"--"):@(tx.ItemCode)</td>
 						<td class="text-end w-auto">@(tx.QuantityStr)</td>
-						<td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-						<td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty} {PortfolioUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+						<td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
 						<td class="text-center text-nowrap w-auto">
 							<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
 								<Authorized>
@@ -213,11 +213,11 @@
 					</div>
 				</form>
 				<span class="small text-muted">
-					Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
+					Tx value: @(FormatUtils.FormatValueWithScale(Tx.Quantity*Tx.Price, Market?.PriceScale??1))
 					/
-					Total fee: @(PortfolioUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+					Total fee: @(FormatUtils.FormatValueWithScale(Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
 					/
-					Total Cost: @(PortfolioUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
+					Total Cost: @(FormatUtils.FormatValueWithScale(Tx.Quantity*Tx.Price+Tx.FeeTx??0+Tx.FeeTax??0+Tx.FeeOther??0, Market?.PriceScale??1))
 				</span>
 			}
 		</div>
@@ -329,11 +329,11 @@
 				</div>
 			</form>
 			<span class="small text-muted">
-				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
+				Tx value: @(FormatUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee+tax: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				Total fee+tax: @(FormatUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
-				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
+				Total value: @(FormatUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
 		</div>
 		<div class="card-footer">
@@ -443,11 +443,11 @@
 				</div>
 			</form>
 			<span class="small text-muted">
-				Tx value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
+				Tx value: @(FormatUtils.FormatValueWithScale(Tx.TxValue, Market?.PriceScale??1))
 				/
-				Total fee+tax: @(PortfolioUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
+				Total fee+tax: @(FormatUtils.FormatValueWithScale(Tx.TotalFees, Market?.PriceScale??1))
 				/
-				Total value: @(PortfolioUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
+				Total value: @(FormatUtils.FormatValueWithScale(Tx.TxValue+(Tx.Type==TxBuySellEntity.TX_TYPE_BUY?Tx.TotalFees:-Tx.TotalFees), Market?.PriceScale??1))
 			</span>
 		</div>
 		<div class="card-footer">

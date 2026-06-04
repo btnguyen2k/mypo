@@ -7,31 +7,31 @@ public class EventBase
 	[JsonPropertyName("symbol")]
 	public string Symbol { get; set; } = string.Empty;
 
-	[JsonPropertyName("exchange")]
-	public string Exchange { get; set; } = string.Empty;
+	[JsonPropertyName("exchange"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Exchange { get; set; }
 
-	[JsonPropertyName("company_name")]
-	public string CompanyName { get; set; } = string.Empty;
+	[JsonPropertyName("company_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? CompanyName { get; set; }
 
 	[JsonPropertyName("timestamp")]
 	public int Timestamp { get; set; }
 
-	[JsonPropertyName("date")]
-	public string TimestampStr { get; set; } = string.Empty;
+	[JsonPropertyName("date"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? TimestampStr { get; set; }
 
 	[JsonIgnore]
 	public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
 		? DateTimeOffset.TryParse(TimestampStr, out var dt) ? dt.ToUniversalTime() : DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime()
 		: DateTimeOffset.FromUnixTimeSeconds(Timestamp).ToUniversalTime();
 
-	[JsonPropertyName("event_category")]
-	public string EventCategory { get; set; } = string.Empty;
+	[JsonPropertyName("event_category"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? EventCategory { get; set; }
 
-	[JsonPropertyName("source_name")]
-	public string SourceName { get; set; } = string.Empty;
+	[JsonPropertyName("source_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? SourceName { get; set; }
 
-	[JsonPropertyName("link")]
-	public string Link { get; set; } = string.Empty;
+	[JsonPropertyName("link"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Link { get; set; }
 }
 
 public sealed class UpcomingDividendEvent : EventBase
@@ -48,8 +48,8 @@ public sealed class UpcomingDividendEvent : EventBase
 	[JsonPropertyName("currency")]
 	public string Currency { get; set; } = string.Empty;
 
-	[JsonPropertyName("payment_date")]
-	public string PaymentDate { get; set; } = string.Empty;
+	[JsonPropertyName("payment_date"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? PaymentDate { get; set; }
 
 	[JsonPropertyName("analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public DividendEventAnalysis? Analysis { get; set; }
@@ -57,23 +57,23 @@ public sealed class UpcomingDividendEvent : EventBase
 
 public sealed class UpcomingEarningsEvent : EventBase
 {
-	[JsonPropertyName("report_period")]
-	public string ReportPeriod { get; set; } = string.Empty;
+	[JsonPropertyName("report_period"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? ReportPeriod { get; set; }
 
-	[JsonPropertyName("status")]
-	public string Status { get; set; } = string.Empty;
+	[JsonPropertyName("status"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Status { get; set; }
 }
 
 public sealed class ListingEvent : EventBase
 {
-	[JsonPropertyName("sector")]
-	public string Sector { get; set; } = string.Empty;
+	[JsonPropertyName("sector"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Sector { get; set; }
 
-	[JsonPropertyName("industry")]
-	public string Industry { get; set; } = string.Empty;
+	[JsonPropertyName("industry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Industry { get; set; }
 
-	[JsonPropertyName("principal_activities")]
-	public string PrincipalActivities { get; set; } = string.Empty;
+	[JsonPropertyName("principal_activities"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? PrincipalActivities { get; set; }
 
 	[JsonPropertyName("price")]
 	public decimal Price { get; set; }
@@ -90,20 +90,20 @@ public sealed class ListingEvent : EventBase
 
 public sealed class ListingEventAnalysis
 {
-	[JsonPropertyName("status")]
-	public string Status { get; set; } = string.Empty;
+	[JsonPropertyName("status"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Status { get; set; }
 
-	[JsonPropertyName("data_quality")]
-	public string DataQuality { get; set; } = string.Empty;
+	[JsonPropertyName("data_quality"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? DataQuality { get; set; }
 
-	[JsonPropertyName("search_findings")]
-	public string SearchFindings { get; set; } = string.Empty;
+	[JsonPropertyName("search_findings"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? SearchFindings { get; set; }
 
-	[JsonPropertyName("stance")]
-	public string Stance { get; set; } = string.Empty;
+	[JsonPropertyName("stance"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Stance { get; set; }
 
-	[JsonPropertyName("catalyst")]
-	public string Catalyst { get; set; } = string.Empty;
+	[JsonPropertyName("catalyst"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Catalyst { get; set; }
 
 	[JsonPropertyName("risks"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public IList<string>? Risks { get; set; }
@@ -114,11 +114,11 @@ public sealed class ListingEventAnalysis
 
 public sealed class ListingOutlook
 {
-	[JsonPropertyName("direction")]
-	public string Direction { get; set; } = string.Empty;
+	[JsonPropertyName("direction"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Direction { get; set; }
 
-	[JsonPropertyName("reason")]
-	public string Reason { get; set; } = string.Empty;
+	[JsonPropertyName("reason"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Reason { get; set; }
 
 	[JsonPropertyName("confidence")]
 	public int Confidence { get; set; }

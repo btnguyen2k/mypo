@@ -6,7 +6,6 @@ namespace MyPo.Portfolio.Api.Services;
 public interface IFinHubClient
 {
 	public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT = "/ai/analyze_dividend_event";
-	public const string API_FINHUB_AI_ANALYZE_PORTFOLIO = "/ai/analyze_portfolio";
 
 	/// <summary>
 	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/> to analyze a dividend event.
@@ -20,20 +19,29 @@ public interface IFinHubClient
 	/// <returns></returns>
 	public Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
-	public const string PORTFOLIO_ANALYSIS_TEMPLATE_ALLOCATION = "allocation";
-	public const string PORTFOLIO_ANALYSIS_TEMPLATE_SWING = "swing";
-	public const string PORTFOLIO_ANALYSIS_TEMPLATE_HYBRID = "hybrid";
+	public const string API_FINHUB_AI_BUILD_PORTFOLIO = "/ai/build_portfolio";
 
 	/// <summary>
-	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a portfolio.
+	/// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/> to build a new portfolio.
 	/// </summary>
-	/// <param name="portfolio">Current portfolio info</param>
-	/// <param name="template">Optional analysis template to use, either "allocation", "swing" or "hybrid"</param>
+	/// <param name="req">The portfolio building request</param>
 	/// <param name="baseUrl"></param>
 	/// <param name="httpClient"></param>
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
-	public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq portfolio, string? template, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+	public Task<ApiResp<PortfolioAnalysis>> BuildPortfolioAsync(BuildPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+	public const string API_FINHUB_AI_ANALYZE_PORTFOLIO = "/ai/analyze_portfolio";
+
+	/// <summary>
+	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a an existing portfolio.
+	/// </summary>
+	/// <param name="req">The portfolio review request</param>
+	/// <param name="baseUrl"></param>
+	/// <param name="httpClient"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
 	/*----------------------------------------------------------------------*/
 

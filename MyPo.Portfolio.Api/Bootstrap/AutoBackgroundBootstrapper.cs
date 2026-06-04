@@ -101,7 +101,7 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 				OwnerId = ownerId,
 				MarketId = marketId,
 				ItemCode = e.Symbol?.ToUpper()??CheckpointEntity.NON_ITEM,
-				EventType = e.EventCategory.Equals("DIVIDEND", StringComparison.OrdinalIgnoreCase) ? MarketEventEntity.EVENT_DIVIDEND : MarketEventEntity.EVENT_DISTRIBUTION,
+				EventType = MarketEventEntity.EVENT_DISTRIBUTION.Equals(e.EventCategory, StringComparison.OrdinalIgnoreCase) ? MarketEventEntity.EVENT_DISTRIBUTION : MarketEventEntity.EVENT_DIVIDEND,
 				EventTime = e.Date,
 				Metadata = new()
 				{
@@ -111,7 +111,7 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					Link = e.Link,
 					Status = e.Status,
 					Currency = e.Currency,
-					Capital = e.Analysis?.Overview?.MarketCap ?? 0,
+					// Capital = e.Analysis?.Overview?.MarketCap ?? 0,
 					Dividend = new()
 					{
 						PaymentDate = e.PaymentDate,
@@ -148,10 +148,10 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
 					CompanyName = e.CompanyName,
 					SourceName = e.SourceName,
 					Link = e.Link,
-					Status = e.Status.Trim().ToLower(),
+					Status = e.Status?.Trim().ToLower() ?? "n/a",
 					Earnings = new()
 					{
-						ReportPeriod = e.ReportPeriod.Trim().ToLower(),
+						ReportPeriod = e.ReportPeriod?.Trim().ToLower() ?? "n/a",
 					},
 				},
 			};

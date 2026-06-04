@@ -18,7 +18,7 @@
 	<td>
 		@_indent<BIcon icon="bi-diagram-3" extraClassName="@($"text-muted me-1 {_noShowIconIfNoChildren}")"/><strong>@p.Name</strong><span class="badge bg-secondary badge-sm ms-1 @_noShowIfActive">Inactive</span>
 		<br>
-		@_indent<small class="text-muted">@(PortfolioUtils.Excerpt(p.Description))</small>
+		@_indent<small class="text-muted">@(p.Description)</small>
 	</td>
 	<td class="text-center w-auto small"><CBadgeRandom Text="@p.Currency" /></td>
 	@if(PortfolioPnlSummaryMap.TryGetValue(p.Id, out var pnlSummary))
@@ -27,42 +27,42 @@
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(pnlSummary.TotalIncome == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalIncome, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(pnlSummary.TotalIncome, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto">
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(pnlSummary.TotalCosts == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalCosts, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(pnlSummary.TotalCosts, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto">
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(pnlSummary.TotalBuyValue == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalBuyValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(pnlSummary.TotalBuyValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto">
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(pnlSummary.TotalSellValue == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(pnlSummary.TotalSellValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(pnlSummary.TotalSellValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto">
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(p.TotalCosts == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(p.TotalCosts, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(p.TotalCosts, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto @(p.TotalPnl>0?"text-success":(p.TotalPnl<0?"text-danger":""))">
 			@((DefaultMarket(p)?.CurrencySymbol??"--")+" ")
 			@(p.TotalMarketValue == 0
 				? "--"
-				: @PortfolioUtils.FormatValueWithScale(p.TotalMarketValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
+				: @FormatUtils.FormatValueWithScale(p.TotalMarketValue, DefaultMarket(p)?.PriceScale??1, DefaultMarket(p)?.ValueFormat??"")
 			)
 		</td>
 		<td class="text-end w-auto @(p.TotalPnl>0?"text-success":(p.TotalPnl<0?"text-danger":""))">

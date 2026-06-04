@@ -32,26 +32,21 @@ public partial class FinHubController
 			: null;
 		var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
 
-		var req = new AnalyzePortfolioReq
-		{
-			Country = market?.Country ?? "US",
-			InvestorTheme = portfolioPlan.Metadata?.Description,
-			CurrentAllocation = [.. (portfolioPlan.Metadata?.HoldingTickers?? []).Select(ht => new HoldingTickerReq
-			{
-				Ticker = ht.Ticker,
-				TargetAllocation = ht.TargetAllocation,
-				NumShares = ht.Shares,
-				AvgPrice = ht.AveragePrice,
-				MarketPrice = ht.MarketPrice,
-			})]
-		};
-		var template = PortfolioPlanEntity.PLAN_TYPE_ALLOCATION.Equals(portfolioPlan.Type, StringComparison.OrdinalIgnoreCase)
-			? IFinHubClient.PORTFOLIO_ANALYSIS_TEMPLATE_ALLOCATION
-			: PortfolioPlanEntity.PLAN_TYPE_PL.Equals(portfolioPlan.Type, StringComparison.OrdinalIgnoreCase)
-				? IFinHubClient.PORTFOLIO_ANALYSIS_TEMPLATE_SWING
-				: IFinHubClient.PORTFOLIO_ANALYSIS_TEMPLATE_HYBRID;
+		/*
+		if current holdings is empty, or >=half of tickers are at 0 allocation ==> call API to build the portfolio
+		otherwise call API to analyze for portfolio
+		*/
 
-		var finhubResult = await FinHubClient.AnalyzePortfolioAsync(req, template);
+		// Step 1: check portfolio plan's holdings
+		var countPositiveAllocation = (portfolioPlan.Metadata?.HoldingTickers??[]).Where(ht => ht.Shares > 0).Count();
+		var countEntries = (portfolioPlan.Metadata?.HoldingTickers??[]).Count;
+
+		// Step 2: make API call
+		var finhubResult = countEntries == 0 || countPositiveAllocation/countEntries <= 0.5
+			? await BuildPortfolio(portfolioPlan, market)
+			: await AnalyzePortfolio(portfolioPlan, market);
+
+		// Step 2: build and return result
 		if (!finhubResult.IsSuccess)
 		{
 			return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extras);
@@ -70,5 +65,41 @@ public partial class FinHubController
 			await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
 		}
 		return ResponseOk(result);
+	}
+
+	private async ValueTask<ApiResp<PortfolioAnalysis>> BuildPortfolio(PortfolioPlanEntity plan, MarketDef? market)
+	{
+		var req = new BuildPortfolioReq
+		{
+			Country = market?.Country ?? "US",
+			InvestorTheme = plan.Metadata?.Description,
+			CurrentAllocation = [.. (plan.Metadata?.HoldingTickers?? []).Select(ht => new HoldingTickerReq
+			{
+				Ticker = ht.Ticker,
+				TargetAllocation = ht.TargetAllocation,
+				NumShares = ht.Shares,
+				AvgPrice = ht.AveragePrice,
+				MarketPrice = ht.MarketPrice,
+			})]
+		};
+		return await FinHubClient.BuildPortfolioAsync(req);
+	}
+
+	private async ValueTask<ApiResp<PortfolioAnalysis>> AnalyzePortfolio(PortfolioPlanEntity plan, MarketDef? market)
+	{
+		var req = new BuildPortfolioReq
+		{
+			Country = market?.Country ?? "US",
+			InvestorTheme = plan.Metadata?.Description,
+			CurrentAllocation = [.. (plan.Metadata?.HoldingTickers?? []).Select(ht => new HoldingTickerReq
+			{
+				Ticker = ht.Ticker,
+				TargetAllocation = ht.TargetAllocation,
+				NumShares = ht.Shares,
+				AvgPrice = ht.AveragePrice,
+				MarketPrice = ht.MarketPrice,
+			})]
+		};
+		return await FinHubClient.BuildPortfolioAsync(req);
 	}
 }

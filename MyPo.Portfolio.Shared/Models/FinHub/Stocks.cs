@@ -1,8 +1,9 @@
 ﻿using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace MyPo.Portfolio.Shared.Models.FinHub;
 
-public class SymbolBase
+public partial class SymbolBase
 {
 	[JsonPropertyName("symbol")]
 	public string Symbol { get; set; } = string.Empty;
@@ -16,17 +17,29 @@ public class SymbolBase
 	[JsonPropertyName("country")]
 	public string Country { get; set; } = string.Empty;
 
+	[JsonIgnore]
+	private static readonly Regex YfSuffixPattern = MyRegex();
+
+	/// <summary>
+	/// Normalizes a YF ticker symbol to the format exchange:symbol.
+	/// YF symbols for non-US stocks have the format SYMBOL.CC where CC is the ISO 3166-1 alpha-2 country code.
+	/// This method strips the trailing country code suffix and returns exchange:symbol.
+	/// </summary>
 	public string NormalizedSymbol()
 	{
 		var exchange = Exchange.ToUpper();
 		var symbol = Symbol.ToUpper();
-		// remove YF's trailing exchange suffixes
-		if (symbol.EndsWith(".AX") || symbol.EndsWith(".VN"))
+		// YF appends a 2-letter country code (e.g. .AX, .VN, .L, .TO) for non-US stocks
+		var match = YfSuffixPattern.Match(symbol);
+		if (match.Success)
 		{
-			return $"{exchange}:{symbol.Substring(0, symbol.Length - 3)}";
+			return $"{exchange}:{symbol[..^3]}";
 		}
 		return $"{exchange}:{symbol}";
 	}
+
+	[GeneratedRegex(@"\.[A-Z]{2}$", RegexOptions.Compiled)]
+	private static partial Regex MyRegex();
 }
 
 public sealed class HistoryPoint
@@ -34,8 +47,8 @@ public sealed class HistoryPoint
 	[JsonPropertyName("timestamp")]
 	public long Timestamp { get; set; }
 
-	[JsonPropertyName("timestamp_str")]
-	public string TimestampStr { get; set; } = string.Empty;
+	[JsonPropertyName("timestamp_str"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? TimestampStr { get; set; }
 
 	[JsonIgnore]
 	public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
@@ -147,20 +160,29 @@ public class SymbolOverview : SymbolBase
 
 public sealed class SymbolDividend
 {
+	/// <summary>
+	/// Annual Dividend amount
+	/// </summary>
 	[JsonPropertyName("dividend_rate")]
 	public decimal DividendRate { get; set; }
 
+	/// <summary>
+	/// Annual Dividend Yield in percentage, value = 3.45 means 3.45%
+	/// </summary>
 	[JsonPropertyName("dividend_yield")]
 	public decimal DividendYield { get; set; }
 
+	/// <summary>
+	/// Number of times the dividend is paid out per year, value = 12 means monthly
+	/// </summary>
 	[JsonPropertyName("payout_frequency")]
 	public int PayoutFrequency { get; set; }
 
 	[JsonPropertyName("ex_dividend_date")]
 	public long ExDividendTimestamp { get; set; }
 
-	[JsonPropertyName("ex_dividend_date_str")]
-	public string ExDividendTimestampStr { get; set; } = string.Empty;
+	[JsonPropertyName("ex_dividend_date_str"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? ExDividendTimestampStr { get; set; }
 
 	[JsonIgnore]
 	public DateTimeOffset ExDividendDate => !string.IsNullOrEmpty(ExDividendTimestampStr)
@@ -182,8 +204,8 @@ public sealed class SymbolDividend
 	[JsonPropertyName("last_dividend_date")]
     public long LastDividendTimestamp { get; set; }
 
-	[JsonPropertyName("last_dividend_date_str")]
-    public string LastDividendTimestampStr { get; set; } = string.Empty;
+	[JsonPropertyName("last_dividend_date_str"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? LastDividendTimestampStr { get; set; }
 
 	[JsonIgnore]
 	public DateTimeOffset LastDividendDate => !string.IsNullOrEmpty(LastDividendTimestampStr)
@@ -199,74 +221,74 @@ public sealed class StockQuote
 	[JsonPropertyName("market_price")]
 	public decimal MarketPrice { get; set; }
 
-	[JsonPropertyName("market_price_change")]
-	public decimal MarketPriceChange { get; set; }
+	[JsonPropertyName("market_price_change"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? MarketPriceChange { get; set; }
 
-	[JsonPropertyName("market_price_change_percent")]
-	public decimal MarketPriceChangePercent { get; set; }
+	[JsonPropertyName("market_price_change_percent"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? MarketPriceChangePercent { get; set; }
 
-	[JsonPropertyName("market_open")]
-	public decimal MarketOpen { get; set; }
+	[JsonPropertyName("market_open"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? MarketOpen { get; set; }
 
-	[JsonPropertyName("market_day_high")]
-	public decimal MarketDayHigh { get; set; }
+	[JsonPropertyName("market_day_high"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? MarketDayHigh { get; set; }
 
-	[JsonPropertyName("market_day_low")]
-	public decimal MarketDayLow { get; set; }
+	[JsonPropertyName("market_day_low"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? MarketDayLow { get; set; }
 
-	[JsonPropertyName("fifty_two_week_high")]
-	public decimal FiftyTwoWeekHigh { get; set; }
+	[JsonPropertyName("fifty_two_week_high"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? FiftyTwoWeekHigh { get; set; }
 
 	[JsonPropertyName("fifty_two_week_low")]
-	public decimal FiftyTwoWeekLow { get; set; }
+	public decimal? FiftyTwoWeekLow { get; set; }
 
-	[JsonPropertyName("market_volume")]
-	public int MarketVolume { get; set; }
+	[JsonPropertyName("market_volume"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? MarketVolume { get; set; }
 
-	[JsonPropertyName("bid")]
-	public decimal Bid { get; set; }
+	[JsonPropertyName("bid"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? Bid { get; set; }
 
-	[JsonPropertyName("bid_size")]
-	public int BidSize { get; set; }
+	[JsonPropertyName("bid_size"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? BidSize { get; set; }
 
 	[JsonPropertyName("ask")]
-	public decimal Ask { get; set; }
+	public decimal? Ask { get; set; }
 
-	[JsonPropertyName("ask_size")]
-	public int AskSize { get; set; }
+	[JsonPropertyName("ask_size"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? AskSize { get; set; }
 
-	[JsonPropertyName("market_cap")]
-	public long MarketCap { get; set; }
+	[JsonPropertyName("market_cap"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public long? MarketCap { get; set; }
 
-	[JsonPropertyName("trailing_eps")]
-	public decimal TrailingEps { get; set; }
+	[JsonPropertyName("trailing_eps"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TrailingEps { get; set; }
 
-	[JsonPropertyName("forward_eps")]
-	public decimal ForwardEps { get; set; }
+	[JsonPropertyName("forward_eps"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? ForwardEps { get; set; }
 
-	[JsonPropertyName("trailing_p_e")]
-	public decimal TrailingPE { get; set; }
+	[JsonPropertyName("trailing_p_e"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TrailingPE { get; set; }
 
-	[JsonPropertyName("forward_p_e")]
-	public decimal ForwardPE { get; set; }
+	[JsonPropertyName("forward_p_e"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? ForwardPE { get; set; }
 
-	[JsonPropertyName("beta")]
-	public decimal Beta { get; set; }
+	[JsonPropertyName("beta"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? Beta { get; set; }
 
 	[JsonPropertyName("recommendation_key"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? RecommendationKey { get; set; }
 
-	[JsonPropertyName("target_high_price")]
-	public decimal TargetHighPrice { get; set; }
+	[JsonPropertyName("target_high_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TargetHighPrice { get; set; }
 
-	[JsonPropertyName("target_low_price")]
-	public decimal TargetLowPrice { get; set; }
+	[JsonPropertyName("target_low_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TargetLowPrice { get; set; }
 
-	[JsonPropertyName("target_mean_price")]
-	public decimal TargetMeanPrice { get; set; }
+	[JsonPropertyName("target_mean_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TargetMeanPrice { get; set; }
 
-	[JsonPropertyName("target_median_price")]
-	public decimal TargetMedianPrice { get; set; }
+	[JsonPropertyName("target_median_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public decimal? TargetMedianPrice { get; set; }
 
 	/// <summary>
 	/// 0: No change
@@ -290,6 +312,9 @@ public sealed class StockHistory
 	[JsonPropertyName("recent_high_price")]
 	public decimal RecentHighPrice { get; set; }
 
+	/// <summary>
+	/// Value = 12.34 means 12.34%
+	/// </summary>
 	[JsonPropertyName("pull_pack_percent")]
 	public decimal PullBackPercent { get; set; }
 

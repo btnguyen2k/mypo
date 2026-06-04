@@ -2,18 +2,6 @@
 
 namespace MyPo.Portfolio.Api.Services;
 
-public sealed class AnalyzePortfolioReq
-{
-	[JsonPropertyName("country")]
-	public string Country { get; set; } = "";
-
-	[JsonPropertyName("investor_theme")]
-	public string? InvestorTheme { get; set; }
-
-	[JsonPropertyName("current_allocation")]
-	public List<HoldingTickerReq> CurrentAllocation { get; set; } = [];
-}
-
 public sealed class HoldingTickerReq
 {
 	[JsonPropertyName("ticker")]
@@ -31,3 +19,19 @@ public sealed class HoldingTickerReq
 	[JsonPropertyName("target_allocation")]
 	public decimal TargetAllocation { get; set; }
 }
+
+public class BasePortfolioPlanReq
+{
+	[JsonPropertyName("country")]
+	public string Country { get; set; } = "";
+
+	[JsonPropertyName("investor_theme")]
+	public string? InvestorTheme { get; set; }
+
+	[JsonPropertyName("current_allocation")]
+	public List<HoldingTickerReq> CurrentAllocation { get; set; } = [];
+}
+
+public sealed class AnalyzePortfolioReq : BasePortfolioPlanReq { }
+
+public sealed class BuildPortfolioReq : BasePortfolioPlanReq { }

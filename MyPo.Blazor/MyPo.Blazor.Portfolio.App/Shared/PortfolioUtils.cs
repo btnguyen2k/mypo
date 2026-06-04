@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
-public static partial class PortfolioUtils
+public static class PortfolioUtils
 {
     public static IEnumerable<PortfolioResp> BuildPortfolioTree(IEnumerable<PortfolioResp> PortfolioList)
     {
@@ -71,60 +71,60 @@ public static partial class PortfolioUtils
 		return jsCoreUIChipInput;
 	}
 
-	public static string Excerpt(string? input, int maxLength = 60)
-	{
-		if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
-		{
-			return input ?? string.Empty;
-		}
-		return input.Substring(0, maxLength - 3) + "...";
-	}
+	// public static string Excerpt(string? input, int maxLength = 60)
+	// {
+	// 	if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+	// 	{
+	// 		return input ?? string.Empty;
+	// 	}
+	// 	return input.Substring(0, maxLength - 3) + "...";
+	// }
 
-	public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";
-	public static readonly List<string> DATETIME_PICKER_FORMATS =
-	[
-		DEFAULT_DATETIME_PICKER_FORMAT,
-		"dd-MM-yyyy HH:mm",
-		"dd-MMMM-yyyy HH:mm",
-		"dd/MM/yyyy HH:mm",
-		"dd/MMM/yyyy HH:mm",
-		"yyyy-MM-dd HH:mm",
-		"yyyy-MM-dd, HH:mm",
-	];
+	// public const string DEFAULT_DATETIME_PICKER_FORMAT = "dd-MMM-yyyy HH:mm";
+	// public static readonly List<string> DATETIME_PICKER_FORMATS =
+	// [
+	// 	DEFAULT_DATETIME_PICKER_FORMAT,
+	// 	"dd-MM-yyyy HH:mm",
+	// 	"dd-MMMM-yyyy HH:mm",
+	// 	"dd/MM/yyyy HH:mm",
+	// 	"dd/MMM/yyyy HH:mm",
+	// 	"yyyy-MM-dd HH:mm",
+	// 	"yyyy-MM-dd, HH:mm",
+	// ];
 
-	[GeneratedRegex( @"(?<=^|-)(\d)(?=-)", RegexOptions.Compiled)]
-	private static partial Regex MyRegexPaddingDayAndMonth();
+	// [GeneratedRegex( @"(?<=^|-)(\d)(?=-)", RegexOptions.Compiled)]
+	// private static partial Regex MyRegexPaddingDayAndMonth();
 
-	/// <summary>
-	/// Parse DateTime from datetime picker string, trying multiple formats.
-	/// </summary>
-	/// <param name="dateTimeStr"></param>
-	/// <returns>return null if parsing error</returns>
-	public static DateTime? ParseDateTimeFromDateTimePicker(string dateTimeStr)
-	{
-		dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
-		dateTimeStr = MyRegexPaddingDayAndMonth().Replace(dateTimeStr, "0$1");
+	// /// <summary>
+	// /// Parse DateTime from datetime picker string, trying multiple formats.
+	// /// </summary>
+	// /// <param name="dateTimeStr"></param>
+	// /// <returns>return null if parsing error</returns>
+	// public static DateTime? ParseDateTimeFromDateTimePicker(string dateTimeStr)
+	// {
+	// 	dateTimeStr = dateTimeStr.Replace("Sept", "Sep", StringComparison.OrdinalIgnoreCase); // handle Sept to Sep
+	// 	dateTimeStr = MyRegexPaddingDayAndMonth().Replace(dateTimeStr, "0$1");
 
-		foreach (var format in DATETIME_PICKER_FORMATS)
-		{
-			if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
-			{
-				return dt;
-			}
-		}
-		return null;
-	}
+	// 	foreach (var format in DATETIME_PICKER_FORMATS)
+	// 	{
+	// 		if (DateTime.TryParseExact(dateTimeStr, format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+	// 		{
+	// 			return dt;
+	// 		}
+	// 	}
+	// 	return null;
+	// }
 
-	/// <summary>
-	/// Parse DateTimeOffset from datetime picker string, trying multiple formats.
-	/// </summary>
-	/// <param name="dateTimeStr"></param>
-	/// <returns>return null if parsing error</returns>
-	public static DateTimeOffset? ParseDateTimeOffsetFromDateTimePicker(string dateTimeStr)
-	{
-		var dt = ParseDateTimeFromDateTimePicker(dateTimeStr);
-		return dt != null ? new DateTimeOffset(dt.Value) : null;
-	}
+	// /// <summary>
+	// /// Parse DateTimeOffset from datetime picker string, trying multiple formats.
+	// /// </summary>
+	// /// <param name="dateTimeStr"></param>
+	// /// <returns>return null if parsing error</returns>
+	// public static DateTimeOffset? ParseDateTimeOffsetFromDateTimePicker(string dateTimeStr)
+	// {
+	// 	var dt = ParseDateTimeFromDateTimePicker(dateTimeStr);
+	// 	return dt != null ? new DateTimeOffset(dt.Value) : null;
+	// }
 
 	public static decimal EstimateTxFee(MarketDef? market)
 	{
@@ -152,90 +152,90 @@ public static partial class PortfolioUtils
 		};
 	}
 
-	public static string FormatValueWithScale(double value, decimal scale = 1, string? format = null)
-	{
-		return FormatValueWithScale((decimal)value, scale, format);
-	}
+	// public static string FormatValueWithScale(double value, decimal scale = 1, string? format = null)
+	// {
+	// 	return FormatValueWithScale((decimal)value, scale, format);
+	// }
 
-	public static string FormatValueWithScale(decimal value, decimal scale = 1, string? format = null)
-	{
-		if (scale <= 0) scale = 1;
-		return FormatRawValueWithScale(value*scale, scale, format);
-	}
+	// public static string FormatValueWithScale(decimal value, decimal scale = 1, string? format = null)
+	// {
+	// 	if (scale <= 0) scale = 1;
+	// 	return FormatRawValueWithScale(value*scale, scale, format);
+	// }
 
-	public static string FormatRawValueWithScale(double value, decimal scale = 1, string? format = null)
-	{
-		return FormatRawValueWithScale((decimal)value, scale, format);
-	}
+	// public static string FormatRawValueWithScale(double value, decimal scale = 1, string? format = null)
+	// {
+	// 	return FormatRawValueWithScale((decimal)value, scale, format);
+	// }
 
-	public static string FormatRawValueWithScale(decimal value, decimal scale = 1, string? format = null)
-	{
-		if (scale <= 0) scale = 1;
-		if (scale >= 1000)
-		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N1", System.Globalization.CultureInfo.CurrentCulture);
-		}
-		if (scale >= 100)
-		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N2", System.Globalization.CultureInfo.CurrentCulture);
-		}
-		if (scale > 1)
-		{
-			return value.ToString(!string.IsNullOrEmpty(format)?format:"N3", System.Globalization.CultureInfo.CurrentCulture);
-		}
-		return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", System.Globalization.CultureInfo.CurrentCulture);
-	}
+	// public static string FormatRawValueWithScale(decimal value, decimal scale = 1, string? format = null)
+	// {
+	// 	if (scale <= 0) scale = 1;
+	// 	if (scale >= 1000)
+	// 	{
+	// 		return value.ToString(!string.IsNullOrEmpty(format)?format:"N1", System.Globalization.CultureInfo.CurrentCulture);
+	// 	}
+	// 	if (scale >= 100)
+	// 	{
+	// 		return value.ToString(!string.IsNullOrEmpty(format)?format:"N2", System.Globalization.CultureInfo.CurrentCulture);
+	// 	}
+	// 	if (scale > 1)
+	// 	{
+	// 		return value.ToString(!string.IsNullOrEmpty(format)?format:"N3", System.Globalization.CultureInfo.CurrentCulture);
+	// 	}
+	// 	return value.ToString(!string.IsNullOrEmpty(format)?format:"N4", System.Globalization.CultureInfo.CurrentCulture);
+	// }
 
-	public static string FormatVolume(int volume)
-	{
-		return FormatVolume((long)volume);
-	}
+	// public static string FormatVolume(int volume)
+	// {
+	// 	return FormatVolume((long)volume);
+	// }
 
-	public static string FormatVolume(long volume)
-	{
-		if (volume >= 1_000_000_000_000)
-		{
-			return $"{(volume / 1_000_000_000_000m):N2}T";
-		}
-		if (volume >= 1_000_000_000)
-		{
-			return $"{(volume / 1_000_000_000m):N2}B";
-		}
-		if (volume >= 1_000_000)
-		{
-			return $"{(volume / 1_000_000m):N2}M";
-		}
-		if (volume >= 1_000)
-		{
-			return $"{(volume / 1_000m):N2}K";
-		}
-		return volume.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
-	}
+	// public static string FormatVolume(long volume)
+	// {
+	// 	if (volume >= 1_000_000_000_000)
+	// 	{
+	// 		return $"{(volume / 1_000_000_000_000m):N2}T";
+	// 	}
+	// 	if (volume >= 1_000_000_000)
+	// 	{
+	// 		return $"{(volume / 1_000_000_000m):N2}B";
+	// 	}
+	// 	if (volume >= 1_000_000)
+	// 	{
+	// 		return $"{(volume / 1_000_000m):N2}M";
+	// 	}
+	// 	if (volume >= 1_000)
+	// 	{
+	// 		return $"{(volume / 1_000m):N2}K";
+	// 	}
+	// 	return volume.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
+	// }
 
-	public static decimal CalculatePercentageChange(decimal oldValue, decimal newValue)
-	{
-		if (oldValue == 0)
-		{
-			return newValue == 0 ? 0 : 100;
-		}
-		return ((newValue - oldValue) / Math.Abs(oldValue)) * 100;
-	}
+	// public static decimal CalculatePercentageChange(decimal oldValue, decimal newValue)
+	// {
+	// 	if (oldValue == 0)
+	// 	{
+	// 		return newValue == 0 ? 0 : 100;
+	// 	}
+	// 	return ((newValue - oldValue) / Math.Abs(oldValue)) * 100;
+	// }
 
-	public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
-	{
-		return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
-	}
+	// public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
+	// {
+	// 	return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
+	// }
 
-	public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, StockQuote quote)
-	{
-		if (market == null)
-		{
-			return 0;
-		}
-		var currentPrice = quote.MarketPrice;
-		var pnl = (currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
-		return pnl;
-	}
+	// public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, StockQuote quote)
+	// {
+	// 	if (market == null)
+	// 	{
+	// 		return 0;
+	// 	}
+	// 	var currentPrice = quote.MarketPrice;
+	// 	var pnl = (currentPrice - asset.AveragePrice*market!.PriceScale) * asset.Quantity;
+	// 	return pnl ?? 0;
+	// }
 
 	public static string BootstrapCssClassForAnalystRecommendation(string ar)
 	{
