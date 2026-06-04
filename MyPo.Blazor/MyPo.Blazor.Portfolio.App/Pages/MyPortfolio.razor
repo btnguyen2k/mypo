@@ -88,6 +88,12 @@
 							</div>
 						}
                     }
+					@if (!string.IsNullOrEmpty(BackgroundMsg))
+					{
+						<div class="alert alert-light" role="alert">
+							<span style="font-size: small !important;">@BackgroundMsg</span>
+						</div>
+					}
                 </div>
             </div>
 

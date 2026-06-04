@@ -13,8 +13,6 @@ public partial class MyPortfolio : BasePage
 	private IEnumerable<PortfolioResp>? MyActivePortfolioList { get; set; }
 	private IEnumerable<PortfolioResp>? MyInactivePortfolioList { get; set; }
 
-	private Dictionary<string, IEnumerable<AssetResp>> PortfolioAssetsMap { get; set; } = [];
-
 	private Dictionary<string, PortfolioResp>? MyPortfolioMap { get; set; }
 	private PortfolioResp? SelectedPortfolio { get; set; }
 	private Dictionary<string, PnlSummaryResp> PortfolioPnlSummaryMap { get; set; } = [];
@@ -34,40 +32,22 @@ public partial class MyPortfolio : BasePage
 		{
 			await Task.Run(async () =>
 			{
+				SetBackgroundMsg($"⌛Fetching PnL summary for portfolio {portfolio.Name}...");
 				var result = await apiClient.GetMyPortfolioPnlSummaryAsync(portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
 				if (!result.IsSuccess)
 				{
 					Logger?.LogWarning("Failed to fetch PnL summary for portfolio {PortfolioId}: {ErrorMessage}", portfolio.Id, result.Message);
+					SetBackgroundMsg($"❗Failed to fetch PnL summary for portfolio {portfolio.Name}: {result.Message}");
 				}
 				else
 				{
 					PortfolioPnlSummaryMap[portfolio.Id] = result.Data;
+					SetBackgroundMsg($"✅Fetched PnL summary for portfolio '{portfolio.Name}'.");
 					StateHasChanged();
 				}
 			});
 		}
-	}
-
-	private async void FetchPortfolioAssetsInBackground()
-	{
-		PortfolioAssetsMap.Clear();
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var portfolio in MyPortfolioMap!.Values)
-		{
-			await Task.Run(async () =>
-			{
-				var result = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (!result.IsSuccess)
-				{
-					Logger?.LogWarning("Failed to fetch PnL summary for portfolio {PortfolioId}: {ErrorMessage}", portfolio.Id, result.Message);
-				}
-				else
-				{
-					PortfolioAssetsMap[portfolio.Id] = result.Data ?? [];
-					StateHasChanged();
-				}
-			});
-		}
+		ClearBackgroundMsg();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -108,7 +88,6 @@ public partial class MyPortfolio : BasePage
 					CloseAlert();
 				}
 				await Task.Run(FetchPortfolioPnlSummaryInBackground);
-				await Task.Run(FetchPortfolioAssetsInBackground);
 			}
 			else
 			{
