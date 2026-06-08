@@ -19,6 +19,7 @@ sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackground
 
 	private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 
+	/// <inheritdoc />
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		// delay a bit to avoid all instances running at the same time after deployment or restart

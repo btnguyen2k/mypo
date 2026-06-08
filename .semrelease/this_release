@@ -6,4 +6,3 @@
 - feat: Add P&L Portfolio Plan type.
 - chore(Deps): Migrate to CoreUI-Free-Bootrap v5.5.0
 - fix(UI): Fix a bug that cause Edit Portfolio Plan page to reload when deleting a holding ticker.
-

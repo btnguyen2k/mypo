@@ -80,6 +80,7 @@ public partial class FinHubController
 				NumShares = ht.Shares,
 				AvgPrice = ht.AveragePrice,
 				MarketPrice = ht.MarketPrice,
+				Tags = ht.Tags,
 			})]
 		};
 		return await FinHubClient.BuildPortfolioAsync(req);
@@ -98,6 +99,7 @@ public partial class FinHubController
 				NumShares = ht.Shares,
 				AvgPrice = ht.AveragePrice,
 				MarketPrice = ht.MarketPrice,
+				Tags = ht.Tags,
 			})]
 		};
 		return await FinHubClient.BuildPortfolioAsync(req);

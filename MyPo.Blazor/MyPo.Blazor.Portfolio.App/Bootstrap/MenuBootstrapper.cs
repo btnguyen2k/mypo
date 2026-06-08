@@ -19,14 +19,14 @@ public class MenuBootstrapper
 			Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MARKETS,
 			Priority = 100,
 		});
-		Sidebar.AddOrReplaceEntry(new Sidebar.SidebarItem
-		{
-			Id = "stock_symbol_info",
-			Label = "Stock Symbol Info",
-			Icon = "bi-graph-up-arrow",
-			Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO_EMPTY,
-			Priority = 101,
-		});
+		// Sidebar.AddOrReplaceEntry(new Sidebar.SidebarItem
+		// {
+		// 	Id = "stock_symbol_info",
+		// 	Label = "Stock Symbol Info",
+		// 	Icon = "bi-graph-up-arrow",
+		// 	Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO_EMPTY,
+		// 	Priority = 101,
+		// });
 		Sidebar.AddOrReplaceEntry(new Sidebar.SidebarSection
 		{
 			Id = "portfolio",
@@ -62,6 +62,13 @@ public class MenuBootstrapper
 			Label = "Tools",
 			Priority = 201,
 			Items = [
+				new Sidebar.SidebarItem
+				{
+					Id = "stock_symbol_info",
+					Label = "Stock Symbol Info",
+					Icon = "bi-graph-up-arrow",
+					Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO_EMPTY,
+				},
 				new Sidebar.SidebarItem
 				{
 					Id = "tool_buy_sell_calc",

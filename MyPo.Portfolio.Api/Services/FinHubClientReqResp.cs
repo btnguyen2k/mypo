@@ -18,6 +18,9 @@ public sealed class HoldingTickerReq
 
 	[JsonPropertyName("target_allocation")]
 	public decimal TargetAllocation { get; set; }
+
+	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Tags { get; set; }
 }
 
 public class BasePortfolioPlanReq
