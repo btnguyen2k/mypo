@@ -149,11 +149,11 @@ public partial class PortfolioController
 				var ht = new HoldingTicker
 				{
 					Id = Guid.NewGuid().ToString(),
-					Ticker = tickerInfoResp.Data.NormalizedSymbol(),
+					Ticker = tickerInfoResp.Data.NormalizedSymbol,
 					TargetAllocation = ticker.TargetAllocation,
 					Tags = ticker.Tags?.Trim() ?? string.Empty,
-					Shares = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol(), out var asset) ? asset.Quantity : 0,
-					AveragePrice = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol(), out var asset2) ? asset2.AveragePrice : 0,
+					Shares = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol, out var asset) ? asset.Quantity : 0,
+					AveragePrice = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol, out var asset2) ? asset2.AveragePrice : 0,
 					MarketPrice = tickerInfoResp.Data.StockQuote?.MarketPrice ?? 0,
 					DividendYield = tickerInfoResp.Data.Dividend?.DividendYield ?? 0,
 					PayoutFrequency = tickerInfoResp.Data.Dividend?.PayoutFrequency ?? 0,

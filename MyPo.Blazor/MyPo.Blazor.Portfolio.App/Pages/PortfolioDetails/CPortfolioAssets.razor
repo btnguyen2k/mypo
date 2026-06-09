@@ -147,13 +147,13 @@ else
 								}
 							</td>
 							<td class="text-center text-nowrap w-auto">
-								<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)">
+								<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)" title="Symbol Info" @onclick:stopPropagation>
 									<BIcon icon="graph-up-arrow" />
 								</button>
-								<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)" @onclick:stopPropagation>
+								<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)" title="Buy/Sell Calculator" @onclick:stopPropagation>
 									<BIcon icon="calculator" />
 								</button>
-								<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)" @onclick:stopPropagation>
+								<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)" title="Edit metadata" @onclick:stopPropagation>
 									<BIcon icon="pencil" />
 								</button>
 							</td>

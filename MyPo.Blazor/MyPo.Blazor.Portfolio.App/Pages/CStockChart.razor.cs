@@ -1,16 +1,14 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class CStockChart : BaseComponent
 {
 	[Parameter]
-	public string? Symbol { get; set; }
-
-	[Parameter]
-	public string? Exchange { get; set; }
+	public SymbolInfo? SymbolInfo { get; set; }
 
 	[Parameter]
 	public MarketDef? Market { get; set; }
@@ -19,24 +17,8 @@ public partial class CStockChart : BaseComponent
 
 	private readonly HashSet<string> ChartsUseVietstock = ["*VNVN", "HOSE", "HNX", "UPCOM"];
 
-	private bool UseVietstockChart => ChartsUseVietstock.Contains(Market?.Code??"");
+	private bool UseVietstockChart => ChartsUseVietstock.Contains(SymbolInfo?.Exchange??"");
 	private bool UseTradingViewChart => !UseVietstockChart;
-
-	protected override async Task OnParametersSetAsync()
-	{
-		await base.OnParametersSetAsync();
-		if (!string.IsNullOrEmpty(Symbol) && UseTradingViewChart)
-		{
-			if ("Australia".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
-			{
-				Exchange = "ASX";
-			}
-			else if ("USA".Equals(Market?.Country, StringComparison.OrdinalIgnoreCase))
-			{
-				Exchange = "";
-			}
-		}
-	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -44,13 +26,13 @@ public partial class CStockChart : BaseComponent
 		if (firstRender)
 		{
 			ErrorMessage = null;
-			if (string.IsNullOrEmpty(Symbol))
+			if (SymbolInfo is null)
 			{
 				ErrorMessage = "No Chart Available.";
 			}
 			else if (!UseVietstockChart && !UseTradingViewChart)
 			{
-				ErrorMessage = $"Charting for exchange '{Exchange}' is not supported.";
+				ErrorMessage = $"Charting for exchange '{SymbolInfo?.Exchange}' is not supported.";
 			}
 			StateHasChanged();
 		}

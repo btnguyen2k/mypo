@@ -289,7 +289,7 @@ public partial class MyPortfolioDetails : BasePage
 
 		if (firstRender) InitializePage();
 
-		if (IsRefreshRequested()) await Task.Run(InitializePage);
+		if (RemoveRefreshParamIfPresent()) await Task.Run(InitializePage);
 	}
 
 	private string ActiveTab { get; set; } = TabIdSummary;

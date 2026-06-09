@@ -96,8 +96,8 @@ public partial class CPortfolioAssets : CBase
 			return;
 		}
 		SelectedAsset.Market = Markets?.FirstOrDefault(m => m.Id == SelectedAsset.MarketId);
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", $"{SelectedAsset.ItemCode}:{SelectedAsset.Market?.Id}", StringComparison.OrdinalIgnoreCase)}"
-			+ $"?pid={SelectedAsset.PortfolioId}";
+		var ticker = $"{SelectedAsset.Market?.Code}:{SelectedAsset.ItemCode}";
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", ticker, StringComparison.OrdinalIgnoreCase)}?pid={SelectedAsset.PortfolioId}";
 		NavigationManager.NavigateTo(nextUrl);
 	}
 

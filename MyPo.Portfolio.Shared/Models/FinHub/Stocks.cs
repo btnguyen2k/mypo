@@ -1,12 +1,14 @@
 ﻿using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 namespace MyPo.Portfolio.Shared.Models.FinHub;
 
-public partial class SymbolBase
+public class SymbolBase
 {
 	[JsonPropertyName("symbol")]
 	public string Symbol { get; set; } = string.Empty;
+
+	[JsonPropertyName("normalized_symbol")]
+	public string NormalizedSymbol { get; set; } = string.Empty;
 
 	[JsonPropertyName("currency")]
 	public string Currency { get; set; } = string.Empty;
@@ -17,29 +19,29 @@ public partial class SymbolBase
 	[JsonPropertyName("country")]
 	public string Country { get; set; } = string.Empty;
 
-	[JsonIgnore]
-	private static readonly Regex YfSuffixPattern = MyRegex();
+	// [JsonIgnore]
+	// private static readonly Regex YfSuffixPattern = MyRegex();
 
-	/// <summary>
-	/// Normalizes a YF ticker symbol to the format exchange:symbol.
-	/// YF symbols for non-US stocks have the format SYMBOL.CC where CC is the ISO 3166-1 alpha-2 country code.
-	/// This method strips the trailing country code suffix and returns exchange:symbol.
-	/// </summary>
-	public string NormalizedSymbol()
-	{
-		var exchange = Exchange.ToUpper();
-		var symbol = Symbol.ToUpper();
-		// YF appends a 2-letter country code (e.g. .AX, .VN, .L, .TO) for non-US stocks
-		var match = YfSuffixPattern.Match(symbol);
-		if (match.Success)
-		{
-			return $"{exchange}:{symbol[..^3]}";
-		}
-		return $"{exchange}:{symbol}";
-	}
+	// /// <summary>
+	// /// Normalizes a YF ticker symbol to the format exchange:symbol.
+	// /// YF symbols for non-US stocks have the format SYMBOL.CC where CC is the ISO 3166-1 alpha-2 country code.
+	// /// This method strips the trailing country code suffix and returns exchange:symbol.
+	// /// </summary>
+	// public string NormalizedSymbol()
+	// {
+	// 	var exchange = Exchange.ToUpper();
+	// 	var symbol = Symbol.ToUpper();
+	// 	// YF appends a 2-letter country code (e.g. .AX, .VN, .L, .TO) for non-US stocks
+	// 	var match = YfSuffixPattern.Match(symbol);
+	// 	if (match.Success)
+	// 	{
+	// 		return $"{exchange}:{symbol[..^3]}";
+	// 	}
+	// 	return $"{exchange}:{symbol}";
+	// }
 
-	[GeneratedRegex(@"\.[A-Z]{2}$", RegexOptions.Compiled)]
-	private static partial Regex MyRegex();
+	// [GeneratedRegex(@"\.[A-Z]{2}$", RegexOptions.Compiled)]
+	// private static partial Regex MyRegex();
 }
 
 public sealed class HistoryPoint

@@ -20,15 +20,16 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	[Parameter]
 	public string Symbol { get; set; } = string.Empty;
-	private string SymbolCode { get; set; } = string.Empty;
+
 	private SymbolInfo? SymbolInfo { get; set; }
 
 	private string PortfolioId { get; set; } = string.Empty;
 	private AssetResp? OwningAsset { get; set; }
 
 	private readonly List<MarketDefResp> Markets = [];
-	private string MarketId { get; set; } = string.Empty;
-	private MarketDef? Market => Markets.FirstOrDefault(m => string.Equals(m.Id, MarketId, StringComparison.OrdinalIgnoreCase))?.ToModel() ?? null;
+	private MarketDef? Market = null;
+	// private string MarketId { get; set; } = string.Empty;
+	// private MarketDef? Market => Markets.FirstOrDefault(m => string.Equals(m.Id, MarketId, StringComparison.OrdinalIgnoreCase))?.ToModel() ?? null;
 
 	private readonly List<AIVendor> AIVendors = [];
 	private readonly List<string> AITiers = [];
@@ -191,9 +192,8 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private void BtnClickLoadData()
 	{
-		var symbol = $"{SymbolCode}:{MarketId}";
-		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", symbol, StringComparison.OrdinalIgnoreCase)}"
-			+ $"?{QUERY_PARM_REFRESH}=true";
+		// var symbol = $"{SymbolCode}:{MarketId}";
+		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", Symbol, StringComparison.OrdinalIgnoreCase)}?{QUERY_PARM_REFRESH}=true";
 		if (!string.IsNullOrEmpty(PortfolioId))
 		{
 			nextUrl += $"&pid={PortfolioId}";
@@ -223,14 +223,14 @@ public sealed partial class StockSymbolInfo : BasePage
 		base.Dispose(disposing);
 	}
 
-	private async Task<ApiResp<SymbolInfo>> FetchSymbolInfo()
+	private async Task<ApiResp<SymbolInfo>> FetchSymbolInfo(string symbol)
 	{
-		SetBackgroundMsg($"⌛Loading symbol info for {Symbol}...");
+		SetBackgroundMsg($"⌛Loading symbol info for {symbol}...");
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 		var symbolResult = await apiClient.GetStockSymbolInfoAsync(Symbol, await GetAuthTokenAsync(), ApiBaseUrl);
-		if (symbolResult.Status != 200)
+		if (!symbolResult.IsSuccess)
 		{
-			SetBackgroundMsg($"❗Error loading symbol info for {Symbol}. Status: {symbolResult.Status}, Message: {symbolResult.Message}");
+			SetBackgroundMsg($"❗Error loading symbol info for {symbol}. Status: {symbolResult.Status}, Message: {symbolResult.Message}");
 		}
 		return symbolResult;
 	}
@@ -240,16 +240,18 @@ public sealed partial class StockSymbolInfo : BasePage
 		HideUI = true;
 
 		ShowAlert("info", "Loading symbol info...");
-		SymbolCode = (Symbol.Split(':').FirstOrDefault() ?? string.Empty).ToUpper().Trim();
-		MarketId = (Symbol.Split(':').LastOrDefault() ?? string.Empty).Trim();
 		SymbolInfo = null;
-		var symbolResult = await FetchSymbolInfo();
-		if (symbolResult.Status != 200)
+		var symbolResult = await FetchSymbolInfo(Symbol);
+		if (!symbolResult.IsSuccess || symbolResult.Data is null)
 		{
 			ShowAlert("danger", symbolResult.Message ?? $"Error loading symbol info for {Symbol}.");
 			return;
 		}
 		SymbolInfo = symbolResult.Data;
+
+		var parts = SymbolInfo.NormalizedSymbol.Split(":") ?? [];
+		var (exchange, symbol) = (parts.Length > 1 ? parts[0] : string.Empty, parts.Length > 1 ? parts[1] : parts[0]);
+		Market = Markets.FirstOrDefault(m => string.Equals(m.Code, exchange, StringComparison.OrdinalIgnoreCase))?.ToModel();
 
 		if (!string.IsNullOrEmpty(PortfolioId))
 		{
@@ -257,28 +259,31 @@ public sealed partial class StockSymbolInfo : BasePage
 			OwningAsset = null;
 			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 			var apiResult = await apiClient.GetMyPortfolioAssetsAsync(PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (apiResult.Status != 200)
+			if (!apiResult.IsSuccess)
 			{
 				ShowAlert("danger", apiResult.Message ?? $"Error loading owning asset info for {Symbol}.");
 				return;
 			}
-			OwningAsset = apiResult.Data?.FirstOrDefault(a => string.Equals(a.ItemCode, SymbolCode, StringComparison.OrdinalIgnoreCase));
+			OwningAsset = apiResult.Data?.FirstOrDefault(a =>
+				string.Equals(a.ItemCode, symbol, StringComparison.OrdinalIgnoreCase)
+				&& string.Equals(a.Market?.Code, exchange, StringComparison.OrdinalIgnoreCase)
+			);
 		}
 
 		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-		taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground(RefreshBackgroundTaskId = Random.Shared.Next()));
+		taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground(Symbol, RefreshBackgroundTaskId = Random.Shared.Next()));
 
 		HideUI = false;
 		CloseAlert();
 	}
 
-	private async void LoadSymbolInfoBackground(int myTaskId)
+	private async void LoadSymbolInfoBackground(string symbol, int myTaskId)
 	{
 		if (myTaskId == RefreshBackgroundTaskId)
 		{
 			if (Market == null)
 			{
-				SetBackgroundMsg($"❗Market info not found for market id '{MarketId}'. Cannot determine refresh timing for symbol info.");
+				SetBackgroundMsg($"❗Market info not found. Cannot determine refresh timing for symbol info.");
 				return;
 			}
 			var sleepTime = Random.Shared.NextInt64(10*1000, 20*1000);
@@ -287,7 +292,7 @@ public sealed partial class StockSymbolInfo : BasePage
 				var timeTillOpen = Market.TimeTillOpen();
 				if (timeTillOpen > TimeSpan.FromMinutes(60))
 				{
-					SetBackgroundMsg($"❗Market '{MarketId}' is currently closed. Not refreshing.");
+					SetBackgroundMsg($"❗Market '{Market.Code}' is currently closed. Not refreshing.");
 					return;
 				}
 				sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
@@ -302,13 +307,13 @@ public sealed partial class StockSymbolInfo : BasePage
 			}
 			if (myTaskId == RefreshBackgroundTaskId)
 			{
-				var symbolResult = await FetchSymbolInfo();
+				var symbolResult = await FetchSymbolInfo(symbol);
 				if (symbolResult.Status == 200)
 				{
 					SymbolInfo = symbolResult.Data;
 					StateHasChanged();
 				}
-				await Task.Run(() => LoadSymbolInfoBackground(myTaskId));
+				await Task.Run(() => LoadSymbolInfoBackground(symbol, myTaskId));
 			}
 		}
 	}
@@ -316,6 +321,7 @@ public sealed partial class StockSymbolInfo : BasePage
 	protected override async Task OnInitializedAsync()
 	{
 		await base.OnInitializedAsync();
+		// store the portfolio id for later.
 		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
 		PortfolioId = queryParams.Get("pid") ?? string.Empty;
 	}
@@ -338,30 +344,6 @@ public sealed partial class StockSymbolInfo : BasePage
 			}
 			Markets.AddRange(marketResult.Data ?? []);
 
-			ShowAlert("info", "Loading AI vendor list...");
-			var aiVendorResult = await apiClient.GetAIVendorsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-			if (aiVendorResult.Status != 200)
-			{
-				ShowAlert("danger", aiVendorResult.Message ?? "Error loading AI vendor info.");
-				return;
-			}
-			AIVendors.AddRange(aiVendorResult.Data ?? []);
-
-			var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-			SelectedAIVendor = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-vendor");
-			var aiVendor = AIVendors.FirstOrDefault(v => string.Equals(v.Name, SelectedAIVendor, StringComparison.OrdinalIgnoreCase)) ?? null;
-			if (aiVendor != null)
-			{
-				AITiers.AddRange(aiVendor.TieredModels.Keys);
-				SelectedAITier = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-tier");
-				var aiTier = AITiers.FirstOrDefault(t => string.Equals(t, SelectedAITier, StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
-				if (!string.IsNullOrEmpty(aiTier))
-				{
-					AIModels.AddRange(aiVendor.TieredModels[aiTier]);
-					SelectedAIModel = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "StockSymbolInfo-ai-model");
-				}
-			}
-
 			CloseAlert();
 
 			HideUI = false;
@@ -372,19 +354,6 @@ public sealed partial class StockSymbolInfo : BasePage
 			InitializePage();
 		}
 
-		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
-		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))
-		{
-			// rebuild the URL without the refresh query parameter
-			queryParams.Remove(QUERY_PARM_REFRESH);
-			var uriBuilder = new UriBuilder(NavigationManager.ToAbsoluteUri(NavigationManager.Uri))
-			{
-				Query = queryParams.ToString() ?? string.Empty
-			};
-			NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: false);
-
-			// reload page data in the background
-			await Task.Run(() => InitializePage());
-		}
+		if (RemoveRefreshParamIfPresent()) await Task.Run(InitializePage);
 	}
 }
