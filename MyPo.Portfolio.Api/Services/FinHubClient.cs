@@ -11,6 +11,20 @@ public partial class FinHubClient : BaseClient, IFinHubClient
 	/*----------------------------------------------------------------------*/
 
 	/// <inheritdoc/>
+	public async Task<ApiResp<TickerAnalysis>> AnalyzeTickerAsync(AnalyzeTickerReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER;
+		using var httpResult = await BuildAndSendRequestAsync(
+			httpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			NoAuth,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<TickerAnalysis>(httpResult, cancellationToken);
+	}
+
+	/// <inheritdoc/>
 	public async Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
 	{
 		var queryParams = new Dictionary<string, string?> {

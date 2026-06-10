@@ -38,3 +38,12 @@ public class BasePortfolioPlanReq
 public sealed class AnalyzePortfolioReq : BasePortfolioPlanReq { }
 
 public sealed class BuildPortfolioReq : BasePortfolioPlanReq { }
+
+public sealed class AnalyzeTickerReq
+{
+	[JsonPropertyName("symbol")]
+	public string Symbol { get; set; } = string.Empty;
+
+	[JsonPropertyName("intent"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? Intent { get; set; }
+}

@@ -89,6 +89,10 @@ public sealed class PortfolioAnalysis : AnalysisResult
 {
 }
 
+public sealed class TickerAnalysis : AnalysisResult
+{
+}
+
 public sealed class DividendEventAnalysis : EventBase
 {
 	/* base info */

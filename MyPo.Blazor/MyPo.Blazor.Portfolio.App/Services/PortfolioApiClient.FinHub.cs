@@ -84,4 +84,20 @@ public partial class PortfolioApiClient
 		);
 		return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
 	}
+
+	/*----------------------------------------------------------------------*/
+
+	/// <inheritdoc />
+	public async Task<ApiResp<TickerAnalysis>> AnalyzeTickerAsync(TickerAnalysisReq req, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+	{
+		var endpoint = IPortfolioApiClient.API_FINHUB_AI_ANALYZE_TICKER;
+		using var httpResult = await BuildAndSendRequestAsync(
+			requestHttpClient,
+			HttpMethod.Post, baseUrl, endpoint,
+			authToken,
+			req,
+			cancellationToken
+		);
+		return await ReadAndCloseResponseAsync<TickerAnalysis>(httpResult, cancellationToken);
+	}
 }

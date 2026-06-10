@@ -7,9 +7,7 @@ using MyPo.Libs.Opurator;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Api;
-using System.Globalization;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -28,142 +26,29 @@ public sealed partial class StockSymbolInfo : BasePage
 
 	private readonly List<MarketDefResp> Markets = [];
 	private MarketDef? Market = null;
-	// private string MarketId { get; set; } = string.Empty;
-	// private MarketDef? Market => Markets.FirstOrDefault(m => string.Equals(m.Id, MarketId, StringComparison.OrdinalIgnoreCase))?.ToModel() ?? null;
 
-	private readonly List<AIVendor> AIVendors = [];
-	private readonly List<string> AITiers = [];
-	private readonly List<string> AIModels = [];
-
-	private string SelectedAIVendor { get; set; } = string.Empty;
-	private string SelectedAITier { get; set; } = string.Empty;
-	private string SelectedAIModel { get; set; } = string.Empty;
+	private string Intent { get; set; } = string.Empty;
 
 	private CModal ModalDialogAnalyzeSymbol { get; set; } = default!;
-	private SymbolAnalysisResp? AnalysisResponse { get; set; }
-
-	private void OnChangeAIVendor()
-	{
-		AITiers.Clear();
-		AIModels.Clear();
-		SelectedAITier = string.Empty;
-		SelectedAIModel = string.Empty;
-		var aiVendor = AIVendors.FirstOrDefault(v => string.Equals(v.Name, SelectedAIVendor, StringComparison.OrdinalIgnoreCase)) ?? null;
-		if (aiVendor != null)
-		{
-			AITiers.AddRange(aiVendor.TieredModels.Keys);
-		}
-	}
-
-	private void OnChangeAITier()
-	{
-		AIModels.Clear();
-		SelectedAIModel = string.Empty;
-		var aiVendor = AIVendors.FirstOrDefault(v => string.Equals(v.Name, SelectedAIVendor, StringComparison.OrdinalIgnoreCase)) ?? null;
-		var aiTier = AITiers.FirstOrDefault(t => string.Equals(t, SelectedAITier, StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
-		if (aiVendor != null && !string.IsNullOrEmpty(aiTier))
-		{
-			AIModels.AddRange(aiVendor.TieredModels[aiTier]);
-		}
-	}
-
-	private static string FormatDecimal(decimal? value, string format) =>
-		value.HasValue ? value.Value.ToString(format, CultureInfo.InvariantCulture) : "N/A";
-
-	private static string FormatLong(long? value) =>
-		value.HasValue ? value.Value.ToString("N0", CultureInfo.InvariantCulture) : "N/A";
-
-	private string BuildAnalysisInputs()
-	{
-		var inputs = $"""
-		## Company Classification
-
-		- Currency: {SymbolInfo?.Currency??"USD"}
-		- Quote type: {SymbolInfo?.QuoteType??"N/A"}
-		- Industry: {SymbolInfo?.Industry??"N/A"}
-		- Sector: {SymbolInfo?.Sector??"N/A"}
-
-
-		## Financials
-
-		- Total cash: {FormatLong(SymbolInfo?.TotalCash)}
-		- Total debt: {FormatLong(SymbolInfo?.TotalDebt)}
-		- Total revenue: {FormatLong(SymbolInfo?.TotalRevenue)}
-		- Revenue growth: {FormatDecimal(SymbolInfo?.RevenueGrowth, "P2")}
-		- Earnings growth: {FormatDecimal(SymbolInfo?.EarningsGrowth, "P2")}
-		- EBITDA: {FormatLong(SymbolInfo?.Ebitda)}
-		- EBITDA margins: {FormatDecimal(SymbolInfo?.EbitdaMargins, "P2")}
-		- Gross margins: {FormatDecimal(SymbolInfo?.GrossMargins, "P2")}
-		- Operating margins: {FormatDecimal(SymbolInfo?.OperatingMargins, "P2")}
-		- Profit margins: {FormatDecimal(SymbolInfo?.ProfitMargins, "P2")}
-
-
-		## Valuation
-
-		- Market capitalization: {(SymbolInfo?.StockQuote?.MarketCap > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockQuote!.MarketCap.Value) : "N/A")}
-		- Current price: {FormatDecimal(SymbolInfo?.StockQuote?.MarketPrice, "F2")}
-		- Shares outstanding: {(SymbolInfo?.StockQuote?.MarketCap > 0 && SymbolInfo?.StockQuote?.MarketPrice > 0 ? ((decimal)SymbolInfo.StockQuote!.MarketCap / SymbolInfo.StockQuote.MarketPrice).ToString("F0", CultureInfo.InvariantCulture) : "N/A")}
-		- Trailing EPS: {FormatDecimal(SymbolInfo?.StockQuote?.TrailingEps, "F2")}
-		- Forward EPS: {FormatDecimal(SymbolInfo?.StockQuote?.ForwardEps, "F2")}
-		- Trailing P/E: {FormatDecimal(SymbolInfo?.StockQuote?.TrailingPE, "F2")}
-		- Forward P/E: {FormatDecimal(SymbolInfo?.StockQuote?.ForwardPE, "F2")}
-
-
-		## Technical Indicators
-
-		- 52-week low/high: {FormatDecimal(SymbolInfo?.StockQuote?.FiftyTwoWeekLow, "F2")} / {FormatDecimal(SymbolInfo?.StockQuote?.FiftyTwoWeekHigh, "F2")}
-		- Beta: {FormatDecimal(SymbolInfo?.StockQuote?.Beta, "F2")}
-		- MA10: {FormatDecimal(SymbolInfo?.StockHistory?.MA10, "F2")}
-		- MA20: {FormatDecimal(SymbolInfo?.StockHistory?.MA20, "F2")}
-		- MA50: {FormatDecimal(SymbolInfo?.StockHistory?.MA50, "F2")}
-		- MA100: {FormatDecimal(SymbolInfo?.StockHistory?.MA100, "F2")}
-		- MA200: {FormatDecimal(SymbolInfo?.StockHistory?.MA200, "F2")}
-		- RSI-14: {FormatDecimal(SymbolInfo?.StockHistory?.RSI14, "F2")}
-		- Current volume ({((Market?.IsCurrentlyOpen()??false)?"Market still open":"Market is closed")}) : {(SymbolInfo?.StockQuote?.MarketVolume > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockQuote!.MarketVolume.Value) : "N/A")}
-		- Yesterday volume: {(SymbolInfo?.StockHistory?.YesterdayVolume > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockHistory!.YesterdayVolume) : "N/A")}
-		- 30-day average volume: {(SymbolInfo?.StockHistory?.AverageVolume30d > 0 ? FormatUtils.FormatVolume(SymbolInfo.StockHistory!.AverageVolume30d) : "N/A")}
-		""";
-
-		var historyData = SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[];
-		if (historyData.Any())
-		{
-			inputs += "\n\n\n";
-			inputs += """
-			## 30-days history
-
-			| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |
-			|-------------|--------|--------|--------|--------|------------|--------|
-			""";
-			foreach(var h in historyData)
-			{
-				inputs += $"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp):yyyy-MMM-dd} | {h.Open:N2} | {h.High:N2} | {h.Low:N2} | {h.Close:N2} | {h.Volume} | {h.RSI14:N2} |\n";
-			}
-		}
-
-		return inputs;
-	}
+	private TickerAnalysis? TickerAnalysis { get; set; }
 
 	private async void BtnClickAIAnalyze()
 	{
-		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-vendor", SelectedAIVendor);
-		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-tier", SelectedAITier);
-		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", $"StockSymbolInfo-ai-model", SelectedAIModel);
-
-		var alertMsg = $"Analyzing symbol with AI (Vendor: {SelectedAIVendor} / Tier: {SelectedAITier} / Model: {SelectedAIModel})...";
-		AnalysisResponse = null;
+		if (SymbolInfo is null)
+		{
+			ShowAlert("warning", "Empty symbol info.");
+			return;
+		}
+		var alertMsg = $"Analyzing {Symbol} with AI...";
+		TickerAnalysis = null;
 		ModalDialogAnalyzeSymbol.Open();
 		ModalDialogAnalyzeSymbol.ShowAlert("info", alertMsg);
 		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var req = new SymbolAnalysisReq
+		var req = new TickerAnalysisReq
 		{
-			AIVendor = SelectedAIVendor,
-			AITier = SelectedAITier,
-			AIModel = SelectedAIModel,
-			Symbol = Symbol,
-			Inputs = BuildAnalysisInputs(),
-			OwningAmount = (OwningAsset?.Quantity??0) > 0 ? OwningAsset?.Quantity : null,
-			OwningAveragePrice = (OwningAsset?.AveragePrice??0) > 0 ? OwningAsset?.AveragePrice : null,
+			Symbol = SymbolInfo.NormalizedSymbol,
+			PortfolioId = PortfolioId,
+			Intent = Intent,
 		};
 		var stopFlag = false;
 		var startTimestamp = DateTime.UtcNow;
@@ -179,20 +64,19 @@ public sealed partial class StockSymbolInfo : BasePage
 				await Task.Delay(100);
 			}
 		});
-		var analysisResponse = await apiClient.AnalyzeSymbolAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
+		var analysisResponse = await apiClient.AnalyzeTickerAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
 		stopFlag = true;
-		if (analysisResponse.Status != 200)
+		if (!analysisResponse.IsSuccess)
 		{
 			ModalDialogAnalyzeSymbol.ShowAlert("danger", analysisResponse.Message ?? "Error analyzing symbol.");
 			return;
 		}
-		AnalysisResponse = analysisResponse.Data;
+		TickerAnalysis = analysisResponse.Data;
 		ModalDialogAnalyzeSymbol.CloseAlert();
 	}
 
 	private void BtnClickLoadData()
 	{
-		// var symbol = $"{SymbolCode}:{MarketId}";
 		var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO.Replace("{Symbol}", Symbol, StringComparison.OrdinalIgnoreCase)}?{QUERY_PARM_REFRESH}=true";
 		if (!string.IsNullOrEmpty(PortfolioId))
 		{

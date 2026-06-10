@@ -5,6 +5,18 @@ namespace MyPo.Portfolio.Api.Services;
 
 public interface IFinHubClient
 {
+	public const string API_FINHUB_AI_ANALYZE_TICKER = "/ai/analyze_ticker";
+
+	/// <summary>
+	/// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/> to analyze a ticker symbol.
+	/// </summary>
+	/// <param name="req">The analysis request.</param>
+	/// <param name="baseUrl">The base URL of the API, optional.</param>
+	/// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+	/// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+	/// <returns></returns>
+	public Task<ApiResp<TickerAnalysis>> AnalyzeTickerAsync(AnalyzeTickerReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
 	public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT = "/ai/analyze_dividend_event";
 
 	/// <summary>

@@ -209,7 +209,7 @@
 													</tr>
 												</table>
 
-												<hr />
+												<hr class="mt-1 mb-1" />
 
 												<table class="table table-sm mb-0">
 													<tr>
@@ -269,51 +269,22 @@
 													</tr>
 												</table>
 
-												<hr />
+												<hr class="mt-1 mb-1" />
 
 												<table class="table table-sm mb-0">
 													<tr>
-														<td>AI Vendor</td>
-														<td class="text-end">
-															<select class="form-select form-select-sm" id="aiVendor" @bind="SelectedAIVendor" @bind:after="OnChangeAIVendor">
-																<option value="">-= AI Vendor =-</option>
-																@foreach (var aiVendor in AIVendors)
-																{
-																	<option value="@aiVendor.Name">@aiVendor.Name</option>
-																}
-															</select>
-														</td>
+														<td colspan="2">Intent:</td>
 													</tr>
 													<tr>
-														<td>Price Tier</td>
-														<td class="text-end">
-															<select class="form-select form-select-sm" id="aiTier" @bind="SelectedAITier" @bind:after="OnChangeAITier">
-																<option value="">-= Price Tier =-</option>
-																@foreach (var aiTier in AITiers)
-																{
-																	<option value="@aiTier">@aiTier</option>
-																}
-															</select>
+														<td colspan="2">
+															<textarea class="form-control form-control-sm" @bind="Intent" id="intent" placeholder="e.g. Should I hold, sell,% or buy"></textarea>
 														</td>
 													</tr>
-													<tr>
-														<td>Model</td>
-														<td class="text-end">
-															<select class="form-select form-select-sm" id="aiModel" @bind="SelectedAIModel">
-																<option value="">-= Model =-</option>
-																@foreach (var aiModel in AIModels)
-																{
-																	<option value="@aiModel">@aiModel</option>
-																}
-															</select>
-														</td>
-													</tr>
-													<tr>
+													<tr class="mt-1">
 														<td>&nbsp;</td>
 														<td class="text-end">
-															<button type="button" class="btn btn-block btn-sm btn-outline-primary" @onclick="BtnClickAIAnalyze" title="Run AI Analysis"
-																	disabled="@(string.IsNullOrEmpty(SelectedAIVendor) || string.IsNullOrEmpty(SelectedAITier) || string.IsNullOrEmpty(SelectedAIModel))">
-																<BIcon icon="graph-up-arrow" /> Run AI Analysis
+															<button type="button" class="btn btn-block btn-sm btn-outline-primary mt-1" @onclick="BtnClickAIAnalyze" title="Run AI Analysis">
+																<BIcon icon="graph-up-arrow" extraClassName="me-1"/>Run AI Analysis
 															</button>
 														</td>
 													</tr>
@@ -432,37 +403,6 @@
 						}
                     }
 
-					<hr />
-
-@*
-					<div class="alert alert-light text-start mt-2 align-items-center" style="font-size: small !important" role="alert">
-						<div class="row">
-							<div class="col">
-<p>
-	Context and Task: Given today is @(DateTimeOffset.Now.ToString("yyyy-MMM-dd")) and 30-day history of the stock @(Market?.Code??""):@(SymbolCode).
-	Analyse the data and find any abnormal values. Browse the web for the most up-to-date information if needed, and provide insights on the following:
-</p>
-
-<pre class="text-start">
-- Abnormal data point
-- Potential reason for the abnormality
-- Potential impact on the stock performance
-</pre>
-
-<pre class="text-start">
-30-days history:
-| Date        | Open   | High   | Low    | Close  | Volume     | RSI-14 |
-|-------------|--------|--------|--------|--------|------------|--------|
-@foreach(var h in SymbolInfo?.StockHistory?.History90d?.TakeLast(30)??[])
-{
-	@($"| {DateTimeOffset.FromUnixTimeSeconds(h.Timestamp).ToString("yyyy-MMM-dd")} | {h.OpenValue:N2} | {h.HighValue:N2} | {h.LowValue:N2} | {h.CloseValue:N2} | {h.Volume} | {h.RSI14:N2} |\n")
-}
-</pre>
-							</div>
-						</div>
-					</div>
-*@
-
 					<div class="alert alert-warning mt-2" role="alert">
 						<span style="font-size: small">@warningMsg</span>
 					</div>
@@ -481,15 +421,15 @@
 			<div class="card">
 				<div class="card-body">
 					<CAlert @ref="@ModalDialogAnalyzeSymbol.Alert" />
-					@if (AnalysisResponse.HasValue)
+                    @if (TickerAnalysis is not null)
 					{
-						<WidgetMarkdownViewer Content="@AnalysisResponse.Value.Response" />
+                        <WidgetMarkdownViewer Content="@TickerAnalysis.Analysis" />
 					}
 				</div>
-				@if (AnalysisResponse.HasValue)
+                @if (TickerAnalysis is not null)
 				{
 					<div class="card-footer">
-						<small>@(AnalysisResponse.Value.IsCached?"(Cached) ":"")@((AnalysisResponse.Value.TotalTimeMs/1000m).ToString("F1"))s - Total Tokens: @(AnalysisResponse.Value.TotalTokens) (Prompt: @(AnalysisResponse.Value.NumTokensPrompt) / Thought: @(AnalysisResponse.Value.NumTokensThought) / Completion: @(AnalysisResponse.Value.NumTokensResponse))</small>
+						@* <small>@(AnalysisResponse.Value.IsCached?"(Cached) ":"")@((AnalysisResponse.Value.TotalTimeMs/1000m).ToString("F1"))s - Total Tokens: @(AnalysisResponse.Value.TotalTokens) (Prompt: @(AnalysisResponse.Value.NumTokensPrompt) / Thought: @(AnalysisResponse.Value.NumTokensThought) / Completion: @(AnalysisResponse.Value.NumTokensResponse))</small> *@
 					</div>
 				}
 			</div>
