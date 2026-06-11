@@ -70,6 +70,14 @@ MyPo.Portfolio.Shared (portfolio EF models/repos)
 
 ## Conventions
 
+- **Project structure**: This repository is based on an existing project template. The project source code lives in these directories:
+  - `.github/`
+  - `.semrelease/`
+  - `dbschema/`
+  - `MyPo.Blazor/MyPo.Blazor.Portfolio.App/`
+  - `MyPo.Portfolio.Api/`
+  - `MyPo.Portfolio.Shared/`
+  Do not modify or update other directories unless explicitly asked, as they belong to the template.
 - **Target framework**: .NET 8 (`net8.0`) across all projects.
 - **Database schemas**: Managed via SQL scripts in `dbschema/pgsql/`. Patches follow naming: `patch_pgsql_{module}-post-{version}.sql`.
 - **Config files**: `appsettings.json` variants exist but are `.disabled` in source. Runtime config lives in `config/` directories.
