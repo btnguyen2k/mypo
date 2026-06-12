@@ -24,48 +24,54 @@
         <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
     </NotAuthorized>
     <Authorized>
-		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
             <div class="card shadow-sm border-top-primary border-top-3 mb-4">
                 <div class="card-header">
-					<h5 class="mb-0">⚙️ @PAGE_TITLE</h5>
-				</div>
+                    <h5 class="mb-0">⚙️ @PAGE_TITLE</h5>
+                </div>
                 <div class="card-body">
-					<CAlert @ref="@Alert" />
-					<div class="row g-3">
-						<!-- Preference groups navigation -->
-						<div class="col-12 col-md-auto">
-							<div class="nav nav-pills flex-md-column flex-row flex-wrap gap-1" role="tablist" aria-orientation="vertical">
-								@foreach (var group in PreferenceGroups)
-								{
-									<button class="nav-link text-start @(ActiveTab==group.Id?"active":"")"
-											type="button" role="tab"
-											aria-selected="@(ActiveTab==group.Id?"true":"false")"
-											@onclick="()=>SwitchTab(group.Id)">
-										@group.Title
-									</button>
-								}
-							</div>
-						</div>
+                    <CAlert @ref="@Alert" />
+                    <div class="row g-3">
+                        <!-- Preference groups navigation -->
+                        <div class="col-12 col-md-auto">
+                            <div class="nav nav-pills flex-md-column flex-row flex-wrap gap-1" role="tablist" aria-orientation="vertical">
+                                @foreach (var group in PreferenceGroups)
+                                {
+                                    <button class="nav-link text-start @(ActiveTab==group.Id?"active":"")"
+                                            type="button" role="tab"
+                                            aria-selected="@(ActiveTab==group.Id?"true":"false")"
+                                            @onclick="()=>SwitchTab(group.Id)">
+                                        @group.Title
+                                    </button>
+                                }
+                            </div>
+                        </div>
 
-						<!-- Preference group content -->
-						<div class="col-12 col-md-auto">
-							<div class="tab-content">
-								<div class="tab-pane fade @(ActiveTab==TabIdMarketAlert?"show active":"")"
-										role="tabpanel" aria-labelledby="@TabIdMarketAlert" tabindex="0">
-									<h6 class="mb-3">📡 Market Alert Settings</h6>
-									<CMarketAlertPreferences />
-								</div>
+                        <!-- Preference group content -->
+                        <div class="col-12 col-md-10">
+                            <div class="tab-content">
+                                <div class="tab-pane fade @(ActiveTab==TabIdMarketAlert?"show active":"")"
+                                        role="tabpanel" aria-labelledby="@TabIdMarketAlert" tabindex="0">
+                                    <h6 class="mb-3">📡 Market Alert Settings</h6>
+                                    <CMarketAlertPreferences />
+                                </div>
 
-								@* To add a new preference group:
-									1. Add a Tab id const and a PreferenceGroups entry in the code-behind.
-									2. Create a self-contained component (inheriting CBase) under Pages/Preferences/.
-									3. Add a matching tab-pane here referencing that component. *@
-							</div>
-						</div>
-					</div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdPortfolioPlan?"show active":"")"
+                                        role="tabpanel" aria-labelledby="@TabIdPortfolioPlan" tabindex="0">
+                                    <h6 class="mb-3">📋 Portfolio Plan Settings</h6>
+                                    <CPortfolioPlanPreferences />
+                                </div>
+
+                                @* To add a new preference group:
+                                    1. Add a Tab id const and a PreferenceGroups entry in the code-behind.
+                                    2. Create a self-contained component (inheriting CBase) under Pages/Preferences/.
+                                    3. Add a matching tab-pane here referencing that component. *@
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-	</Authorized>
+    </Authorized>
 </AuthorizeView>

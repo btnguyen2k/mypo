@@ -63,7 +63,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
                                 cancellationToken
                             );
                             var alertDelay = TimeSpan.FromMinutes(prefs.DelayMinutes);
-                            if (checkpoint == null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < alertDelay))
+                            if (checkpoint is null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < alertDelay))
                             {
                                 // checkpoint is not ready for sending alerts yet
                                 continue;

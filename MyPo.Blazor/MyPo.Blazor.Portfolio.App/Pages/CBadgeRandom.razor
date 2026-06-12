@@ -1,19 +1,19 @@
 ﻿<span class="badge rounded-pill @extraClassName @BadgeColorClass()">@Text</span>
 @code {
-	[Parameter]
-	public string Text { get; set; } = "Badge";
+    [Parameter]
+    public string Text { get; set; } = "Badge";
 
-	[Parameter]
-	public string extraClassName { get; set; } = string.Empty;
+    [Parameter]
+    public string extraClassName { get; set; } = string.Empty;
 
-	private readonly List<string> availableClasses = ["text-bg-primary", "text-bg-success", "text-bg-danger", "text-bg-warning", "text-bg-info"];
+    private readonly List<string> availableClasses = ["text-bg-primary", "text-bg-success", "text-bg-danger", "text-bg-warning", "text-bg-info"];
 
-	private string BadgeColorClass()
-	{
-		var crc32 = new System.IO.Hashing.Crc32();
+    private string BadgeColorClass()
+    {
+        var crc32 = new System.IO.Hashing.Crc32();
         crc32.Append(System.Text.Encoding.UTF8.GetBytes(Text));
-		var hash = crc32.GetCurrentHashAsUInt32();
-		var index = (int)(hash % availableClasses.Count);
-		return availableClasses[index];
-	}
+        var hash = crc32.GetCurrentHashAsUInt32();
+        var index = (int)(hash % availableClasses.Count);
+        return availableClasses[index];
+    }
 }

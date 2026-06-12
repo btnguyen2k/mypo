@@ -14,308 +14,310 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolioDetails : BasePage
 {
-	[Parameter]
-	public string PortfolioId { get; set; } = string.Empty;
-	private PortfolioResp? SelectedPortfolio { get; set; }
+    [Parameter]
+    public string PortfolioId { get; set; } = string.Empty;
+    private PortfolioResp? SelectedPortfolio { get; set; }
 
-	private IEnumerable<MarketDefResp>? Markets { get; set; }
-	private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
-	private IEnumerable<AssetResp>? Assets { get; set; }
-	private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
+    private IEnumerable<MarketDefResp>? Markets { get; set; }
+    private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
+    private IEnumerable<AssetResp>? Assets { get; set; }
+    private IEnumerable<TxSettlementResp>? TxSettlements { get; set; }
 
-	// map {asset-id --> quote}
-	private readonly Dictionary<string, StockQuote> QuotesMap = [];
+    // map {asset-id --> quote}
+    private readonly Dictionary<string, StockQuote> QuotesMap = [];
 
-	private int RefreshBackgroundTaskId = Random.Shared.Next();
+    private int RefreshBackgroundTaskId = Random.Shared.Next();
 
-	private void StopRefreshQuotesBackground()
-	{
-		RefreshBackgroundTaskId = 0;
-	}
+    private void StopRefreshQuotesBackground()
+    {
+        RefreshBackgroundTaskId = 0;
+    }
 
-	protected override void Dispose(bool disposing)
-	{
-		if (disposing)
-		{
-			StopRefreshQuotesBackground();
-		}
-		base.Dispose(disposing);
-	}
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            StopRefreshQuotesBackground();
+        }
+        base.Dispose(disposing);
+    }
 
-	private async void GetStocksQuotesBackground(List<string> symbolsList, int myTaskId)
-	{
-		var hasError = false;
+    private async void GetStocksQuotesBackground(List<string> symbolsList, int myTaskId)
+    {
+        var hasError = false;
 
-		void prefetchCallback(IEnumerable<string> symbols)
-		{
-			SetBackgroundMsg($"⌛Fetching quotes for symbols: {string.Join(",", symbols)}");
-		}
+        void prefetchCallback(IEnumerable<string> symbols)
+        {
+            SetBackgroundMsg($"⌛Fetching quotes for symbols: {string.Join(",", symbols)}");
+        }
 
-		bool postfetchCallback(ApiResp<IDictionary<string, StockQuote>> quotesResp)
-		{
-			var emptyDict = new Dictionary<string, StockQuote>();
-			if (!quotesResp.IsSuccess)
-			{
-				hasError = true;
-				SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {string.Join(",", symbolsList)}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
-			}
-			else
-			{
-				foreach (var quote in quotesResp.Data ?? emptyDict)
-				{
-					QuotesMap[quote.Key] = quote.Value;
-				}
-				StateHasChanged();
-			}
-			return myTaskId == RefreshBackgroundTaskId;
-		}
+        bool postfetchCallback(ApiResp<IDictionary<string, StockQuote>> quotesResp)
+        {
+            var emptyDict = new Dictionary<string, StockQuote>();
+            if (!quotesResp.IsSuccess)
+            {
+                hasError = true;
+                SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {string.Join(",", symbolsList)}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
+            }
+            else
+            {
+                foreach (var quote in quotesResp.Data ?? emptyDict)
+                {
+                    QuotesMap[quote.Key] = quote.Value;
+                }
+                StateHasChanged();
+            }
+            return myTaskId == RefreshBackgroundTaskId;
+        }
 
-		if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
-		{
-			var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-			var authToken = await GetAuthTokenAsync();
-			await TickerUtils.FetchQuotesForTickers(symbolsList, apiClient, authToken, ApiBaseUrl, prefetchCallback, postfetchCallback);
+        if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
+        {
+            var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+            var authToken = await GetAuthTokenAsync();
+            await TickerUtils.FetchQuotesForTickers(symbolsList, apiClient, authToken, ApiBaseUrl, prefetchCallback, postfetchCallback);
 
-			if (!hasError)
-			{
-				var now = DateTimeOffset.UtcNow;
-				if (now.ToUnixTimeSeconds()-3600 > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp??0))
-				{
-					// calculate base cost and market value for the portfolio
-					var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
-					req.Metadata!.TotalCosts = Assets?
-						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
-						.Sum(a => a.AveragePrice*a.Quantity) ?? 0;
-					req.Metadata!.TotalMarketValue = Assets?
-						.Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase)??false)
-						.Sum(a => {
-							var symbol = $"{a.Market?.Code??string.Empty}:{a.ItemCode}";
-							return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
-						}) ?? 0;
-					var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
-					if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
-					{
-						// special case
-						req.Metadata!.TotalMarketValue /= 1000;
-					}
-					req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-					var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
-					if (resp.IsSuccess)
-					{
-						SelectedPortfolio = resp.Data;
-						StateHasChanged();
-					}
-				}
-			}
+            if (!hasError)
+            {
+                var now = DateTimeOffset.UtcNow;
+                if (now.ToUnixTimeSeconds() - 3600 > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp ?? 0))
+                {
+                    // calculate base cost and market value for the portfolio
+                    var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
+                    req.Metadata!.TotalCosts = Assets?
+                        .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
+                        .Sum(a => a.AveragePrice * a.Quantity) ?? 0;
+                    req.Metadata!.TotalMarketValue = Assets?
+                        .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
+                        .Sum(a =>
+                        {
+                            var symbol = $"{a.Market?.Code ?? string.Empty}:{a.ItemCode}";
+                            return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
+                        }) ?? 0;
+                    var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
+                    if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // special case
+                        req.Metadata!.TotalMarketValue /= 1000;
+                    }
+                    req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
+                    if (resp.IsSuccess)
+                    {
+                        SelectedPortfolio = resp.Data;
+                        StateHasChanged();
+                    }
+                }
+            }
 
-			if (myTaskId == RefreshBackgroundTaskId)
-			{
-				var sleepTime = Random.Shared.NextInt64(30*1000, 60*1000);
-				var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
-				if (market == null)
-				{
-					SetBackgroundMsg($"❗Default market '{SelectedPortfolio?.Metadata?.DefaultMarketId}' not found in markets metadata. Not refreshing quotes.");
-					return;
-				}
-				if (!market.IsCurrentlyOpen())
-				{
-					var timeTillOpen = market.TimeTillOpen();
-					if (timeTillOpen > TimeSpan.FromMinutes(60))
-					{
-						SetBackgroundMsg($"❗Market '{market.Id}' is currently closed. Not refreshing.");
-						return;
-					}
-					sleepTime = Random.Shared.NextInt64(5*60*1000, 10*60*1000);
-					sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds)+1000;
-				}
-				while (sleepTime > 0 && myTaskId == RefreshBackgroundTaskId)
-				{
-					SetBackgroundMsg($"💤Sleeping {sleepTime/1000} seconds before next quotes refresh...");
-					var delay = Math.Min(sleepTime, 1000);
-					await Task.Delay((int)delay);
-					sleepTime -= delay;
-				}
-				if (myTaskId == RefreshBackgroundTaskId)
-				{
-					await Task.Run(() => GetStocksQuotesBackground(symbolsList, myTaskId));
-				}
-			}
-		}
-	}
+            if (myTaskId == RefreshBackgroundTaskId)
+            {
+                var sleepTime = Random.Shared.NextInt64(30 * 1000, 60 * 1000);
+                var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
+                if (market == null)
+                {
+                    SetBackgroundMsg($"❗Default market '{SelectedPortfolio?.Metadata?.DefaultMarketId}' not found in markets metadata. Not refreshing quotes.");
+                    return;
+                }
+                if (!market.IsCurrentlyOpen())
+                {
+                    var timeTillOpen = market.TimeTillOpen();
+                    if (timeTillOpen > TimeSpan.FromMinutes(60))
+                    {
+                        SetBackgroundMsg($"❗Market '{market.Id}' is currently closed. Not refreshing.");
+                        return;
+                    }
+                    sleepTime = Random.Shared.NextInt64(5 * 60 * 1000, 10 * 60 * 1000);
+                    sleepTime = Math.Min(sleepTime, (long)timeTillOpen.TotalMilliseconds) + 1000;
+                }
+                while (sleepTime > 0 && myTaskId == RefreshBackgroundTaskId)
+                {
+                    SetBackgroundMsg($"💤Sleeping {sleepTime / 1000} seconds before next quotes refresh...");
+                    var delay = Math.Min(sleepTime, 1000);
+                    await Task.Delay((int)delay);
+                    sleepTime -= delay;
+                }
+                if (myTaskId == RefreshBackgroundTaskId)
+                {
+                    await Task.Run(() => GetStocksQuotesBackground(symbolsList, myTaskId));
+                }
+            }
+        }
+    }
 
-	private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
-	{
-		HideUI = true;
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+    private async Task<PortfolioResp?> LoadPortfolioAsync(string id, string authToken)
+    {
+        HideUI = true;
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
 
-		ShowAlert("info", "Loading portfolio, please wait...");
-		var apiRespPortfolio = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
-		if (!apiRespPortfolio.IsSuccess)
-		{
-			ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
-			return null;
-		}
+        ShowAlert("info", "Loading portfolio, please wait...");
+        var apiRespPortfolio = await apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
+        if (!apiRespPortfolio.IsSuccess)
+        {
+            ShowAlert("danger", apiRespPortfolio.Message ?? "Error while loading portfolio.");
+            return null;
+        }
 
-		var myPortfolioMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
-		if (!myPortfolioMap.TryGetValue(id, out var portfolio))
-		{
-			ShowAlert("danger", $"Portfolio '{id}' not found.");
-			return null;
-		}
+        var myPortfolioMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
+        if (!myPortfolioMap.TryGetValue(id, out var portfolio))
+        {
+            ShowAlert("danger", $"Portfolio '{id}' not found.");
+            return null;
+        }
 
-		ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
-		var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (!apiRespTx.IsSuccess)
-		{
-			ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio buy/sell transactions.");
-			return null;
-		}
-		TxBuySells = apiRespTx.Data ?? [];
+        ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
+        var apiRespTx = await apiClient.GetMyPortfolioTxBuySellsAsync(portfolio.Id, authToken, ApiBaseUrl);
+        if (!apiRespTx.IsSuccess)
+        {
+            ShowAlert("danger", apiRespTx.Message ?? $"Error while loading portfolio buy/sell transactions.");
+            return null;
+        }
+        TxBuySells = apiRespTx.Data ?? [];
 
-		ShowAlert("info", "Loading portfolio assets, please wait...");
-		var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (!apiRespAssets.IsSuccess)
-		{
-			ShowAlert("danger", apiRespAssets.Message ?? $"Error while loading portfolio assets.");
-			return null;
-		}
-		Assets = apiRespAssets.Data ?? [];
+        ShowAlert("info", "Loading portfolio assets, please wait...");
+        var apiRespAssets = await apiClient.GetMyPortfolioAssetsAsync(portfolio.Id, authToken, ApiBaseUrl);
+        if (!apiRespAssets.IsSuccess)
+        {
+            ShowAlert("danger", apiRespAssets.Message ?? $"Error while loading portfolio assets.");
+            return null;
+        }
+        Assets = apiRespAssets.Data ?? [];
 
-		ShowAlert("info", "Loading portfolio settlement records, please wait...");
-		var apiRespTxSettlementRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
-		if (!apiRespTxSettlementRecs.IsSuccess)
-		{
-			ShowAlert("danger", apiRespTxSettlementRecs.Message ?? $"Error while loading portfolio settlement records.");
-			return null;
-		}
-		TxSettlements = apiRespTxSettlementRecs.Data ?? [];
+        ShowAlert("info", "Loading portfolio settlement records, please wait...");
+        var apiRespTxSettlementRecs = await apiClient.GetMyPortfolioTxSettlementsAsync(portfolio.Id, authToken, ApiBaseUrl);
+        if (!apiRespTxSettlementRecs.IsSuccess)
+        {
+            ShowAlert("danger", apiRespTxSettlementRecs.Message ?? $"Error while loading portfolio settlement records.");
+            return null;
+        }
+        TxSettlements = apiRespTxSettlementRecs.Data ?? [];
 
-		return portfolio;
-	}
+        return portfolio;
+    }
 
-	private async Task<IEnumerable<MarketDefResp>?> LoadMarketsAsync(string authToken)
-	{
-		ShowAlert("info", "Loading markets metadata...");
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		var result = await apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
-		if (result.IsSuccess)
-		{
-			return result.Data ?? [];
-		}
-		ShowAlert("danger", result.Message ?? "Unknown error while loading markets metadata.");
-		return null;
-	}
+    private async Task<IEnumerable<MarketDefResp>?> LoadMarketsAsync(string authToken)
+    {
+        ShowAlert("info", "Loading markets metadata...");
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var result = await apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
+        if (result.IsSuccess)
+        {
+            return result.Data ?? [];
+        }
+        ShowAlert("danger", result.Message ?? "Unknown error while loading markets metadata.");
+        return null;
+    }
 
-	private async void AutoPopulateAssetMetadata()
-	{
-		var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-		foreach (var a in (Assets ?? []).Where(a => a.Metadata is null || string.IsNullOrEmpty(a.Metadata.CorpName)
-				|| string.IsNullOrEmpty(a.Metadata.AssetType)
-				|| a.Metadata.Tags is null || a.Metadata.Tags.Count == 0
-				|| (a.Metadata.AssetType != "ETF" && (string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)))
-			)
-		)
-		{
-			var symbol = $"{a.Market?.Code}:{a.ItemCode}";
-			SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
-			var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
-			if (!apiResp.IsSuccess)
-			{
-				SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
-			}
-			else
-			{
-				var overview = apiResp.Data;
-				if (overview is null) continue;
+    private async void AutoPopulateAssetMetadata()
+    {
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        foreach (var a in (Assets ?? []).Where(a => a.Metadata is null || string.IsNullOrEmpty(a.Metadata.CorpName)
+                || string.IsNullOrEmpty(a.Metadata.AssetType)
+                || a.Metadata.Tags is null || a.Metadata.Tags.Count == 0
+                || (a.Metadata.AssetType != "ETF" && (string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)))
+            )
+        )
+        {
+            var symbol = $"{a.Market?.Code}:{a.ItemCode}";
+            SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
+            var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
+            if (!apiResp.IsSuccess)
+            {
+                SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
+            }
+            else
+            {
+                var overview = apiResp.Data;
+                if (overview is null) continue;
 
-				a.Metadata ??= new AssetMetadata();
-				a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
-				a.Metadata.Industry = overview.Industry?.Trim() ?? "";
-				a.Metadata.Sector = overview.Sector?.Trim() ?? "";
-				a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
-				a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
-				if (!string.IsNullOrEmpty(a.Metadata.Industry))
-				{
-					a.Metadata.Tags.Add(a.Metadata.Industry);
-				}
-				if (a.Metadata.AssetType == "ETF")
-				{
-					a.Metadata.Tags.Add("ETF");
-				}
-				SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
-				var updateReq = CreateOrUpdateAssetReq.NewRequest(a);
-				var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
-				if (!updateResp.IsSuccess)
-				{
-					SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
-				}
-				else
-				{
-					SetBackgroundMsg($"✅Successfully updated asset metadata for '{symbol}'.");
-				}
-			}
-		}
-	}
+                a.Metadata ??= new AssetMetadata();
+                a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
+                a.Metadata.Industry = overview.Industry?.Trim() ?? "";
+                a.Metadata.Sector = overview.Sector?.Trim() ?? "";
+                a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
+                a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(a.Metadata.Industry))
+                {
+                    a.Metadata.Tags.Add(a.Metadata.Industry);
+                }
+                if (a.Metadata.AssetType == "ETF")
+                {
+                    a.Metadata.Tags.Add("ETF");
+                }
+                SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
+                var updateReq = CreateOrUpdateAssetReq.NewRequest(a);
+                var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);
+                if (!updateResp.IsSuccess)
+                {
+                    SetBackgroundMsg($"❗Failed to update asset metadata for '{symbol}'. Status: {updateResp.Status}, Message: {updateResp.Message}");
+                }
+                else
+                {
+                    SetBackgroundMsg($"✅Successfully updated asset metadata for '{symbol}'.");
+                }
+            }
+        }
+    }
 
-	private async void InitializePage()
-	{
-		HideUI = true;
+    private async void InitializePage()
+    {
+        HideUI = true;
 
-		SwitchToSavedTab();
+        SwitchToSavedTab();
 
-		Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
+        Markets = await LoadMarketsAsync(await GetAuthTokenAsync());
 
-		SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
-		if (SelectedPortfolio == null) return;
+        SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
+        if (SelectedPortfolio == null) return;
 
-		// var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
-		var symbolsList = Assets?.Select(a => {
-			var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
-			return $"{market?.Code??string.Empty}:{a.ItemCode}";
-		}).Distinct().ToList() ?? [];
-		SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
-		var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-		taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
-		taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
+        // var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
+        var symbolsList = Assets?.Select(a =>
+        {
+            var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+            return $"{market?.Code ?? string.Empty}:{a.ItemCode}";
+        }).Distinct().ToList() ?? [];
+        SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
+        var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
+        taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
+        taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
 
-		HideUI = false;
+        HideUI = false;
 
-		ShowPassedMessageOrCloseAlert();
-	}
+        ShowPassedMessageOrCloseAlert();
+    }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		await base.OnAfterRenderAsync(firstRender);
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
 
-		if (firstRender) InitializePage();
+        if (firstRender) InitializePage();
 
-		if (RemoveRefreshParamIfPresent()) await Task.Run(InitializePage);
-	}
+        if (RemoveRefreshParamIfPresent()) await Task.Run(InitializePage);
+    }
 
-	private string ActiveTab { get; set; } = TabIdSummary;
-	private const string TabIdSummary = "nav-summary-tab";
-	private const string TabIdPositions = "nav-positions-tab";
-	private const string TabIdTxBuysSells = "nav-txbuyssells-tab";
-	private const string TabIdTxSettled = "nav-txsettled-tab";
+    private string ActiveTab { get; set; } = TabIdSummary;
+    private const string TabIdSummary = "nav-summary-tab";
+    private const string TabIdPositions = "nav-positions-tab";
+    private const string TabIdTxBuysSells = "nav-txbuyssells-tab";
+    private const string TabIdTxSettled = "nav-txsettled-tab";
 
-	[Inject]
-	private IJSRuntime JS { get; set; } = default!;
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
 
-	private async void SwitchToSavedTab()
-	{
-		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-		var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
-		ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
-		if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
-		{
-			ActiveTab = TabIdSummary;
-		}
-	}
+    private async void SwitchToSavedTab()
+    {
+        var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
+        var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
+        ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
+        if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
+        {
+            ActiveTab = TabIdSummary;
+        }
+    }
 
-	private async void SwitchTab(string tab)
-	{
-		CloseAlert();
-		var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-		await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
-	}
+    private async void SwitchTab(string tab)
+    {
+        CloseAlert();
+        var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
+        await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
+    }
 }

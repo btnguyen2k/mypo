@@ -39,7 +39,7 @@ sealed class AutoBackgroundPortfolioPlansScanner : AutoBackgroundAnnouncementSca
                             var prefs = user.Metadata?.GetPortfolioPlanPreferences();
                             var botApiKey = user.Metadata?.GetPortfolioPlanTelegramBotApiKey();
                             var chatIDs = (user.Metadata?.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
-                            if (user.Metadata == null || prefs == null || !prefs.ViaTelegram  // portfolio plan alerts not enabled
+                            if (user.Metadata is null || prefs is null || !prefs.ViaTelegram  // portfolio plan alerts not enabled
                                 || prefs.AutoAnalyzeDays <= 0                                   // auto-analyze disabled
                                 || string.IsNullOrEmpty(botApiKey)  // Telegram bot API key is not configured
                                 || chatIDs.Count == 0               // No Telegram chat IDs are configured

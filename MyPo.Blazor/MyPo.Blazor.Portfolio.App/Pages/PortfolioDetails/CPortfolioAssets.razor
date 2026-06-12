@@ -14,342 +14,342 @@
 
 @if (Assets == null || Assets.Count() == 0)
 {
-	<CAlert Type="warning">
-		No assets found. Settle buy/sell transactions to update the asset list.
-	</CAlert>
+    <CAlert Type="warning">
+        No assets found. Settle buy/sell transactions to update the asset list.
+    </CAlert>
 }
 else
 {
-	<CAlert @ref="@Alert" />
+    <CAlert @ref="@Alert" />
 
-	<div class="row mb-2">
-		<div class="col-auto">
-			<input type="checkbox" @bind="ShowOnlyOpenPositions" class="form-check-input" /> Show only open positions
-		</div>
-	</div>
+    <div class="row mb-2">
+        <div class="col-auto">
+            <input type="checkbox" @bind="ShowOnlyOpenPositions" class="form-check-input" /> Show only open positions
+        </div>
+    </div>
 
-	<div class="row mb-2">
-		<div class="col-sm-4">
-			<div class="card text-center">
-				<div class="card-body py-3">
-					<div class="text-muted small">Total Cost</div>
-					<div class="h5 mb-0">
-						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalCost<=0?"--":FormatUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="col-sm-4">
-			<div class="card text-center">
-				<div class="card-body py-3">
-					<div class="text-muted small">Market Value</div>
-					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
-						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="col-sm-4">
-			<div class="card text-center">
-				<div class="card-body py-3">
-					<div class="text-muted small">Unsettled P/L</div>
-					<div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
-						@(DefaultMarket?.CurrencySymbol??"")
-						@(TotalCost<=0||TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
-						(@(
-							TotalCost>0&&TotalMarketValue>0
-								? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
-								: "--"
-						))
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+    <div class="row mb-2">
+        <div class="col-sm-4">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Total Cost</div>
+                    <div class="h5 mb-0">
+                        @(DefaultMarket?.CurrencySymbol??"")
+                        @(TotalCost<=0?"--":FormatUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Market Value</div>
+                    <div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+                        @(DefaultMarket?.CurrencySymbol??"")
+                        @(TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Unsettled P/L</div>
+                    <div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+                        @(DefaultMarket?.CurrencySymbol??"")
+                        @(TotalCost<=0||TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+                        (@(
+                            TotalCost>0&&TotalMarketValue>0
+                                ? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
+                                : "--"
+                        ))
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<div class="row mb-2">
-		<div class="table-responsive">
-			<table class="table table-sm table-hover">
-				<thead>
-					<tr>
-						<th scope="col" class="text-center text-nowrap w-auto">Item</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Units</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Avg. Price</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Total Cost</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Mkt. Price</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Mkt. Value</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Unsettled P/L %</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Analyst Rec.</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Tags</th>
-						<th scope="col" class="text-center text-nowrap w-auto">Actions</th>
-					</tr>
-				</thead>
-				<tbody class="table-group-divider">
-					@foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
-					{
-						<tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
-							<td class="text-start text-nowrap w-auto">
-								@(FormatUtils.EmojiForAssetType(asset.Metadata?.AssetType??""))
-								<button type="button" class="btn btn-link p-0 pb-1" @onclick="()=>BtnClickAssetInfo(asset.Id)">
-									@(asset.ItemCode)
-								</button>
-							</td>
-							<td class="text-end text-nowrap w-auto">
-								@(asset.QuantityStr)
-							</td>
-							<td class="text-end text-nowrap w-auto">
-								@(asset.Market?.CurrencySymbol??"")
-								@(FormatUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
-							</td>
-							<td class="text-end text-nowrap w-auto">
-								@(asset.Market?.CurrencySymbol??"")
-								@(FormatUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
-							</td>
-							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
-								@(asset.Market?.CurrencySymbol??"")
-								@(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
-									? $"{FormatUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
-									: "--"
-								)
-							</td>
-							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
-								@(asset.Market?.CurrencySymbol??"")
-								@(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
-									? $"{FormatUtils.FormatValueWithScale(lp8326*asset.Quantity, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
-									: "--"
-								)
-							</td>
-							<td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
-								@(asset.Market?.CurrencySymbol??"")
-								@(FormatUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
-								(@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"--"))
-							</td>
-							<td class="text-center text-nowrap w-auto">
-								@(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
-									? (quote.RecommendationKey??string.Empty) switch
-										{
-											"strong_buy" => "Strong Buy",
-											"buy" => "Buy",
-											"hold" => "Hold",
-											"sell" => "Sell",
-											"strong_sell" => "Strong Sell",
-											_ => "--",
-										}
-									: "--"
-								)
-							</td>
-							<td class="text-start w-auto small">
-								@foreach (var tag in asset.TagsList)
-								{
-									<CBadgeRandom Text="@tag" extraClassName="me-1" />
-								}
-							</td>
-							<td class="text-center text-nowrap w-auto">
-								<button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)" title="Symbol Info" @onclick:stopPropagation>
-									<BIcon icon="graph-up-arrow" />
-								</button>
-								<button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)" title="Buy/Sell Calculator" @onclick:stopPropagation>
-									<BIcon icon="calculator" />
-								</button>
-								<button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)" title="Edit metadata" @onclick:stopPropagation>
-									<BIcon icon="pencil" />
-								</button>
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-	</div>
+    <div class="row mb-2">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-center text-nowrap w-auto">Item</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Units</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Avg. Price</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Total Cost</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Price</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Value</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Unsettled P/L %</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Analyst Rec.</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Tags</th>
+                        <th scope="col" class="text-center text-nowrap w-auto">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    @foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
+                    {
+                        <tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
+                            <td class="text-start text-nowrap w-auto">
+                                @(FormatUtils.EmojiForAssetType(asset.Metadata?.AssetType??""))
+                                <button type="button" class="btn btn-link p-0 pb-1" @onclick="()=>BtnClickAssetInfo(asset.Id)">
+                                    @(asset.ItemCode)
+                                </button>
+                            </td>
+                            <td class="text-end text-nowrap w-auto">
+                                @(asset.QuantityStr)
+                            </td>
+                            <td class="text-end text-nowrap w-auto">
+                                @(asset.Market?.CurrencySymbol??"")
+                                @(FormatUtils.FormatValueWithScale(asset.AveragePrice, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+                            </td>
+                            <td class="text-end text-nowrap w-auto">
+                                @(asset.Market?.CurrencySymbol??"")
+                                @(FormatUtils.FormatValueWithScale(asset.TotalCost, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+                            </td>
+                            <td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
+                                @(asset.Market?.CurrencySymbol??"")
+                                @(MarketPricesMap.TryGetValue(asset.Id, out var lp0762)
+                                    ? $"{FormatUtils.FormatValueWithScale(lp0762, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+                                    : "--"
+                                )
+                            </td>
+                            <td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
+                                @(asset.Market?.CurrencySymbol??"")
+                                @(MarketPricesMap.TryGetValue(asset.Id, out var lp8326)
+                                    ? $"{FormatUtils.FormatValueWithScale(lp8326*asset.Quantity, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??"")}"
+                                    : "--"
+                                )
+                            </td>
+                            <td class="text-end text-nowrap w-auto @(asset.Quantity<=0?"":TextHighlight(asset.Id))">
+                                @(asset.Market?.CurrencySymbol??"")
+                                @(FormatUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
+                                (@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"--"))
+                            </td>
+                            <td class="text-center text-nowrap w-auto">
+                                @(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
+                                    ? (quote.RecommendationKey??string.Empty) switch
+                                        {
+                                            "strong_buy" => "Strong Buy",
+                                            "buy" => "Buy",
+                                            "hold" => "Hold",
+                                            "sell" => "Sell",
+                                            "strong_sell" => "Strong Sell",
+                                            _ => "--",
+                                        }
+                                    : "--"
+                                )
+                            </td>
+                            <td class="text-start w-auto small">
+                                @foreach (var tag in asset.TagsList)
+                                {
+                                    <CBadgeRandom Text="@tag" extraClassName="me-1" />
+                                }
+                            </td>
+                            <td class="text-center text-nowrap w-auto">
+                                <button class="btn btn-sm btn-outline-info" @onclick="()=>BtnClickAssetInfo(asset.Id)" title="Symbol Info" @onclick:stopPropagation>
+                                    <BIcon icon="graph-up-arrow" />
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="()=>BtnClickAssetBuySellCalculator(asset.Id)" title="Buy/Sell Calculator" @onclick:stopPropagation>
+                                    <BIcon icon="calculator" />
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="()=>BtnClickAssetUpdateTags(asset.Id)" title="Edit metadata" @onclick:stopPropagation>
+                                    <BIcon icon="pencil" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 <div class="alert alert-warning" role="alert">
-	<span style="font-size: small">@warningMsg</span>
+    <span style="font-size: small">@warningMsg</span>
 </div>
 
 <CModal @ref="@ModalDialogBuySellAssetCalculator" title="Asset Buy/Sell Calculator" centered="false" type="secondary" size="extra-large">
-	<nav>
-		<div class="nav nav-tabs" id="nav-tab" role="tablist">
-			<button class="nav-link active"
-				id="tabBuyCalc"
-				data-coreui-toggle="tab" data-coreui-target="#nav-buy-calc"
-				type="button" role="tab" aria-controls="nav-buy-calc" aria-selected="true">Buy</button>
-			<button class="nav-link"
-				id="tabSellCalc"
-				data-coreui-toggle="tab" data-coreui-target="#nav-sell-calc"
-				type="button" role="tab" aria-controls="nav-sell-calc" aria-selected="false">Sells</button>
-		</div>
-	</nav>
-	<div class="tab-content mt-2" id="nav-tabContent">
-		<div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
-			<WidgetBuyCalculator
-				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
-				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
-				OwningUnits="@(SelectedAsset?.Quantity??0)"
-				OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
-		</div>
-		<div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
-			<WidgetSellCalculator
-				ItemCode="@(SelectedAsset?.ItemCode??"")"
-				UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
-				TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
-				NumUnits="@(SelectedAsset?.Quantity??10)"
-				OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
-		</div>
-	</div>
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active"
+                id="tabBuyCalc"
+                data-coreui-toggle="tab" data-coreui-target="#nav-buy-calc"
+                type="button" role="tab" aria-controls="nav-buy-calc" aria-selected="true">Buy</button>
+            <button class="nav-link"
+                id="tabSellCalc"
+                data-coreui-toggle="tab" data-coreui-target="#nav-sell-calc"
+                type="button" role="tab" aria-controls="nav-sell-calc" aria-selected="false">Sells</button>
+        </div>
+    </nav>
+    <div class="tab-content mt-2" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-buy-calc" role="tabpanel" aria-labelledby="tabBuyCalc" tabindex="0">
+            <WidgetBuyCalculator
+                ItemCode="@(SelectedAsset?.ItemCode??"")"
+                UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp4776)?lp4776:100)"
+                TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
+                OwningUnits="@(SelectedAsset?.Quantity??0)"
+                OwningAvgPrice="@(SelectedAsset?.AveragePrice??0)" />
+        </div>
+        <div class="tab-pane fade" id="nav-sell-calc" role="tabpanel" aria-labelledby="tabSellCalc" tabindex="0">
+            <WidgetSellCalculator
+                ItemCode="@(SelectedAsset?.ItemCode??"")"
+                UnitPrice="@(MarketPricesMap.TryGetValue(SelectedAsset?.Id??"", out var lp9551)?lp9551:80)"
+                TxFee="@(PortfolioUtils.EstimateTxFee(SelectedAsset?.Market??null))"
+                NumUnits="@(SelectedAsset?.Quantity??10)"
+                OwningAvgPrice="@(SelectedAsset?.AveragePrice??100)" />
+        </div>
+    </div>
 </CModal>
 
 <CModal @ref="@ModalDialogAssetUpdateTags" title="Asset Info" centered="false" type="info" size="extra-large">
-	<div class="card mb-2">
-		<div class="card-body">
-			<CAlert @ref="@ModalDialogAssetUpdateTags.Alert" />
-			@if (SelectedAsset != null)
-			{
-				<div class="row card-group">
-					<div class="col-md-6 col-sm-12">
-						<div class="card mb-2 border-top-info border-top-3">
-							<div class="card-body">
-    							<h5 class="card-title">@(SelectedAsset.ItemCode)</h5>
-								<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
-									<tr>
-										<td>
-											Type:
-										</td>
-										<td class="text-end">
-											@(SelectedAsset.ItemType)
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Position:
-										</td>
-										<td class="text-end">
-											@(SelectedAsset.Quantity.ToString(SelectedAsset.Market?.QuantityFormat??"N2"))
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Average Price:
-										</td>
-										<td class="text-end">
-											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(FormatUtils.FormatValueWithScale(SelectedAsset.AveragePrice, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Total Cost:
-										</td>
-										<td class="text-end">
-											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(FormatUtils.FormatValueWithScale(SelectedAsset.TotalCost, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
-										</td>
-									</tr>
-								</table>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-6 col-sm-12">
-						<div class="card mb-2 @(new List<string>(["border-top-danger", "border-top-primary", "border-top-success"])[MarketStatus(SelectedAsset)+1]) border-top-3">
-							<div class="card-body">
-    							<h5 class="card-title">Performance</h5>
-								<table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
-									<tr>
-										<td>
-											Market:
-										</td>
-										<td class="text-end">
-											@(SelectedAsset.Market?.Country??"--") / @(SelectedAsset.Market?.Code??"--")
-											(@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen()??false)?"Open":"Closed"))
-										</td>
-									</tr>
-									@*
-									<tr>
-										<td>
-											Status:
-										</td>
-										<td class="text-end">
-											@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Market Open" : "Market Closed") ?? "--")
-										</td>
-									</tr>
-									*@
-									<tr>
-										<td>
-											Unsettled P/L:
-										</td>
-										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
-											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(UnsettledPnLMap.TryGetValue(SelectedAsset.Id, out var upnl2520)
-												? $"{FormatUtils.FormatValueWithScale(upnl2520, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
-												: "--"
-											)
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Market Price:
-										</td>
-										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
-											@(SelectedAsset.Market?.CurrencySymbol??"")
-											@(MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
-												? $"{FormatUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
-												: "--"
-											)
-											(@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var upnl0763)?upnl0763.ToString("N2")+"%":"--"))
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Market Value:
-										</td>
-										<td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
-											@(SelectedAsset.Quantity<=0
-												? "--"
-												: (SelectedAsset.Market?.CurrencySymbol??"") + " " +
-												  FormatUtils.FormatValueWithScale(
-													MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
-														? lp7317 * SelectedAsset.Quantity
-														: 0,
-													SelectedAsset.Market?.PriceScale??1,
-													SelectedAsset.Market?.ValueFormat??""
-												  )
-											)
-										</td>
-									</tr>
-								</table>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="input-group input-group-sm">
-						<span class="input-group-text">Tags:</span>
-						<input type="text" class="form-control" @bind="AssetTags" placeholder="Comma separated, e.g. ETF, Divident,..."/>
-						<button class="btn btn-outline-primary" type="button" @onclick="()=>BtnClickAssetUpdateTagsConfirmed()">Update</button>
-					</div>
-				</div>
-			}
-		</div>
-	</div>
-	<div class="alert alert-warning" role="alert">
-		<span style="font-size: small">@warningMsg</span>
-	</div>
+    <div class="card mb-2">
+        <div class="card-body">
+            <CAlert @ref="@ModalDialogAssetUpdateTags.Alert" />
+            @if (SelectedAsset != null)
+            {
+                <div class="row card-group">
+                    <div class="col-md-6 col-sm-12">
+                        <div class="card mb-2 border-top-info border-top-3">
+                            <div class="card-body">
+                                <h5 class="card-title">@(SelectedAsset.ItemCode)</h5>
+                                <table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+                                    <tr>
+                                        <td>
+                                            Type:
+                                        </td>
+                                        <td class="text-end">
+                                            @(SelectedAsset.ItemType)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Position:
+                                        </td>
+                                        <td class="text-end">
+                                            @(SelectedAsset.Quantity.ToString(SelectedAsset.Market?.QuantityFormat??"N2"))
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Average Price:
+                                        </td>
+                                        <td class="text-end">
+                                            @(SelectedAsset.Market?.CurrencySymbol??"")
+                                            @(FormatUtils.FormatValueWithScale(SelectedAsset.AveragePrice, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Total Cost:
+                                        </td>
+                                        <td class="text-end">
+                                            @(SelectedAsset.Market?.CurrencySymbol??"")
+                                            @(FormatUtils.FormatValueWithScale(SelectedAsset.TotalCost, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??""))
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <div class="card mb-2 @(new List<string>(["border-top-danger", "border-top-primary", "border-top-success"])[MarketStatus(SelectedAsset)+1]) border-top-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Performance</h5>
+                                <table class="table table-sm table-borderless" style="margin-bottom: 0 !important; padding-bottom: 0 !important;">
+                                    <tr>
+                                        <td>
+                                            Market:
+                                        </td>
+                                        <td class="text-end">
+                                            @(SelectedAsset.Market?.Country??"--") / @(SelectedAsset.Market?.Code??"--")
+                                            (@((SelectedAsset.Market?.ToModel().IsCurrentlyOpen()??false)?"Open":"Closed"))
+                                        </td>
+                                    </tr>
+                                    @*
+                                    <tr>
+                                        <td>
+                                            Status:
+                                        </td>
+                                        <td class="text-end">
+                                            @((SelectedAsset.Market?.ToModel().IsCurrentlyOpen() == true ? "Market Open" : "Market Closed") ?? "--")
+                                        </td>
+                                    </tr>
+                                    *@
+                                    <tr>
+                                        <td>
+                                            Unsettled P/L:
+                                        </td>
+                                        <td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+                                            @(SelectedAsset.Market?.CurrencySymbol??"")
+                                            @(UnsettledPnLMap.TryGetValue(SelectedAsset.Id, out var upnl2520)
+                                                ? $"{FormatUtils.FormatValueWithScale(upnl2520, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+                                                : "--"
+                                            )
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Market Price:
+                                        </td>
+                                        <td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+                                            @(SelectedAsset.Market?.CurrencySymbol??"")
+                                            @(MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7990)
+                                                ? $"{FormatUtils.FormatValueWithScale(lp7990, SelectedAsset.Market?.PriceScale??1, SelectedAsset.Market?.ValueFormat??"")}"
+                                                : "--"
+                                            )
+                                            (@(SelectedAsset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(SelectedAsset.Id, out var upnl0763)?upnl0763.ToString("N2")+"%":"--"))
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Market Value:
+                                        </td>
+                                        <td class="text-end @(new List<string>(["text-danger", "", "text-success"])[MarketStatus(SelectedAsset)+1])">
+                                            @(SelectedAsset.Quantity<=0
+                                                ? "--"
+                                                : (SelectedAsset.Market?.CurrencySymbol??"") + " " +
+                                                  FormatUtils.FormatValueWithScale(
+                                                    MarketPricesMap.TryGetValue(SelectedAsset.Id, out var lp7317)
+                                                        ? lp7317 * SelectedAsset.Quantity
+                                                        : 0,
+                                                    SelectedAsset.Market?.PriceScale??1,
+                                                    SelectedAsset.Market?.ValueFormat??""
+                                                  )
+                                            )
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Tags:</span>
+                        <input type="text" class="form-control" @bind="AssetTags" placeholder="Comma separated, e.g. ETF, Divident,..."/>
+                        <button class="btn btn-outline-primary" type="button" @onclick="()=>BtnClickAssetUpdateTagsConfirmed()">Update</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="alert alert-warning" role="alert">
+        <span style="font-size: small">@warningMsg</span>
+    </div>
 </CModal>
 
 @code {
-	private readonly string warningMsg = "Stock chart and data are provided by third-party services. " +
-		"The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
-		"Users should verify the data independently before making any investment decisions.";
+    private readonly string warningMsg = "Stock chart and data are provided by third-party services. " +
+        "The application does not guarantee the accuracy, completeness, or timeliness of the information displayed. " +
+        "Users should verify the data independently before making any investment decisions.";
 
-	private string TextHighlight(string assetId)
-	{
-		if (UnsettledPnLMap.TryGetValue(assetId, out var upnl))
-		{
-			return upnl > 0 ? "text-success" : (upnl < 0 ? "text-danger" : "");
-		}
-		return "";
-	}
+    private string TextHighlight(string assetId)
+    {
+        if (UnsettledPnLMap.TryGetValue(assetId, out var upnl))
+        {
+            return upnl > 0 ? "text-success" : (upnl < 0 ? "text-danger" : "");
+        }
+        return "";
+    }
 }

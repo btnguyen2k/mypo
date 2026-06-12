@@ -7,155 +7,155 @@
 
 <!-- Summary cards -->
 <div class="row g-3 mb-4">
-	<div class="col-sm-6 col-lg-3">
-		<div class="card text-center">
-			<div class="card-body py-3">
-				<div class="text-muted small">Market Value</div>
-				<div class="h5 mb-0">@(Plan.TotalMarketValueStr()??"--")</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-sm-6 col-lg-3">
-		<div class="card text-center">
-			<div class="card-body py-3">
-				<div class="text-muted small">Est. Yearly Dividend)</div>
-				<div class="h5 mb-0">@(Plan.EstTotalYearlyDividendStr()) (@Plan.EstTotalYearlyDividendYieldStr())</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-sm-6 col-lg-3">
-		<div class="card text-center">
-			<div class="card-body py-3">
-				<div class="text-muted small">Max Overweight</div>
-				<div class="h5 mb-0 @(devCssClass(Plan.MaxAllocationDiffPct))">@(Plan.MaxAllocationDiffPctStr())</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-sm-6 col-lg-3">
-		<div class="card text-center">
-			<div class="card-body py-3">
-				<div class="text-muted small">Max Underweight</div>
-				<div class="h5 mb-0 @(devCssClass(Plan.MinAllocationDiffPct))">@(Plan.MinAllocationDiffPctStr()??"--")</div>
-			</div>
-		</div>
-	</div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Market Value</div>
+                <div class="h5 mb-0">@(Plan.TotalMarketValueStr()??"--")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Est. Yearly Dividend)</div>
+                <div class="h5 mb-0">@(Plan.EstTotalYearlyDividendStr()) (@Plan.EstTotalYearlyDividendYieldStr())</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Max Overweight</div>
+                <div class="h5 mb-0 @(devCssClass(Plan.MaxAllocationDiffPct))">@(Plan.MaxAllocationDiffPctStr())</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Max Underweight</div>
+                <div class="h5 mb-0 @(devCssClass(Plan.MinAllocationDiffPct))">@(Plan.MinAllocationDiffPctStr()??"--")</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Holdings detail table -->
 <div class="card">
-	<div class="card-header d-flex justify-content-between align-items-center">
-		<div class="d-flex align-items-center">
-			<h5 class="mb-0">Holdings Breakdown</h5>
-			@if(string.IsNullOrEmpty(Plan.Metadata?.Description))
-			{
-				<div title="Add plan description to enable analysis">
-					<button class="btn btn-sm btn-outline-secondary ms-1" disabled><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
-				</div>
-			}
-			else
-			{
-				<button class="btn btn-sm btn-outline-info ms-1" @onclick="Parent.BtnClickAnalyze" disabled="@Parent.analyzing"><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
-			}
-		</div>
-		<span class="badge bg-secondary">@(Plan.Metadata?.HoldingTickers?.Count) symbols</span>
-	</div>
-	<div class="table-responsive">
-		<style>
-		.allocation-bar {
-			position: relative;
-			height: 16px;
-			border-radius: 4px;
-			overflow: hidden;
-			background: var(--cui-secondary-bg);
-		}
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0">Holdings Breakdown</h5>
+            @if(string.IsNullOrEmpty(Plan.Metadata?.Description))
+            {
+                <div title="Add plan description to enable analysis">
+                    <button class="btn btn-sm btn-outline-secondary ms-1" disabled><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+                </div>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-info ms-1" @onclick="Parent.BtnClickAnalyze" disabled="@Parent.analyzing"><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+            }
+        </div>
+        <span class="badge bg-secondary">@(Plan.Metadata?.HoldingTickers?.Count) symbols</span>
+    </div>
+    <div class="table-responsive">
+        <style>
+        .allocation-bar {
+            position: relative;
+            height: 16px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--cui-secondary-bg);
+        }
 
-		.allocation-bar .bar-current {
-			height: 100%;
-			transition: width .4s ease;
-		}
+        .allocation-bar .bar-current {
+            height: 100%;
+            transition: width .4s ease;
+        }
 
-		.allocation-bar .bar-target {
-			position: absolute;
-			top: 0;
-			height: 100%;
-			width: 2px;
-			background: var(--cui-dark);
-		}
-		</style>
-		<table class="table table-hover align-middle mb-0">
-			<thead>
-				<tr>
-					<th>Ticker</th>
-					<th class="text-end">Shares</th>
-					<th class="text-end">Mkt. Price</th>
-					<th class="text-end">Mkt. Value</th>
-					<th class="text-end">Div Yield</th>
-					<th class="text-end">Est. Yearly Div</th>
-					<th class="text-end">Current %</th>
-					<th class="text-end">Target %</th>
-					<th class="text-end">Deviation</th>
-					<th style="width:200px">Allocation</th>
-				</tr>
-			</thead>
-			<tbody class="table-group-divider">
-				@foreach (var ht in Plan.Metadata?.HoldingTickers??[])
-				{
-					<tr>
-						<td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
-						<td class="text-end">@Plan.NumSharesStr(ht)</td>
-						<td class="text-end">@Plan.MarketPriceStr(ht)</td>
-						<td class="text-end">@Plan.MarketValueStr(ht)</td>
-						<td class="text-end">@($"{ht.DividendYield:N1}%")</td>
-						<td class="text-end">@Plan.EstYearlyDividendStr(ht)</td>
-						<td class="text-end">@Plan.CurrentAllocationPct(ht).ToString("N1")%</td>
-						<td class="text-end">@Plan.TargetAllocationPct(ht).ToString("N0")%</td>
-						<td class="text-end @(devCssClass(Plan.AllocationDiffPct(ht)))">@Plan.AllocationDiffPct(ht).ToString("N1")%</td>
-						<td>
-							<div class="allocation-bar" title="Current @(Plan.CurrentAllocationPct(ht).ToString("N1"))% / Target @(Plan.TargetAllocationPct(ht).ToString("N0"))% / Need @(Plan.AmoutNeededToFillDeviationStr(ht)) (@Plan.SharesNeededToFillDeviationStr(ht) shares)">
-								<div class="bar-current @(barCssClass(Plan.AllocationDiffPct(ht)))" style="width:@(Plan.CurrentAllocationPct(ht))%"></div>
-								<div class="bar-target" style="left:@(Plan.TargetAllocationPct(ht))%" title="Target @(Plan.TargetAllocationPct(ht).ToString("N0"))%"></div>
-							</div>
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
-	</div>
+        .allocation-bar .bar-target {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background: var(--cui-dark);
+        }
+        </style>
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th class="text-end">Shares</th>
+                    <th class="text-end">Mkt. Price</th>
+                    <th class="text-end">Mkt. Value</th>
+                    <th class="text-end">Div Yield</th>
+                    <th class="text-end">Est. Yearly Div</th>
+                    <th class="text-end">Current %</th>
+                    <th class="text-end">Target %</th>
+                    <th class="text-end">Deviation</th>
+                    <th style="width:200px">Allocation</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                @foreach (var ht in Plan.Metadata?.HoldingTickers??[])
+                {
+                    <tr>
+                        <td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
+                        <td class="text-end">@Plan.NumSharesStr(ht)</td>
+                        <td class="text-end">@Plan.MarketPriceStr(ht)</td>
+                        <td class="text-end">@Plan.MarketValueStr(ht)</td>
+                        <td class="text-end">@($"{ht.DividendYield:N1}%")</td>
+                        <td class="text-end">@Plan.EstYearlyDividendStr(ht)</td>
+                        <td class="text-end">@Plan.CurrentAllocationPct(ht).ToString("N1")%</td>
+                        <td class="text-end">@Plan.TargetAllocationPct(ht).ToString("N0")%</td>
+                        <td class="text-end @(devCssClass(Plan.AllocationDiffPct(ht)))">@Plan.AllocationDiffPct(ht).ToString("N1")%</td>
+                        <td>
+                            <div class="allocation-bar" title="Current @(Plan.CurrentAllocationPct(ht).ToString("N1"))% / Target @(Plan.TargetAllocationPct(ht).ToString("N0"))% / Need @(Plan.AmoutNeededToFillDeviationStr(ht)) (@Plan.SharesNeededToFillDeviationStr(ht) shares)">
+                                <div class="bar-current @(barCssClass(Plan.AllocationDiffPct(ht)))" style="width:@(Plan.CurrentAllocationPct(ht))%"></div>
+                                <div class="bar-target" style="left:@(Plan.TargetAllocationPct(ht))%" title="Target @(Plan.TargetAllocationPct(ht).ToString("N0"))%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @code {
-	[Parameter]
-	public MyPortfolioPlansDetails Parent { get; set; } = default!;
+    [Parameter]
+    public MyPortfolioPlansDetails Parent { get; set; } = default!;
 
-	private string barCssClass(decimal dev)
-	{
-		var v = Math.Abs(dev);
-		if (v <= 5)
-		{
-			return "bg-success bg-opacity-50";
-		}
-		if (v <= 11)
-		{
-			return "bg-info bg-opacity-75";
-		}
-		return "bg-danger bg-opacity-50";
-	}
+    private string barCssClass(decimal dev)
+    {
+        var v = Math.Abs(dev);
+        if (v <= 5)
+        {
+            return "bg-success bg-opacity-50";
+        }
+        if (v <= 11)
+        {
+            return "bg-info bg-opacity-75";
+        }
+        return "bg-danger bg-opacity-50";
+    }
 
-	private string devCssClass(decimal dev)
-	{
-		var v = Math.Abs(dev);
-		if (v <= 1)
-		{
-			return "text-muted";
-		}
-		if (v <= 3)
-		{
-			return "text-success";
-		}
-		if (v <= 7)
-		{
-			return "text-info";
-		}
-		return "text-danger";
-	}
+    private string devCssClass(decimal dev)
+    {
+        var v = Math.Abs(dev);
+        if (v <= 1)
+        {
+            return "text-muted";
+        }
+        if (v <= 3)
+        {
+            return "text-success";
+        }
+        if (v <= 7)
+        {
+            return "text-info";
+        }
+        return "text-danger";
+    }
 }

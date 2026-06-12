@@ -16,7 +16,7 @@
     <li class="breadcrumb-item">
         <a href="@UIGlobals.ROUTE_HOME">Home</a>
     </li>
-	<li class="breadcrumb-item">
+    <li class="breadcrumb-item">
         <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</a>
     </li>
     <li class="breadcrumb-item active">
@@ -25,7 +25,7 @@
 </SectionContent>
 
 <AuthorizeView>
-	<Authorizing>
+    <Authorizing>
         <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
     </Authorizing>
     <NotAuthorized>
@@ -34,94 +34,94 @@
     <Authorized>
         <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
-			<div class="card border-top-primary border-top-3 mb-4">
-				<div class="card-header">
+            <div class="card border-top-primary border-top-3 mb-4">
+                <div class="card-header">
                     <h4 class="card-title float-start">@(SelectedPortfolioPlan?.Name ?? PlanId)</h4>
-					@if (!HideUI)
-					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="ctx_edit_delete_portfolio_plan">
-								<div class="float-end">
-									<button class="btn btn-sm btn-outline-primary" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
-									<button class="btn btn-sm btn-outline-danger" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
-								</div>
-							</ChildContent>
-						</AuthorizeView>
-					}
+                    @if (!HideUI)
+                    {
+                        <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                            <ChildContent Context="ctx_edit_delete_portfolio_plan">
+                                <div class="float-end">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
+                                </div>
+                            </ChildContent>
+                        </AuthorizeView>
+                    }
                 </div>
                 <div class="card-body">
-					<CAlert @ref="@Alert" />
-					@if (!HideUI)
-					{
-						<div class="d-flex justify-content-between align-items-start mb-4">
-							<div>
-								@if(SelectedPortfolioPlan?.Metadata is not null && !string.IsNullOrEmpty(SelectedPortfolioPlan.Metadata.Description))
-								{
-									<p class="text-muted mb-1">@(SelectedPortfolioPlan.Metadata.Description.SingleLine())</p>
-								}
-								<p class="text-muted small mb-0">
-									@if (SelectedPortfolioPlan?.Portfolio is not null)
-									{
-										<BIcon icon="bi-link-45deg" extraClassName="me-1" />@($"{SelectedPortfolioPlan.Portfolio.Name} | ")
-									}
-									Refreshed @((SelectedPortfolioPlan?.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")
-								</p>
-							</div>
-						</div>
+                    <CAlert @ref="@Alert" />
+                    @if (!HideUI)
+                    {
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                @if(SelectedPortfolioPlan?.Metadata is not null && !string.IsNullOrEmpty(SelectedPortfolioPlan.Metadata.Description))
+                                {
+                                    <p class="text-muted mb-1">@(SelectedPortfolioPlan.Metadata.Description.SingleLine())</p>
+                                }
+                                <p class="text-muted small mb-0">
+                                    @if (SelectedPortfolioPlan?.Portfolio is not null)
+                                    {
+                                        <BIcon icon="bi-link-45deg" extraClassName="me-1" />@($"{SelectedPortfolioPlan.Portfolio.Name} | ")
+                                    }
+                                    Refreshed @((SelectedPortfolioPlan?.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")
+                                </p>
+                            </div>
+                        </div>
 
-						@if (PortfolioPlanEntity.PLAN_TYPE_ALLOCATION.Equals(SelectedPortfolioPlan?.Type, StringComparison.OrdinalIgnoreCase))
-						{
-							<CAllocationPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
-						}
-						else if (PortfolioPlanEntity.PLAN_TYPE_PL.Equals(SelectedPortfolioPlan?.Type, StringComparison.OrdinalIgnoreCase))
-						{
-							<CPnLPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
-						}
+                        @if (PortfolioPlanEntity.PLAN_TYPE_ALLOCATION.Equals(SelectedPortfolioPlan?.Type, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <CAllocationPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
+                        }
+                        else if (PortfolioPlanEntity.PLAN_TYPE_PL.Equals(SelectedPortfolioPlan?.Type, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <CPnLPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
+                        }
 
-						@if(!string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis))
-						{
-							<style>
-							#analysis-result h1 {font-size: 1.5rem !important;}
-							#analysis-result h2 {font-size: 1.4rem !important;}
-							#analysis-result h3 {font-size: 1.3rem !important;}
-							#analysis-result h4 {font-size: 1.2rem !important;}
-							#analysis-result h5 {font-size: 1.1rem !important;}
-							</style>
-							<div class="card mt-4">
-								<div class="card-header">
-									<h5 class="mb-0">📊Analysis <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span></h5>
-								</div>
-								<div class="card-body" id="analysis-result">
-									<WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
-								</div>
-							</div>
-						}
-					}
-				</div>
-			</div>
-		</div>
+                        @if(!string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis))
+                        {
+                            <style>
+                            #analysis-result h1 {font-size: 1.5rem !important;}
+                            #analysis-result h2 {font-size: 1.4rem !important;}
+                            #analysis-result h3 {font-size: 1.3rem !important;}
+                            #analysis-result h4 {font-size: 1.2rem !important;}
+                            #analysis-result h5 {font-size: 1.1rem !important;}
+                            </style>
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">📊Analysis <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span></h5>
+                                </div>
+                                <div class="card-body" id="analysis-result">
+                                    <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
 
-		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio Plan" centered="false" type="danger" size="large">
-			<div class="card">
-				<div class="card-body">
-					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio plan?</span></CAlert>
-					<form>
-						<div class="row">
-							<div class="col-12">
-								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolioPlan?.Name)">
-									<label for="pName">Name</label>
-								</div>
-							</div>
-						</div>
-					</form>
-					<hr />
-					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
-				</div>
-			</div>
-		</CModal>
-	</Authorized>
+        <CModal @ref="@ModalDialogDelete" title="Delete Portfolio Plan" centered="false" type="danger" size="large">
+            <div class="card">
+                <div class="card-body">
+                    <CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio plan?</span></CAlert>
+                    <form>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolioPlan?.Name)">
+                                    <label for="pName">Name</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
+                </div>
+            </div>
+        </CModal>
+    </Authorized>
 </AuthorizeView>
 
 @code {
