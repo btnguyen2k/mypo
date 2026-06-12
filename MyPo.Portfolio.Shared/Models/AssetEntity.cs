@@ -5,33 +5,33 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public sealed class AssetEntity : Entity<string>
 {
-	public const string ASSET_TYPE_STOCK = "STOCK";
+    public const string ASSET_TYPE_STOCK = "STOCK";
 
-	/// <inheritdoc />
-	public override string Id { get; set; } = Guid.NewGuid().ToString();
-	public string PortfolioId { get; set; } = default!;
-	public string ItemType { get; set; } = default!;
-	public string ItemCode { get; set; } = default!;
-	public string? MarketId { get; set; }
-	public decimal Quantity { get; set; } = 0.0m;
-	public decimal AveragePrice { get; set; } = 0.0m;
-	public AssetMetadata? Metadata { get; set; }
+    /// <inheritdoc />
+    public override string Id { get; set; } = Guid.NewGuid().ToString();
+    public string PortfolioId { get; set; } = default!;
+    public string ItemType { get; set; } = default!;
+    public string ItemCode { get; set; } = default!;
+    public string? MarketId { get; set; }
+    public decimal Quantity { get; set; } = 0.0m;
+    public decimal AveragePrice { get; set; } = 0.0m;
+    public AssetMetadata? Metadata { get; set; }
 }
 
 public sealed class AssetMetadata
 {
-	[JsonPropertyName("corp_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? CorpName { get; set; }
+    [JsonPropertyName("corp_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CorpName { get; set; }
 
-	[JsonPropertyName("industry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Industry { get; set; }
+    [JsonPropertyName("industry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Industry { get; set; }
 
-	[JsonPropertyName("sector"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Sector { get; set; }
+    [JsonPropertyName("sector"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Sector { get; set; }
 
-	[JsonPropertyName("asset_type"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? AssetType { get; set; }
+    [JsonPropertyName("asset_type"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AssetType { get; set; }
 
-	[JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public ISet<string>? Tags { get; set; }
+    [JsonPropertyName("tags"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ISet<string>? Tags { get; set; }
 }
