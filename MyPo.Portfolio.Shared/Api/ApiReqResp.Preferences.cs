@@ -28,3 +28,33 @@ public sealed class SaveMyPrefMarketAlertReq
 	[JsonPropertyName("telegram_chat_ids"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? TelegramChatIDs { get; set; }
 }
+
+/// <summary>
+/// Request to save the current user's "Portfolio Plan" preferences.
+/// </summary>
+public sealed class SaveMyPrefPortfolioPlanReq
+{
+	/// <summary>
+	/// Whether to send portfolio-plan alerts via Telegram.
+	/// </summary>
+	[JsonPropertyName("enable_portfolio_plan_alerts_via_telegrams")]
+	public bool EnablePortfolioPlanAlertsViaTelegrams { get; set; } = false;
+
+	/// <summary>
+	/// Auto-update the user's portfolio plans every N days. A value &lt;= 0 disables auto-update.
+	/// </summary>
+	[JsonPropertyName("portfolio_plan_auto_update_days")]
+	public int PortfolioPlanAutoUpdateDays { get; set; } = 0;
+
+	/// <summary>
+	/// Auto-analyze the user's portfolio plans every N days. A value &lt;= 0 disables auto-analyze.
+	/// </summary>
+	[JsonPropertyName("portfolio_plan_auto_analyze_days")]
+	public int PortfolioPlanAutoAnalyzeDays { get; set; } = 0;
+
+	[JsonPropertyName("telegram_bot_api_key"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? TelegramBotApiKey { get; set; }
+
+	[JsonPropertyName("telegram_chat_ids"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public string? TelegramChatIDs { get; set; }
+}
