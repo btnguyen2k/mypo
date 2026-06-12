@@ -100,7 +100,7 @@ public struct UserResp
 			Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
 			Metadata = user.Metadata?.Clone() ?? null,
 		};
-		if (userResp.Metadata != null) userResp.Metadata.PrivateData = null; // do not return any private data in the API response
+		userResp.Metadata?.StripSecrets(); // do not return any private data in the API response
 		return userResp;
 	}
 

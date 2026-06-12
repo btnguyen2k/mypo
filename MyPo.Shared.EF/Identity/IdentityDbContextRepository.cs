@@ -72,8 +72,7 @@ public sealed class IdentityDbContextRepository : IdentityDbContext<MyPoUser, My
 		if (clavis != null && user != null)
 		{
 			user.Metadata ??= new MyPoUserMetadata();
-			user.Metadata.PrivateData ??= new Libs.Clavis.PrivateData();
-			user.Metadata.PrivateData.SetClavis(clavis);
+			user.Metadata.ApplyClavis(clavis);
 		}
 
 		if (user is null || options is null || cancellationToken.IsCancellationRequested) return user;
