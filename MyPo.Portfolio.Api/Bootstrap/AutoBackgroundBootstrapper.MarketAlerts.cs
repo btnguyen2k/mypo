@@ -27,74 +27,28 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
         while (!cancellationToken.IsCancellationRequested)
         {
             using (var scope = ServiceProvider.CreateScope())
+            {
                 try
                 {
                     var identityRepository = scope.ServiceProvider.GetRequiredService<IIdentityRepository>();
                     var allUsers = await identityRepository.GetAllUsersAsync(cancellationToken: cancellationToken);
                     foreach (var user in allUsers)
+                    {
                         try
                         {
-                            var userId = user.UserName!.ToLower();
-                            Logger.LogInformation("Processing market alerts for user {userId}...", userId);
-                            var prefs = user.Metadata?.GetMarketAlertPreferences();
-                            var botApiKey = user.Metadata?.GetMarketAlertTelegramBotApiKey();
-                            var chatIDs = (user.Metadata?.GetMarketAlertTelegramChatIDs() ?? []).ToList();
-                            if (user.Metadata is null || prefs is null || !prefs.ViaTelegram  // market alert is not enabled
-                                || string.IsNullOrEmpty(botApiKey)  // Telegram bot API key is not configured
-                                || chatIDs.Count == 0               // No Telegram chat IDs are configured
-                            )
-                            {
-                                continue;
-                            }
-                            var now = DateTimeOffset.Now.ToTimeZoneSilently(prefs.Timezone);
-                            if (now is null                                                         // invalid timezone
-                                || !now.Value.IsOnDayOfWeek(prefs.DaysOfWeek)                       // not in the configured days to send alerts
-                                || !now.Value.IsWithinTimeWindow(prefs.StartTime ?? TimeOnly.MinValue, prefs.EndTime ?? TimeOnly.MaxValue)
-                            )
-                            {
-                                continue;
-                            }
-                            var checkpoint = await GetOrInitCheckpoint(
-                                ownerId: userId,
-                                portfolioId: CheckpointEntity.NON_PORTFOLIO,
-                                marketId: CheckpointEntity.NON_MARKET,
-                                itemCode: CheckpointEntity.NON_ITEM,
-                                checkpointType: CheckpointEntity.CHECKPOINT_MARKET_ALERTS,
-                                cancellationToken
-                            );
-                            var alertDelay = TimeSpan.FromMinutes(prefs.DelayMinutes);
-                            if (checkpoint is null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < alertDelay))
-                            {
-                                // checkpoint is not ready for sending alerts yet
-                                continue;
-                            }
-
-                            var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
-                            var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-                            var teleBot = new TelegramBotClient(botApiKey);
-                            await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, chatIDs, cancellationToken);
-                            await MarketAlertNewListings(portfolioRepo, finHubClient, teleBot, chatIDs, cancellationToken);
-
-                            checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
-                            var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
-                            if (dbresult == null)
-                            {
-                                Logger.LogError(
-                                    "Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
-                                    checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
-                                );
-                            }
+                            await SendMarketAlertsForUser(scope, user, cancellationToken);
                         }
                         catch (Exception ex)
                         {
                             Logger.LogError(ex, "An error occurred while sending market alerts for user '{userId}'", user.Id);
                         }
+                    }
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
-
+            }
             try
             {
                 var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
@@ -103,6 +57,52 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
             }
             catch (TaskCanceledException) { }
         }
+    }
+
+    private async Task SendMarketAlertsForUser(IServiceScope scope, MyPoUser user, CancellationToken cancellationToken)
+    {
+        var userName = user.UserName!.ToLower();
+        Logger.LogInformation("Processing market alerts for user {userName}...", userName);
+        var prefs = user.Metadata?.GetMarketAlertPreferences();
+        var botApiKey = user.Metadata?.GetMarketAlertTelegramBotApiKey();
+        var chatIDs = (user.Metadata?.GetMarketAlertTelegramChatIDs() ?? []).ToList();
+        if (user.Metadata is null || prefs is null || !prefs.ViaTelegram  // market alert is not enabled
+            || string.IsNullOrEmpty(botApiKey)  // Telegram bot API key is not configured
+            || chatIDs.Count == 0               // No Telegram chat IDs are configured
+        )
+        {
+            return;
+        }
+        var now = DateTimeOffset.Now.ToTimeZoneSilently(prefs.Timezone);
+        if (now is null                                                         // invalid timezone
+            || !now.Value.IsOnDayOfWeek(prefs.DaysOfWeek)                       // not in the configured days to send alerts
+            || !now.Value.IsWithinTimeWindow(prefs.StartTime ?? TimeOnly.MinValue, prefs.EndTime ?? TimeOnly.MaxValue)
+        )
+        {
+            return;
+        }
+        var checkpoint = await GetOrInitCheckpoint(
+            ownerId: userName,
+            portfolioId: CheckpointEntity.NON_PORTFOLIO,
+            marketId: CheckpointEntity.NON_MARKET,
+            itemCode: CheckpointEntity.NON_ITEM,
+            checkpointType: CheckpointEntity.CHECKPOINT_MARKET_ALERTS,
+            cancellationToken
+        );
+        var alertDelay = TimeSpan.FromMinutes(prefs.DelayMinutes);
+        if (checkpoint is null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < alertDelay))
+        {
+            // not due for sending alerts
+            return;
+        }
+
+        var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+        var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+        var teleBot = new TelegramBotClient(botApiKey);
+        await MarketAlertDividendEvents(portfolioRepo, finHubClient, teleBot, chatIDs, cancellationToken);
+        await MarketAlertNewListings(portfolioRepo, finHubClient, teleBot, chatIDs, cancellationToken);
+
+        await SaveCheckpoint(checkpoint, cancellationToken);
     }
 
     private async Task MarketAlertDividendEvents(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient teleBot, IEnumerable<string> chatIDs, CancellationToken cancellationToken)

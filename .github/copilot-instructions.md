@@ -79,6 +79,7 @@ MyPo.Portfolio.Shared (portfolio EF models/repos)
   - `MyPo.Portfolio.Shared/`
   Do not modify or update other directories unless explicitly asked, as they belong to the template.
 - **Target framework**: .NET 8 (`net8.0`) across all projects.
+- **Code style — always use braces**: Always wrap statement blocks in `{` and `}`, even single statements. In particular, a `try`/`foreach`/`if`/`while` body that directly follows a `using (...)` or `for (...)`/`foreach (...)` must still be enclosed in braces — do not rely on the implicit single-statement form.
 - **Database schemas**: Managed via SQL scripts in `dbschema/pgsql/`. Patches follow naming: `patch_pgsql_{module}-post-{version}.sql`.
 - **Config files**: `appsettings.json` variants exist but are `.disabled` in source. Runtime config lives in `config/` directories.
 - **Non-root Docker**: Production container runs as `appuser` (non-root).
