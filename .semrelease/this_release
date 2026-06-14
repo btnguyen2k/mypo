@@ -1,11 +1,3 @@
-﻿# This file has been cleaned up post-releasing version 1.5.3.
+# This file has been cleaned up post-releasing version 1.6.0.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
-- feat: Add Description to Portfolio Plan.
-- feat: Analyze portfolio plan using FinHub API.
-- feat: Add P&L Portfolio Plan type.
-- chore(Deps): Migrate to CoreUI-Free-Bootrap v5.5.0
-- fix(UI): Fix a bug that cause Edit Portfolio Plan page to reload when deleting a holding ticker.
-- feat: Rework Stock Symbol Info page.
-- feat(UI): Rework My Preferences page.
-- feat: Add background task to automatically run analysis on portfolio plans.
