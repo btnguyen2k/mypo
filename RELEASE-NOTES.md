@@ -1,5 +1,20 @@
 # My Portfolio Tracker release notes
 
+## 2026-06-14 - v1.6.0
+
+### Added/Refactoring/Deprecation
+
+- Feat: Add Description to Portfolio Plan.
+- Feat: Analyze portfolio plan using FinHub API.
+- Feat: Add P&L Portfolio Plan type.
+- Feat: Rework Stock Symbol Info page.
+- Feat(UI): Rework My Preferences page.
+- Feat: Add background task to automatically run analysis on portfolio plans.
+
+### Fixed/Improvements
+
+- Fix(UI): Fix a bug that cause Edit Portfolio Plan page to reload when deleting a holding ticker.
+
 ## 2026-05-05 - v1.5.3
 
 ### Fixed/Improvements
