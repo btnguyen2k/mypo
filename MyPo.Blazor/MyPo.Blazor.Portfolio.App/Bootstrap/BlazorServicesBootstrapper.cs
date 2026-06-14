@@ -8,8 +8,8 @@ namespace MyPo.Blazor.Portfolio.App.Bootstrap;
 [Bootstrapper]
 public class BlazorServicesBootstrapper
 {
-	public static void ConfigureServices(IServiceCollection services)
-	{
-		services.AddSingleton<IPortfolioApiClient, PortfolioApiClient>();
-	}
+    public static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<IPortfolioApiClient, PortfolioApiClient>();
+    }
 }

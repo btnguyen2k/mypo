@@ -11,13 +11,13 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 [Bootstrapper]
 public class DbContextBootstrapper
 {
-	public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
-	{
-		var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<DbContextBootstrapper>();
+    public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
+    {
+        var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<DbContextBootstrapper>();
 
-		const string confKey = "Databases:Portfolio";
-		logger.LogInformation("Configuring DbContext service {confKey}...", confKey);
-		DbBootstrapHelper.ConfigureDbContext<IPortfolioRepository, PortfolioDbContextRepository>(appBuilder, confKey, logger);
-		appBuilder.Services.AddHostedService<PortfolioInitializer>();
-	}
+        const string confKey = "Databases:Portfolio";
+        logger.LogInformation("Configuring DbContext service {confKey}...", confKey);
+        DbBootstrapHelper.ConfigureDbContext<IPortfolioRepository, PortfolioDbContextRepository>(appBuilder, confKey, logger);
+        appBuilder.Services.AddHostedService<PortfolioInitializer>();
+    }
 }

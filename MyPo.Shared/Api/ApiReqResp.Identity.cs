@@ -8,11 +8,11 @@ namespace MyPo.Shared.Api;
 /// </summary>
 public struct ChangePasswordReq
 {
-	[JsonPropertyName("current_password")]
-	public string CurrentPassword { get; set; }
+    [JsonPropertyName("current_password")]
+    public string CurrentPassword { get; set; }
 
-	[JsonPropertyName("new_password")]
-	public string NewPassword { get; set; }
+    [JsonPropertyName("new_password")]
+    public string NewPassword { get; set; }
 }
 
 /// <summary>
@@ -20,12 +20,12 @@ public struct ChangePasswordReq
 /// </summary>
 public struct ChangePasswordResp
 {
-	[JsonPropertyName("message")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Message { get; set; }
+    [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Message { get; set; }
 
-	[JsonPropertyName("token")]
-	public string Token { get; set; }
+    [JsonPropertyName("token")]
+    public string Token { get; set; }
 }
 
 /*----------------------------------------------------------------------*/
@@ -35,17 +35,17 @@ public struct ChangePasswordResp
 /// </summary>
 public struct UpdateUserProfileReq
 {
-	[JsonPropertyName("given_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? GivenName { get; set; }
+    [JsonPropertyName("given_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GivenName { get; set; }
 
-	[JsonPropertyName("family_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? FamilyName { get; set; }
+    [JsonPropertyName("family_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FamilyName { get; set; }
 
-	[JsonPropertyName("email")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Email { get; set; }
+    [JsonPropertyName("email")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Email { get; set; }
 }
 
 /// <summary>
@@ -53,33 +53,33 @@ public struct UpdateUserProfileReq
 /// </summary>
 public struct CreateOrUpdateUserReq
 {
-	[JsonPropertyName("username")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Username { get; set; }
+    [JsonPropertyName("username")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Username { get; set; }
 
-	[JsonPropertyName("email")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Email { get; set; }
+    [JsonPropertyName("email")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Email { get; set; }
 
-	[JsonPropertyName("password")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Password { get; set; }
+    [JsonPropertyName("password")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Password { get; set; }
 
-	[JsonPropertyName("given_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? GivenName { get; set; }
+    [JsonPropertyName("given_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GivenName { get; set; }
 
-	[JsonPropertyName("family_name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? FamilyName { get; set; }
+    [JsonPropertyName("family_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FamilyName { get; set; }
 
-	[JsonPropertyName("roles")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<string>? Roles { get; set; }
+    [JsonPropertyName("roles")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<string>? Roles { get; set; }
 
-	[JsonPropertyName("claims")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<IdentityClaim>? Claims { get; set; }
+    [JsonPropertyName("claims")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<IdentityClaim>? Claims { get; set; }
 }
 
 /// <summary>
@@ -87,60 +87,60 @@ public struct CreateOrUpdateUserReq
 /// </summary>
 public struct UserResp
 {
-	public static UserResp BuildFromUser(MyPoUser user)
-	{
-		var userResp = new UserResp
-		{
-			Id = user.Id,
-			Username = user.UserName!,
-			Email = user.Email!,
-			GivenName = user.GivenName,
-			FamilyName = user.FamilyName,
-			Roles = user.Roles?.Select(r => RoleResp.BuildFromRole(r)),
-			Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
-			Metadata = user.Metadata?.Clone() ?? null,
-		};
-		if (userResp.Metadata != null) userResp.Metadata.PrivateData = null; // do not return any private data in the API response
-		return userResp;
-	}
+    public static UserResp BuildFromUser(MyPoUser user)
+    {
+        var userResp = new UserResp
+        {
+            Id = user.Id,
+            Username = user.UserName!,
+            Email = user.Email!,
+            GivenName = user.GivenName,
+            FamilyName = user.FamilyName,
+            Roles = user.Roles?.Select(r => RoleResp.BuildFromRole(r)),
+            Claims = user.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
+            Metadata = user.Metadata?.Clone() ?? null,
+        };
+        userResp.Metadata?.StripSecrets(); // do not return any private data in the API response
+        return userResp;
+    }
 
-	[JsonPropertyName("id")]
-	public string Id { get; set; }
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
 
-	[JsonPropertyName("username")]
-	public string Username { get; set; }
+    [JsonPropertyName("username")]
+    public string Username { get; set; }
 
-	[JsonPropertyName("email")]
-	public string Email { get; set; }
+    [JsonPropertyName("email")]
+    public string Email { get; set; }
 
-	[JsonPropertyName("password")]
-	public string? Password { get; set; }
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
 
-	[JsonPropertyName("given_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? GivenName { get; set; }
+    [JsonPropertyName("given_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GivenName { get; set; }
 
-	[JsonPropertyName("family_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? FamilyName { get; set; }
+    [JsonPropertyName("family_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FamilyName { get; set; }
 
-	[JsonPropertyName("roles"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<RoleResp>? Roles { get; set; }
+    [JsonPropertyName("roles"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<RoleResp>? Roles { get; set; }
 
-	[JsonPropertyName("claims"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<ClaimResp>? Claims { get; set; }
+    [JsonPropertyName("claims"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<ClaimResp>? Claims { get; set; }
 
-	[JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public MyPoUserMetadata? Metadata { get; set; }
+    [JsonPropertyName("metadata"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public MyPoUserMetadata? Metadata { get; set; }
 }
 
 /*----------------------------------------------------------------------*/
 
 public struct ClaimResp
 {
-	[JsonPropertyName("type")]
-	public string ClaimType { get; set; }
+    [JsonPropertyName("type")]
+    public string ClaimType { get; set; }
 
-	[JsonPropertyName("value")]
-	public string ClaimValue { get; set; }
+    [JsonPropertyName("value")]
+    public string ClaimValue { get; set; }
 }
 
 /*----------------------------------------------------------------------*/
@@ -150,42 +150,42 @@ public struct ClaimResp
 /// </summary>
 public struct CreateOrUpdateRoleReq
 {
-	[JsonPropertyName("name")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Name { get; set; }
+    [JsonPropertyName("name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Name { get; set; }
 
-	[JsonPropertyName("description")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public string? Description { get; set; }
+    [JsonPropertyName("description")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Description { get; set; }
 
-	[JsonPropertyName("claims")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<IdentityClaim>? Claims { get; set; }
+    [JsonPropertyName("claims")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<IdentityClaim>? Claims { get; set; }
 }
 
 public struct RoleResp
 {
-	public static RoleResp BuildFromRole(MyPoRole role)
-	{
-		return new RoleResp
-		{
-			Id = role.Id,
-			Name = role.Name ?? string.Empty,
-			Description = role.Description ?? string.Empty,
-			Claims = role.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
-		};
-	}
+    public static RoleResp BuildFromRole(MyPoRole role)
+    {
+        return new RoleResp
+        {
+            Id = role.Id,
+            Name = role.Name ?? string.Empty,
+            Description = role.Description ?? string.Empty,
+            Claims = role.Claims?.Select(c => new ClaimResp { ClaimType = c.ClaimType!, ClaimValue = c.ClaimValue! }),
+        };
+    }
 
-	[JsonPropertyName("id")]
-	public string Id { get; set; }
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
 
-	[JsonPropertyName("name")]
-	public string Name { get; set; }
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
 
-	[JsonPropertyName("description")]
-	public string Description { get; set; }
+    [JsonPropertyName("description")]
+    public string Description { get; set; }
 
-	[JsonPropertyName("claims")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public IEnumerable<ClaimResp>? Claims { get; set; }
+    [JsonPropertyName("claims")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<ClaimResp>? Claims { get; set; }
 }

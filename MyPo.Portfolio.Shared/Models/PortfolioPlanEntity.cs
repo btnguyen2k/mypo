@@ -3,69 +3,104 @@ using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
+
 public sealed class PortfolioPlanEntity : Entity<string>
 {
-	/// <inheritdoc />
-	public override string Id { get; set; } = Guid.NewGuid().ToString();
+    public const string PLAN_TYPE_ALLOCATION = "ALLOCATION";
+    public const string PLAN_TYPE_PL = "P&L";
 
-	/// <summary>
-	/// Id of the portfolio owner, which is the user id.
-	/// </summary>
-	public string OwnerUserId { get; set; } = default!;
+    public static readonly IEnumerable<string> ValidPlanTypes = [PLAN_TYPE_ALLOCATION, PLAN_TYPE_PL];
 
-	/// <summary>
-	/// Id of the associated portfolio, if any.
-	/// </summary>
-	public string? PortfolioId { get; set; }
+    /// <inheritdoc />
+    public override string Id { get; set; } = Guid.NewGuid().ToString();
 
-	/// <summary>
-	/// Plan's friendly name.
-	/// </summary>
-	public string Name { get; set; } = default!;
+    /// <summary>
+    /// Type of the plan, which can be either <see cref="PLAN_TYPE_ALLOCATION"/> or <see cref="PLAN_TYPE_PL"/>.
+    /// </summary>
+    public string Type { get; set; } = PLAN_TYPE_ALLOCATION;
 
-	public PortfolioPlanMetadata? Metadata { get; set; }
+    /// <summary>
+    /// Id of the portfolio owner, which is the user id.
+    /// </summary>
+    public string OwnerUserId { get; set; } = default!;
 
-	public override string ToString() => Name ?? string.Empty;
+    /// <summary>
+    /// Id of the associated portfolio, if any.
+    /// </summary>
+    public string? PortfolioId { get; set; }
+
+    /// <summary>
+    /// Plan's friendly name.
+    /// </summary>
+    public string Name { get; set; } = default!;
+
+    public PortfolioPlanMetadata? Metadata { get; set; }
+
+    public override string ToString() => Name ?? string.Empty;
 }
 
 public sealed class PortfolioPlanMetadata
 {
-	[JsonPropertyName("refresh_timestamp")]
-	public long MetadataRefreshTimestamp { get; set; }
+    [JsonPropertyName("trefresh_holdings")]
+    public long HoldingsRefreshTimestamp { get; set; }
 
-	[JsonIgnore]
-	public DateTime MetadataRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(MetadataRefreshTimestamp).UtcDateTime;
+    [JsonIgnore]
+    public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
 
-	[JsonPropertyName("holdings")]
-	public IList<HoldingTicker> HoldingTickers { get; set; } = [];
+    [JsonPropertyName("holdings")]
+    public IList<HoldingTicker> HoldingTickers { get; set; } = [];
+
+    [JsonPropertyName("desc")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("trefresh_analysis")]
+    public long AnalysisRefreshTimestsmp { get; set; }
+
+    [JsonIgnore]
+    public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestsmp).UtcDateTime;
+
+    [JsonPropertyName("analysis")]
+    public string Analysis { get; set; } = string.Empty;
+
+    [JsonPropertyName("trefresh_spotlight")]
+    public long SpotlightRefreshTimestsmp { get; set; }
+
+    [JsonIgnore]
+    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestsmp).UtcDateTime;
+
+    [JsonPropertyName("spotlight")]
+    public string Spotlight { get; set; } = string.Empty;
 }
 
 public sealed class HoldingTicker
 {
-	[JsonPropertyName("id")]
-	public string Id = Guid.NewGuid().ToString();
+    [JsonPropertyName("id")]
+    public string Id = Guid.NewGuid().ToString();
 
-	[JsonPropertyName("ticker")]
-	public string Ticker { get; set; } = string.Empty;
+    [JsonPropertyName("ticker")]
+    public string Ticker { get; set; } = string.Empty;
 
-	[JsonPropertyName("allocation")]
-	public decimal TargetAllocation { get; set; } = 0;
+    [JsonPropertyName("allocation")]
+    public decimal TargetAllocation { get; set; } = 0;
 
-	[JsonPropertyName("tags")]
-	public string Tags { get; set; } = string.Empty;
+    [JsonPropertyName("tags")]
+    public string Tags { get; set; } = string.Empty;
 
-	[JsonPropertyName("shares")]
-	public decimal Shares { get; set; }
+    [JsonPropertyName("shares")]
+    public decimal Shares { get; set; }
 
-	[JsonPropertyName("market_price")]
-	public decimal MarketPrice { get; set; }
+    [JsonPropertyName("avg_price")]
+    public decimal AveragePrice { get; set; }
 
-	[JsonPropertyName("div_yield")]
-	public decimal DividendYield { get; set; }
+    [JsonPropertyName("market_price")]
+    public decimal MarketPrice { get; set; }
 
-	[JsonPropertyName("payout_frequency")]
-	public int PayoutFrequency { get; set; }
+    [JsonPropertyName("div_yield")]
+    public decimal DividendYield { get; set; }
 
-	[JsonIgnore]
-	public decimal EstYearlyDividend => MarketPrice * DividendYield/100m * Shares;
+    [JsonPropertyName("payout_frequency")]
+    public int PayoutFrequency { get; set; }
+
+    [JsonIgnore]
+    public decimal EstYearlyDividend => MarketPrice * DividendYield / 100m * Shares;
 }

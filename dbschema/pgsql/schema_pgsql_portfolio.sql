@@ -97,6 +97,7 @@ DROP TABLE IF EXISTS mypo_portfolio_plans;
 
 CREATE TABLE mypo_portfolio_plans (
     plan_id varchar(48) NOT NULL,
+    plan_type varchar(16) NOT NULL DEFAULT 'ALLOCATION',
     owner_id varchar(48) NOT NULL,
     portfolio_id varchar(48) NULL,
     plan_name varchar(64) NOT NULL,

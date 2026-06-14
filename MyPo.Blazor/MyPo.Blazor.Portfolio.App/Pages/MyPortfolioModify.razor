@@ -10,7 +10,7 @@
     <li class="breadcrumb-item">
         <a href="@UIGlobals.ROUTE_HOME">Home</a>
     </li>
-	<li class="breadcrumb-item">
+    <li class="breadcrumb-item">
         <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
     </li>
     <li class="breadcrumb-item active">
@@ -19,7 +19,7 @@
 </SectionContent>
 
 <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-	<Authorizing>
+    <Authorizing>
         <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
     </Authorizing>
     <NotAuthorized>
@@ -33,85 +33,85 @@
                     <h4 class="card-title">@PAGE_TITLE</h4>
                 </div>
                 <div class="card-body">
-					<CAlert @ref="@Alert" />
-					@if (!HideUI)
-					{
-						<form>
-							<div class="row mb-2 align-items-center">
-								<div class="col-md-5 col-sm-12 mb-2">
-									<div class="form-floating">
-										<select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
-											<option value="@(string.Empty)">-</option>
-											@foreach (var p in (MyPortfolioTree??[]).Where(p => p.Id != PortfolioId))
-											{
-												<option value="@p.Id">@p.Name</option>
-											}
-										</select>
-										<label for="pParentId">Parent Portfolio:</label>
-									</div>
-								</div>
-								<div class="col-md-5 col-sm-12 mb-2">
-									<div class="form-floating">
-										<select class="form-select" id="pDefaultMarketId" aria-label="Default Market" @bind="DefaultMarketId" @bind:after="DefaultMarketChanged">
-											<option value="@(string.Empty)">-</option>
-											@foreach (var m in AllMarkets)
-											{
-												<option value="@m.Id">@m.Code - @m.Name</option>
-											}
-										</select>
-										<label for="pDefaultMarketId">Default Market:</label>
-									</div>
-								</div>
-								<div class="col-md-2 col-sm-12">
-									<div class="form-check">
-										<input type="checkbox" class="form-check-input" id="pIsActive" @bind="IsActive" />
-										<label class="form-check-label" for="pIsActive">Active</label>
-									</div>
-								</div>
-							</div>
-							<div class="row mb-2 align-items-center">
-								<div class="col-md-6 col-sm-12">
-									<div class="form-floating">
-										<input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
-										<label for="pName">Name: (*)</label>
-									</div>
-								</div>
-								<div class="col-md-6 col-sm-12">
-									<div class="form-floating">
-										<input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
-										<label for="pCurrency">Currency: (*)</label>
-									</div>
-								</div>
-							</div>
-							<div class="row mb-2">
-								<div class="col-12">
-									<div class="form-floating mb-2">
-										<textarea type="text" class="form-control" id="pDesc" placeholder="Description" style="height: 80px;"
-											@bind="Description"></textarea>
-										<label for="pDesc">Description:</label>
-									</div>
-								</div>
-							</div>
-							<div class="row mb-2">
-								<div class="col-12">
-									<div class="form-floating mb-2">
-										<textarea type="text" class="form-control" id="pViewers" placeholder="Comma-separated list of emails" style="height: 80px;"
-											@bind="Viewers"></textarea>
-										<label for="pViewers">People who can view my portfolio:</label>
-									</div>
-								</div>
-							</div>
-						</form>
-					}
+                    <CAlert @ref="@Alert" />
+                    @if (!HideUI)
+                    {
+                        <form>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-5 col-sm-12 mb-2">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="pParentId" aria-label="Parent Portfolio" @bind="ParentPortfolioId">
+                                            <option value="@(string.Empty)">-</option>
+                                            @foreach (var p in (MyPortfolioTree??[]).Where(p => p.Id != PortfolioId))
+                                            {
+                                                <option value="@p.Id">@p.Name</option>
+                                            }
+                                        </select>
+                                        <label for="pParentId">Parent Portfolio:</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-5 col-sm-12 mb-2">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="pDefaultMarketId" aria-label="Default Market" @bind="DefaultMarketId" @bind:after="DefaultMarketChanged">
+                                            <option value="@(string.Empty)">-</option>
+                                            @foreach (var m in AllMarkets)
+                                            {
+                                                <option value="@m.Id">@m.Code - @m.Name</option>
+                                            }
+                                        </select>
+                                        <label for="pDefaultMarketId">Default Market:</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-12">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="pIsActive" @bind="IsActive" />
+                                        <label class="form-check-label" for="pIsActive">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="pName" placeholder="Name" @bind-value="Name">
+                                        <label for="pName">Name: (*)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="pCurrency" placeholder="Currency" @bind-value="Currency">
+                                        <label for="pCurrency">Currency: (*)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div class="form-floating mb-2">
+                                        <textarea type="text" class="form-control" id="pDesc" placeholder="Description" style="height: 80px;"
+                                            @bind="Description"></textarea>
+                                        <label for="pDesc">Description:</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div class="form-floating mb-2">
+                                        <textarea type="text" class="form-control" id="pViewers" placeholder="Comma-separated list of emails" style="height: 80px;"
+                                            @bind="Viewers"></textarea>
+                                        <label for="pViewers">People who can view my portfolio:</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    }
                 </div>
-				<div class="card-footer">
-					<button class="btn btn-outline-secondary" @onclick="()=>BtnClickCancel()">Cancel</button>
-					@if (!HideUI)
-					{
-						<button class="btn btn-primary ms-2" @onclick="()=>BtnClickSave()"><BIcon icon="bi-floppy" extraClassName="me-1"/>Save Portfolio</button>
-						<button class="btn btn-info text-light" @onclick="()=>BtnClickSaveAndOpen()"><BIcon icon="bi-save" extraClassName="me-1"/>Save and Open</button>
-					}
-				</div>
+                <div class="card-footer">
+                    <button class="btn btn-outline-secondary" @onclick="()=>BtnClickCancel()">Cancel</button>
+                    @if (!HideUI)
+                    {
+                        <button class="btn btn-primary ms-2" @onclick="()=>BtnClickSave()"><BIcon icon="bi-floppy" extraClassName="me-1"/>Save Portfolio</button>
+                        <button class="btn btn-info text-light" @onclick="()=>BtnClickSaveAndOpen()"><BIcon icon="bi-save" extraClassName="me-1"/>Save and Open</button>
+                    }
+                </div>
             </div>
         </div>
     </Authorized>

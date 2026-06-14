@@ -1,0 +1,111 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Utils
+
+@inherits CBasePlanView
+
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Market Value</div>
+                <div class="h5 mb-0">@(Plan.TotalMarketValueStr()??"--")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Cost Basic</div>
+                <div class="h5 mb-0">@Plan.TotalCostBasicStr()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Unsettled P&L</div>
+                <div class="h5 mb-0 @(pnlCssClass(Plan.TotalUnsettledPnL))">@(Plan.TotalUnsettledPnLStr())</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <div class="text-muted small">Overall Return</div>
+                <div class="h5 mb-0 @(pnlCssClass(Plan.TotalUnsettledPnL))">@(Plan.TotalUnsettledPnLYieldStr())</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holdings detail table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0">Holdings Breakdown</h5>
+            @if(string.IsNullOrEmpty(Plan.Metadata?.Description))
+            {
+                <div title="Add plan description to enable analysis">
+                    <button class="btn btn-sm btn-outline-secondary ms-1" disabled><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+                </div>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-info ms-1" @onclick="Parent.BtnClickAnalyze" disabled="@Parent.analyzing"><BIcon icon="bi-bar-chart-line" extraClassName="me-1"/>Analyze</button>
+            }
+        </div>
+        <span class="badge bg-secondary">@(Plan.Metadata?.HoldingTickers?.Count) symbols</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th class="text-end">Shares</th>
+                    <th class="text-end">Avg. Price</th>
+                    <th class="text-end">Cost Basic</th>
+                    <th class="text-end">Mkt. Price</th>
+                    <th class="text-end">Mkt. Value</th>
+                    <th class="text-end">Unsettled P&L</th>
+                    <th class="text-end">Overall Return</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                @foreach (var ht in Plan.Metadata?.HoldingTickers??[])
+                {
+                    <tr>
+                        <td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
+                        <td class="text-end">@Plan.NumSharesStr(ht)</td>
+                        <td class="text-end">@Plan.AveragePriceStr(ht)</td>
+                        <td class="text-end">@Plan.CostBasicStr(ht)</td>
+                        <td class="text-end">@Plan.MarketPriceStr(ht)</td>
+                        <td class="text-end">@Plan.MarketValueStr(ht)</td>
+                        <td class="text-end @(pnlCssClass(Plan.UnsettledPnL(ht)))">@Plan.UnsettledPnLStr(ht)</td>
+                        <td class="text-end @(pnlCssClass(Plan.UnsettledPnL(ht)))">@Plan.UnsettledPnLYieldStr(ht)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public MyPortfolioPlansDetails Parent { get; set; } = default!;
+
+    private string pnlCssClass(decimal pnl)
+    {
+        if (pnl > 0)
+        {
+            return "text-success";
+        }
+        if (pnl < 0)
+        {
+            return "text-danger";
+        }
+        return "text-muted";
+    }
+}

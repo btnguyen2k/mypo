@@ -1,7 +1,9 @@
-﻿@using MyPo.Blazor.App.Shared;
+﻿@using MyPo.Libs;
+@using MyPo.Blazor.App.Shared;
 @using MyPo.Blazor.Portfolio.App.Shared;
 @using MyPo.Blazor.App.Layout;
 @using MyPo.Portfolio.Shared.Identity;
+@using MyPo.Portfolio.Shared.Models;
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS)]
 @inherits BasePage
@@ -23,114 +25,136 @@
         <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
     </NotAuthorized>
     <Authorized>
-		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
-		<div class="container-lg px-4">
-			<div class="card border-top-primary border-top-3 mb-4">
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="card border-top-primary border-top-3 mb-4">
                 <div class="card-header">
                     <h4 class="card-title float-start">My Portfolio Plans</h4>
-					@if (!HideUI)
-					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="ctx_add_portfolio_plan">
-								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Plan</button>
-							</ChildContent>
-						</AuthorizeView>
-					}
+                    @if (!HideUI)
+                    {
+                        <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                            <ChildContent Context="ctx_add_portfolio_plan">
+                                <button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Plan</button>
+                            </ChildContent>
+                        </AuthorizeView>
+                    }
                 </div>
                 <div class="card-body">
-					<CAlert @ref="@Alert" />
-					@if (!HideUI)
-					{
-						@if (PortfolioPlansMap.Count == 0)
-						{
-							<div class="text-center py-5">
-								<BIcon icon="bi-folder2-open" extraClassName="display-3 text-secondary" />
-								<p class="mt-3 text-secondary">No plans yet. Create your first portfolio plan to get started.</p>
-								<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-									<ChildContent Context="ctx_add_portfolio_plan">
-										<button class="btn btn-outline-primary" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> Create Plan</button>
-									</ChildContent>
-								</AuthorizeView>
-							</div>
-						}
-						else
-						{
-							<style>
-							.plan-card {
-								transition: box-shadow .2s, border-color .2s;
-								cursor: pointer;
-							}
-							.plan-card:hover {
-								box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .12);
-								border-color: var(--cui-primary);
-							}
-							[data-bs-theme="dark"] .plan-card:hover {
-								box-shadow: 0 .25rem 1rem rgba(255, 255, 255, .1);
-							}
-							</style>
-							<div class="row g-4">
-								@foreach (var plan in PortfolioPlansMap.OrderBy(kv => kv.Value.Name).Select(kv => kv.Value))
-								{
-									<div class="col-md-6 col-lg-4" @onclick="()=>BtnClickViewPlan(plan.Id)">
-										<div class="card plan-card h-100">
-											<div class="card-body">
-												<div class="d-flex justify-content-between align-items-start mb-2">
-													<h5 class="card-title mb-0">@(plan.Name)</h5>
-													<div class="dropdown">
-														<button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown" aria-expanded="false" @onclick:stopPropagation>
-															<BIcon icon="bi-three-dots-vertical" />
-														</button>
-														<ul class="dropdown-menu dropdown-menu-end">
-															<li><a class="dropdown-item" href="#" @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-pencil" extraClassName="me-2" />Edit</a></li>
-															<li><hr class="dropdown-divider"></li>
-															<li><a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-trash" extraClassName="me-2" />Delete</a></li>
-														</ul>
-													</div>
-												</div>
-												<p class="text-secondary small mb-2">@(plan.HoldingSymbols)</p>
-												<p class="text-secondary small mb-2">
-													<BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
-												</p>
-												<p class="h5 mb-1">🏦@(plan.TotalMarketValueStr()) - <span class="small">📅@plan.EstTotalYearlyDividendStr() (@plan.EstTotalYearlyDividendYieldStr())</span></p>
-												<p class="text-muted small mb-0">Updated @((plan.Metadata?.MetadataRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
-											</div>
-										</div>
-									</div>
-								}
-							</div>
-							@if (!string.IsNullOrEmpty(BackgroundMsg))
-							{
-								<div class="alert alert-light mt-2" role="alert">
-									<span style="font-size: small !important;">@BackgroundMsg</span>
-								</div>
-							}
-						}
-					}
-				</div>
-			</div>
-		</div>
+                    <CAlert @ref="@Alert" />
+                    @if (!HideUI)
+                    {
+                        @if (PortfolioPlansMap.Count == 0)
+                        {
+                            <div class="text-center py-5">
+                                <BIcon icon="bi-folder2-open" extraClassName="display-3 text-secondary" />
+                                <p class="mt-3 text-secondary">No plans yet. Create your first portfolio plan to get started.</p>
+                                <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                                    <ChildContent Context="ctx_add_portfolio_plan">
+                                        <button class="btn btn-outline-primary" @onclick="BtnClickAddPlan"><BIcon icon="bi-plus-lg" /> Create Plan</button>
+                                    </ChildContent>
+                                </AuthorizeView>
+                            </div>
+                        }
+                        else
+                        {
+                            <style>
+                            .plan-card {
+                                transition: box-shadow .2s, border-color .2s;
+                                cursor: pointer;
+                            }
+                            .plan-card:hover {
+                                box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .12);
+                                border-color: var(--cui-primary);
+                            }
+                            [data-bs-theme="dark"] .plan-card:hover {
+                                box-shadow: 0 .25rem 1rem rgba(255, 255, 255, .1);
+                            }
+                            </style>
+                            <div class="row g-4">
+                                @foreach (var plan in PortfolioPlansMap.OrderBy(kv => kv.Value.Name).Select(kv => kv.Value))
+                                {
+                                    <div class="col-md-6 col-lg-4" @onclick="()=>BtnClickViewPlan(plan.Id)">
+                                        <div class="card plan-card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h5 class="card-title mb-0">
+                                                        @(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL?"💸":"⚖️")@(plan.Name)
+                                                    </h5>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown" aria-expanded="false" @onclick:stopPropagation>
+                                                            <BIcon icon="bi-three-dots-vertical" />
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            <li><a class="dropdown-item" href="#" @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-pencil" extraClassName="me-2" />Edit</a></li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li><a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-trash" extraClassName="me-2" />Delete</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <p class="text-secondary small mb-2">@(plan.HoldingSymbols)</p>
+                                                @if(plan.Metadata is not null && !string.IsNullOrEmpty(plan.Metadata.Description))
+                                                {
+                                                    <p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine().Excerpt(50))</p>
+                                                }
+                                                <p class="text-secondary small mb-2">
+                                                    <BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
+                                                </p>
+                                                <p class="h5 mb-1">
+                                                    🏦@(plan.TotalMarketValueStr())
+                                                    -
+                                                    <span class="small">
+                                                        @if(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL)
+                                                        {
+                                                            @(plan.TotalUnsettledPnL<0?"📉":"📈")
+                                                            <span class="@(plan.TotalUnsettledPnL<0?"text-danger":"text-success")">
+                                                                @($"{plan.TotalUnsettledPnLStr()} ({plan.TotalUnsettledPnLYieldStr()})")
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @($"📅{plan.EstTotalYearlyDividendStr()} ({plan.EstTotalYearlyDividendYieldStr()})")
+                                                        }
+                                                    </span>
+                                                </p>
+                                                <p class="text-muted small mb-0">Refreshed @((plan.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(BackgroundMsg))
+                            {
+                                <div class="alert alert-light mt-2" role="alert">
+                                    <span style="font-size: small !important;">@BackgroundMsg</span>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
 
-		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio Plan" centered="false" type="danger" size="large">
-			<div class="card">
-				<div class="card-body">
-					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio plan?</span></CAlert>
-					<form>
-						<div class="row">
-							<div class="col-12">
-								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolioPlan?.Name)">
-									<label for="pName">Name</label>
-								</div>
-							</div>
-						</div>
-					</form>
-					<hr />
-					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeletePlanClose()">Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeletePlanConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
-				</div>
-			</div>
-		</CModal>
-	</Authorized>
+        <CModal @ref="@ModalDialogDelete" title="Delete Portfolio Plan" centered="false" type="danger" size="large">
+            <div class="card">
+                <div class="card-body">
+                    <CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio plan?</span></CAlert>
+                    <form>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolioPlan?.Name)">
+                                    <label for="pName">Name</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeletePlanClose()">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeletePlanConfirm()"><BIcon icon="trash" extraClassName="me-1"/>Delete</button>
+                </div>
+            </div>
+        </CModal>
+    </Authorized>
 </AuthorizeView>
 @code {
     private const string PAGE_TITLE = "My Portfolio Plans";
