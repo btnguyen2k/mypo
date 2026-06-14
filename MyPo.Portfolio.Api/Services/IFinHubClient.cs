@@ -48,12 +48,24 @@ public interface IFinHubClient
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a an existing portfolio.
     /// </summary>
-    /// <param name="req">The portfolio review request</param>
+    /// <param name="req">The portfolio analyze request</param>
     /// <param name="baseUrl"></param>
     /// <param name="httpClient"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    public const string API_FINHUB_AI_SPOTLIGHT_PORTFOLIO = "/ai/analyze_portfolio";
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/> to analyze a an existing portfolio for immediate risks and actions.
+    /// </summary>
+    /// <param name="req">The portfolio analyze request</param>
+    /// <param name="baseUrl"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public Task<ApiResp<PortfolioAnalysis>> SpotlightPortfolioAsync(SpotLightPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /*----------------------------------------------------------------------*/
 

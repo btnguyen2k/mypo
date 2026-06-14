@@ -51,36 +51,36 @@ public partial class MyPortfolioPlans : BasePage
 
             HideUI = false;
             ShowPassedMessageOrCloseAlert();
-            await Task.Run(UpdatePortfolioPlansInBackground);
+            // await Task.Run(UpdatePortfolioPlansInBackground);
         }
     }
 
-    private async void UpdatePortfolioPlansInBackground()
-    {
-        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var plansList = PortfolioPlansMap.Values.ToList();
-        foreach (var plan in plansList)
-        {
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (plan.Portfolio == null || plan.Metadata == null || now - plan.Metadata.HoldingsRefreshTimestamp < 24 * 3600)
-            {
-                continue;
-            }
-            SetBackgroundMsg($"⌛Updating portfolio plan '{plan.Name}'...");
-            var req = CreateOrUpdatePortfolioPlanReq.NewRequestFrom(plan);
-            var updateResp = await apiClient.UpdateMyPortfolioPlanAsync(plan.Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
-            if (!updateResp.IsSuccess)
-            {
-                SetBackgroundMsg($"❗Failed to update portfolio plan '{plan.Name}': {updateResp.Message}");
-                return;
-            }
-            var updatedPlan = updateResp.Data!;
-            updatedPlan.Market = MarketsMap.GetValueOrDefault(plan.Portfolio.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty);
-            PortfolioPlansMap[plan.Id] = updatedPlan;
-            StateHasChanged();
-        }
-        ClearBackgroundMsg();
-    }
+    // private async void UpdatePortfolioPlansInBackground()
+    // {
+    //     var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+    //     var plansList = PortfolioPlansMap.Values.ToList();
+    //     foreach (var plan in plansList)
+    //     {
+    //         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    //         if (plan.Portfolio == null || plan.Metadata == null || now - plan.Metadata.HoldingsRefreshTimestamp < 24 * 3600)
+    //         {
+    //             continue;
+    //         }
+    //         SetBackgroundMsg($"⌛Updating portfolio plan '{plan.Name}'...");
+    //         var req = CreateOrUpdatePortfolioPlanReq.NewRequestFrom(plan);
+    //         var updateResp = await apiClient.UpdateMyPortfolioPlanAsync(plan.Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
+    //         if (!updateResp.IsSuccess)
+    //         {
+    //             SetBackgroundMsg($"❗Failed to update portfolio plan '{plan.Name}': {updateResp.Message}");
+    //             return;
+    //         }
+    //         var updatedPlan = updateResp.Data!;
+    //         updatedPlan.Market = MarketsMap.GetValueOrDefault(plan.Portfolio.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty);
+    //         PortfolioPlansMap[plan.Id] = updatedPlan;
+    //         StateHasChanged();
+    //     }
+    //     ClearBackgroundMsg();
+    // }
 
     private void BtnClickAddPlan()
     {

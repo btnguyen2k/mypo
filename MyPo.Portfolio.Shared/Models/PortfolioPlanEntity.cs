@@ -61,6 +61,15 @@ public sealed class PortfolioPlanMetadata
 
     [JsonPropertyName("analysis")]
     public string Analysis { get; set; } = string.Empty;
+
+    [JsonPropertyName("trefresh_spotlight")]
+    public long SpotlightRefreshTimestsmp { get; set; }
+
+    [JsonIgnore]
+    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestsmp).UtcDateTime;
+
+    [JsonPropertyName("spotlight")]
+    public string Spotlight { get; set; } = string.Empty;
 }
 
 public sealed class HoldingTicker

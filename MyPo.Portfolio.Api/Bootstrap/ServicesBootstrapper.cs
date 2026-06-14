@@ -1,4 +1,5 @@
 ﻿using MyPo.Libs.Clavis;
+using MyPo.Portfolio.Api.Services;
 using MyPo.Shared.Bootstrap;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
@@ -11,6 +12,7 @@ public class ServicesBootstrapper
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
         ConfigureClavis(appBuilder.Services);
+        appBuilder.Services.AddScoped<IPortfolioPlanHoldingsService, PortfolioPlanHoldingsService>();
     }
 
     private static void ConfigureClavis(IServiceCollection services)
@@ -25,8 +27,7 @@ public class ServicesBootstrapper
         }
         if (key.Length < 32)
         {
-            logger.LogWarning("Clavis key length is less than 32 characters. It will be padded with random characters!");
-            while (key.Length < 32) key = key.PadRight(1, Guid.NewGuid().ToString()[0]);
+            throw new InvalidOperationException("Clavis key must be at least 32 characters long. Please provide a valid key in the CLAVIS_KEY environment variable.");
         }
         services.AddSingleton<Clavis, Clavis>(sp => new Clavis(key));
     }

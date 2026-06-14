@@ -71,6 +71,20 @@ public partial class FinHubClient : BaseClient, IFinHubClient
         return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public async Task<ApiResp<PortfolioAnalysis>> SpotlightPortfolioAsync(SpotLightPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO;
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            HttpMethod.Post, baseUrl, endpoint,
+            NoAuth,
+            req,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+    }
+
     /*----------------------------------------------------------------------*/
 
     /// <inheritdoc/>

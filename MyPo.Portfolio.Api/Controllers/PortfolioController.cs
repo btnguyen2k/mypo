@@ -19,6 +19,7 @@ public partial class PortfolioController : ApiBaseController
     private readonly IdentityOptions IdentityOptions;
     private readonly IPortfolioRepository PortfolioRepository;
     private readonly IFinHubClient FinHubClient;
+    private readonly IPortfolioPlanHoldingsService PortfolioPlanHoldingsService;
 
     public PortfolioController(
         IIdentityRepository identityRepository,
@@ -26,7 +27,8 @@ public partial class PortfolioController : ApiBaseController
         IAuthenticator? authenticator,
         IAuthenticatorAsync? authenticatorAsync,
         IPortfolioRepository portfolioRepository,
-        IFinHubClient finHubClient
+        IFinHubClient finHubClient,
+        IPortfolioPlanHoldingsService portfolioPlanHoldingsService
     )
     {
         ArgumentNullException.ThrowIfNull(identityRepository, nameof(identityRepository));
@@ -37,6 +39,7 @@ public partial class PortfolioController : ApiBaseController
         }
         ArgumentNullException.ThrowIfNull(portfolioRepository, nameof(portfolioRepository));
         ArgumentNullException.ThrowIfNull(finHubClient, nameof(finHubClient));
+        ArgumentNullException.ThrowIfNull(portfolioPlanHoldingsService, nameof(portfolioPlanHoldingsService));
 
         IdentityRepository = identityRepository;
         IdentityOptions = identityOptions.Value;
@@ -44,6 +47,7 @@ public partial class PortfolioController : ApiBaseController
         AuthenticatorAsync = authenticatorAsync;
         PortfolioRepository = portfolioRepository;
         FinHubClient = finHubClient;
+        PortfolioPlanHoldingsService = portfolioPlanHoldingsService;
     }
 
     private async ValueTask<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()

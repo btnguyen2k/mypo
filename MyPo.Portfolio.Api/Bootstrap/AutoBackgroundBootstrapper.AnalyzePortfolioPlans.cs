@@ -5,19 +5,22 @@ using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
-using Telegram.Bot.Extensions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
 /// <summary>
-/// Background task that periodically analyzes users' portfolio plans and, when immediate actions are
-/// recommended, sends alerts via Telegram. The cadence is controlled per user by
-/// <see cref="PortfolioPlanPreferences.AutoAnalyzeDays"/>.
+/// Background task that periodically analyzes users' portfolio plans. Two distinct analyses are run
+/// per plan, each gated by its own timestamp in <see cref="PortfolioPlanMetadata"/>:
+/// <list type="bullet">
+/// <item>normal analysis (<see cref="PortfolioPlanMetadata.AnalysisRefreshTimestsmp"/>) — result is
+/// persisted only;</item>
+/// <item>spotlight analysis (<see cref="PortfolioPlanMetadata.SpotlightRefreshTimestsmp"/>) — result is
+/// persisted and pushed to the user via a Telegram alert (Markdown).</item>
+/// </list>
+/// The cadence is controlled per user by <see cref="PortfolioPlanPreferences.AutoAnalyzeDays"/>.
 /// </summary>
-/// <remarks>
-/// SKELETON: the "immediate action" detection (<see cref="ShouldAlert"/>) and the alert message
-/// formatting (<see cref="BuildAlertMessage"/>) are placeholders to be implemented later.
-/// </remarks>
 sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
 {
     public AutoBackgroundAnalyzePortfolioPlansScanner(
@@ -69,137 +72,187 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
 
     private async Task AnalyzePortfolioPlansForUser(IServiceScope scope, MyPoUser user, CancellationToken cancellationToken)
     {
-        var userId = user.UserName!.ToLower();
+        var userName = user.UserName!.ToLower();
         var prefs = user.Metadata?.GetPortfolioPlanPreferences();
-        var botApiKey = user.Metadata?.GetPortfolioPlanTelegramBotApiKey();
-        var chatIDs = (user.Metadata?.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
-        if (user.Metadata is null || prefs is null || !prefs.ViaTelegram  // portfolio plan alerts not enabled
-            || prefs.AutoAnalyzeDays <= 0                                 // auto-analyze disabled
-            || string.IsNullOrEmpty(botApiKey)  // Telegram bot API key is not configured
-            || chatIDs.Count == 0               // No Telegram chat IDs are configured
-        )
+        if (user.Metadata is null || prefs is null || prefs.AutoAnalyzeDays <= 0)  // auto-analyze disabled
         {
             return;
         }
 
-        var checkpoint = await GetOrInitCheckpoint(
-            ownerId: userId,
-            portfolioId: CheckpointEntity.NON_PORTFOLIO,
-            marketId: CheckpointEntity.NON_MARKET,
-            itemCode: CheckpointEntity.NON_ITEM,
-            checkpointType: CheckpointEntity.CHECKPOINT_PORTFOLIO_PLAN_ANALYZE,
-            cancellationToken
-        );
+        Logger.LogInformation("Auto-analyzing portfolio plans for user {userName}...", userName);
         var analyzeDelay = TimeSpan.FromDays(prefs.AutoAnalyzeDays);
-        if (checkpoint is null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < analyzeDelay))
-        {
-            // not due for an auto-analyze yet
-            return;
-        }
-
-        Logger.LogInformation("Auto-analyzing portfolio plans for user {userId}...", userId);
         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-        var teleBot = new TelegramBotClient(botApiKey);
-        var plans = await portfolioRepo.GetPortfolioPlansByOwnerUserIdAsync(userId, cancellationToken);
+
+        // Telegram is only used to push spotlight alerts; it's optional and the analyses still run without it.
+        var botApiKey = user.Metadata?.GetPortfolioPlanTelegramBotApiKey();
+        var chatIDs = (user.Metadata?.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
+        var teleBot = prefs.ViaTelegram && !string.IsNullOrEmpty(botApiKey) && chatIDs.Count > 0
+            ? new TelegramBotClient(botApiKey)
+            : null;
+
+        var plans = await portfolioRepo.GetPortfolioPlansByOwnerUserIdAsync(user.Id, cancellationToken);
         foreach (var plan in plans)
         {
             try
             {
-                await AnalyzePortfolioPlanAndAlert(portfolioRepo, finHubClient, teleBot, chatIDs, plan, cancellationToken);
+                var changed = await AnalyzePortfolioPlan(portfolioRepo, finHubClient, teleBot, chatIDs, plan, analyzeDelay, cancellationToken);
+                if (changed) break;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to auto-analyze portfolio plan '{planId}' for user '{userId}'.", plan.Id, userId);
+                Logger.LogError(ex, "Failed to auto-analyze portfolio plan '{planId}: {planName}' for user '{userName}'.", plan.Id, plan.Name, userName);
             }
         }
-
-        await SaveCheckpoint(checkpoint, cancellationToken);
     }
 
     /// <summary>
-    /// SKELETON: analyzes a single portfolio plan via the AI analysis API, persists the result, and
-    /// sends a Telegram alert when immediate actions are recommended.
+    /// Runs the two analyses (normal and spotlight) for a single plan, each only if its own refresh
+    /// timestamp is older than <paramref name="analyzeDelay"/>, persists any new result, and pushes a
+    /// Telegram alert (Markdown) for a refreshed spotlight analysis.
     /// </summary>
-    private async Task AnalyzePortfolioPlanAndAlert(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, CancellationToken cancellationToken)
+    private async Task<bool> AnalyzePortfolioPlan(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, TimeSpan analyzeDelay, CancellationToken cancellationToken)
     {
+        var now = DateTimeOffset.UtcNow;
+        plan.Metadata ??= new PortfolioPlanMetadata();
+
         // resolve the plan's market via the linked portfolio's default market (if any)
         var portfolio = !string.IsNullOrEmpty(plan.PortfolioId)
             ? await portfolioRepo.GetPortfolioByIdAsync(plan.PortfolioId, cancellationToken)
             : null;
         var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
+        var country = market?.Country ?? "US";
+        var allocation = BuildAllocationReqs(plan);
+        var changed = false;
 
-        // call the AI analysis endpoint for the plan
-        // TODO: mirror PortfolioController/FinHubController.AnalyzePortfolioPlan: choose between
-        //       BuildPortfolioAsync and AnalyzePortfolioAsync based on the plan's holdings.
-        var req = new AnalyzePortfolioReq
+        // normal analysis: persisted only, no alert
+        var lastAnalysis = plan.Metadata.AnalysisRefreshTimestsmp;
+        if (lastAnalysis <= 0 || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
-            Country = market?.Country ?? "US",
-            InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new HoldingTickerReq
+            Logger.LogInformation("Running normal analysis for portfolio plan '{planName}'...", plan.Name);
+            var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+            if (analysis != null)
             {
-                Ticker = ht.Ticker,
-                TargetAllocation = ht.TargetAllocation,
-                NumShares = ht.Shares,
-                AvgPrice = ht.AveragePrice,
-                MarketPrice = ht.MarketPrice,
-                Tags = ht.Tags,
-            })],
-        };
-        var analysisResp = await finHubClient.AnalyzePortfolioAsync(req, cancellationToken: cancellationToken);
-        if (!analysisResp.IsSuccess || analysisResp.Data is null || analysisResp.Data.LLMError)
+                plan.Metadata.AnalysisRefreshTimestsmp = now.ToUnixTimeSeconds();
+                plan.Metadata.Analysis = analysis;
+                changed = true;
+            }
+        }
+
+        // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
+        var lastSpotlight = plan.Metadata.SpotlightRefreshTimestsmp;
+        if (lastSpotlight <= 0 || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
-            Logger.LogWarning("Failed to analyze portfolio plan '{planId}': {message}", plan.Id, analysisResp.Message);
+            Logger.LogInformation("Running spotlight analysis for portfolio plan '{planName}'...", plan.Name);
+            var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+            if (spotlight != null)
+            {
+                plan.Metadata.SpotlightRefreshTimestsmp = now.ToUnixTimeSeconds();
+                plan.Metadata.Spotlight = spotlight;
+                changed = true;
+                await SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken);
+            }
+        }
+
+        if (changed)
+        {
+            Logger.LogInformation("Saving updated portfolio plan '{planName}' after analysis...", plan.Name);
+            var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
+            if (dbresult == null)
+            {
+                Logger.LogError("Failed to persist auto-analyzed portfolio plan '{planId}'.", plan.Id);
+            }
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Runs the normal portfolio analysis. Mirrors <c>FinHubController.AnalyzePortfolioPlan</c>: builds a
+    /// fresh portfolio when there are no (or mostly empty) holdings, otherwise analyzes the existing one.
+    /// Returns the analysis text, or <c>null</c> if the call failed or the LLM reported an error.
+    /// </summary>
+    private async Task<string?> RunNormalAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    {
+        var holdings = plan.Metadata?.HoldingTickers ?? [];
+        var countEntries = holdings.Count;
+        var countPositive = holdings.Count(ht => ht.Shares > 0);
+        var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
+        var resp = buildNew
+            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken)
+            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
+        if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
+        {
+            Logger.LogWarning("Failed to analyze portfolio plan '{planId}': {message}", plan.Id, resp.Data?.LLMErrorMsg ?? resp.Message);
+            return null;
+        }
+        return resp.Data.Analysis;
+    }
+
+    /// <summary>
+    /// Runs the spotlight portfolio analysis (immediate risks/actions). Returns the analysis text, or
+    /// <c>null</c> if the call failed or the LLM reported an error.
+    /// </summary>
+    private async Task<string?> RunSpotlightAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    {
+        var resp = await finHubClient.SpotlightPortfolioAsync(new SpotLightPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
+        if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
+        {
+            Logger.LogWarning("Failed to spotlight portfolio plan '{planId}': {message}", plan.Id, resp.Data?.LLMErrorMsg ?? resp.Message);
+            return null;
+        }
+        return resp.Data.Analysis;
+    }
+
+    /// <summary>
+    /// Sends the spotlight analysis to the user's configured Telegram chats as a Markdown message.
+    /// No-op when Telegram is not configured for the user.
+    /// </summary>
+    private async Task SendSpotlightAlert(TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, string spotlight, CancellationToken cancellationToken)
+    {
+        if (teleBot is null)
+        {
             return;
         }
-        var analysis = analysisResp.Data;
 
-        // persist the latest analysis result on the plan
-        plan.Metadata ??= new PortfolioPlanMetadata();
-        plan.Metadata.AnalysisRefreshTimestsmp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        plan.Metadata.Analysis = analysis.Analysis;
-        await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
-
-        // only alert when the analysis flags an immediate action
-        if (!ShouldAlert(analysis))
-        {
-            return;
-        }
-        var message = BuildAlertMessage(plan, analysis);
+        var message = BuildSpotlightMessage(plan, spotlight);
         foreach (var chatId in chatIDs)
         {
             try
             {
-                await teleBot.SendHtml(chatId, message);
+                Logger.LogInformation("Sending spotlight alert for portfolio plan '{planName}' to Telegram chat ID {chatId}...", plan.Name, chatId);
+                await teleBot.SendMessage(chatId, message, parseMode: ParseMode.Markdown,
+                    linkPreviewOptions: new LinkPreviewOptions { IsDisabled = true }, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to send portfolio plan alert to chat ID {chatId}: {message}", chatId, message);
+                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message);
             }
         }
     }
 
     /// <summary>
-    /// SKELETON placeholder: decides whether the analysis result warrants an immediate-action alert.
+    /// Builds the FinHub request allocation list from a plan's current holdings.
     /// </summary>
-    /// <remarks>Returns <c>false</c> for now so the skeleton never sends alerts. TODO: implement the
-    /// real "immediate action" detection (e.g. inspect <paramref name="analysis"/> for actionable signals).</remarks>
-    private static bool ShouldAlert(PortfolioAnalysis analysis)
-    {
-        // TODO: implement immediate-action detection.
-        return false;
-    }
+    private static List<HoldingTickerReq> BuildAllocationReqs(PortfolioPlanEntity plan)
+        => [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new HoldingTickerReq
+        {
+            Ticker = ht.Ticker,
+            TargetAllocation = ht.TargetAllocation,
+            NumShares = ht.Shares,
+            AvgPrice = ht.AveragePrice,
+            MarketPrice = ht.MarketPrice,
+            Tags = ht.Tags,
+        })];
 
     /// <summary>
-    /// SKELETON placeholder: formats the Telegram alert message for a plan's analysis result.
+    /// Formats the Telegram spotlight alert message (Markdown). The analysis body is itself Markdown.
     /// </summary>
-    private static string BuildAlertMessage(PortfolioPlanEntity plan, PortfolioAnalysis analysis)
+    private static string BuildSpotlightMessage(PortfolioPlanEntity plan, string spotlight)
     {
-        // TODO: extract and format the actionable items from the analysis.
         var msg = new StringBuilder();
-        msg.Append($"<strong>📊 Portfolio plan '{plan.Name}' - immediate actions:</strong>\n<blockquote>");
-        msg.Append(analysis.Analysis);
-        msg.Append("</blockquote><preview disabled />");
+        msg.Append($"📊 *Portfolio plan '{plan.Name}' - spotlight:*\n\n");
+        msg.Append(spotlight);
         return msg.ToString();
     }
 }

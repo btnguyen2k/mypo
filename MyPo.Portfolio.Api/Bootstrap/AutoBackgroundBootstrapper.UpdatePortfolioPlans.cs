@@ -1,7 +1,6 @@
 ﻿using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
@@ -67,46 +66,37 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
             return;
         }
 
-        var checkpoint = await GetOrInitCheckpoint(
-            ownerId: userName,
-            portfolioId: CheckpointEntity.NON_PORTFOLIO,
-            marketId: CheckpointEntity.NON_MARKET,
-            itemCode: CheckpointEntity.NON_ITEM,
-            checkpointType: CheckpointEntity.CHECKPOINT_PORTFOLIO_PLAN_UPDATE,
-            cancellationToken
-        );
-        var updateDelay = TimeSpan.FromDays(prefs.AutoUpdateDays);
-        if (checkpoint is null || (checkpoint.CheckpointTime != DateTimeOffset.MinValue && DateTimeOffset.UtcNow - checkpoint.CheckpointTime < updateDelay))
-        {
-            // not due for an auto-update yet
-            return;
-        }
-
         Logger.LogInformation("Auto-updating portfolio plans for user {userName}...", userName);
+        var updateDelay = TimeSpan.FromDays(prefs.AutoUpdateDays);
         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
-        var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+        var holdingsService = scope.ServiceProvider.GetRequiredService<IPortfolioPlanHoldingsService>();
         var plans = await portfolioRepo.GetPortfolioPlansByOwnerUserIdAsync(user.Id, cancellationToken);
         foreach (var plan in plans)
         {
+            var lastRefresh = plan.Metadata?.HoldingsRefreshTimestamp ?? 0;
+            if (lastRefresh > 0 && DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(lastRefresh) < updateDelay)
+            {
+                // this plan is not due for an auto-update yet
+                continue;
+            }
+
             try
             {
-                await RefreshPortfolioPlanHoldings(portfolioRepo, finHubClient, plan, cancellationToken);
+                await RefreshPortfolioPlanHoldings(holdingsService, portfolioRepo, plan, cancellationToken);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Failed to auto-update portfolio plan '{planId}: {planName}' for user '{userName}'.", plan.Id, plan.Name, userName);
             }
         }
-
-        await SaveCheckpoint(checkpoint, cancellationToken);
     }
 
     /// <summary>
     /// Rebuilds a plan's holding tickers (market price, dividend info, and shares/avg-price from any linked
-    /// portfolio) and persists it. Mirrors the server-side update logic in
-    /// <c>PortfolioController.UpdateMyPortfolioPlan</c>.
+    /// portfolio) via the shared <see cref="IPortfolioPlanHoldingsService"/> and persists it. On a fetch
+    /// failure the existing holding values are kept (the service reports the failed tickers).
     /// </summary>
-    private async Task RefreshPortfolioPlanHoldings(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, PortfolioPlanEntity plan, CancellationToken cancellationToken)
+    private async Task RefreshPortfolioPlanHoldings(IPortfolioPlanHoldingsService holdingsService, IPortfolioRepository portfolioRepo, PortfolioPlanEntity plan, CancellationToken cancellationToken)
     {
         var existingHoldings = plan.Metadata?.HoldingTickers ?? [];
         if (existingHoldings.Count == 0)
@@ -114,55 +104,15 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
             return;
         }
 
-        // build a map of currently-held assets in the linked portfolio (if any), for shares/avg-price
-        var assetsMap = new Dictionary<string, AssetEntity>();
-        if (!string.IsNullOrWhiteSpace(plan.PortfolioId))
+        var result = await holdingsService.RefreshHoldingsAsync(existingHoldings, plan.PortfolioId, cancellationToken);
+        foreach (var failedTicker in result.FailedTickers)
         {
-            var assets = await portfolioRepo.GetAssetsByPortfolioIdAsync(plan.PortfolioId, cancellationToken);
-            foreach (var asset in assets)
-            {
-                if (Globals.MarketsMap.TryGetValue(asset.MarketId?.ToUpper() ?? string.Empty, out var market))
-                {
-                    assetsMap[SymbolUtils.NormalizeSymbol(asset.ItemCode, market)] = asset;
-                }
-            }
-        }
-
-        var holdings = new List<HoldingTicker>();
-        foreach (var ticker in existingHoldings)
-        {
-            var tickerInfoResp = await finHubClient.GetStockSymbolInfoAsync(ticker.Ticker, cancellationToken: cancellationToken);
-            if (tickerInfoResp.Status != 200 || tickerInfoResp.Data == null)
-            {
-                Logger.LogWarning("Cannot fetch info for ticker '{ticker}' while updating plan '{planId}'; keeping existing values.", ticker.Ticker, plan.Id);
-                holdings.Add(ticker);  // keep the existing holding as-is
-                continue;
-            }
-            var data = tickerInfoResp.Data;
-            var ht = new HoldingTicker
-            {
-                Id = ticker.Id,
-                Ticker = data.NormalizedSymbol,
-                TargetAllocation = ticker.TargetAllocation,
-                Tags = ticker.Tags?.Trim() ?? string.Empty,
-                Shares = assetsMap.TryGetValue(data.NormalizedSymbol, out var asset) ? asset.Quantity : 0,
-                AveragePrice = assetsMap.TryGetValue(data.NormalizedSymbol, out var asset2) ? asset2.AveragePrice : 0,
-                MarketPrice = data.StockQuote?.MarketPrice ?? 0,
-                DividendYield = data.Dividend?.DividendYield ?? 0,
-                PayoutFrequency = data.Dividend?.PayoutFrequency ?? 0,
-            };
-            var country = data.Country.ToUpper();
-            if (country == "VN" || country == "VIETNAM")
-            {
-                // special case
-                ht.MarketPrice /= 1000;
-            }
-            holdings.Add(ht);
+            Logger.LogWarning("Cannot fetch info for ticker '{ticker}' while updating plan '{planId}'; keeping existing values.", failedTicker, plan.Id);
         }
 
         plan.Metadata ??= new PortfolioPlanMetadata();
         plan.Metadata.HoldingsRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        plan.Metadata.HoldingTickers = holdings;
+        plan.Metadata.HoldingTickers = result.Holdings;
         var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
         if (dbresult == null)
         {

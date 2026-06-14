@@ -113,62 +113,15 @@ public partial class PortfolioController
         return null;
     }
 
-    private async ValueTask<IDictionary<string, AssetEntity>> GetAssetsMapByPortfolioId(string? portfolioId)
-    {
-        if (string.IsNullOrWhiteSpace(portfolioId))
-        {
-            return new Dictionary<string, AssetEntity>();
-        }
-
-        var assetsMap = new Dictionary<string, AssetEntity>();
-        var assets = await PortfolioRepository.GetAssetsByPortfolioIdAsync(portfolioId);
-        foreach (var asset in assets)
-        {
-            if (Globals.MarketsMap.TryGetValue(asset.MarketId?.ToUpper() ?? string.Empty, out var market))
-            {
-                var symbol = SymbolUtils.NormalizeSymbol(asset.ItemCode, market);
-                assetsMap[symbol] = asset;
-            }
-            ;
-        }
-        return assetsMap;
-    }
-
     private async ValueTask<(ObjectResult?, IList<HoldingTicker>?)> BuildHoldingTickers(CreateOrUpdatePortfolioPlanReq req)
     {
-        var holdings = new List<HoldingTicker>();
-        if (req.Metadata != null && req.Metadata.HoldingTickers != null)
+        var inputTickers = req.Metadata?.HoldingTickers ?? [];
+        var result = await PortfolioPlanHoldingsService.RefreshHoldingsAsync(inputTickers, req.PortfolioId);
+        if (result.FailedTickers.Count > 0)
         {
-            var assetsMap = await GetAssetsMapByPortfolioId(req.PortfolioId);
-            foreach (var ticker in req.Metadata.HoldingTickers)
-            {
-                var tickerInfoResp = await FinHubClient.GetStockSymbolInfoAsync(ticker.Ticker);
-                if (tickerInfoResp.Status != 200 || tickerInfoResp.Data == null)
-                {
-                    return (ResponseNoData(400, $"Cannot fetch info for ticker '{ticker.Ticker}'."), null);
-                }
-                var ht = new HoldingTicker
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Ticker = tickerInfoResp.Data.NormalizedSymbol,
-                    TargetAllocation = ticker.TargetAllocation,
-                    Tags = ticker.Tags?.Trim() ?? string.Empty,
-                    Shares = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol, out var asset) ? asset.Quantity : 0,
-                    AveragePrice = assetsMap.TryGetValue(tickerInfoResp.Data.NormalizedSymbol, out var asset2) ? asset2.AveragePrice : 0,
-                    MarketPrice = tickerInfoResp.Data.StockQuote?.MarketPrice ?? 0,
-                    DividendYield = tickerInfoResp.Data.Dividend?.DividendYield ?? 0,
-                    PayoutFrequency = tickerInfoResp.Data.Dividend?.PayoutFrequency ?? 0,
-                };
-                var country = tickerInfoResp.Data.Country.ToUpper();
-                if (country == "VN" || country == "VIETNAM")
-                {
-                    // special case
-                    ht.MarketPrice /= 1000;
-                }
-                holdings.Add(ht);
-            }
+            return (ResponseNoData(400, $"Cannot fetch info for ticker '{result.FailedTickers[0]}'."), null);
         }
-        return (null, holdings);
+        return (null, result.Holdings);
     }
 
     /// <summary>

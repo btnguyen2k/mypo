@@ -35,6 +35,8 @@ public class BasePortfolioPlanReq
     public List<HoldingTickerReq> CurrentAllocation { get; set; } = [];
 }
 
+public sealed class SpotLightPortfolioReq : BasePortfolioPlanReq { }
+
 public sealed class AnalyzePortfolioReq : BasePortfolioPlanReq { }
 
 public sealed class BuildPortfolioReq : BasePortfolioPlanReq { }
