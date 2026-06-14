@@ -1,38 +1,23 @@
-using MyPo.Blazor.App.Helpers;
+﻿using MyPo.Blazor.App.Helpers;
 using MyPo.Blazor.App.Services;
 using MyPo.Blazor.App.Shared;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MyPo.Blazor.App.Pages.ExternalAuth;
 
 public partial class LoginGithub
 {
-	private string AlertType { get; set; } = string.Empty;
-	private string AlertMessage { get; set; } = string.Empty;
-	private bool ShowReturnLinks { get; set; } = false;
-
-	[Inject]
-	private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-
-	private void ShowAlert(string type, string message)
-	{
-		AlertType = type;
-		AlertMessage = message;
-		StateHasChanged();
-	}
-
 	protected override async Task OnInitializedAsync()
 	{
-		ShowAlert("waiting", "Logging in, please wait...");
+		ShowAlert("waiting", "Authenticating with GitHub, please wait.", "Authenticating...");
 		await base.OnInitializedAsync();
 
 		var authData = ParseQueryParams(htmlDecode: true);
 		if (authData.TryGetValue("error", out var errorCode))
 		{
 			ShowReturnLinks = true;
-			ShowAlert("danger", $"{errorCode}: {authData["error_description"] ?? string.Empty}");
+			ShowAlert("error", $"{errorCode}: {authData["error_description"] ?? string.Empty}", "Error");
 			return;
 		}
 
@@ -46,14 +31,14 @@ public partial class LoginGithub
 			Provider = "GitHub",
 			AuthData = authData
 		}, ApiBaseUrl);
-		if (apiResult.Status != 200)
+		if (!apiResult.IsSuccess)
 		{
 			ShowReturnLinks = true;
-			ShowAlert("danger", $"{apiResult.Status}: {apiResult.Message}");
+			ShowAlert("error", $"{apiResult.Status}: {apiResult.Message}", "Error");
 			return;
 		}
 
-		ShowAlert("success", "Authenticated successfully, logging in...⏳");
+		ShowAlert("wait", "GitHub authentication was successful, signing you in, please wait.", "Logging in...");
 		ShowReturnLinks = true;
 		var localStorage = ServiceProvider.GetRequiredService<LocalStorageHelper>();
 		await localStorage.SetItemAsync(Globals.LOCAL_STORAGE_KEY_AUTH_TOKEN, apiResult.Data.Token!);

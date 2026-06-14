@@ -2,58 +2,17 @@
 
 namespace MyPo.Portfolio.Shared.Api;
 
-public sealed class SymbolAnalysisReq
+public sealed class TickerAnalysisReq
 {
-	[JsonPropertyName("ai_vendor")]
-	public string AIVendor { get; set; } = Models.FinHub.AIVendor.VENDOR_GEMINI;
+    [JsonPropertyName("max_output_tokens")]
+    public int MaxOutputTokens { get; set; }
 
-	[JsonPropertyName("ai_tier")]
-	public string AITier { get; set; } = Models.FinHub.AIVendor.TIER_FREE;
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
 
-	[JsonPropertyName("ai_model")]
-	public string AIModel { get; set; } = string.Empty;
+    [JsonPropertyName("portfolio_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PortfolioId { get; set; }
 
-	[JsonPropertyName("max_output_tokens")]
-	public int MaxOutputTokens { get; set; }
-
-	[JsonPropertyName("symbol")]
-	public string Symbol { get; set; } = string.Empty;
-
-	[JsonPropertyName("inputs")]
-	public string Inputs { get; set; } = string.Empty;
-
-	[JsonPropertyName("owning_amount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? OwningAmount { get; set; }
-
-	[JsonPropertyName("owning_average_price"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public decimal? OwningAveragePrice { get; set; }
-}
-
-public struct SymbolAnalysisResp
-{
-	public readonly static SymbolAnalysisResp Error = new() { IsError = true };
-
-	[JsonPropertyName("response")]
-	public string Response { get; set; }
-
-	[JsonPropertyName("num_tokens_prompt")]
-	public int NumTokensPrompt { get; set; }
-
-	[JsonPropertyName("num_tokens_thought")]
-	public int NumTokensThought { get; set; }
-
-	[JsonPropertyName("num_tokens_response")]
-	public int NumTokensResponse { get; set; }
-
-	[JsonIgnore]
-	public readonly int TotalTokens => NumTokensPrompt + NumTokensThought + NumTokensResponse;
-
-	[JsonPropertyName("total_time_ms")]
-	public int TotalTimeMs { get; set; }
-
-	[JsonPropertyName("is_cached")]
-	public bool IsCached { get; set; }
-
-	[JsonPropertyName("is_error")]
-	public bool IsError { get; set; }
+    [JsonPropertyName("intent")]
+    public string Intent { get; set; } = string.Empty;
 }

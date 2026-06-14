@@ -1,4 +1,7 @@
 ﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.App.Helpers
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.DependencyInjection
 
 @attribute [Route(UIGlobals.ROUTE_LOGOUT)]
 @layout Layout.Empty
@@ -6,6 +9,20 @@
 
 <PageTitle>Logout | @AppInfo?.Name</PageTitle>
 
-<CAlert type="info">
-    @Message
-</CAlert>
+<CFullpageAlert type="wait" title="Logging out...">
+	Signing you out, please wait.
+</CFullpageAlert>
+
+@code {
+	// [Inject]
+	// private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		var localStorage = ServiceProvider.GetRequiredService<LocalStorageHelper>();
+		await localStorage.RemoveItemAsync(Globals.LOCAL_STORAGE_KEY_AUTH_TOKEN);
+		// ((JwtAuthenticationStateProvider)AuthenticationStateProvider).NotifyStageChanged();
+
+		NavigationManager.NavigateTo(UIGlobals.ROUTE_LANDING, forceLoad: true);
+	}
+}

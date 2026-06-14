@@ -1,0 +1,79 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+
+@inherits CBase
+
+<CAlert @ref="@Alert" />
+@if (!Saving)
+{
+    <form novalidate>
+        <!-- Enable Alerts -->
+        <div class="mb-4 p-3 border rounded">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="enablePlanAlerts" @bind="EnablePortfolioPlanAlertsViaTelegrams" />
+                <label class="form-check-label fw-semibold" for="enablePlanAlerts">Receive portfolio plan alerts via Telegram</label>
+            </div>
+            <div class="form-text">Enable this to automatically update/analyze your portfolio plans and receive Telegram notifications.</div>
+        </div>
+
+        @if (EnablePortfolioPlanAlertsViaTelegrams)
+        {
+            <div id="planConfig">
+                <!-- Auto update -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="autoUpdateDays">🔄 Auto-update portfolio plans</label>
+                    <div class="input-group" style="max-width: 24rem;">
+                        <span class="input-group-text">Every</span>
+                        <input type="number" min="0" class="form-control" id="autoUpdateDays" name="autoUpdateDays" @bind="AutoUpdateDays" />
+                        <span class="input-group-text">day(s)</span>
+                    </div>
+                    <div class="form-text">Your portfolio plans will be refreshed on this cadence. Set to <code>0</code> to disable.</div>
+                </div>
+
+                <hr/>
+
+                <!-- Auto analyze -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="autoAnalyzeDays">🧠 Auto-analyze portfolio plans</label>
+                    <div class="input-group" style="max-width: 24rem;">
+                        <span class="input-group-text">Every</span>
+                        <input type="number" min="0" class="form-control" id="autoAnalyzeDays" name="autoAnalyzeDays" @bind="AutoAnalyzeDays" />
+                        <span class="input-group-text">day(s)</span>
+                    </div>
+                    <div class="form-text">Your portfolio plans will be analyzed on this cadence. An alert is sent if any immediate actions are detected. Set to <code>0</code> to disable.</div>
+                </div>
+
+                <hr/>
+
+                <!-- Telegram Bot API Key -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="planBotApiKey">🤖 Telegram Bot API Key</label>
+                    <input type="password" class="form-control font-monospace" id="planBotApiKey"
+                        name="planBotApiKey"
+                        placeholder="e.g. 123456789:HHMCBpavBkafq4T472wsfuyAJTsjwwqfSX"
+                        autocomplete="off" spellcheck="false" @bind-value="TelegramBotApiKey"/>
+                    <div class="form-text">Obtain from <strong>@@BotFather</strong> on Telegram. Keep this key private.</div>
+                </div>
+
+                <!-- Chat IDs -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="planChatIds">💬 Chat IDs</label>
+                    <textarea class="form-control font-monospace" id="planChatIds" name="planChatIds"
+                            rows="3"
+                            placeholder="@((MarkupString)"e.g.\n-1001234567890\n987654321\n-4412345678")"
+                            spellcheck="false" @bind="TelegramChatIDs"></textarea>
+                    <div class="form-text">
+                        Enter one Chat ID per line. Group/channel IDs start with <code>-</code>.
+                        Use <strong>@@userinfobot</strong> to find your ID.
+                    </div>
+                </div>
+            </div><!-- /planConfig -->
+        }
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" @onclick="()=>LoadFromCurrentUser()">Reset</button>
+            <button type="button" class="btn btn-primary" @onclick="()=>BtnClickSave()"><CIcon icon="cil-save" /> Save</button>
+        </div>
+    </form>
+}

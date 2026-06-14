@@ -55,7 +55,7 @@ public abstract class BasePage : BaseComponent
 	public const string QUERY_PARM_ALERT_MESSAGE = "alertMessage";
 	public const string QUERY_PARM_REFRESH = "refresh";
 
-	protected bool IsRefreshRequested()
+	protected bool RemoveRefreshParamIfPresent()
 	{
 		var queryParams = System.Web.HttpUtility.ParseQueryString(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query);
 		if (queryParams.AllKeys.Contains(QUERY_PARM_REFRESH))

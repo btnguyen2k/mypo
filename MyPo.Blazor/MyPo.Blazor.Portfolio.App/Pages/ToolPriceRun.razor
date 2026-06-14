@@ -23,11 +23,11 @@
         <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
     </NotAuthorized>
     <Authorized>
-		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
-			<WidgetPriceRun />
+            <WidgetPriceRun />
         </div>
-	</Authorized>
+    </Authorized>
 </AuthorizeView>
 
 @code {

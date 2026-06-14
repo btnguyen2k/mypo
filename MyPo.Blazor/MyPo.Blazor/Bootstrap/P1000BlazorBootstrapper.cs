@@ -25,8 +25,8 @@ public class BlazorBootstrapper
 			app.UseHsts();
 		}
 
+		// app.UseRouting();
 		app.UseStaticFiles();
-		//app.UseRouting();
 		app.UseAntiforgery();
 
 		app.MapRazorComponents<Components.App>()

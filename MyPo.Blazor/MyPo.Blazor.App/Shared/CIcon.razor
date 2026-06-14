@@ -14,9 +14,7 @@ Custom class & style:
 Ref: to workaround the issue where icons disappear after switching to client mode https://stackoverflow.com/a/66255451
 -->
 
-<svg class="@IconClass" style="@IconStyle">
-    @IconMarkupString
-</svg>
+<i class="@IconClass" style="@IconStyle"></i>
 
 @code {
     [Parameter]
@@ -28,27 +26,14 @@ Ref: to workaround the issue where icons disappear after switching to client mod
     [Parameter]
     public string extraClassName { get; set; } = string.Empty;
 
-    private static readonly string SpriteFree = $"{UIGlobals.COREUI_BASE }/vendors/@coreui/icons/svg/free.svg";
-    private static readonly string SpriteFlag = $"{UIGlobals.COREUI_BASE}/vendors/@coreui/icons/svg/flag.svg";
-    private static readonly string SpriteBrand = $"{UIGlobals.COREUI_BASE}/vendors/@coreui/icons/svg/brand.svg";
-
     private string IconClass
     {
-		get => $"icon {extraClassName}";
+		get => $"{IconId} {extraClassName}";
     }
 
     private string? IconStyle
     {
-        get => string.IsNullOrWhiteSpace(style) ? null : style;
-    }
-
-    private string IconSprite
-    {
-        get => icon.StartsWith("cib-") || icon.StartsWith("brand-")
-            ? SpriteBrand
-            : icon.StartsWith("cif-") || icon.StartsWith("flag-")
-                ? SpriteFlag
-                : SpriteFree;
+        get => string.IsNullOrWhiteSpace(style) ? string.Empty : style;
     }
 
     private string IconId
@@ -58,10 +43,5 @@ Ref: to workaround the issue where icons disappear after switching to client mod
             : icon.StartsWith("cif-") || icon.StartsWith("flag-")
                 ? "cif-"+icon.Replace("cif-", "").Replace("flag-", "")
                 : "cil-"+icon.Replace("cil-", "");
-    }
-
-    private MarkupString IconMarkupString
-    {
-        get => new MarkupString($"<use xlink:href=\"{IconSprite}#{IconId}\"></use>");
     }
 }

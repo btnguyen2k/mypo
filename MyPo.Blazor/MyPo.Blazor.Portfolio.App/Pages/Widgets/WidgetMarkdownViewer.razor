@@ -1,34 +1,34 @@
-@using Markdig
+﻿@using Markdig
 @using System.Text.RegularExpressions
 
 @if (!string.IsNullOrWhiteSpace(Content))
 {
-	<div class="cotainer">
-		@((MarkupString)RenderMarkdown())
-	</div>
+    <div class="cotainer">
+        @((MarkupString)RenderMarkdown())
+    </div>
 }
 
 @code {
-	[Parameter]
-	public string? Content { get; set; }
+    [Parameter]
+    public string? Content { get; set; }
 
-	private readonly MarkdownPipeline pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+    private readonly MarkdownPipeline pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
 
-	private static string SanitizeMarkdown(string markdown)
-	{
-		// remove leading ```markdown
-		markdown = Regex.Replace(markdown, @"^\s*`+markdown\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-		// and trailing ```
-		markdown = Regex.Replace(markdown, @"[\s`]+$", string.Empty);
-		return markdown;
-	}
+    private static string SanitizeMarkdown(string markdown)
+    {
+        // remove leading ```markdown
+        markdown = Regex.Replace(markdown, @"^\s*`+markdown\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        // and trailing ```
+        markdown = Regex.Replace(markdown, @"[\s`]+$", string.Empty);
+        return markdown;
+    }
 
-	private string RenderMarkdown()
-	{
-		var markdown = SanitizeMarkdown(Content??string.Empty);
-		var doc = Markdown.Parse(markdown, pipeline);
-		var html = Markdown.ToHtml(doc, pipeline);
-		html = html.Replace("<table>", "<table class=\"table table-sm\">");
-		return html;
-	}
+    private string RenderMarkdown()
+    {
+        var markdown = SanitizeMarkdown(Content??string.Empty);
+        var doc = Markdown.Parse(markdown, pipeline);
+        var html = Markdown.ToHtml(doc, pipeline);
+        html = html.Replace("<table>", "<table class=\"table table-sm\">");
+        return html;
+    }
 }

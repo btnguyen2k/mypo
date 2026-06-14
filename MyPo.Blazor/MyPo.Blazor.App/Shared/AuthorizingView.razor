@@ -1,10 +1,10 @@
-﻿<PageTitle>@PageTitle</PageTitle>
+﻿@using MyPo.Blazor.App.Shared
 
-<div class="container">
-    <CAlert type="info">
-        <span>Please wait...</span>
-    </CAlert>
-</div>
+<PageTitle>@PageTitle</PageTitle>
+
+<CFullpageAlert type="wait" title="Authorizing...">
+	Authorizing your account, please wait.
+</CFullpageAlert>
 
 @code {
     [Parameter]

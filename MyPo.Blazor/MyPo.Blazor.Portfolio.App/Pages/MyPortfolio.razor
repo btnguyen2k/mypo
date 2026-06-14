@@ -23,154 +23,160 @@
         <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
     </NotAuthorized>
     <Authorized>
-		<PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
             <div class="card border-top-primary border-top-3 mb-4">
                 <div class="card-header">
                     <h4 class="card-title float-start">Active Portfolios</h4>
-					@if (!HideUI)
-					{
-						<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-							<ChildContent Context="ctx_add_portfolio">
-								<button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
-							</ChildContent>
-						</AuthorizeView>
-					}
+                    @if (!HideUI)
+                    {
+                        <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                            <ChildContent Context="ctx_add_portfolio">
+                                <button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+                            </ChildContent>
+                        </AuthorizeView>
+                    }
                 </div>
                 <div class="card-body">
-					<CAlert @ref="@Alert" />
-					@if (!HideUI)
-					{
-						@if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
-						{
-							<div class="text-center">
-								<BIcon icon="bi-briefcase" extraClassName="fs-1" />
-								<h3>No Portfolios Yet</h3>
-								<AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-									<ChildContent Context="ctx_add_portfolio">
-										<p>Create your first portfolio to get started.</p>
-										<button class="btn btn-primary btn-lg" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
-									</ChildContent>
-								</AuthorizeView>
-							</div>
-						}
-						else
-						{
-							<div class="table-responsive">
-								<table class="table table-sm table-hover align-middle">
-									<thead>
-										<tr>
-											<th>Portfolio</th>
-											<th class="text-center">Currency</th>
-											<th scope="col" class="text-center w-auto">Returns</th>
-											<th scope="col" class="text-center w-auto">Fees+Tax</th>
-											<th scope="col" class="text-center w-auto">Buy</th>
-											<th scope="col" class="text-center w-auto">Sell</th>
-											<th scope="col" class="text-center w-auto">Costs</th>
-											<th scope="col" class="text-center w-auto">Mkt. Value</th>
-											<th scope="col" class="text-center w-auto">P/L</th>
-											<th scope="col" class="text-center w-auto">Actions</th>
-										</tr>
-									</thead>
-									<tbody class="table-group-divider">
-										@foreach (var p in MyActivePortfolioList)
-										{
-											<MyPortfolio_Row
-												Page="this"
-												Markets="Markets"
-												Portfolio="p"
-												Level="0"
-												PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
-											/>
-										}
-									</tbody>
-								</table>
-							</div>
-						}
+                    <CAlert @ref="@Alert" />
+                    @if (!HideUI)
+                    {
+                        @if (MyActivePortfolioList == null || MyActivePortfolioList.Count() == 0)
+                        {
+                            <div class="text-center">
+                                <BIcon icon="bi-briefcase" extraClassName="fs-1" />
+                                <h3>No Portfolios Yet</h3>
+                                <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                                    <ChildContent Context="ctx_add_portfolio">
+                                        <p>Create your first portfolio to get started.</p>
+                                        <button class="btn btn-primary btn-lg" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+                                    </ChildContent>
+                                </AuthorizeView>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Portfolio</th>
+                                            <th class="text-center">Currency</th>
+                                            <th scope="col" class="text-center w-auto">Returns</th>
+                                            <th scope="col" class="text-center w-auto">Fees+Tax</th>
+                                            <th scope="col" class="text-center w-auto">Buy</th>
+                                            <th scope="col" class="text-center w-auto">Sell</th>
+                                            <th scope="col" class="text-center w-auto">Costs</th>
+                                            <th scope="col" class="text-center w-auto">Mkt. Value</th>
+                                            <th scope="col" class="text-center w-auto">P/L</th>
+                                            <th scope="col" class="text-center w-auto">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="table-group-divider">
+                                        @foreach (var p in MyActivePortfolioList)
+                                        {
+                                            <MyPortfolio_Row
+                                                Page="this"
+                                                Markets="Markets"
+                                                Portfolio="p"
+                                                Level="0"
+                                                PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
+                                            />
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                    @if (!string.IsNullOrEmpty(BackgroundMsg))
+                    {
+                        <div class="alert alert-light" role="alert">
+                            <span style="font-size: small !important;">@BackgroundMsg</span>
+                        </div>
                     }
                 </div>
             </div>
 
-			@if (!HideUI && MyInactivePortfolioList != null && MyInactivePortfolioList.Count() > 0)
-			{
-				<div class="card border-top-secondary border-top-3 mb-4">
-					<div class="card-header" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#inactive-section" aria-expanded="false">
-						<h4 class="card-title float-start">Inactive Portfolios</h4>
-						<h5 class="text-muted float-end">
-							<BIcon icon="bi-chevron-down" />
-						</h5>
-					</div>
-					<div class="card-body collapse" id="inactive-section">
-						<div class="table-responsive">
-							<table class="table table-sm table-hover align-middle">
-								<thead>
-									<tr>
-										<th>Portfolio</th>
-										<th class="text-center">Currency</th>
-										<th scope="col" class="text-center w-auto">Returns</th>
-										<th scope="col" class="text-center w-auto">Fees+Tax</th>
-										<th scope="col" class="text-center w-auto">Buy</th>
-										<th scope="col" class="text-center w-auto">Sell</th>
-										<th scope="col" class="text-center w-auto">Costs</th>
-										<th scope="col" class="text-center w-auto">Mkt. Value</th>
-										<th scope="col" class="text-center w-auto">P/L</th>
-										<th scope="col" class="text-center w-auto">Actions</th>
-									</tr>
-								</thead>
-								<tbody class="table-group-divider">
-									@foreach (var p in MyInactivePortfolioList)
-									{
-										<MyPortfolio_Row
-											Page="this"
-											Markets="Markets"
-											Portfolio="p"
-											Level="0"
-											PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
-										/>
-									}
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</div>
-			}
+            @if (!HideUI && MyInactivePortfolioList != null && MyInactivePortfolioList.Count() > 0)
+            {
+                <div class="card border-top-secondary border-top-3 mb-4">
+                    <div class="card-header" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#inactive-section" aria-expanded="false">
+                        <h4 class="card-title float-start">Inactive Portfolios</h4>
+                        <h5 class="text-muted float-end">
+                            <BIcon icon="bi-chevron-down" />
+                        </h5>
+                    </div>
+                    <div class="card-body collapse" id="inactive-section">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Portfolio</th>
+                                        <th class="text-center">Currency</th>
+                                        <th scope="col" class="text-center w-auto">Returns</th>
+                                        <th scope="col" class="text-center w-auto">Fees+Tax</th>
+                                        <th scope="col" class="text-center w-auto">Buy</th>
+                                        <th scope="col" class="text-center w-auto">Sell</th>
+                                        <th scope="col" class="text-center w-auto">Costs</th>
+                                        <th scope="col" class="text-center w-auto">Mkt. Value</th>
+                                        <th scope="col" class="text-center w-auto">P/L</th>
+                                        <th scope="col" class="text-center w-auto">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    @foreach (var p in MyInactivePortfolioList)
+                                    {
+                                        <MyPortfolio_Row
+                                            Page="this"
+                                            Markets="Markets"
+                                            Portfolio="p"
+                                            Level="0"
+                                            PortfolioPnlSummaryMap="PortfolioPnlSummaryMap"
+                                        />
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
-		<CModal @ref="@ModalDialogDelete" title="Delete Portfolio" centered="false" type="danger" size="large">
-			<div class="card">
-				<div class="card-body">
-					<CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio?</span></CAlert>
-					<form>
-						<div class="row">
-							<div class="col-8">
-								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name??string.Empty)">
-									<label for="pName">Name</label>
-								</div>
-							</div>
-							<div class="col-4">
-								<div class="form-floating mb-1">
-									<input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency??string.Empty)">
-									<label for="pCurrency">Currency</label>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-sm-12">
-								<div class="form-floating mb-1">
-									<textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description??string.Empty)</textarea>
-									<label for="pDesc">Description</label>
-								</div>
-							</div>
-						</div>
-					</form>
-					<hr />
-					<button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
-					<button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
-				</div>
-			</div>
-		</CModal>
-	</Authorized>
+        <CModal @ref="@ModalDialogDelete" title="Delete Portfolio" centered="false" type="danger" size="large">
+            <div class="card">
+                <div class="card-body">
+                    <CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio?</span></CAlert>
+                    <form>
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="pName" placeholder="Name" disabled value="@(SelectedPortfolio?.Name??string.Empty)">
+                                    <label for="pName">Name</label>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="pCurrency" placeholder="Currency" disabled value="@(SelectedPortfolio?.Currency??string.Empty)">
+                                    <label for="pCurrency">Currency</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-floating mb-1">
+                                    <textarea class="form-control form-control-sm" id="pDesc" placeholder="Décription" disabled style="height: 100px;">@(SelectedPortfolio?.Description??string.Empty)</textarea>
+                                    <label for="pDesc">Description</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="()=>BtnClickDeleteClose()">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="()=>BtnClickDeleteConfirm()"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
+                </div>
+            </div>
+        </CModal>
+    </Authorized>
 </AuthorizeView>
 
 @code {

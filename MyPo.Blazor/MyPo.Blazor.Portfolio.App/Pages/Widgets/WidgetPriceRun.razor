@@ -1,99 +1,99 @@
-@using MyPo.Blazor.App.Shared
+﻿@using MyPo.Blazor.App.Shared
 
 <div class="card border-top-primary border-top-3 mb-4">
-	<div class="card-header align-items-center">
-		<h5 class="card-title float-start">Price Run</h5>
-		<div class="row float-end">
-			<div class="col-auto">
-				<label for="numDecimals" class="form-label">Decimals:</label>
-			</div>
-			<div class="col-auto">
-				<select class="form-select form-select-sm" id="numDecimals" @bind="numDecimals">
-					<option value="N0">0</option>
-					<option value="N1">1</option>
-					<option value="N2">2</option>
-					<option value="N3">3</option>
-					<option value="N4">4</option>
-					<option value="N5">5</option>
-					<option value="N6">6</option>
-				</select>
-			</div>
-		</div>
-	</div>
-	<div class="card-body">
-		<div class="row">
-			<div class="col-md-4 col-sm-12">
-				<label for="startingPrice" class="form-label">Starting Price:</label>
-				<div class="input-group input-group-sm">
-					<span class="input-group-text">💵</span>
-					<input type="number" min="@MinValue" step="@Step" class="form-control" id="startingPrice" placeholder="Starting price"
-						value="@startingPrice.ToString(numDecimals)" @onchange="(e)=>{startingPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-12">
-				<label for="delta" class="form-label">Delta:</label>
-				<div class="input-group input-group-sm">
-					<span class="input-group-text">💵</span>
-					<input type="number" step="@Step" class="form-control" id="delta" placeholder="Delta"
-						value="@delta.ToString(numDecimals)" @onchange="(e)=>{delta=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-12">
-				<label for="numSteps" class="form-label">Num Steps:</label>
-				<div class="input-group input-group-sm">
-					<input type="number" min="1" step="1" class="form-control" id="numSteps" placeholder="Num Steps" @bind="numSteps" />
-				</div>
-			</div>
-		</div>
-		@if (delta != 0)
-		{
-			<div class="row mt-2">
-				@for (var i = 1; i < numSteps+1; i++)
-				{
-					<div class="col-xl-3 col-md-4 col-sm-6 col-xs-12">
-						<div class="card mb-2 text-white @(CardBackground(i))">
-							<div class="card-body pb-0 d-flex justify-content-between align-items-start">
-								<div>
-									<div class="fs-5 fw-semibold">
-										💵 @(CalcPrice(i).ToString(numDecimals))
-										<span class="fs-6 fw-normal">
-											(@CalcDiffPercent(i).ToString("N2")%
-											<CIcon icon="@(CalcDiffPercent(i)>0?"arrow-top":"arrow-bottom")" />)
-										</span>
-									</div>
-									<div>Step @i</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				}
-			</div>
-		}
-	</div>
+    <div class="card-header align-items-center">
+        <h5 class="card-title float-start">Price Run</h5>
+        <div class="row float-end">
+            <div class="col-auto">
+                <label for="numDecimals" class="form-label">Decimals:</label>
+            </div>
+            <div class="col-auto">
+                <select class="form-select form-select-sm" id="numDecimals" @bind="numDecimals">
+                    <option value="N0">0</option>
+                    <option value="N1">1</option>
+                    <option value="N2">2</option>
+                    <option value="N3">3</option>
+                    <option value="N4">4</option>
+                    <option value="N5">5</option>
+                    <option value="N6">6</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 col-sm-12">
+                <label for="startingPrice" class="form-label">Starting Price:</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">💵</span>
+                    <input type="number" min="@MinValue" step="@Step" class="form-control" id="startingPrice" placeholder="Starting price"
+                        value="@startingPrice.ToString(numDecimals)" @onchange="(e)=>{startingPrice=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-12">
+                <label for="delta" class="form-label">Delta:</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">💵</span>
+                    <input type="number" step="@Step" class="form-control" id="delta" placeholder="Delta"
+                        value="@delta.ToString(numDecimals)" @onchange="(e)=>{delta=decimal.TryParse(e.Value?.ToString(), out var v)?v:0;}" />
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-12">
+                <label for="numSteps" class="form-label">Num Steps:</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" min="1" step="1" class="form-control" id="numSteps" placeholder="Num Steps" @bind="numSteps" />
+                </div>
+            </div>
+        </div>
+        @if (delta != 0)
+        {
+            <div class="row mt-2">
+                @for (var i = 1; i < numSteps+1; i++)
+                {
+                    <div class="col-xl-3 col-md-4 col-sm-6 col-xs-12">
+                        <div class="card mb-2 text-white @(CardBackground(i))">
+                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-5 fw-semibold">
+                                        💵 @(CalcPrice(i).ToString(numDecimals))
+                                        <span class="fs-6 fw-normal">
+                                            (@CalcDiffPercent(i).ToString("N2")%
+                                            <CIcon icon="@(CalcDiffPercent(i)>0?"arrow-top":"arrow-bottom")" />)
+                                        </span>
+                                    </div>
+                                    <div>Step @i</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </div>
 
 @code {
-	private string numDecimals { get; set; } = "N2";
-	private decimal startingPrice { get; set; } = 100.00m;
-	private decimal delta { get; set; } = 0.5m;
-	private decimal numSteps { get; set; } = 10m;
-	private decimal MinValue => numDecimals switch
-	{
-		"N0" => 1m,
-		"N1" => 0.1m,
-		"N2" => 0.01m,
-		"N3" => 0.001m,
-		"N4" => 0.0001m,
-		"N5" => 0.00001m,
-		"N6" => 0.000001m,
-		_ => 0.01m,
-	};
-	private decimal Step => MinValue;
-	private decimal CalcPrice(int step) => startingPrice + (delta * step);
-	private decimal CalcDiffPercent(int step) => startingPrice>0 ? (CalcPrice(step)/startingPrice-1) * 100m : 0;
-	private string CardBackground(int step)
-	{
-		List<string> bgList = ["bg-primary", "bg-info", "bg-warning", "bg-success", "bg-danger"];
-		return bgList[step % bgList.Count];
-	}
+    private string numDecimals { get; set; } = "N2";
+    private decimal startingPrice { get; set; } = 100.00m;
+    private decimal delta { get; set; } = 0.5m;
+    private decimal numSteps { get; set; } = 10m;
+    private decimal MinValue => numDecimals switch
+    {
+        "N0" => 1m,
+        "N1" => 0.1m,
+        "N2" => 0.01m,
+        "N3" => 0.001m,
+        "N4" => 0.0001m,
+        "N5" => 0.00001m,
+        "N6" => 0.000001m,
+        _ => 0.01m,
+    };
+    private decimal Step => MinValue;
+    private decimal CalcPrice(int step) => startingPrice + (delta * step);
+    private decimal CalcDiffPercent(int step) => startingPrice>0 ? (CalcPrice(step)/startingPrice-1) * 100m : 0;
+    private string CardBackground(int step)
+    {
+        List<string> bgList = ["bg-primary", "bg-info", "bg-warning", "bg-success", "bg-danger"];
+        return bgList[step % bgList.Count];
+    }
 }

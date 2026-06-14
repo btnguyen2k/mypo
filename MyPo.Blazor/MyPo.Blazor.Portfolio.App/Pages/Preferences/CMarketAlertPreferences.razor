@@ -1,0 +1,133 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+
+@inherits CBase
+
+<CAlert @ref="@Alert" />
+@if (!Saving)
+{
+    <form novalidate>
+        <!-- Enable Alerts -->
+        <div class="mb-4 p-3 border rounded">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="enableAlerts" @bind="EnableMarketAlertsViaTelegrams" />
+                <label class="form-check-label fw-semibold" for="enableAlerts">Receive market alerts via Telegram</label>
+            </div>
+            <div class="form-text">Enable this to configure and activate Telegram notifications.</div>
+        </div>
+
+        @if(EnableMarketAlertsViaTelegrams)
+        {
+            <!-- Config section -->
+            <div id="alertConfig">
+                <!-- Timezone -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="timezone">🌐 Timezone</label>
+                    <select class="form-select" id="timezone" name="timezone" @bind="TimeZone">
+                        <option value="" disabled selected>-= Select your timezone =-</option>
+                        @foreach(var tzg in PortfolioUIGlobals.TIME_ZONE_GROUPS)
+                        {
+                            <optgroup label="@tzg.GroupName">
+                                @foreach(var tz in tzg.TimeZones)
+                                {
+                                    <option value="@tz.Id">@tz.Label</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+
+                <hr/>
+
+                <!-- Alert Time Window -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">🕐 Alert Time Window</label>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label class="form-label text-muted small" for="delayMinutes">Delay in Minutes</label>
+                            <input type="number" min="60" class="form-control" id="delayMinutes" name="delayMinutes" @bind="MarketAlertDelayMinutes"/>
+                        </div>
+                        <div class="col">
+                            <label class="form-label text-muted small" for="startTime">Start Time</label>
+                            <input type="time" class="form-control" id="startTime" name="startTime" @bind-value="StartTime"/>
+                        </div>
+                        <div class="col-auto align-self-end pb-2 text-muted">to</div>
+                        <div class="col">
+                            <label class="form-label text-muted small" for="endTime">End Time</label>
+                            <input type="time" class="form-control" id="endTime" name="endTime" @bind-value="EndTime"/>
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        Alerts will only be sent within this window (based on your timezone), with minimum delay of <code>Delay in Minutes</code> between alerts sends to avoid spamming.
+                    </div>
+                </div>
+
+                <!-- Days of Week -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">📅 Active Days</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-mon" name="days" value="Mon" @bind="EnableDayMon"/>
+                            <label class="form-check-label" for="day-mon">Mon</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-tue" name="days" value="Tue" @bind="EnableDayTue"/>
+                            <label class="form-check-label" for="day-tue">Tue</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-wed" name="days" value="Wed" @bind="EnableDayWed"/>
+                            <label class="form-check-label" for="day-wed">Wed</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-thu" name="days" value="Thu" @bind="EnableDayThu"/>
+                            <label class="form-check-label" for="day-thu">Thu</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-fri" name="days" value="Fri" @bind="EnableDayFri"/>
+                            <label class="form-check-label" for="day-fri">Fri</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-sat" name="days" value="Sat" @bind="EnableDaySat"/>
+                            <label class="form-check-label" for="day-sat">Sat</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day-sun" name="days" value="Sun" @bind="EnableDaySun"/>
+                            <label class="form-check-label" for="day-sun">Sun</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <!-- Telegram Bot API Key -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="botApiKey">🤖 Telegram Bot API Key</label>
+                    <input type="password" class="form-control font-monospace" id="botApiKey"
+                        name="botApiKey"
+                        placeholder="e.g. 123456789:HHMCBpavBkafq4T472wsfuyAJTsjwwqfSX"
+                        autocomplete="off" spellcheck="false" @bind-value="TelegramBotApiKey"/>
+                    <div class="form-text">Obtain from <strong>@@BotFather</strong> on Telegram. Keep this key private.</div>
+                </div>
+
+                <!-- Chat IDs -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="chatIds">💬 Chat IDs</label>
+                    <textarea class="form-control font-monospace" id="chatIds" name="chatIds"
+                            rows="3"
+                            placeholder="@((MarkupString)"e.g.\n-1001234567890\n987654321\n-4412345678")"
+                            spellcheck="false" @bind="TelegramChatIDs"></textarea>
+                    <div class="form-text">
+                        Enter one Chat ID per line. Group/channel IDs start with <code>-</code>.
+                        Use <strong>@@userinfobot</strong> to find your ID.
+                    </div>
+                </div>
+            </div><!-- /alertConfig -->
+        }
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" @onclick="()=>LoadFromCurrentUser()">Reset</button>
+            <button type="button" class="btn btn-primary" @onclick="()=>BtnClickSave()"><CIcon icon="cil-save" /> Save</button>
+        </div>
+    </form>
+}

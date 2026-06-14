@@ -6,199 +6,201 @@ using System.Text.Json;
 using MyPo.Shared.Helpers;
 
 namespace MyPo.Portfolio.Shared.EF;
+
 sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<PortfolioEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("portfolio_id");
-		builder.Property(e => e.ParentId).HasColumnName("parent_id");
-		builder.Property(e => e.Name).HasColumnName("portfolio_name");
-		builder.Property(e => e.Description).HasColumnName("portfolio_desc");
-		builder.Property(e => e.Currency).HasColumnName("portfolio_currency");
-		builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
-		builder.Property(e => e.IsActive).HasColumnName("is_active");
-		builder.Property(e => e.Metadata).HasColumnName("portfolio_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<PortfolioMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<PortfolioEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}portfolio"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("portfolio_id");
+        builder.Property(e => e.ParentId).HasColumnName("parent_id");
+        builder.Property(e => e.Name).HasColumnName("portfolio_name");
+        builder.Property(e => e.Description).HasColumnName("portfolio_desc");
+        builder.Property(e => e.Currency).HasColumnName("portfolio_currency");
+        builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
+        builder.Property(e => e.IsActive).HasColumnName("is_active");
+        builder.Property(e => e.Metadata).HasColumnName("portfolio_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<PortfolioMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioPlanEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<PortfolioPlanEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}portfolio_plans"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("plan_id");
-		builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
-		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
-		builder.Property(e => e.Name).HasColumnName("plan_name");
-		builder.Property(e => e.Metadata).HasColumnName("plan_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<PortfolioPlanEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}portfolio_plans"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("plan_id");
+        builder.Property(e => e.Type).HasColumnName("plan_type");
+        builder.Property(e => e.OwnerUserId).HasColumnName("owner_id");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+        builder.Property(e => e.Name).HasColumnName("plan_name");
+        builder.Property(e => e.Metadata).HasColumnName("plan_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class TxBuySellEntityTypeConfiguration : GenericEntityTypeConfiguration<TxBuySellEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<TxBuySellEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}buys_sells"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("tx_id");
-		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
-		builder.Property(e => e.Type).HasColumnName("tx_type");
-		builder.Property(e => e.Time).HasColumnName("tx_time");
-		builder.Property(e => e.Quantity).HasColumnName("tx_quantity");
-		builder.Property(e => e.Price).HasColumnName("tx_price");
-		builder.Property(e => e.Notes).HasColumnName("tx_notes");
-		builder.Property(e => e.FeeTx).HasColumnName("fee_tx");
-		builder.Property(e => e.FeeTax).HasColumnName("fee_tax");
-		builder.Property(e => e.FeeOther).HasColumnName("fee_other");
-		builder.Property(e => e.ItemType).HasColumnName("item_type");
-		builder.Property(e => e.ItemCode).HasColumnName("item_code");
-		builder.Property(e => e.MarketId).HasColumnName("market_id");
-		builder.Property(e => e.IsSettled).HasColumnName("is_settled");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<TxBuySellEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}buys_sells"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("tx_id");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+        builder.Property(e => e.Type).HasColumnName("tx_type");
+        builder.Property(e => e.Time).HasColumnName("tx_time");
+        builder.Property(e => e.Quantity).HasColumnName("tx_quantity");
+        builder.Property(e => e.Price).HasColumnName("tx_price");
+        builder.Property(e => e.Notes).HasColumnName("tx_notes");
+        builder.Property(e => e.FeeTx).HasColumnName("fee_tx");
+        builder.Property(e => e.FeeTax).HasColumnName("fee_tax");
+        builder.Property(e => e.FeeOther).HasColumnName("fee_other");
+        builder.Property(e => e.ItemType).HasColumnName("item_type");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.MarketId).HasColumnName("market_id");
+        builder.Property(e => e.IsSettled).HasColumnName("is_settled");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<AssetEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<AssetEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}ownings"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("owning_id");
-		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
-		builder.Property(e => e.ItemType).HasColumnName("item_type");
-		builder.Property(e => e.ItemCode).HasColumnName("item_code");
-		builder.Property(e => e.MarketId).HasColumnName("market_id");
-		builder.Property(e => e.Quantity).HasColumnName("item_quantity");
-		builder.Property(e => e.AveragePrice).HasColumnName("average_price");
-		builder.Property(e => e.Metadata).HasColumnName("item_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<AssetMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<AssetEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}ownings"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("owning_id");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+        builder.Property(e => e.ItemType).HasColumnName("item_type");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.MarketId).HasColumnName("market_id");
+        builder.Property(e => e.Quantity).HasColumnName("item_quantity");
+        builder.Property(e => e.AveragePrice).HasColumnName("average_price");
+        builder.Property(e => e.Metadata).HasColumnName("item_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<AssetMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class TxSettlementEntityTypeConfiguration : GenericEntityTypeConfiguration<TxSettlementEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<TxSettlementEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}settlements"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("tx_id");
-		builder.Property(e => e.Status).HasColumnName("tx_status");
-		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
-		builder.Property(e => e.TxType).HasColumnName("tx_type");
-		builder.Property(e => e.TxTime).HasColumnName("tx_time");
-		builder.Property(e => e.TxValue).HasColumnName("tx_value");
-		builder.Property(e => e.RefTxId).HasColumnName("ref_tx_id");
-		builder.Property(e => e.RefItemType).HasColumnName("ref_item_type");
-		builder.Property(e => e.RefItemCode).HasColumnName("ref_item_code");
-		builder.Property(e => e.RefMarketId).HasColumnName("ref_market_id");
-		builder.Property(e => e.TxDesc).HasColumnName("tx_desc");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<TxSettlementEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}settlements"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("tx_id");
+        builder.Property(e => e.Status).HasColumnName("tx_status");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+        builder.Property(e => e.TxType).HasColumnName("tx_type");
+        builder.Property(e => e.TxTime).HasColumnName("tx_time");
+        builder.Property(e => e.TxValue).HasColumnName("tx_value");
+        builder.Property(e => e.RefTxId).HasColumnName("ref_tx_id");
+        builder.Property(e => e.RefItemType).HasColumnName("ref_item_type");
+        builder.Property(e => e.RefItemCode).HasColumnName("ref_item_code");
+        builder.Property(e => e.RefMarketId).HasColumnName("ref_market_id");
+        builder.Property(e => e.TxDesc).HasColumnName("tx_desc");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfiguration<SymbolAnalysisEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<SymbolAnalysisEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}symbol_analysis"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("analysis_id");
-		builder.Property(e => e.OwnerId).HasColumnName("owner_id");
-		builder.Property(e => e.MarketId).HasColumnName("market_id");
-		builder.Property(e => e.ItemType).HasColumnName("item_type");
-		builder.Property(e => e.ItemCode).HasColumnName("item_code");
-		builder.Property(e => e.AnalysisType).HasColumnName("analysis_type");
-		builder.Property(e => e.AnalysisTime).HasColumnName("analysis_time");
-		builder.Property(e => e.AnalysisPrompt).HasColumnName("analysis_prompt");
-		builder.Property(e => e.AnalysisResult).HasColumnName("analysis_result");
-		builder.Property(e => e.Metadata).HasColumnName("analysis_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<SymbolAnalysisEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}symbol_analysis"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("analysis_id");
+        builder.Property(e => e.OwnerId).HasColumnName("owner_id");
+        builder.Property(e => e.MarketId).HasColumnName("market_id");
+        builder.Property(e => e.ItemType).HasColumnName("item_type");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.AnalysisType).HasColumnName("analysis_type");
+        builder.Property(e => e.AnalysisTime).HasColumnName("analysis_time");
+        builder.Property(e => e.AnalysisPrompt).HasColumnName("analysis_prompt");
+        builder.Property(e => e.AnalysisResult).HasColumnName("analysis_result");
+        builder.Property(e => e.Metadata).HasColumnName("analysis_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class CheckpointEntityTypeConfiguration : GenericEntityTypeConfiguration<CheckpointEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<CheckpointEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}checkpoints"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("checkpoint_id");
-		builder.Property(e => e.OwnerId).HasColumnName("owner_id");
-		builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
-		builder.Property(e => e.MarketId).HasColumnName("market_id");
-		builder.Property(e => e.ItemCode).HasColumnName("item_code");
-		builder.Property(e => e.CheckpointType).HasColumnName("checkpoint_type");
-		builder.Property(e => e.CheckpointTime).HasColumnName("checkpoint_time");
-		builder.Property(e => e.Metadata).HasColumnName("checkpoint_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<CheckpointMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<CheckpointEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}checkpoints"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("checkpoint_id");
+        builder.Property(e => e.OwnerId).HasColumnName("owner_id");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
+        builder.Property(e => e.MarketId).HasColumnName("market_id");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.CheckpointType).HasColumnName("checkpoint_type");
+        builder.Property(e => e.CheckpointTime).HasColumnName("checkpoint_time");
+        builder.Property(e => e.Metadata).HasColumnName("checkpoint_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<CheckpointMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
 
 sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration<MarketEventEntity, string>
 {
-	public override void Configure(EntityTypeBuilder<MarketEventEntity> builder)
-	{
-		base.Configure(builder);
-		builder.ToTable($"{Globals.TABLE_PREFIX}market_events"); // change table name if needed
-		builder.Property(e => e.Id).HasColumnName("event_id");
-		builder.Property(e => e.OwnerId).HasColumnName("owner_id");
-		builder.Property(e => e.MarketId).HasColumnName("market_id");
-		builder.Property(e => e.ItemCode).HasColumnName("item_code");
-		builder.Property(e => e.EventType).HasColumnName("event_type");
-		builder.Property(e => e.EventTime).HasColumnName("event_time");
-		builder.Property(e => e.Metadata).HasColumnName("event_metadata")
-			.HasConversion(
-				v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-				v => JsonHelper.SafeDeserialize<MarketEventMetadata>(v)
-			)
-			.HasColumnType("jsonb");
-		builder.Property(e => e.CreatedAt).HasColumnName("created_at");
-		builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-		builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
-	}
+    public override void Configure(EntityTypeBuilder<MarketEventEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}market_events"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("event_id");
+        builder.Property(e => e.OwnerId).HasColumnName("owner_id");
+        builder.Property(e => e.MarketId).HasColumnName("market_id");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.EventType).HasColumnName("event_type");
+        builder.Property(e => e.EventTime).HasColumnName("event_time");
+        builder.Property(e => e.Metadata).HasColumnName("event_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<MarketEventMetadata>(v)
+            )
+            .HasColumnType("jsonb");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
 }
