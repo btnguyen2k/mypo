@@ -1,5 +1,6 @@
 ﻿using MyPo.Shared.Api;
 using MyPo.Shared.Helpers;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace MyPo.Portfolio.Api.Services;
@@ -10,16 +11,47 @@ public class BaseClient
     private readonly string baseUrl;
     private readonly ILogger<BaseClient> logger;
 
-    public BaseClient(ILogger<BaseClient> logger, HttpClient httpClient, string baseUrl = "")
+    private static readonly IDictionary<string, string> DEFAULT_HEADERS = new Dictionary<string, string>
+    {
+        { "Accept", "application/json" },
+    };
+
+    /// <summary>
+    /// Default HTTP request headers applied to every request built by <see cref="BuildRequest"/>.
+    /// </summary>
+    protected IDictionary<string, string> DefaultHeaders { get; private set; }
+
+    public BaseClient(ILogger<BaseClient> logger, HttpClient httpClient, string baseUrl = "", IDictionary<string, string>? defaultHeaders = null)
     {
         this.defaultHttpClient = httpClient;
         this.baseUrl = baseUrl;
         this.logger = logger;
+        this.DefaultHeaders = defaultHeaders != null ? new Dictionary<string, string>(defaultHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
 
         defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
     }
 
     private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(10 * 60);
+
+    /// <summary>
+    /// Sets the default HTTP request headers applied to every request built by <see cref="BuildRequest"/>.
+    /// </summary>
+    protected void SetDefaultHeaders(IDictionary<string, string>? defaultHeaders)
+    {
+        DefaultHeaders = defaultHeaders != null ? new Dictionary<string, string>(defaultHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
+    }
+
+    /// <summary>
+    /// Adds (or overwrites) the supplied headers into the default HTTP request headers applied to every
+    /// request built by <see cref="BuildRequest"/>.
+    /// </summary>
+    protected void AddDefaultHeaders(IDictionary<string, string> headers)
+    {
+        foreach (var header in headers)
+        {
+            DefaultHeaders[header.Key] = header.Value;
+        }
+    }
 
     protected void UsingBaseUrlAndHttpClient(string? baseUrl, HttpClient? requestHttpClient, out string usingBaseUrl, out HttpClient usingHttpClient)
     {
@@ -27,14 +59,13 @@ public class BaseClient
         usingHttpClient = requestHttpClient ?? defaultHttpClient;
     }
 
-    protected static HttpRequestMessage BuildRequest(HttpMethod method, Uri endpoint, string? authToken, object? requestData)
+    protected HttpRequestMessage BuildRequest(HttpMethod method, Uri endpoint, string? authToken, object? requestData)
     {
-        var req = new HttpRequestMessage(method, endpoint)
+        var req = new HttpRequestMessage(method, endpoint);
+        foreach (var header in DefaultHeaders)
         {
-            Headers = {
-                { "Accept", "application/json" }
-            }
-        };
+            req.Headers.Add(header.Key, header.Value);
+        }
         if (!string.IsNullOrEmpty(authToken))
         {
             req.Headers.Add("Authorization", $"Bearer {authToken}");
