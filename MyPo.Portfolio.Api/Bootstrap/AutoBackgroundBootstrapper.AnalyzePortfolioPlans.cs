@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
@@ -84,9 +85,9 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
 
-        // Telegram is only used to push spotlight alerts; it's optional and the analyses still run without it.
-        var botApiKey = user.Metadata?.GetPortfolioPlanTelegramBotApiKey();
-        var chatIDs = (user.Metadata?.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
+         // Telegram is only used to push spotlight alerts; it's optional and the analyses still run without it.
+        var botApiKey = user.Metadata.GetPortfolioPlanTelegramBotApiKey();
+        var chatIDs = (user.Metadata.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
         var teleBot = prefs.ViaTelegram && !string.IsNullOrEmpty(botApiKey) && chatIDs.Count > 0
             ? new TelegramBotClient(botApiKey)
             : null;
@@ -226,7 +227,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message);
+                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
             }
         }
     }
