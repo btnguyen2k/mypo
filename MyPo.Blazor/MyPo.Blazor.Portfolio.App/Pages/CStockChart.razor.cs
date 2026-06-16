@@ -32,7 +32,7 @@ public partial class CStockChart : BaseComponent
             }
             else if (!UseVietstockChart && !UseTradingViewChart)
             {
-                ErrorMessage = $"Charting for exchange '{SymbolInfo?.Exchange}' is not supported.";
+                ErrorMessage = $"Charting for exchange '{SymbolInfo.Exchange}' is not supported.";
             }
             StateHasChanged();
         }

@@ -88,7 +88,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         NavigationManager.NavigateTo(nextUrl);
     }
 
-    public bool analyzing = false;
+    public volatile bool analyzing = false;
 
     public async void BtnClickAnalyze()
     {

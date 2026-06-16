@@ -43,7 +43,7 @@ public partial class FinHubController
         var countEntries = (portfolioPlan.Metadata?.HoldingTickers ?? []).Count;
 
         // Step 2: make API call
-        var finhubResult = countEntries == 0 || countPositiveAllocation / countEntries <= 0.5
+        var finhubResult = countEntries == 0 || (double)countPositiveAllocation / countEntries <= 0.5
             ? await BuildPortfolio(portfolioPlan, market)
             : await AnalyzePortfolio(portfolioPlan, market);
 
