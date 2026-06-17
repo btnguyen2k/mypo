@@ -1,13 +1,14 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Ddth.Signum;
-using Markdig;
 using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
-using Telegram.Bot.Extensions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
@@ -22,7 +23,7 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 /// </list>
 /// The cadence is controlled per user by <see cref="PortfolioPlanPreferences.AutoAnalyzeDays"/>.
 /// </summary>
-sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
+sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
 {
     public AutoBackgroundAnalyzePortfolioPlansScanner(
             IServiceProvider serviceProvider, ILogger<AutoBackgroundAnalyzePortfolioPlansScanner> logger
@@ -168,7 +169,8 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
                 plan.Metadata.SpotlightRefreshTimestsmp = now.ToUnixTimeSeconds();
                 plan.Metadata.Spotlight = spotlight;
                 changed = true;
-                await SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken);
+                // fire-and-forget: don't block the analysis loop on Telegram delivery
+                _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken), cancellationToken);
             }
         }
         else
@@ -229,7 +231,8 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
 
     /// <summary>
     /// Sends the spotlight analysis to the user's configured Telegram chats as a Markdown message.
-    /// No-op when Telegram is not configured for the user.
+    /// No-op when Telegram is not configured for the user. This is invoked fire-and-forget, so it never
+    /// throws: all failures are caught and logged.
     /// </summary>
     private async Task SendSpotlightAlert(TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, string spotlight, CancellationToken cancellationToken)
     {
@@ -238,18 +241,26 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             return;
         }
 
-        var message = BuildSpotlightMessage(plan, spotlight);
-        foreach (var chatId in chatIDs)
+        try
         {
-            try
+            var message = BuildSpotlightMessage(plan, spotlight);
+            foreach (var chatId in chatIDs)
             {
-                Logger.LogInformation("Sending spotlight alert for portfolio plan '{planId}: {planName}' to Telegram chat ID {chatId}...", plan.Id, plan.Name, chatId);
-                await teleBot.SendHtml(chatId, message);
+                try
+                {
+                    Logger.LogInformation("Sending spotlight alert for portfolio plan '{planId}: {planName}' to Telegram chat ID {chatId}...", plan.Id, plan.Name, chatId);
+                    await teleBot.SendMessage(chatId, message, parseMode: ParseMode.Markdown,
+                        linkPreviewOptions: new LinkPreviewOptions { IsDisabled = true }, cancellationToken: cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
+                }
             }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
-            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to send spotlight alert for portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
         }
     }
 
@@ -267,20 +278,21 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             Tags = ht.Tags,
         })];
 
-    private static readonly MarkdownPipeline SpotlightMarkdownPipeline =
-        new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+    [GeneratedRegex(@"^[ \t]*#{1,6}[ \t]+(.+?)[ \t]*$", RegexOptions.Multiline)]
+    private static partial Regex MarkdownHeadingRegex();
 
     /// <summary>
-    /// Formats the Telegram spotlight alert message as HTML. The analysis body is Markdown (as returned by
-    /// <see cref="IFinHubClient.SpotlightPortfolioAsync"/>) and is converted to HTML for Telegram.
+    /// Formats the Telegram spotlight alert message. The analysis body is Markdown (as returned by
+    /// <see cref="IFinHubClient.SpotlightPortfolioAsync"/>) and is sent using Telegram's Markdown parse
+    /// mode. Telegram supports only a subset of Markdown, so heading lines (e.g. <c># Heading</c>) are
+    /// converted to bold (<c>*Heading*</c>).
     /// </summary>
     private static string BuildSpotlightMessage(PortfolioPlanEntity plan, string spotlight)
     {
-        var spotlightHtml = Markdig.Markdown.ToHtml(spotlight ?? string.Empty, SpotlightMarkdownPipeline);
+        var body = MarkdownHeadingRegex().Replace(spotlight ?? string.Empty, "*$1*");
         var msg = new StringBuilder();
-        msg.Append($"<strong>📊 Portfolio plan '{plan.Name}' - spotlight:</strong>\n");
-        msg.Append(spotlightHtml);
-        msg.Append("<preview disabled />");
+        msg.Append($"*📊 Portfolio plan '{plan.Name}' - spotlight:*\n\n");
+        msg.Append(body);
         return msg.ToString();
     }
 }
