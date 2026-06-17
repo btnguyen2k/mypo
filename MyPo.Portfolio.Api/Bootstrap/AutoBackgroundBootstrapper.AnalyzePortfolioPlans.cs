@@ -136,11 +136,10 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
 
         var checksumObj = new { allocation, plan.Metadata.Description, plan.Type };
         var thisChecksum = Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
-        var lastChecksum = plan.Metadata.ChecksumForAnalysis;
 
         // normal analysis: persisted only, no alert
         var lastAnalysis = plan.Metadata.AnalysisRefreshTimestsmp;
-        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
             || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
             Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
@@ -159,7 +158,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
         var lastSpotlight = plan.Metadata.SpotlightRefreshTimestsmp;
-        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
             || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
             Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
@@ -181,7 +180,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         if (changed)
         {
             Logger.LogInformation("Saving updated portfolio plan '{planId}: {planName}' after analysis...", plan.Id, plan.Name);
-            plan.Metadata.ChecksumForAnalysis = thisChecksum;
+            plan.Metadata.ChecksumAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
             if (dbresult == null)
             {

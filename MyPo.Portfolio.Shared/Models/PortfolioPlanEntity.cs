@@ -50,8 +50,8 @@ public sealed class PortfolioPlanMetadata
     /// <summary>
     /// A checksum of the plan's holdings data, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
     /// </summary>
-    [JsonIgnore]
-    public string? ChecksumForAnalysis { get; set; }
+    [JsonPropertyName("checksum_analysis")]
+    public string? ChecksumAnalysis { get; set; }
 
     [JsonPropertyName("holdings")]
     public IList<HoldingTicker> HoldingTickers { get; set; } = [];
