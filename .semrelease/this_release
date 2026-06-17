@@ -1,7 +1,3 @@
-﻿# This file has been cleaned up post-releasing version 1.6.0.
+# This file has been cleaned up post-releasing version 1.6.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
-- patch: AutoBackgroundAnalyzePortfolioPlansScanner analyzes portfolio plans only when description is not empty.
-- impr: AutoBackgroundAnalyzePortfolioPlansScanner analyzes portfolio plans early if there are changes in plan type/description/holdings.
-- patch: Add authentication support to FinHubClient.
-- fix(CodeQL): Fix CodeQL warnings.
