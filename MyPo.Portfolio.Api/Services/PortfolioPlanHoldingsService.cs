@@ -96,12 +96,13 @@ public sealed class PortfolioPlanHoldingsService : IPortfolioPlanHoldingsService
             return assetsMap;
         }
         var assets = await _portfolioRepository.GetAssetsByPortfolioIdAsync(portfolioId, cancellationToken);
-        foreach (var asset in assets)
+        var assetsMarket = assets.Select(a => {
+            var found = Globals.MarketsMap.TryGetValue(a.MarketId?.ToUpper() ?? string.Empty, out var market);
+            return new { found, a, market };
+        }).Where(x => x.found).Select(x => new { asset=x.a, x.market });
+        foreach (var x in assetsMarket)
         {
-            if (Globals.MarketsMap.TryGetValue(asset.MarketId?.ToUpper() ?? string.Empty, out var market))
-            {
-                assetsMap[SymbolUtils.NormalizeSymbol(asset.ItemCode, market)] = asset;
-            }
+            assetsMap[SymbolUtils.NormalizeSymbol(x.asset.ItemCode, x.market!)] = x.asset;
         }
         return assetsMap;
     }

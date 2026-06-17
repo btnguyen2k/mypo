@@ -1,5 +1,14 @@
 # My Portfolio Tracker release notes
 
+## 2026-06-17 - v1.6.1
+
+### Fixed/Improvements
+
+- Patch: AutoBackgroundAnalyzePortfolioPlansScanner analyzes portfolio plans only when description is not empty.
+- Impr: AutoBackgroundAnalyzePortfolioPlansScanner analyzes portfolio plans early if there are changes in plan type/description/holdings.
+- Patch: Add authentication support to FinHubClient.
+- Fix(CodeQL): Fix CodeQL warnings.
+
 ## 2026-06-14 - v1.6.0
 
 ### Added/Refactoring/Deprecation

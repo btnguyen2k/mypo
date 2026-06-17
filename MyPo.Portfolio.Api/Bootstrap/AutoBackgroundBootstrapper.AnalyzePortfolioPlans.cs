@@ -1,8 +1,9 @@
 ﻿using System.Text;
+using Ddth.Signum;
+using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -84,9 +85,9 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
 
-        // Telegram is only used to push spotlight alerts; it's optional and the analyses still run without it.
-        var botApiKey = user.Metadata?.GetPortfolioPlanTelegramBotApiKey();
-        var chatIDs = (user.Metadata?.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
+         // Telegram is only used to push spotlight alerts; it's optional and the analyses still run without it.
+        var botApiKey = user.Metadata.GetPortfolioPlanTelegramBotApiKey();
+        var chatIDs = (user.Metadata.GetPortfolioPlanTelegramChatIDs() ?? []).ToList();
         var teleBot = prefs.ViaTelegram && !string.IsNullOrEmpty(botApiKey) && chatIDs.Count > 0
             ? new TelegramBotClient(botApiKey)
             : null;
@@ -116,6 +117,13 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         var now = DateTimeOffset.UtcNow;
         plan.Metadata ??= new PortfolioPlanMetadata();
 
+        // skip analysis for plans without a description: the analysis is driven by the investor theme
+        if (string.IsNullOrWhiteSpace(plan.Metadata.Description))
+        {
+            Logger.LogInformation("Skipping analysis for portfolio plan '{planName}': no description provided.", plan.Name);
+            return false;
+        }
+
         // resolve the plan's market via the linked portfolio's default market (if any)
         var portfolio = !string.IsNullOrEmpty(plan.PortfolioId)
             ? await portfolioRepo.GetPortfolioByIdAsync(plan.PortfolioId, cancellationToken)
@@ -125,9 +133,14 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         var allocation = BuildAllocationReqs(plan);
         var changed = false;
 
+        var checksumObj = new { allocation, plan.Metadata.Description, plan.Type };
+        var thisChecksum = Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
+        var lastChecksum = plan.Metadata.ChecksumForAnalysis;
+
         // normal analysis: persisted only, no alert
         var lastAnalysis = plan.Metadata.AnalysisRefreshTimestsmp;
-        if (lastAnalysis <= 0 || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+            || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
             Logger.LogInformation("Running normal analysis for portfolio plan '{planName}'...", plan.Name);
             var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
@@ -141,7 +154,8 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
         var lastSpotlight = plan.Metadata.SpotlightRefreshTimestsmp;
-        if (lastSpotlight <= 0 || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+            || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
             Logger.LogInformation("Running spotlight analysis for portfolio plan '{planName}'...", plan.Name);
             var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
@@ -157,6 +171,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         if (changed)
         {
             Logger.LogInformation("Saving updated portfolio plan '{planName}' after analysis...", plan.Name);
+            plan.Metadata.ChecksumForAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
             if (dbresult == null)
             {
@@ -226,7 +241,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message);
+                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
             }
         }
     }

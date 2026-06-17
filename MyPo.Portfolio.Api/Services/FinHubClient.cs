@@ -6,7 +6,17 @@ namespace MyPo.Portfolio.Api.Services;
 
 public partial class FinHubClient : BaseClient, IFinHubClient
 {
-    public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl) { }
+    public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl)
+    {
+        var apiKey = Environment.GetEnvironmentVariable("FINHUB_API_KEY");
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            AddDefaultHeaders(new Dictionary<string, string>
+            {
+                { "X-Api-Key", apiKey },
+            });
+        }
+    }
 
     /*----------------------------------------------------------------------*/
 
