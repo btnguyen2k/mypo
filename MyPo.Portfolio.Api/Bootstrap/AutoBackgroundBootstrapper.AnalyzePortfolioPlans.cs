@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Ddth.Signum;
 using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
@@ -22,7 +23,7 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 /// </list>
 /// The cadence is controlled per user by <see cref="PortfolioPlanPreferences.AutoAnalyzeDays"/>.
 /// </summary>
-sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
+sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
 {
     public AutoBackgroundAnalyzePortfolioPlansScanner(
             IServiceProvider serviceProvider, ILogger<AutoBackgroundAnalyzePortfolioPlansScanner> logger
@@ -120,7 +121,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         // skip analysis for plans without a description: the analysis is driven by the investor theme
         if (string.IsNullOrWhiteSpace(plan.Metadata.Description))
         {
-            Logger.LogInformation("Skipping analysis for portfolio plan '{planName}': no description provided.", plan.Name);
+            Logger.LogInformation("Skipping analysis for portfolio plan '{planId}: {planName}': no description provided.", plan.Id, plan.Name);
             return false;
         }
 
@@ -135,14 +136,13 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
 
         var checksumObj = new { allocation, plan.Metadata.Description, plan.Type };
         var thisChecksum = Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
-        var lastChecksum = plan.Metadata.ChecksumForAnalysis;
 
         // normal analysis: persisted only, no alert
         var lastAnalysis = plan.Metadata.AnalysisRefreshTimestsmp;
-        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
             || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
-            Logger.LogInformation("Running normal analysis for portfolio plan '{planName}'...", plan.Name);
+            Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (analysis != null)
             {
@@ -151,31 +151,40 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
                 changed = true;
             }
         }
+        else
+        {
+            Logger.LogInformation("Skipping normal analysis for portfolio plan '{planId}: {planName}' (last refresh: {lastRefresh}).", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
+        }
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
         var lastSpotlight = plan.Metadata.SpotlightRefreshTimestsmp;
-        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, lastChecksum, StringComparison.OrdinalIgnoreCase)
+        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
             || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
-            Logger.LogInformation("Running spotlight analysis for portfolio plan '{planName}'...", plan.Name);
+            Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (spotlight != null)
             {
                 plan.Metadata.SpotlightRefreshTimestsmp = now.ToUnixTimeSeconds();
                 plan.Metadata.Spotlight = spotlight;
                 changed = true;
-                await SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken);
+                // fire-and-forget: don't block the analysis loop on Telegram delivery
+                _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken), cancellationToken);
             }
+        }
+        else
+        {
+            Logger.LogInformation("Skipping spotlight analysis for portfolio plan '{planId}: {planName}' (last refresh: {lastRefresh}).", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
         }
 
         if (changed)
         {
-            Logger.LogInformation("Saving updated portfolio plan '{planName}' after analysis...", plan.Name);
-            plan.Metadata.ChecksumForAnalysis = thisChecksum;
+            Logger.LogInformation("Saving updated portfolio plan '{planId}: {planName}' after analysis...", plan.Id, plan.Name);
+            plan.Metadata.ChecksumAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
             if (dbresult == null)
             {
-                Logger.LogError("Failed to persist auto-analyzed portfolio plan '{planId}'.", plan.Id);
+                Logger.LogError("Failed to persist auto-analyzed portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
             }
         }
 
@@ -198,7 +207,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
         if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
         {
-            Logger.LogWarning("Failed to analyze portfolio plan '{planId}': {message}", plan.Id, resp.Data?.LLMErrorMsg ?? resp.Message);
+            Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
             return null;
         }
         return resp.Data.Analysis;
@@ -213,7 +222,7 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
         var resp = await finHubClient.SpotlightPortfolioAsync(new SpotLightPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
         if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
         {
-            Logger.LogWarning("Failed to spotlight portfolio plan '{planId}': {message}", plan.Id, resp.Data?.LLMErrorMsg ?? resp.Message);
+            Logger.LogWarning("Failed to spotlight portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
             return null;
         }
         return resp.Data.Analysis;
@@ -221,7 +230,8 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
 
     /// <summary>
     /// Sends the spotlight analysis to the user's configured Telegram chats as a Markdown message.
-    /// No-op when Telegram is not configured for the user.
+    /// No-op when Telegram is not configured for the user. This is invoked fire-and-forget, so it never
+    /// throws: all failures are caught and logged.
     /// </summary>
     private async Task SendSpotlightAlert(TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, string spotlight, CancellationToken cancellationToken)
     {
@@ -230,19 +240,26 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             return;
         }
 
-        var message = BuildSpotlightMessage(plan, spotlight);
-        foreach (var chatId in chatIDs)
+        try
         {
-            try
+            var message = BuildSpotlightMessage(plan, spotlight);
+            foreach (var chatId in chatIDs)
             {
-                Logger.LogInformation("Sending spotlight alert for portfolio plan '{planName}' to Telegram chat ID {chatId}...", plan.Name, chatId);
-                await teleBot.SendMessage(chatId, message, parseMode: ParseMode.Markdown,
-                    linkPreviewOptions: new LinkPreviewOptions { IsDisabled = true }, cancellationToken: cancellationToken);
+                try
+                {
+                    Logger.LogInformation("Sending spotlight alert for portfolio plan '{planId}: {planName}' to Telegram chat ID {chatId}...", plan.Id, plan.Name, chatId);
+                    await teleBot.SendMessage(chatId, message, parseMode: ParseMode.Markdown,
+                        linkPreviewOptions: new LinkPreviewOptions { IsDisabled = true }, cancellationToken: cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
+                }
             }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to send portfolio plan spotlight alert to chat ID {chatId}: {message}", chatId, message.Excerpt(50));
-            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to send spotlight alert for portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
         }
     }
 
@@ -260,14 +277,21 @@ sealed class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnounce
             Tags = ht.Tags,
         })];
 
+    [GeneratedRegex(@"^[ \t]*#{1,6}[ \t]+(.+?)[ \t]*$", RegexOptions.Multiline)]
+    private static partial Regex MarkdownHeadingRegex();
+
     /// <summary>
-    /// Formats the Telegram spotlight alert message (Markdown). The analysis body is itself Markdown.
+    /// Formats the Telegram spotlight alert message. The analysis body is Markdown (as returned by
+    /// <see cref="IFinHubClient.SpotlightPortfolioAsync"/>) and is sent using Telegram's Markdown parse
+    /// mode. Telegram supports only a subset of Markdown, so heading lines (e.g. <c># Heading</c>) are
+    /// converted to bold (<c>*Heading*</c>).
     /// </summary>
     private static string BuildSpotlightMessage(PortfolioPlanEntity plan, string spotlight)
     {
+        var body = MarkdownHeadingRegex().Replace(spotlight ?? string.Empty, "*$1*");
         var msg = new StringBuilder();
-        msg.Append($"📊 *Portfolio plan '{plan.Name}' - spotlight:*\n\n");
-        msg.Append(spotlight);
+        msg.Append($"*📊 Portfolio plan '{plan.Name}' - spotlight:*\n\n");
+        msg.Append(body);
         return msg.ToString();
     }
 }

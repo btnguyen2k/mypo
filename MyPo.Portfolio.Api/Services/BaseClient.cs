@@ -1,6 +1,5 @@
 ﻿using MyPo.Shared.Api;
 using MyPo.Shared.Helpers;
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace MyPo.Portfolio.Api.Services;

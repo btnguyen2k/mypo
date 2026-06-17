@@ -77,11 +77,13 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
             if (lastRefresh > 0 && DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(lastRefresh) < updateDelay)
             {
                 // this plan is not due for an auto-update yet
+                Logger.LogInformation("Skipping portfolio plan '{planId}: {planName}' for user '{userName}' (last refresh: {lastRefresh}).", plan.Id, plan.Name, userName, DateTimeOffset.FromUnixTimeSeconds(lastRefresh));
                 continue;
             }
 
             try
             {
+                Logger.LogInformation("Auto-updating portfolio plan '{planId}: {planName}' for user '{userName}'...", plan.Id, plan.Name, userName);
                 await RefreshPortfolioPlanHoldings(holdingsService, portfolioRepo, plan, cancellationToken);
             }
             catch (Exception ex)
@@ -107,7 +109,7 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
         var result = await holdingsService.RefreshHoldingsAsync(existingHoldings, plan.PortfolioId, cancellationToken);
         foreach (var failedTicker in result.FailedTickers)
         {
-            Logger.LogWarning("Cannot fetch info for ticker '{ticker}' while updating plan '{planId}'; keeping existing values.", failedTicker, plan.Id);
+            Logger.LogWarning("Cannot fetch info for ticker '{ticker}' while updating plan '{planId}: {planName}'; keeping existing values.", failedTicker, plan.Id, plan.Name);
         }
 
         plan.Metadata ??= new PortfolioPlanMetadata();
@@ -116,7 +118,7 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
         var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
         if (dbresult == null)
         {
-            Logger.LogError("Failed to persist auto-updated portfolio plan '{planId}'.", plan.Id);
+            Logger.LogError("Failed to persist auto-updated portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
         }
     }
 }

@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-06-17 - v1.6.2
+
+### Fixed/Improvements
+
+- Patch: Better logging and error handling for AutoBackgroundAnalyzePortfolioPlansScanner and AutoBackgroundUpdatePortfolioPlansScanner
+
 ## 2026-06-17 - v1.6.1
 
 ### Fixed/Improvements
