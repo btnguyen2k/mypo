@@ -1,3 +1,4 @@
-# This file has been cleaned up post-releasing version 1.6.1.
+﻿# This file has been cleaned up post-releasing version 1.6.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+- patch: Better logging and error handling for AutoBackgroundAnalyzePortfolioPlansScanner and AutoBackgroundUpdatePortfolioPlansScanner
