@@ -128,4 +128,37 @@ public partial class MyPortfolioPlansDetails : BasePage
         SelectedPortfolioPlan.Metadata.Analysis = result.Data.Analysis;
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.");
     }
+
+    private const string TabIdSpotlight = "nav-spotlight-tab";
+    private const string TabIdAnalysis = "nav-analysis-tab";
+    private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
+
+    private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
+    private bool HasSpotlight => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Spotlight);
+
+    /// <summary>
+    /// Resolves <see cref="ActiveAnalysisTab"/> to a tab that is actually visible (has content),
+    /// preferring Spotlight. Falls back to the other tab when the selected one has no content.
+    /// </summary>
+    private string EffectiveAnalysisTab
+    {
+        get
+        {
+            if (ActiveAnalysisTab == TabIdSpotlight && !HasSpotlight)
+            {
+                return TabIdAnalysis;
+            }
+            if (ActiveAnalysisTab == TabIdAnalysis && !HasAnalysis)
+            {
+                return TabIdSpotlight;
+            }
+            return ActiveAnalysisTab;
+        }
+    }
+
+    private void SwitchAnalysisTab(string tab)
+    {
+        ActiveAnalysisTab = tab;
+        StateHasChanged();
+    }
 }
