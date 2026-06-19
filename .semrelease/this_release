@@ -2,3 +2,6 @@
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - impr(UI): Add print analysis feature to MyPortfolioPlansDetails view.
+- impr: AutoBackgroundAnalyzePortfolioPlansScanner no longer run spotlight analysis if there is no holdings.
+- patch: Refactor PortfolioPlanMetadata checksum calculation.
+- patch: Analysis feature on MyPortfolioPlansDetails page now includes spotlight analysis.

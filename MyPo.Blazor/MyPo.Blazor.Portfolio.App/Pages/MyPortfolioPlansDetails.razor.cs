@@ -94,8 +94,10 @@ public partial class MyPortfolioPlansDetails : BasePage
     {
         if (analyzing) return;
         analyzing = true;
+        var step = string.Empty;
 
         ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
+
         _ = Task.Run(async () =>
         {
             var start = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -105,27 +107,50 @@ public partial class MyPortfolioPlansDetails : BasePage
                 var delta = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - start;
                 if (analyzing)
                 {
-                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait... ({delta}s)");
+                    var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
+                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta}s)");
                 }
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var result = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-        analyzing = false;
-        if (!result.IsSuccess || result.Data is null)
+        SelectedPortfolioPlan.Metadata ??= new();
+
+        step = "spotlight";
+        if (SelectedPortfolioPlan.Metadata.HoldingTickers.Count > 0)
         {
-            ShowAlert("danger", result.Message ?? "Error analyzing portfolio plan.");
-            return;
-        }
-        if (result.Data.LLMError)
-        {
-            ShowAlert("danger", $"Portfolio analysis completed with LLM error: {result.Data.LLMErrorMsg}");
-            return;
+            var spotlightResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+            if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
+            {
+                analyzing = false;
+                ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
+                return;
+            }
+            if (spotlightResult.Data.LLMError)
+            {
+                analyzing = false;
+                ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
+                return;
+            }
+            SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Analysis;
         }
 
-        SelectedPortfolioPlan.Metadata ??= new();
-        SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestsmp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        SelectedPortfolioPlan.Metadata.Analysis = result.Data.Analysis;
+        step = "analysis";
+        var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+        analyzing = false;
+        if (!analysisResult.IsSuccess || analysisResult.Data is null)
+        {
+            ShowAlert("danger", analysisResult.Message ?? "Error analyzing portfolio plan.");
+            return;
+        }
+        if (analysisResult.Data.LLMError)
+        {
+            ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
+            return;
+        }
+        SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.");
     }
 

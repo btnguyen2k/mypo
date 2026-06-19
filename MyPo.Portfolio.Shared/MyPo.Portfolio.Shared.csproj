@@ -11,4 +11,7 @@
     <ProjectReference Include="..\MyPo.Shared.EF\MyPo.Shared.EF.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Ddth.Signum" Version="0.0.3" />
+  </ItemGroup>
 </Project>

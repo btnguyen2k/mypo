@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Ddth.Signum;
 using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
@@ -48,10 +49,24 @@ public sealed class PortfolioPlanMetadata
     public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
 
     /// <summary>
-    /// A checksum of the plan's holdings data, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
+    /// A checksum of the plan's holdings data, saved when the last analysis ran, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
     /// </summary>
     [JsonPropertyName("checksum_analysis")]
-    public string? ChecksumAnalysis { get; set; }
+    public string? LastChecksumAnalysis { get; set; }
+
+    /// <summary>
+    /// Calculates the checksum of the current holdings data, which can be used to compare with <see cref="LastChecksumAnalysis"/> to determine if the holdings have changed since the last analysis.
+    /// </summary>
+    /// <returns></returns>
+    public string CalcChecksumAnalysis()
+    {
+        var checksumObj = new
+        {
+            Desc = Description,
+            Holdings = HoldingTickers.ToArray(),
+        };
+        return Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
+    }
 
     [JsonPropertyName("holdings")]
     public IList<HoldingTicker> HoldingTickers { get; set; } = [];
@@ -60,19 +75,19 @@ public sealed class PortfolioPlanMetadata
     public string Description { get; set; } = string.Empty;
 
     [JsonPropertyName("trefresh_analysis")]
-    public long AnalysisRefreshTimestsmp { get; set; }
+    public long AnalysisRefreshTimestamp { get; set; }
 
     [JsonIgnore]
-    public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestsmp).UtcDateTime;
+    public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestamp).UtcDateTime;
 
     [JsonPropertyName("analysis")]
     public string Analysis { get; set; } = string.Empty;
 
     [JsonPropertyName("trefresh_spotlight")]
-    public long SpotlightRefreshTimestsmp { get; set; }
+    public long SpotlightRefreshTimestamp { get; set; }
 
     [JsonIgnore]
-    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestsmp).UtcDateTime;
+    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestamp).UtcDateTime;
 
     [JsonPropertyName("spotlight")]
     public string Spotlight { get; set; } = string.Empty;
