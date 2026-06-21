@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Ddth.Signum;
 using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
@@ -39,19 +40,39 @@ public sealed class PortfolioPlanEntity : Entity<string>
     public override string ToString() => Name ?? string.Empty;
 }
 
-public sealed class PortfolioPlanMetadata
+public sealed class PortfolioPlanMetadata : ISignumFingerprintable
 {
+    /// <inheritdoc/>
+    public void WriteFingerprint(IFingerprintWriter writer)
+    {
+        var checksumObj = new
+        {
+            Description,
+            Holdings = HoldingTickers.ToArray(),
+        };
+        writer.Write(checksumObj);
+    }
+
+    /// <summary>
+    /// A checksum of the plan's holdings data, saved when the last analysis ran, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
+    /// </summary>
+    [JsonPropertyName("checksum_analysis")]
+    public string? LastChecksumAnalysis { get; set; }
+
+    /// <summary>
+    /// Calculates the checksum of the current holdings data, which can be used to compare with <see cref="LastChecksumAnalysis"/> to determine if the holdings have changed since the last analysis.
+    /// </summary>
+    /// <returns></returns>
+    public string CalcChecksumAnalysis()
+    {
+        return Signum.ChecksumHex(this, XxHash128Hasher.Factory);
+    }
+
     [JsonPropertyName("trefresh_holdings")]
     public long HoldingsRefreshTimestamp { get; set; }
 
     [JsonIgnore]
     public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
-
-    /// <summary>
-    /// A checksum of the plan's holdings data, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
-    /// </summary>
-    [JsonPropertyName("checksum_analysis")]
-    public string? ChecksumAnalysis { get; set; }
 
     [JsonPropertyName("holdings")]
     public IList<HoldingTicker> HoldingTickers { get; set; } = [];
@@ -60,26 +81,39 @@ public sealed class PortfolioPlanMetadata
     public string Description { get; set; } = string.Empty;
 
     [JsonPropertyName("trefresh_analysis")]
-    public long AnalysisRefreshTimestsmp { get; set; }
+    public long AnalysisRefreshTimestamp { get; set; }
 
     [JsonIgnore]
-    public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestsmp).UtcDateTime;
+    public DateTime AnalysisRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(AnalysisRefreshTimestamp).UtcDateTime;
 
     [JsonPropertyName("analysis")]
     public string Analysis { get; set; } = string.Empty;
 
     [JsonPropertyName("trefresh_spotlight")]
-    public long SpotlightRefreshTimestsmp { get; set; }
+    public long SpotlightRefreshTimestamp { get; set; }
 
     [JsonIgnore]
-    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestsmp).UtcDateTime;
+    public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestamp).UtcDateTime;
 
     [JsonPropertyName("spotlight")]
     public string Spotlight { get; set; } = string.Empty;
 }
 
-public sealed class HoldingTicker
+public sealed class HoldingTicker : ISignumFingerprintable
 {
+    /// <inheritdoc/>
+    public void WriteFingerprint(IFingerprintWriter writer)
+    {
+        writer.Write(Ticker);
+        writer.Write(TargetAllocation);
+        writer.Write(Tags);
+        writer.Write(Shares);
+        writer.Write(AveragePrice);
+        writer.Write(MarketPrice);
+        writer.Write(DividendYield);
+        writer.Write(PayoutFrequency);
+    }
+
     [JsonPropertyName("id")]
     public string Id = Guid.NewGuid().ToString();
 

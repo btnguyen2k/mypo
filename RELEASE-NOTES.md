@@ -1,5 +1,14 @@
 # My Portfolio Tracker release notes
 
+## 2026-06-21 - v1.6.3
+
+### Fixed/Improvements
+
+- Impr(UI): Add print analysis feature to MyPortfolioPlansDetails view.
+- Impr: AutoBackgroundAnalyzePortfolioPlansScanner no longer run spotlight analysis if there is no holdings.
+- Patch: Refactor PortfolioPlanMetadata checksum calculation.
+- Patch: Analysis feature on MyPortfolioPlansDetails page now includes spotlight analysis.
+
 ## 2026-06-17 - v1.6.2
 
 ### Fixed/Improvements

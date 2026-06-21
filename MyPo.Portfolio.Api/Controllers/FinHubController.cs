@@ -19,8 +19,9 @@ public partial class FinHubController : MyPoBaseController
         IAuthenticator? authenticator,
         IAuthenticatorAsync? authenticatorAsync,
         IPortfolioRepository portfolioRepository,
-        IFinHubClient finHubClient
-    ) : base(identityRepository, identityOptions, authenticator, authenticatorAsync, portfolioRepository)
+        IFinHubClient finHubClient,
+        ILogger<FinHubController> logger
+    ) : base(identityRepository, identityOptions, authenticator, authenticatorAsync, portfolioRepository, logger)
     {
         ArgumentNullException.ThrowIfNull(finHubClient, nameof(finHubClient));
         FinHubClient = finHubClient;

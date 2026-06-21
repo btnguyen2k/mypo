@@ -78,7 +78,7 @@
                             <CPnLPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
                         }
 
-                        @if(!string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis))
+                        @if (HasAnalysis || HasSpotlight)
                         {
                             <style>
                             #analysis-result h1 {font-size: 1.5rem !important;}
@@ -86,13 +86,58 @@
                             #analysis-result h3 {font-size: 1.3rem !important;}
                             #analysis-result h4 {font-size: 1.2rem !important;}
                             #analysis-result h5 {font-size: 1.1rem !important;}
+                            .xsmall {font-size: 0.775em;}
                             </style>
                             <div class="card mt-4">
                                 <div class="card-header">
-                                    <h5 class="mb-0">📊Analysis <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span></h5>
+                                    <nav>
+                                        <div class="nav nav-tabs card-header-tabs" id="nav-analysis-tab" role="tablist">
+                                            @if (HasSpotlight && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                            {
+                                                <button class="nav-link @(EffectiveAnalysisTab==TabIdSpotlight?"active":"")"
+                                                    @onclick="(()=>SwitchAnalysisTab(TabIdSpotlight))" id="@TabIdSpotlight"
+                                                    type="button" role="tab" aria-controls="@(TabIdSpotlight)-content"
+                                                    aria-selected="@(EffectiveAnalysisTab==TabIdSpotlight?"true":"false")">
+                                                    🔦 Spotlight
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.SpotlightRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdSpotlight)-content', 'Spotlight - @(SelectedPortfolioPlan.Name)')" title="Print">
+                                                        <BIcon icon="bi-printer" />
+                                                    </a>
+                                                </button>
+                                            }
+                                            @if (HasAnalysis && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                            {
+                                                <button class="nav-link @(EffectiveAnalysisTab==TabIdAnalysis?"active":"")"
+                                                    @onclick="(()=>SwitchAnalysisTab(TabIdAnalysis))" id="@TabIdAnalysis"
+                                                    type="button" role="tab" aria-controls="@(TabIdAnalysis)-content"
+                                                    aria-selected="@(EffectiveAnalysisTab==TabIdAnalysis?"true":"false")">
+                                                    📊 Analysis
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdAnalysis)-content', 'Analysis - @(SelectedPortfolioPlan.Name)')" title="Print">
+                                                        <BIcon icon="bi-printer" />
+                                                    </a>
+                                                </button>
+                                            }
+                                        </div>
+                                    </nav>
                                 </div>
                                 <div class="card-body" id="analysis-result">
-                                    <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                    <div class="tab-content">
+                                        @if (HasSpotlight && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                        {
+                                            <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdSpotlight?"show active":"")"
+                                                id="@(TabIdSpotlight)-content" role="tabpanel" aria-labelledby="@TabIdSpotlight" tabindex="0">
+                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Spotlight)" />
+                                            </div>
+                                        }
+                                        @if (HasAnalysis && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                        {
+                                            <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdAnalysis?"show active":"")"
+                                                id="@(TabIdAnalysis)-content" role="tabpanel" aria-labelledby="@TabIdAnalysis" tabindex="0">
+                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -124,6 +169,8 @@
     </Authorized>
 </AuthorizeView>
 
+<!-- Plugins and scripts required by this page-->
+<script src="@($"./_content/{this.GetType().Assembly.GetName().Name!}/js/print-utils.js")"></script>
 @code {
     private const string PAGE_TITLE = "My Portfolio Plan";
 }

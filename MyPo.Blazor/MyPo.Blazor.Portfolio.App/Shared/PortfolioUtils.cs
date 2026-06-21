@@ -1,8 +1,6 @@
 ﻿using Microsoft.JSInterop;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
-using System.Text.RegularExpressions;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
