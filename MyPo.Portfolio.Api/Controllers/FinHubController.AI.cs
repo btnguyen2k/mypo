@@ -83,6 +83,7 @@ public partial class FinHubController
 
     private async ValueTask<ApiResp<PortfolioAnalysis>> BuildPortfolio(PortfolioPlanEntity plan, MarketDef? market)
     {
+        Logger?.LogInformation("Calling FinHub BuildPortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
         var req = new BuildPortfolioReq
         {
             Country = market?.Country ?? "US",
@@ -94,16 +95,17 @@ public partial class FinHubController
 
     private async ValueTask<ApiResp<PortfolioAnalysis>> AnalyzePortfolio(PortfolioPlanEntity plan, MarketDef? market)
     {
-        var req = new BuildPortfolioReq
+        Logger?.LogInformation("Calling FinHub AnalyzePortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
+        var req = new AnalyzePortfolioReq
         {
             Country = market?.Country ?? "US",
             InvestorTheme = plan.Metadata?.Description,
             CurrentAllocation = BuildHoldingTickersReq(plan)
         };
-        return await FinHubClient.BuildPortfolioAsync(req);
+        return await FinHubClient.AnalyzePortfolioAsync(req);
     }
 
-    [HttpGet(IPortfolioApiClient.API_FINHUB_AI_ANALYZE_PORTFOLIO)]
+    [HttpGet(IPortfolioApiClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO)]
     public async ValueTask<ActionResult<ApiResp<PortfolioAnalysis>>> SpotlightPortfolioPlan([FromRoute] string id)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
@@ -157,6 +159,7 @@ public partial class FinHubController
 
     private async ValueTask<ApiResp<PortfolioAnalysis>> SpotlightPortfolio(PortfolioPlanEntity plan, MarketDef? market)
     {
+        Logger?.LogInformation("Calling FinHub SpotlightPortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
         var req = new SpotLightPortfolioReq
         {
             Country = market?.Country ?? "US",
@@ -165,7 +168,6 @@ public partial class FinHubController
         };
         return await FinHubClient.SpotlightPortfolioAsync(req);
     }
-
 
     /*----------------------------------------------------------------------*/
 

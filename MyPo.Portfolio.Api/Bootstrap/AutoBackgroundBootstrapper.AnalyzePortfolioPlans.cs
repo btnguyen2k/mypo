@@ -114,7 +114,6 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
     /// </summary>
     private async Task<bool> AnalyzePortfolioPlan(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, TimeSpan analyzeDelay, CancellationToken cancellationToken)
     {
-        var now = DateTimeOffset.UtcNow;
         plan.Metadata ??= new PortfolioPlanMetadata();
 
         // skip analysis for plans without a description: the analysis is driven by the investor theme
@@ -132,6 +131,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         var country = market?.Country ?? "US";
         var allocation = BuildAllocationReqs(plan);
         var changed = false;
+        var now = DateTimeOffset.UtcNow;
 
         var thisChecksum = plan.Metadata.CalcChecksumAnalysis();
         var checksumChanged = !string.Equals(thisChecksum, plan.Metadata.LastChecksumAnalysis, StringComparison.OrdinalIgnoreCase);
@@ -140,9 +140,22 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         var lastAnalysis = plan.Metadata.AnalysisRefreshTimestamp;
         if (lastAnalysis <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
+            if (lastAnalysis <= 0)
+            {
+                Logger.LogCritical("'{planId}: {planName}' never run analysis before", plan.Id, plan.Name);
+            }
+            if (checksumChanged)
+            {
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis", plan.Id, plan.Name);
+            }
+            if (now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last analysis is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
+            }
+
             Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-            if (analysis != null)
+            if (analysis is not null)
             {
                 plan.Metadata.AnalysisRefreshTimestamp = now.ToUnixTimeSeconds();
                 plan.Metadata.Analysis = analysis;
@@ -158,6 +171,19 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         var lastSpotlight = plan.Metadata.SpotlightRefreshTimestamp;
         if (lastSpotlight <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
+            if (lastAnalysis <= 0)
+            {
+                Logger.LogCritical("'{planId}: {planName}' never run spotlight before", plan.Id, plan.Name);
+            }
+            if (checksumChanged)
+            {
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last spotlight", plan.Id, plan.Name);
+            }
+            if (now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
+            }
+
             if (plan.Metadata.HoldingTickers is null || plan.Metadata.HoldingTickers.Count == 0)
             {
                 Logger.LogInformation("Skipping spotlight analysis for portfolio plan '{planId}: {planName}': no holdings.", plan.Id, plan.Name);
@@ -166,7 +192,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
             {
                 Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
                 var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-                if (spotlight != null)
+                if (spotlight is not null)
                 {
                     plan.Metadata.SpotlightRefreshTimestamp = now.ToUnixTimeSeconds();
                     plan.Metadata.Spotlight = spotlight;
@@ -186,7 +212,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
             Logger.LogInformation("Saving updated portfolio plan '{planId}: {planName}' after analysis...", plan.Id, plan.Name);
             plan.Metadata.LastChecksumAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
-            if (dbresult == null)
+            if (dbresult is null)
             {
                 Logger.LogError("Failed to persist auto-analyzed portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
             }

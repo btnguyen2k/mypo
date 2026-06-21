@@ -17,13 +17,15 @@ public abstract class MyPoBaseController : ApiBaseController
     protected readonly IIdentityRepository IdentityRepository;
     protected readonly IdentityOptions IdentityOptions;
     protected readonly IPortfolioRepository PortfolioRepository;
+    protected ILogger<MyPoBaseController>? Logger;
 
     public MyPoBaseController(
         IIdentityRepository identityRepository,
         IOptions<IdentityOptions> identityOptions,
         IAuthenticator? authenticator,
         IAuthenticatorAsync? authenticatorAsync,
-        IPortfolioRepository portfolioRepository
+        IPortfolioRepository portfolioRepository,
+        ILogger<MyPoBaseController>? logger = null
     )
     {
         ArgumentNullException.ThrowIfNull(identityRepository, nameof(identityRepository));
@@ -39,6 +41,7 @@ public abstract class MyPoBaseController : ApiBaseController
         Authenticator = authenticator;
         AuthenticatorAsync = authenticatorAsync;
         PortfolioRepository = portfolioRepository;
+        Logger = logger;
     }
 
     protected async ValueTask<(ActionResult?, MyPoUser)> VerifyAuthTokenAndCurrentUser()

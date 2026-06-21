@@ -40,13 +40,18 @@ public sealed class PortfolioPlanEntity : Entity<string>
     public override string ToString() => Name ?? string.Empty;
 }
 
-public sealed class PortfolioPlanMetadata
+public sealed class PortfolioPlanMetadata : ISignumFingerprintable
 {
-    [JsonPropertyName("trefresh_holdings")]
-    public long HoldingsRefreshTimestamp { get; set; }
-
-    [JsonIgnore]
-    public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
+    /// <inheritdoc/>
+    public void WriteFingerprint(IFingerprintWriter writer)
+    {
+        var checksumObj = new
+        {
+            Description,
+            Holdings = HoldingTickers.ToArray(),
+        };
+        writer.Write(checksumObj);
+    }
 
     /// <summary>
     /// A checksum of the plan's holdings data, saved when the last analysis ran, used to detect changes and avoid unnecessary re-analysis when the holdings haven't changed.
@@ -60,13 +65,14 @@ public sealed class PortfolioPlanMetadata
     /// <returns></returns>
     public string CalcChecksumAnalysis()
     {
-        var checksumObj = new
-        {
-            Desc = Description,
-            Holdings = HoldingTickers.ToArray(),
-        };
-        return Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
+        return Signum.ChecksumHex(this, XxHash128Hasher.Factory);
     }
+
+    [JsonPropertyName("trefresh_holdings")]
+    public long HoldingsRefreshTimestamp { get; set; }
+
+    [JsonIgnore]
+    public DateTime HoldingsRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(HoldingsRefreshTimestamp).UtcDateTime;
 
     [JsonPropertyName("holdings")]
     public IList<HoldingTicker> HoldingTickers { get; set; } = [];
@@ -93,8 +99,21 @@ public sealed class PortfolioPlanMetadata
     public string Spotlight { get; set; } = string.Empty;
 }
 
-public sealed class HoldingTicker
+public sealed class HoldingTicker : ISignumFingerprintable
 {
+    /// <inheritdoc/>
+    public void WriteFingerprint(IFingerprintWriter writer)
+    {
+        writer.Write(Ticker);
+        writer.Write(TargetAllocation);
+        writer.Write(Tags);
+        writer.Write(Shares);
+        writer.Write(AveragePrice);
+        writer.Write(MarketPrice);
+        writer.Write(DividendYield);
+        writer.Write(PayoutFrequency);
+    }
+
     [JsonPropertyName("id")]
     public string Id = Guid.NewGuid().ToString();
 

@@ -86,6 +86,7 @@
                             #analysis-result h3 {font-size: 1.3rem !important;}
                             #analysis-result h4 {font-size: 1.2rem !important;}
                             #analysis-result h5 {font-size: 1.1rem !important;}
+                            .xsmall {font-size: 0.775em;}
                             </style>
                             <div class="card mt-4">
                                 <div class="card-header">
@@ -98,7 +99,7 @@
                                                     type="button" role="tab" aria-controls="@(TabIdSpotlight)-content"
                                                     aria-selected="@(EffectiveAnalysisTab==TabIdSpotlight?"true":"false")">
                                                     🔦 Spotlight
-                                                    <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.SpotlightRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span>
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.SpotlightRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
                                                     <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdSpotlight)-content', 'Spotlight - @(SelectedPortfolioPlan.Name)')" title="Print">
                                                         <BIcon icon="bi-printer" />
                                                     </a>
@@ -111,7 +112,7 @@
                                                     type="button" role="tab" aria-controls="@(TabIdAnalysis)-content"
                                                     aria-selected="@(EffectiveAnalysisTab==TabIdAnalysis?"true":"false")">
                                                     📊 Analysis
-                                                    <span class="text-muted small">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd")+" UTC")</span>
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
                                                     <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdAnalysis)-content', 'Analysis - @(SelectedPortfolioPlan.Name)')" title="Print">
                                                         <BIcon icon="bi-printer" />
                                                     </a>

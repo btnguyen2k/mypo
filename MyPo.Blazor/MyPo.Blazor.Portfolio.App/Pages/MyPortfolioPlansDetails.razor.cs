@@ -96,20 +96,18 @@ public partial class MyPortfolioPlansDetails : BasePage
         analyzing = true;
         var step = string.Empty;
 
-        ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
-
         _ = Task.Run(async () =>
         {
             var start = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             while (analyzing)
             {
-                await Task.Delay(1000);
                 var delta = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - start;
                 if (analyzing)
                 {
                     var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
                     ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta}s)");
                 }
+                await Task.Delay(1000);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
@@ -118,7 +116,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         step = "spotlight";
         if (SelectedPortfolioPlan.Metadata.HoldingTickers.Count > 0)
         {
-            var spotlightResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+            var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
             if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
             {
                 analyzing = false;
@@ -151,7 +149,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
 
-        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.");
+        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }
 
     private const string TabIdSpotlight = "nav-spotlight-tab";
