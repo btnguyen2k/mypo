@@ -94,38 +94,94 @@ public partial class MyPortfolioPlansDetails : BasePage
     {
         if (analyzing) return;
         analyzing = true;
+        var step = string.Empty;
 
-        ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait...");
         _ = Task.Run(async () =>
         {
             var start = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             while (analyzing)
             {
-                await Task.Delay(1000);
                 var delta = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - start;
                 if (analyzing)
                 {
-                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}', please wait... ({delta}s)");
+                    var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
+                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta}s)");
                 }
+                await Task.Delay(1000);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var result = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-        analyzing = false;
-        if (!result.IsSuccess || result.Data is null)
+        SelectedPortfolioPlan.Metadata ??= new();
+
+        step = "spotlight";
+        if (SelectedPortfolioPlan.Metadata.HoldingTickers.Count > 0)
         {
-            ShowAlert("danger", result.Message ?? "Error analyzing portfolio plan.");
-            return;
-        }
-        if (result.Data.LLMError)
-        {
-            ShowAlert("danger", $"Portfolio analysis completed with LLM error: {result.Data.LLMErrorMsg}");
-            return;
+            var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+            if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
+            {
+                analyzing = false;
+                ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
+                return;
+            }
+            if (spotlightResult.Data.LLMError)
+            {
+                analyzing = false;
+                ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
+                return;
+            }
+            SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Analysis;
         }
 
-        SelectedPortfolioPlan.Metadata ??= new();
-        SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestsmp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        SelectedPortfolioPlan.Metadata.Analysis = result.Data.Analysis;
-        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.");
+        step = "analysis";
+        var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+        analyzing = false;
+        if (!analysisResult.IsSuccess || analysisResult.Data is null)
+        {
+            ShowAlert("danger", analysisResult.Message ?? "Error analyzing portfolio plan.");
+            return;
+        }
+        if (analysisResult.Data.LLMError)
+        {
+            ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
+            return;
+        }
+        SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+
+        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+    }
+
+    private const string TabIdSpotlight = "nav-spotlight-tab";
+    private const string TabIdAnalysis = "nav-analysis-tab";
+    private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
+
+    private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
+    private bool HasSpotlight => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Spotlight);
+
+    /// <summary>
+    /// Resolves <see cref="ActiveAnalysisTab"/> to a tab that is actually visible (has content),
+    /// preferring Spotlight. Falls back to the other tab when the selected one has no content.
+    /// </summary>
+    private string EffectiveAnalysisTab
+    {
+        get
+        {
+            if (ActiveAnalysisTab == TabIdSpotlight && !HasSpotlight)
+            {
+                return TabIdAnalysis;
+            }
+            if (ActiveAnalysisTab == TabIdAnalysis && !HasAnalysis)
+            {
+                return TabIdSpotlight;
+            }
+            return ActiveAnalysisTab;
+        }
+    }
+
+    private void SwitchAnalysisTab(string tab)
+    {
+        ActiveAnalysisTab = tab;
+        StateHasChanged();
     }
 }

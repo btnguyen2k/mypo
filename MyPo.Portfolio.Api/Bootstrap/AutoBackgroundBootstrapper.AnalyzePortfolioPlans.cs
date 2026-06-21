@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
-using Ddth.Signum;
 using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
@@ -115,7 +114,6 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
     /// </summary>
     private async Task<bool> AnalyzePortfolioPlan(IPortfolioRepository portfolioRepo, IFinHubClient finHubClient, TelegramBotClient? teleBot, IEnumerable<string> chatIDs, PortfolioPlanEntity plan, TimeSpan analyzeDelay, CancellationToken cancellationToken)
     {
-        var now = DateTimeOffset.UtcNow;
         plan.Metadata ??= new PortfolioPlanMetadata();
 
         // skip analysis for plans without a description: the analysis is driven by the investor theme
@@ -133,20 +131,33 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         var country = market?.Country ?? "US";
         var allocation = BuildAllocationReqs(plan);
         var changed = false;
+        var now = DateTimeOffset.UtcNow;
 
-        var checksumObj = new { allocation, plan.Metadata.Description, plan.Type };
-        var thisChecksum = Signum.ChecksumHex(checksumObj, XxHash128Hasher.Factory);
+        var thisChecksum = plan.Metadata.CalcChecksumAnalysis();
+        var checksumChanged = !string.Equals(thisChecksum, plan.Metadata.LastChecksumAnalysis, StringComparison.OrdinalIgnoreCase);
 
         // normal analysis: persisted only, no alert
-        var lastAnalysis = plan.Metadata.AnalysisRefreshTimestsmp;
-        if (lastAnalysis <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
-            || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+        var lastAnalysis = plan.Metadata.AnalysisRefreshTimestamp;
+        if (lastAnalysis <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
+            if (lastAnalysis <= 0)
+            {
+                Logger.LogCritical("'{planId}: {planName}' never run analysis before", plan.Id, plan.Name);
+            }
+            if (checksumChanged)
+            {
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis", plan.Id, plan.Name);
+            }
+            if (now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last analysis is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
+            }
+
             Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-            if (analysis != null)
+            if (analysis is not null)
             {
-                plan.Metadata.AnalysisRefreshTimestsmp = now.ToUnixTimeSeconds();
+                plan.Metadata.AnalysisRefreshTimestamp = now.ToUnixTimeSeconds();
                 plan.Metadata.Analysis = analysis;
                 changed = true;
             }
@@ -157,19 +168,38 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         }
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
-        var lastSpotlight = plan.Metadata.SpotlightRefreshTimestsmp;
-        if (lastSpotlight <= 0 || !string.Equals(thisChecksum, plan.Metadata.ChecksumAnalysis, StringComparison.OrdinalIgnoreCase)
-            || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+        var lastSpotlight = plan.Metadata.SpotlightRefreshTimestamp;
+        if (lastSpotlight <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
-            Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
-            var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-            if (spotlight != null)
+            if (lastAnalysis <= 0)
             {
-                plan.Metadata.SpotlightRefreshTimestsmp = now.ToUnixTimeSeconds();
-                plan.Metadata.Spotlight = spotlight;
-                changed = true;
-                // fire-and-forget: don't block the analysis loop on Telegram delivery
-                _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken), cancellationToken);
+                Logger.LogCritical("'{planId}: {planName}' never run spotlight before", plan.Id, plan.Name);
+            }
+            if (checksumChanged)
+            {
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last spotlight", plan.Id, plan.Name);
+            }
+            if (now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
+            }
+
+            if (plan.Metadata.HoldingTickers is null || plan.Metadata.HoldingTickers.Count == 0)
+            {
+                Logger.LogInformation("Skipping spotlight analysis for portfolio plan '{planId}: {planName}': no holdings.", plan.Id, plan.Name);
+            }
+            else
+            {
+                Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
+                var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+                if (spotlight is not null)
+                {
+                    plan.Metadata.SpotlightRefreshTimestamp = now.ToUnixTimeSeconds();
+                    plan.Metadata.Spotlight = spotlight;
+                    changed = true;
+                    // fire-and-forget: don't block the analysis loop on Telegram delivery
+                    _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken), cancellationToken);
+                }
             }
         }
         else
@@ -180,9 +210,9 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         if (changed)
         {
             Logger.LogInformation("Saving updated portfolio plan '{planId}: {planName}' after analysis...", plan.Id, plan.Name);
-            plan.Metadata.ChecksumAnalysis = thisChecksum;
+            plan.Metadata.LastChecksumAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
-            if (dbresult == null)
+            if (dbresult is null)
             {
                 Logger.LogError("Failed to persist auto-analyzed portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
             }
