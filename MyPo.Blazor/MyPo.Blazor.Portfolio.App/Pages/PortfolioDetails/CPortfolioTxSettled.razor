@@ -17,6 +17,12 @@
 </AuthorizeView>
 
 <div class="table-responsive">
+    @if (TxSettlements is null || TxSettlements.Count() == 0)
+    {
+        <CAlert Type="info">
+            No transactions found. Settle buy/sell transactions to update this list.
+        </CAlert>
+    }
     <table class="table table-sm table-hover align-middle" id="tblTxSettlements" data-order='[[ 1, "desc" ]]'>
         <thead>
             <tr>
@@ -31,12 +37,6 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @if (TxSettlements==null || TxSettlements.Count()==0)
-            {
-                <tr>
-                    <td colspan="8" class="text-center">No data found. Settle buy/sell transactions to update this list.</td>
-                </tr>
-            }
             @foreach (var tx in TxSettlements??[])
             {
                 <tr>

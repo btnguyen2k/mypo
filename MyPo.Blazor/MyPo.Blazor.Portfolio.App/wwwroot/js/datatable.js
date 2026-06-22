@@ -5,6 +5,6 @@ export function MakeDatatable(elId) {
         // options
         info: true,
         pageLength: 20,
-        lengthMenu: [10, 20, 50, 100]
+        lengthMenu: [10, 20, 50, 100],
     });
 }
