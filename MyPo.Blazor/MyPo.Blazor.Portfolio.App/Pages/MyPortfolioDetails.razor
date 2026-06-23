@@ -62,6 +62,17 @@
                                     data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxSettled)-content"
                                     type="button" role="tab" aria-controls="@(TabIdTxSettled)-content"
                                     aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Settlements</button>
+                                <button class="nav-link @(ActiveTab==TabIdReports?"active":"")"
+                                    @onclick="(()=>SwitchTab(TabIdReports))" id="@TabIdReports"
+                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdReports)-content"
+                                    type="button" role="tab" aria-controls="@(TabIdReports)-content"
+                                    aria-selected="@(ActiveTab==TabIdReports?"true":"false")">Reports</button>
+                                <button class="nav-link ms-auto @(ActiveTab==TabIdPreferences?"active":"")"
+                                    @onclick="(()=>SwitchTab(TabIdPreferences))" id="@TabIdPreferences"
+                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdPreferences)-content"
+                                    type="button" role="tab" aria-controls="@(TabIdPreferences)-content"
+                                    aria-selected="@(ActiveTab==TabIdPreferences?"true":"false")">
+                                    <BIcon icon="bi-sliders" extraClassName="me-1" />Preferences</button>
                             </div>
                         </nav>
                         <div class="tab-content" id="nav-tabContent">
@@ -96,6 +107,14 @@
                                     Portfolio="@(SelectedPortfolio)"
                                     TxSettlements="@(TxSettlements)"
                                     Markets="@(Markets)" />
+                            </div>
+                            <div class="tab-pane fade @(ActiveTab==TabIdReports?"show active":"")"
+                                    id="@(TabIdReports)-content" role="tabpanel" aria-labelledby="@TabIdReports" tabindex="0">
+                                @* TODO: Report content placeholder *@
+                            </div>
+                            <div class="tab-pane fade @(ActiveTab==TabIdPreferences?"show active":"")"
+                                    id="@(TabIdPreferences)-content" role="tabpanel" aria-labelledby="@TabIdPreferences" tabindex="0">
+                                @* TODO: Preferences content placeholder *@
                             </div>
                         </div>
                     }

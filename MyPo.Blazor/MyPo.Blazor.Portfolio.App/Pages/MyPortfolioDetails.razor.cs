@@ -298,6 +298,8 @@ public partial class MyPortfolioDetails : BasePage
     private const string TabIdPositions = "nav-positions-tab";
     private const string TabIdTxBuysSells = "nav-txbuyssells-tab";
     private const string TabIdTxSettled = "nav-txsettled-tab";
+    private const string TabIdReports = "nav-report-tab";
+    private const string TabIdPreferences = "nav-preferences-tab";
 
     [Inject]
     private IJSRuntime JS { get; set; } = default!;
@@ -307,7 +309,8 @@ public partial class MyPortfolioDetails : BasePage
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
         var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
         ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
-        if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled)
+        if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled
+            && ActiveTab != TabIdReports && ActiveTab != TabIdPreferences)
         {
             ActiveTab = TabIdSummary;
         }
@@ -316,6 +319,11 @@ public partial class MyPortfolioDetails : BasePage
     private async void SwitchTab(string tab)
     {
         CloseAlert();
+        if (tab == TabIdPreferences)
+        {
+            // the preferences tab is transient; don't persist it as the active tab
+            return;
+        }
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
         await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
     }
