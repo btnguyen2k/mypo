@@ -23,9 +23,7 @@ public partial class CPortfolioPreferences : CBase
     };
 
     private static readonly IReadOnlyList<KeyValuePair<int, string>> FiscalMonths =
-        Enumerable.Range(1, 12)
-            .Select(m => new KeyValuePair<int, string>(m, CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)))
-            .ToList();
+        [.. Enumerable.Range(1, 12).Select(m => new KeyValuePair<int, string>(m, CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)))];
 
     private bool Saving { get; set; } = false;
 
@@ -63,7 +61,7 @@ public partial class CPortfolioPreferences : CBase
         }
 
         Saving = true;
-        ShowAlert("info", "Saving preferences...");
+        ShowAlert("info", "Saving portfolio preferences...");
 
         // Preserve all existing metadata fields (totals, report markers, etc.) and only update preferences.
         var metadata = Portfolio.Metadata ?? new PortfolioMetadata();
@@ -75,9 +73,9 @@ public partial class CPortfolioPreferences : CBase
         var req = CreateOrUpdatePortfolioReq.NewRequest(Portfolio);
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         var resp = await apiClient.UpdateMyPortfolioAsync(Portfolio.Id, req, await GetAuthTokenAsync(), ApiBaseUrl);
-        if (resp.Status != 200)
+        if (!resp.IsSuccess)
         {
-            ShowAlert("error", $"Failed to save preferences: {resp.Message}");
+            ShowAlert("error", $"Failed to save portfolio preferences: {resp.Message}");
         }
         else
         {
@@ -85,7 +83,7 @@ public partial class CPortfolioPreferences : CBase
             {
                 Portfolio.Metadata = resp.Data.Metadata;
             }
-            ShowAlert("success", "Preferences saved successfully!", ALERT_AUTO_CLOSE_MS);
+            ShowAlert("success", "Portfolio preferences saved successfully!");
         }
 
         Saving = false;
