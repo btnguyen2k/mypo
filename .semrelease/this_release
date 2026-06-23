@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 - fix(UI): Fix datatables warning if portfolio has no transactions.
 - refactor: Move the current Dashboard to new page Events.
+- feat: Portfolio perferences.
