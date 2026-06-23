@@ -114,7 +114,9 @@
                             </div>
                             <div class="tab-pane fade @(ActiveTab==TabIdPreferences?"show active":"")"
                                     id="@(TabIdPreferences)-content" role="tabpanel" aria-labelledby="@TabIdPreferences" tabindex="0">
-                                @* TODO: Preferences content placeholder *@
+                                <CPortfolioPreferences
+                                    Portfolio="@(SelectedPortfolio)"
+                                    Markets="@(Markets)" />
                             </div>
                         </div>
                     }

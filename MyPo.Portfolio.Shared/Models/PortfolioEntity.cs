@@ -65,4 +65,80 @@ public sealed class PortfolioMetadata
 
     [JsonIgnore]
     public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
+
+    /// <summary>
+    /// When <c>true</c>, this portfolio is not used for tracking stocks directly; it acts as a
+    /// parent/container portfolio only.
+    /// </summary>
+    [JsonPropertyName("is_container")]
+    public bool IsContainer { get; set; } = false;
+
+    /// <summary>
+    /// The day considered the first day of the week (used for weekly reporting). Defaults to Monday.
+    /// </summary>
+    [JsonPropertyName("first_day_of_week")]
+    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Monday;
+
+    /// <summary>
+    /// The month considered the first month of the fiscal year (1 = January .. 12 = December, used for
+    /// quarterly/yearly fiscal reporting). Defaults to January.
+    /// </summary>
+    [JsonPropertyName("fiscal_year_start_month")]
+    public int FiscalYearStartMonth { get; set; } = 1;
+
+    /// <summary>Unix timestamp (seconds) of when the weekly report was last run.</summary>
+    [JsonPropertyName("trun_weekly_report")]
+    public long LastWeeklyReportTimestamp { get; set; }
+
+    [JsonIgnore]
+    public DateTime LastWeeklyReportUTC => DateTimeOffset.FromUnixTimeSeconds(LastWeeklyReportTimestamp).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) marking the first date of the last reported week.</summary>
+    [JsonPropertyName("tmark_weekly_report")]
+    public long WeeklyReportPeriodStart { get; set; }
+
+    [JsonIgnore]
+    public DateTime WeeklyReportPeriodStartUTC => DateTimeOffset.FromUnixTimeSeconds(WeeklyReportPeriodStart).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) of when the monthly report was last run.</summary>
+    [JsonPropertyName("trun_monthly_report")]
+    public long LastMonthlyReportTimestamp { get; set; }
+
+    [JsonIgnore]
+    public DateTime LastMonthlyReportUTC => DateTimeOffset.FromUnixTimeSeconds(LastMonthlyReportTimestamp).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) marking the first date of the last reported month.</summary>
+    [JsonPropertyName("tmark_monthly_report")]
+    public long MonthlyReportPeriodStart { get; set; }
+
+    [JsonIgnore]
+    public DateTime MonthlyReportPeriodStartUTC => DateTimeOffset.FromUnixTimeSeconds(MonthlyReportPeriodStart).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) of when the quarterly report was last run.</summary>
+    [JsonPropertyName("trun_quarterly_report")]
+    public long LastQuarterlyReportTimestamp { get; set; }
+
+    [JsonIgnore]
+    public DateTime LastQuarterlyReportUTC => DateTimeOffset.FromUnixTimeSeconds(LastQuarterlyReportTimestamp).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) marking the first date of the last reported quarter.</summary>
+    [JsonPropertyName("tmark_quarterly_report")]
+    public long QuarterlyReportPeriodStart { get; set; }
+
+    [JsonIgnore]
+    public DateTime QuarterlyReportPeriodStartUTC => DateTimeOffset.FromUnixTimeSeconds(QuarterlyReportPeriodStart).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) of when the yearly (fiscal) report was last run.</summary>
+    [JsonPropertyName("trun_yearly_report")]
+    public long LastYearlyReportTimestamp { get; set; }
+
+    [JsonIgnore]
+    public DateTime LastYearlyReportUTC => DateTimeOffset.FromUnixTimeSeconds(LastYearlyReportTimestamp).UtcDateTime;
+
+    /// <summary>Unix timestamp (seconds) marking the first date of the last reported year (fiscal).</summary>
+    [JsonPropertyName("tmark_yearly_report")]
+    public long YearlyReportPeriodStart { get; set; }
+
+    [JsonIgnore]
+    public DateTime YearlyReportPeriodStartUTC => DateTimeOffset.FromUnixTimeSeconds(YearlyReportPeriodStart).UtcDateTime;
 }
