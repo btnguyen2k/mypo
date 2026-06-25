@@ -62,11 +62,16 @@
                                     data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxSettled)-content"
                                     type="button" role="tab" aria-controls="@(TabIdTxSettled)-content"
                                     aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Settlements</button>
-                                <button class="nav-link @(ActiveTab==TabIdReports?"active":"")"
-                                    @onclick="(()=>SwitchTab(TabIdReports))" id="@TabIdReports"
-                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdReports)-content"
-                                    type="button" role="tab" aria-controls="@(TabIdReports)-content"
-                                    aria-selected="@(ActiveTab==TabIdReports?"true":"false")">Reports</button>
+                                <button class="nav-link @(ActiveTab==TabIdSnapshots?"active":"")"
+                                    @onclick="(()=>SwitchTab(TabIdSnapshots))" id="@TabIdSnapshots"
+                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdSnapshots)-content"
+                                    type="button" role="tab" aria-controls="@(TabIdSnapshots)-content"
+                                    aria-selected="@(ActiveTab==TabIdSnapshots?"true":"false")">Snapshots</button>
+                                <button class="nav-link @(ActiveTab==TabIdTrends?"active":"")"
+                                    @onclick="(()=>SwitchTab(TabIdTrends))" id="@TabIdTrends"
+                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdTrends)-content"
+                                    type="button" role="tab" aria-controls="@(TabIdTrends)-content"
+                                    aria-selected="@(ActiveTab==TabIdTrends?"true":"false")">Trends</button>
                                 <button class="nav-link ms-auto @(ActiveTab==TabIdPreferences?"active":"")"
                                     @onclick="(()=>SwitchTab(TabIdPreferences))" id="@TabIdPreferences"
                                     data-coreui-toggle="tab" data-coreui-target="#@(TabIdPreferences)-content"
@@ -108,9 +113,17 @@
                                     TxSettlements="@(TxSettlements)"
                                     Markets="@(Markets)" />
                             </div>
-                            <div class="tab-pane fade @(ActiveTab==TabIdReports?"show active":"")"
-                                    id="@(TabIdReports)-content" role="tabpanel" aria-labelledby="@TabIdReports" tabindex="0">
-                                @* TODO: Report content placeholder *@
+                            <div class="tab-pane fade @(ActiveTab==TabIdSnapshots?"show active":"")"
+                                    id="@(TabIdSnapshots)-content" role="tabpanel" aria-labelledby="@TabIdSnapshots" tabindex="0">
+                                <CPortfolioSnapshots
+                                    Portfolio="@(SelectedPortfolio)"
+                                    Markets="@(Markets)" />
+                            </div>
+                            <div class="tab-pane fade @(ActiveTab==TabIdTrends?"show active":"")"
+                                    id="@(TabIdTrends)-content" role="tabpanel" aria-labelledby="@TabIdTrends" tabindex="0">
+                                <CPortfolioTrends
+                                    Portfolio="@(SelectedPortfolio)"
+                                    Markets="@(Markets)" />
                             </div>
                             <div class="tab-pane fade @(ActiveTab==TabIdPreferences?"show active":"")"
                                     id="@(TabIdPreferences)-content" role="tabpanel" aria-labelledby="@TabIdPreferences" tabindex="0">

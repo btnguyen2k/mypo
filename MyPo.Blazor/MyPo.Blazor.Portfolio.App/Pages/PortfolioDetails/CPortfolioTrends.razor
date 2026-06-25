@@ -1,0 +1,179 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+@if (Portfolio is null)
+{
+    <div class="text-muted">No portfolio selected.</div>
+}
+else
+{
+    <!-- Controls: grouping + number of periods -->
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+        <div>
+            <label class="form-label fw-semibold d-block mb-1">
+                <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Group by
+            </label>
+            <div class="btn-group flex-wrap" role="group" aria-label="Grouping">
+                @foreach (var grouping in Groupings)
+                {
+                    <button type="button"
+                            class="btn @(SelectedGrouping==grouping?"btn-primary":"btn-outline-primary")"
+                            @onclick="()=>SelectGrouping(grouping)">
+                        @GroupingTitle(grouping)
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div style="min-width: 12rem;">
+            <label class="form-label fw-semibold d-block mb-1" for="trendCount">
+                <BIcon icon="bi-list-ol" extraClassName="me-1" />Periods
+            </label>
+            <select class="form-select" id="trendCount" value="@SelectedCount" @onchange="OnCountChanged">
+                @foreach (var count in CountOptions(SelectedGrouping))
+                {
+                    <option value="@count">Last @count</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <button type="button" class="btn btn-success"
+                    disabled="@Generating"
+                    @onclick="BtnClickGenerate">
+                <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Generate report
+            </button>
+        </div>
+    </div>
+
+    @if (Generating)
+    {
+        <div class="text-center py-5 text-muted">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+            <div class="mt-2">Generating report...</div>
+        </div>
+    }
+    else if (Buckets.Count > 0)
+    {
+        var latest = Buckets[^1];
+        var totalPnl = Buckets.Sum(b => b.NetPnl);
+        var best = Buckets.OrderByDescending(b => b.NetPnl).First();
+        var worst = Buckets.OrderBy(b => b.NetPnl).First();
+        var totalClass = totalPnl >= 0 ? "text-success" : "text-danger";
+
+        <!-- Summary stat cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-3">
+                        <div class="text-muted small text-uppercase">Latest value</div>
+                        <div class="fs-5 fw-semibold">@Money(latest.Value, Currency)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-3">
+                        <div class="text-muted small text-uppercase">Total P&amp;L (@SelectedCount periods)</div>
+                        <div class="fs-5 fw-semibold @totalClass">@Money(totalPnl, Currency)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-3">
+                        <div class="text-muted small text-uppercase">Best period</div>
+                        <div class="fs-6 fw-semibold text-success">@best.Label · @Money(best.NetPnl, Currency)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-3">
+                        <div class="text-muted small text-uppercase">Worst period</div>
+                        <div class="fs-6 fw-semibold text-danger">@worst.Label · @Money(worst.NetPnl, Currency)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio value over time -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">@GroupingTitle(SelectedGrouping) portfolio value</div>
+            <div class="card-body">
+                <WidgetChart Config="@ValueChartConfig" Style="position: relative; height: 320px;" />
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">Net P&amp;L per period</div>
+                    <div class="card-body">
+                        <WidgetChart Config="@PnlChartConfig" Style="position: relative; height: 300px;" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">Current allocation</div>
+                    <div class="card-body">
+                        <WidgetChart Config="@AllocationChartConfig" Style="position: relative; height: 300px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail table -->
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th class="text-end">Opening</th>
+                        <th class="text-end">Closing</th>
+                        <th class="text-end">Net P&amp;L</th>
+                        <th class="text-end">Net P&amp;L %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bucket in Buckets.Reverse())
+                    {
+                        var rowClass = bucket.NetPnl >= 0 ? "text-success" : "text-danger";
+                        <tr>
+                            <td>@bucket.Label</td>
+                            <td class="text-end">@Money(bucket.OpeningValue, Currency)</td>
+                            <td class="text-end">@Money(bucket.Value, Currency)</td>
+                            <td class="text-end @rowClass">@Money(bucket.NetPnl, Currency)</td>
+                            <td class="text-end @rowClass">@Percent(bucket.NetPnlPct)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="alert alert-warning py-2 mb-0" role="alert">
+            <span style="font-size: small;">⚠️ Sample data — the trends/aggregation engine has not been implemented yet.</span>
+        </div>
+    }
+    else
+    {
+        <div class="text-center text-muted py-5">
+            <BIcon icon="bi-bar-chart-line" extraClassName="fs-1 d-block mb-2" />
+            Select a grouping and number of periods, then click <strong>Generate report</strong>.
+        </div>
+    }
+}
+
+@code {
+    private static readonly TrendGrouping[] Groupings =
+    {
+        TrendGrouping.Weekly, TrendGrouping.Monthly, TrendGrouping.Quarterly, TrendGrouping.Yearly,
+    };
+}

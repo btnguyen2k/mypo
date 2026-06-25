@@ -77,14 +77,14 @@ public sealed class PortfolioMetadata
     /// The day considered the first day of the week (used for weekly reporting). Defaults to Monday.
     /// </summary>
     [JsonPropertyName("first_day_of_week")]
-    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Monday;
+    public DayOfWeek? FirstDayOfWeek { get; set; }
 
     /// <summary>
     /// The month considered the first month of the fiscal year (1 = January .. 12 = December, used for
     /// quarterly/yearly fiscal reporting). Defaults to January.
     /// </summary>
     [JsonPropertyName("fiscal_year_start_month")]
-    public int FiscalYearStartMonth { get; set; } = 1;
+    public int? FiscalYearStartMonth { get; set; }
 
     /// <summary>Unix timestamp (seconds) of when the weekly report was last run.</summary>
     [JsonPropertyName("trun_weekly_report")]

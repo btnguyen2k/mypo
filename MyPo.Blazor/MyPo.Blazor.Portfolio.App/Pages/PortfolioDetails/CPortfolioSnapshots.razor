@@ -1,0 +1,166 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+<div class="row mt-2 mb-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <CAlert @ref="@Alert" />
+
+                @if (Portfolio is null)
+                {
+                    <div class="text-muted">No portfolio selected.</div>
+                }
+                else
+                {
+                    <!-- Report type selector -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block mb-1">
+                            <BIcon icon="bi-calendar3" extraClassName="me-1" />Report type
+                        </label>
+                        <div class="btn-group flex-wrap" role="group" aria-label="Report type">
+                            @foreach (var type in ReportTypes)
+                            {
+                                <button type="button"
+                                        class="btn @(SelectedType==type?"btn-primary":"btn-outline-primary")"
+                                        @onclick="()=>SelectType(type)">
+                                    @TypeTitle(type)
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Period + symbol + generate -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold mb-1" for="reportPeriod">
+                                <BIcon icon="bi-clock-history" extraClassName="me-1" />Period
+                            </label>
+                            <select class="form-select" id="reportPeriod" value="@SelectedPeriodKey" @onchange="OnPeriodChanged">
+                                @foreach (var period in AvailablePeriods)
+                                {
+                                    <option value="@period">@period</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label class="form-label fw-semibold mb-1" for="reportSymbol">
+                                <BIcon icon="bi-graph-up" extraClassName="me-1" />Symbol (optional)
+                            </label>
+                            <select class="form-select" id="reportSymbol" value="@SelectedSymbol" @onchange="OnSymbolChanged">
+                                <option value="">Entire portfolio</option>
+                                @foreach (var sym in Symbols)
+                                {
+                                    <option value="@sym.ItemCode">@sym.ItemCode — @(sym.Metadata?.CorpName ?? sym.ItemCode)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <button type="button" class="btn btn-success w-100"
+                                    disabled="@(Generating || string.IsNullOrEmpty(SelectedPeriodKey))"
+                                    @onclick="BtnClickGenerate">
+                                <BIcon icon="bi-file-earmark-bar-graph" extraClassName="me-1" />Generate report
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    @if (Generating)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                            <div class="mt-2">Generating report...</div>
+                        </div>
+                    }
+                    else if (CurrentReport is not null)
+                    {
+                        var report = CurrentReport;
+                        var pnlClass = report.NetPnl >= 0 ? "text-success" : "text-danger";
+
+                        <!-- Report header -->
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                @TypeTitle(report.Type) report
+                                <span class="text-muted fs-6">· @report.Scope</span>
+                            </h5>
+                            <span class="badge bg-light text-dark border">
+                                <BIcon icon="bi-calendar-range" extraClassName="me-1" />@report.PeriodLabel
+                            </span>
+                        </div>
+
+                        <!-- Summary stat cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-lg-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body py-3">
+                                        <div class="text-muted small text-uppercase">Opening value</div>
+                                        <div class="fs-5 fw-semibold">@Money(report.OpeningValue, report.Currency)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body py-3">
+                                        <div class="text-muted small text-uppercase">Closing value</div>
+                                        <div class="fs-5 fw-semibold">@Money(report.ClosingValue, report.Currency)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body py-3">
+                                        <div class="text-muted small text-uppercase">Net P&amp;L</div>
+                                        <div class="fs-5 fw-semibold @pnlClass">@Money(report.NetPnl, report.Currency)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body py-3">
+                                        <div class="text-muted small text-uppercase">Net P&amp;L %</div>
+                                        <div class="fs-5 fw-semibold @pnlClass">@Percent(report.NetPnlPct)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed narrative (Markdown) -->
+                        <div class="border rounded p-3">
+                            <WidgetMarkdownViewer Content="@report.Narrative" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <BIcon icon="bi-file-earmark-bar-graph" extraClassName="fs-1 d-block mb-2" />
+                            Select a report type and period, then click <strong>Generate report</strong>.
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly ReportType[] ReportTypes =
+    {
+        ReportType.WEEKLY, ReportType.MONTHLY, ReportType.QUARTERLY, ReportType.YEARLY,
+    };
+
+    private static string TypeTitle(ReportType type) => type switch
+    {
+        ReportType.WEEKLY => "Weekly",
+        ReportType.MONTHLY => "Monthly",
+        ReportType.QUARTERLY => "Quarterly",
+        ReportType.YEARLY => "Yearly (Fiscal)",
+        _ => type.ToString(),
+    };
+}

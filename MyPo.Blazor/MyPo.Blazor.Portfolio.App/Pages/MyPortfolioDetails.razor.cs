@@ -298,7 +298,8 @@ public partial class MyPortfolioDetails : BasePage
     private const string TabIdPositions = "nav-positions-tab";
     private const string TabIdTxBuysSells = "nav-txbuyssells-tab";
     private const string TabIdTxSettled = "nav-txsettled-tab";
-    private const string TabIdReports = "nav-report-tab";
+    private const string TabIdSnapshots = "nav-snapshots-tab";
+    private const string TabIdTrends = "nav-trends-tab";
     private const string TabIdPreferences = "nav-preferences-tab";
 
     [Inject]
@@ -310,7 +311,7 @@ public partial class MyPortfolioDetails : BasePage
         var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "MyPortfolioDetails-active-tab");
         ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdSummary : savedTab;
         if (ActiveTab != TabIdSummary && ActiveTab != TabIdPositions && ActiveTab != TabIdTxBuysSells && ActiveTab != TabIdTxSettled
-            && ActiveTab != TabIdReports && ActiveTab != TabIdPreferences)
+            && ActiveTab != TabIdSnapshots && ActiveTab != TabIdTrends && ActiveTab != TabIdPreferences)
         {
             ActiveTab = TabIdSummary;
         }

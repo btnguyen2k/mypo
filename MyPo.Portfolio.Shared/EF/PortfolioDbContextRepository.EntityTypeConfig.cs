@@ -204,3 +204,26 @@ sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
 }
+
+sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<ReportEntity, string>
+{
+    public override void Configure(EntityTypeBuilder<ReportEntity> builder)
+    {
+        base.Configure(builder);
+        builder.ToTable($"{Globals.TABLE_PREFIX}report"); // change table name if needed
+        builder.Property(e => e.Id).HasColumnName("report_id");
+        builder.Property(e => e.Type).HasColumnName("report_type");
+        builder.Property(e => e.PeriodStart).HasColumnName("report_period_start");
+        builder.Property(e => e.Period).HasColumnName("report_period");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfilio_id");
+        builder.Property(e => e.ItemCode).HasColumnName("item_code");
+        builder.Property(e => e.Quantity).HasColumnName("report_quantity");
+        builder.Property(e => e.Cost).HasColumnName("item_cost");
+        builder.Property(e => e.OpenValue).HasColumnName("open_value");
+        builder.Property(e => e.CloseValue).HasColumnName("close_value");
+        builder.Property(e => e.IsFinal).HasColumnName("is_final");
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at");
+        builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
+    }
+}
