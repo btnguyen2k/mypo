@@ -30,7 +30,14 @@ public partial class MyPortfolioAdd : BasePage
 
     private void BtnClickCancel()
     {
-        NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
+        if (string.IsNullOrEmpty(ParentId))
+        {
+            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
+        }
+        else
+        {
+            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", ParentId, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private async Task BtnClickSaveAndOpen()
