@@ -17,6 +17,8 @@ public partial class MyPortfolioDetails : BasePage
     public string PortfolioId { get; set; } = string.Empty;
     private PortfolioResp? SelectedPortfolio { get; set; }
 
+    private Dictionary<string, PortfolioResp> PortfoliosMap { get; set; } = [];
+
     private IEnumerable<MarketDefResp>? Markets { get; set; }
     private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
     private IEnumerable<AssetResp>? Assets { get; set; }
@@ -156,11 +158,20 @@ public partial class MyPortfolioDetails : BasePage
             return null;
         }
 
-        var myPortfolioMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
-        if (!myPortfolioMap.TryGetValue(id, out var portfolio))
+        PortfoliosMap = (apiRespPortfolio.Data ?? []).ToDictionary(p => p.Id);
+        if (!PortfoliosMap.TryGetValue(id, out var portfolio))
         {
             ShowAlert("danger", $"Portfolio '{id}' not found.");
             return null;
+        }
+
+        // build the tree so container portfolios have their child portfolios populated
+        PortfolioUtils.BuildPortfolioTree(apiRespPortfolio.Data ?? []);
+
+        if (portfolio.Metadata?.IsContainer ?? false)
+        {
+            // container portfolios have no assets/transactions of their own: skip loading them
+            return portfolio;
         }
 
         ShowAlert("info", "Loading portfolio buy/sell transactions, please wait...");
@@ -268,16 +279,18 @@ public partial class MyPortfolioDetails : BasePage
         SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, await GetAuthTokenAsync());
         if (SelectedPortfolio == null) return;
 
-        // var symbolsList = Assets?.Select(a => $"{a.ItemCode}:{a.MarketId}").ToList() ?? [];
-        var symbolsList = Assets?.Select(a =>
+        if (!(SelectedPortfolio.Metadata?.IsContainer ?? false))
         {
-            var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
-            return $"{market?.Code ?? string.Empty}:{a.ItemCode}";
-        }).Distinct().ToList() ?? [];
-        SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
-        var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-        taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
-        taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
+            var symbolsList = Assets?.Select(a =>
+            {
+                var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+                return $"{market?.Code ?? string.Empty}:{a.ItemCode}";
+            }).Distinct().ToList() ?? [];
+            SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
+            var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
+            taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
+            taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
+        }
 
         HideUI = false;
 
@@ -304,6 +317,22 @@ public partial class MyPortfolioDetails : BasePage
 
     [Inject]
     private IJSRuntime JS { get; set; } = default!;
+
+    private void BtnClickOpenPortfolio(string pid)
+    {
+        NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
+        InitializePage();
+    }
+
+    private void BtnClickCreatePortfolio()
+    {
+        NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD}?parentId={PortfolioId}");
+    }
+
+    private MarketDefResp? DefaultMarket(PortfolioResp p)
+    {
+        return Markets?.FirstOrDefault(m => m.Id.Equals(p.Metadata?.DefaultMarketId ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+    }
 
     private async void SwitchToSavedTab()
     {
