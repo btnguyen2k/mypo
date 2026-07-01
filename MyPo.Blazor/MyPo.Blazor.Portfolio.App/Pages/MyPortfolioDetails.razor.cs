@@ -329,6 +329,13 @@ public partial class MyPortfolioDetails : BasePage
         NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD}?parentId={PortfolioId}");
     }
 
+    private bool ShowContainerPreferences { get; set; } = false;
+
+    private void ToggleContainerPreferences()
+    {
+        ShowContainerPreferences = !ShowContainerPreferences;
+    }
+
     private MarketDefResp? DefaultMarket(PortfolioResp p)
     {
         return Markets?.FirstOrDefault(m => m.Id.Equals(p.Metadata?.DefaultMarketId ?? string.Empty, StringComparison.OrdinalIgnoreCase));

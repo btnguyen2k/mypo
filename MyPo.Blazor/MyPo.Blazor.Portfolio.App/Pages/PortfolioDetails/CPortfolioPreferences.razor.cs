@@ -65,6 +65,7 @@ public partial class CPortfolioPreferences : CBase
 
         // Preserve all existing metadata fields (totals, report markers, etc.) and only update preferences.
         var metadata = Portfolio.Metadata ?? new PortfolioMetadata();
+        var oldPref = metadata.IsContainer;
         metadata.IsContainer = IsContainer;
         metadata.FirstDayOfWeek = FirstDayOfWeek;
         metadata.FiscalYearStartMonth = FiscalYearStartMonth;
@@ -84,6 +85,11 @@ public partial class CPortfolioPreferences : CBase
                 Portfolio.Metadata = resp.Data.Metadata;
             }
             ShowAlert("success", "Portfolio preferences saved successfully!");
+            if (oldPref != IsContainer)
+            {
+                // If the container preference changed, reload the portfolio to reflect the change in the UI.
+                NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+            }
         }
 
         Saving = false;

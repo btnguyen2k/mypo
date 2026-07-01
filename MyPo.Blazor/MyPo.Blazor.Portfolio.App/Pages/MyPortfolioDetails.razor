@@ -50,12 +50,26 @@
                         if (SelectedPortfolio?.Metadata?.IsContainer ?? false)
                         {
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><BIcon icon="bi-diagram-3" extraClassName="me-1" />Child Portfolios</h5>
-                                <button class="btn btn-outline-primary btn-sm" @onclick="BtnClickCreatePortfolio">
-                                    <BIcon icon="bi-plus-lg" extraClassName="me-1" />Create portfolio
-                                </button>
+                                <h5 class="mb-0"><BIcon icon="bi-diagram-3" extraClassName="me-1" />@(ShowContainerPreferences ? "Container Preferences" : "Child Portfolios")</h5>
+                                <div class="d-flex gap-2">
+                                    <button class="btn @(ShowContainerPreferences?"btn-primary":"btn-outline-primary") btn-sm" @onclick="ToggleContainerPreferences">
+                                        <BIcon icon="bi-sliders" extraClassName="me-1" />Preferences
+                                    </button>
+                                    @if (!ShowContainerPreferences)
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="BtnClickCreatePortfolio">
+                                            <BIcon icon="bi-plus-lg" extraClassName="me-1" />Create portfolio
+                                        </button>
+                                    }
+                                </div>
                             </div>
-                            @if (SelectedPortfolio.Children == null || !SelectedPortfolio.Children.Any())
+                            @if (ShowContainerPreferences)
+                            {
+                                <CPortfolioPreferences
+                                    Portfolio="@(SelectedPortfolio)"
+                                    Markets="@(Markets)" />
+                            }
+                            else if (SelectedPortfolio.Children == null || !SelectedPortfolio.Children.Any())
                             {
                                 <div class="text-center text-muted py-5">
                                     <BIcon icon="bi-briefcase" extraClassName="fs-1" />
