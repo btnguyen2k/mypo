@@ -8,3 +8,4 @@
 - feat: Portfolio reports.
 - impr(UI): Rework Portfolio Details page for inactive portfolios.
 - patch: MyPortfolioAdd page accepts new query parameter parentId.
+- impr(UX): Reorder returned TxSettlements list.

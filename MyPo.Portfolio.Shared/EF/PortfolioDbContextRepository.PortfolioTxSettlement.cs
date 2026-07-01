@@ -169,7 +169,7 @@ public sealed partial class PortfolioDbContextRepository
     {
         return await TxSettlementStore.AsNoTracking()
             .Where(rr => rr.PortfolioId == portfolioId).Where(rr => rr.Status != TxSettlementEntity.STATUS_ARCHIVED)
-            .OrderByDescending(rr => rr.TxTime)
+            .OrderByDescending(rr => rr.TxTime).OrderBy(rr => rr.RefItemCode).OrderBy(rr => rr.TxType)
             .ToListAsync(cancellationToken);
     }
 
