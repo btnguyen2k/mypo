@@ -27,9 +27,48 @@
             <a href="#" @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(parent.Id)">@(parent.Name)</a>
         </li>
     }
-    <li class="breadcrumb-item active">
-        <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
-    </li>
+    @if (!HideUI && SelectedPortfolio is not null)
+    {
+        <li class="breadcrumb-item active">
+            <div class="dropdown d-inline-block">
+                <a class="dropdown-toggle text-decoration-none" href="#" role="button"
+                    data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>
+                    @SelectedPortfolio.Name
+                </a>
+                <ul class="dropdown-menu">
+                    @foreach (var (p, level) in FlattenPortfolioTree())
+                    {
+                        var isCurrent = string.Equals(p.Id, SelectedPortfolio.Id, StringComparison.Ordinal);
+                        <li>
+                            <a class="dropdown-item @(isCurrent?"active":"")" href="#"
+                                style="padding-left:@($"{0.5 + level * 1.25}rem")"
+                                @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(p.Id)">
+                                @if (p.Metadata?.IsContainer ?? false)
+                                {
+                                    <BIcon icon="bi-diagram-3" extraClassName="text-muted me-1" />
+                                }
+                                @if (isCurrent)
+                                {
+                                    <BIcon icon="bi-check-lg" extraClassName="me-1" />
+                                }
+                                @p.Name
+                                @if (!p.IsActive)
+                                {
+                                    <span class="text-muted ms-1" title="Inactive"><BIcon icon="bi-slash-circle" /></span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </li>
+    }
+    else
+    {
+        <li class="breadcrumb-item active">
+            <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
+        </li>
+    }
 </SectionContent>
 
 <AuthorizeView>

@@ -19,6 +19,32 @@ public partial class MyPortfolioDetails : BasePage
 
     private Dictionary<string, PortfolioResp> PortfoliosMap { get; set; } = [];
 
+    // root portfolios (with Children populated) used to render the breadcrumb jump-to dropdown as a tree
+    private IEnumerable<PortfolioResp> PortfolioRoots { get; set; } = [];
+
+    // depth-first flatten of the portfolio tree into (portfolio, indent-level) pairs, ordered by name
+    private IEnumerable<(PortfolioResp Portfolio, int Level)> FlattenPortfolioTree()
+    {
+        IEnumerable<(PortfolioResp, int)> Walk(PortfolioResp p, int level)
+        {
+            yield return (p, level);
+            foreach (var child in p.Children ?? [])
+            {
+                foreach (var descendant in Walk(child, level + 1))
+                {
+                    yield return descendant;
+                }
+            }
+        }
+        foreach (var root in PortfolioRoots)
+        {
+            foreach (var node in Walk(root, 0))
+            {
+                yield return node;
+            }
+        }
+    }
+
     private IEnumerable<MarketDefResp>? Markets { get; set; }
     private IEnumerable<TxBuySellResp>? TxBuySells { get; set; }
     private IEnumerable<AssetResp>? Assets { get; set; }
@@ -166,7 +192,7 @@ public partial class MyPortfolioDetails : BasePage
         }
 
         // build the tree so container portfolios have their child portfolios populated
-        PortfolioUtils.BuildPortfolioTree(apiRespPortfolio.Data ?? []);
+        PortfolioRoots = PortfolioUtils.BuildPortfolioTree(apiRespPortfolio.Data ?? []);
 
         if (portfolio.Metadata?.IsContainer ?? false)
         {
@@ -320,6 +346,11 @@ public partial class MyPortfolioDetails : BasePage
 
     private void BtnClickOpenPortfolio(string pid)
     {
+        if (string.Equals(pid, PortfolioId, StringComparison.OrdinalIgnoreCase))
+        {
+            // already viewing this portfolio: nothing to do
+            return;
+        }
         NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase));
         InitializePage();
     }
