@@ -1,11 +1,11 @@
 ﻿/* Datatable utilities */
 
 export function MakeDatatable(elId) {
-    const el = document.getElementById(elId);
-    console.log("[DEBUG] MakeDatatable:", elId);
-    console.log("[DEBUG] MakeDatatable:", el);
+    const elIdNoHash = elId.replace("#", "");
+    const elIdHash = "#" + elIdNoHash;
+    const el = document.getElementById(elIdNoHash);
     if (!el) return;
-    let table = new DataTable(elId, {
+    let table = new DataTable(elIdHash, {
         // options
         info: true,
         pageLength: 20,

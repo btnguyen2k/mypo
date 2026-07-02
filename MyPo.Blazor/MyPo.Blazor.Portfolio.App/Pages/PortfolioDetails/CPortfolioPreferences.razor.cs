@@ -8,8 +8,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioPreferences : CBase
 {
-    private const int ALERT_AUTO_CLOSE_MS = 15000;
-
     [Parameter]
     public PortfolioResp? Portfolio { get; set; }
 
