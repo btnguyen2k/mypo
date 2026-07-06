@@ -212,10 +212,7 @@ sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<Repo
         base.Configure(builder);
         builder.ToTable($"{Globals.TABLE_PREFIX}report"); // change table name if needed
         builder.Property(e => e.Id).HasColumnName("report_id");
-        builder.Property(e => e.Type).HasConversion(
-            v => v.ToString(),
-            v => Enum.Parse<ReportType>(v, true)
-        ).HasColumnName("report_type");
+        builder.Property(e => e.Type).HasConversion<string>().HasColumnName("report_type");
         builder.Property(e => e.PeriodStart).HasColumnName("report_period_start");
         builder.Property(e => e.PeriodLabel).HasColumnName("report_period");
         builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
