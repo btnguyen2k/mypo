@@ -1,9 +1,12 @@
 ﻿using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.EF;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Buffers.Binary;
 using System.Text.Json;
 using MyPo.Shared.Helpers;
+using Ddth.Signum;
 
 namespace MyPo.Portfolio.Shared.EF;
 
@@ -25,11 +28,25 @@ sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<P
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<PortfolioMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<PortfolioMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(PortfolioMetadata? a, PortfolioMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(PortfolioMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static PortfolioMetadata? MetadataSnapshot(PortfolioMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<PortfolioMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfiguration<PortfolioPlanEntity, string>
@@ -48,11 +65,25 @@ sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfigurati
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<PortfolioPlanMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(PortfolioPlanMetadata? a, PortfolioPlanMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(PortfolioPlanMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static PortfolioPlanMetadata? MetadataSnapshot(PortfolioPlanMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class TxBuySellEntityTypeConfiguration : GenericEntityTypeConfiguration<TxBuySellEntity, string>
@@ -99,11 +130,25 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<AssetMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<AssetMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(AssetMetadata? a, AssetMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(AssetMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static AssetMetadata? MetadataSnapshot(AssetMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<AssetMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class TxSettlementEntityTypeConfiguration : GenericEntityTypeConfiguration<TxSettlementEntity, string>
@@ -149,11 +194,25 @@ sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfigurat
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<SymbolAnalysisMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(SymbolAnalysisMetadata? a, SymbolAnalysisMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(SymbolAnalysisMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static SymbolAnalysisMetadata? MetadataSnapshot(SymbolAnalysisMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class CheckpointEntityTypeConfiguration : GenericEntityTypeConfiguration<CheckpointEntity, string>
@@ -174,11 +233,25 @@ sealed class CheckpointEntityTypeConfiguration : GenericEntityTypeConfiguration<
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<CheckpointMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<CheckpointMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(CheckpointMetadata? a, CheckpointMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(CheckpointMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static CheckpointMetadata? MetadataSnapshot(CheckpointMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<CheckpointMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration<MarketEventEntity, string>
@@ -198,11 +271,25 @@ sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonHelper.SafeDeserialize<MarketEventMetadata>(v)
             )
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<MarketEventMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(MarketEventMetadata? a, MarketEventMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(MarketEventMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static MarketEventMetadata? MetadataSnapshot(MarketEventMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<MarketEventMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
 
 sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<ReportEntity, string>

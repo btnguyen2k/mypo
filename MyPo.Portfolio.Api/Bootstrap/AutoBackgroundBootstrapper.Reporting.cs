@@ -60,7 +60,7 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             }
             try
             {
-                var delaySecs = Random.Shared.Next(5 * 60, 10 * 60);
+                var delaySecs = Random.Shared.Next(60 * 60, 90 * 60);
                 Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
                 await Task.Delay(delaySecs * 1000, cancellationToken);
             }
@@ -99,12 +99,15 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
         var market = Globals.MarketsMap.TryGetValue(metadata.DefaultMarketId?.ToUpper() ?? string.Empty, out var mkt) ? mkt : null;
         var tz = market?.TZ ?? TimeZoneInfo.Utc;
 
+        // WEEKLY report, covering 1 year
         for (var count = 0; count < 53; count++)
         {
+            portfolio.Metadata!.LastWeeklyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             var (isFinal, nextPeriodStart) = await BuildWeeklyReport(scope, portfolio, tz, cancellationToken);
             if (isFinal)
             {
                 portfolio.Metadata!.WeeklyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                Logger.LogInformation("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.WeeklyReportPeriodStartUTC);
                 var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
                 if (dbresult is null)
                 {
@@ -115,12 +118,15 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             else break;
         }
 
+        // MONTHLY report, covering 1 year
         for (var count = 0; count < 12; count++)
         {
+            portfolio.Metadata!.LastMonthlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             var (isFinal, nextPeriodStart) = await BuildMonthlyReport(scope, portfolio, tz, cancellationToken);
             if (isFinal)
             {
                 portfolio.Metadata!.MonthlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                Logger.LogInformation("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.MonthlyReportPeriodStartUTC);
                 var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
                 if (dbresult is null)
                 {
@@ -131,12 +137,15 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             else break;
         }
 
+        // QUARTERLY report, covering 1 year
         for (var count = 0; count < 4; count++)
         {
+            portfolio.Metadata!.LastQuarterlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             var (isFinal, nextPeriodStart) = await BuildQuarterlyReport(scope, portfolio, tz, cancellationToken);
             if (isFinal)
             {
                 portfolio.Metadata!.QuarterlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                Logger.LogInformation("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.QuarterlyReportPeriodStartUTC);
                 var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
                 if (dbresult is null)
                 {
@@ -147,17 +156,30 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             else break;
         }
 
+        // YEARLY report, covering 1 year
         {
+            portfolio.Metadata!.LastYearlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
             var (isFinal, nextPeriodStart) = await BuildYearlyReport(scope, portfolio, tz, cancellationToken);
             if (isFinal)
             {
                 portfolio.Metadata!.YearlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                Logger.LogInformation("Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.YearlyReportPeriodStartUTC);
                 var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
                 if (dbresult is null)
                 {
                     Logger.LogWarning("Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
                     throw new Exception($"Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
                 }
+            }
+        }
+
+        // finally update the portfolio's last-report-timestamp
+        {
+            var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+            if (dbresult is null)
+            {
+                Logger.LogWarning("Updating portfolio metadata for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+                throw new Exception($"Updating portfolio metadata for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
             }
         }
     }
