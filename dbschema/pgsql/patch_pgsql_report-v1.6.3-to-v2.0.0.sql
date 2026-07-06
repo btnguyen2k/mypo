@@ -1,8 +1,4 @@
-﻿-- Database: PostgreSQL (min version 15)
-
-DROP TABLE IF EXISTS mypo_report;
-
-CREATE TABLE mypo_report (
+﻿CREATE TABLE mypo_report (
     report_id varchar(48) NOT NULL,
     report_type varchar(16) NOT NULL,           -- WEEKLY, MONTHLY, QUARTERLY, YEARLY
     report_period_start varchar(10) NOT NULL,   -- YYYY-MM-DD, mark the start date of the report period,

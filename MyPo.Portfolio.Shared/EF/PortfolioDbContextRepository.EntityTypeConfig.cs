@@ -212,12 +212,16 @@ sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<Repo
         base.Configure(builder);
         builder.ToTable($"{Globals.TABLE_PREFIX}report"); // change table name if needed
         builder.Property(e => e.Id).HasColumnName("report_id");
-        builder.Property(e => e.Type).HasColumnName("report_type");
+        builder.Property(e => e.Type).HasConversion(
+            v => v.ToString(),
+            v => Enum.Parse<ReportType>(v, true)
+        ).HasColumnName("report_type");
         builder.Property(e => e.PeriodStart).HasColumnName("report_period_start");
-        builder.Property(e => e.Period).HasColumnName("report_period");
-        builder.Property(e => e.PortfolioId).HasColumnName("portfilio_id");
+        builder.Property(e => e.PeriodLabel).HasColumnName("report_period");
+        builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
         builder.Property(e => e.ItemCode).HasColumnName("item_code");
-        builder.Property(e => e.Quantity).HasColumnName("report_quantity");
+        builder.Property(e => e.TxType).HasColumnName("tx_type");
+        builder.Property(e => e.Quantity).HasColumnName("item_quantity");
         builder.Property(e => e.Cost).HasColumnName("item_cost");
         builder.Property(e => e.OpenValue).HasColumnName("open_value");
         builder.Property(e => e.CloseValue).HasColumnName("close_value");

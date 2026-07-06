@@ -1,5 +1,7 @@
-﻿using Ddth.Utilities.Tempus;
+﻿using System.Text.Json;
+using Ddth.Utilities.Tempus;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
@@ -58,7 +60,7 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             }
             try
             {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
+                var delaySecs = Random.Shared.Next(5 * 60, 10 * 60);
                 Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
                 await Task.Delay(delaySecs * 1000, cancellationToken);
             }
@@ -68,6 +70,7 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
 
     private async Task BuildReportForPortfolio(IServiceScope scope, PortfolioEntity portfolio, CancellationToken cancellationToken)
     {
+        var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var metadata = portfolio.Metadata;
 
         // skip container portfolios, inactive portfolios, or portfolios with incomplete reporting config
@@ -96,58 +99,105 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
         var market = Globals.MarketsMap.TryGetValue(metadata.DefaultMarketId?.ToUpper() ?? string.Empty, out var mkt) ? mkt : null;
         var tz = market?.TZ ?? TimeZoneInfo.Utc;
 
-        await BuildWeeklyReport(scope, portfolio, tz, cancellationToken);
-        await BuildMonthlyReport(scope, portfolio, tz, cancellationToken);
-        await BuildQuarterlyReport(scope, portfolio, tz, cancellationToken);
-        await BuildYearlyReport(scope, portfolio, tz, cancellationToken);
+        for (var count = 0; count < 53; count++)
+        {
+            var (isFinal, nextPeriodStart) = await BuildWeeklyReport(scope, portfolio, tz, cancellationToken);
+            if (isFinal)
+            {
+                portfolio.Metadata!.WeeklyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+                if (dbresult is null)
+                {
+                    Logger.LogWarning("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+                    throw new Exception($"Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+                }
+            }
+            else break;
+        }
+
+        for (var count = 0; count < 12; count++)
+        {
+            var (isFinal, nextPeriodStart) = await BuildMonthlyReport(scope, portfolio, tz, cancellationToken);
+            if (isFinal)
+            {
+                portfolio.Metadata!.MonthlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+                if (dbresult is null)
+                {
+                    Logger.LogWarning("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+                    throw new Exception($"Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+                }
+            }
+            else break;
+        }
+
+        for (var count = 0; count < 4; count++)
+        {
+            var (isFinal, nextPeriodStart) = await BuildQuarterlyReport(scope, portfolio, tz, cancellationToken);
+            if (isFinal)
+            {
+                portfolio.Metadata!.QuarterlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+                if (dbresult is null)
+                {
+                    Logger.LogWarning("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+                    throw new Exception($"Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+                }
+            }
+            else break;
+        }
+
+        {
+            var (isFinal, nextPeriodStart) = await BuildYearlyReport(scope, portfolio, tz, cancellationToken);
+            if (isFinal)
+            {
+                portfolio.Metadata!.YearlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+                if (dbresult is null)
+                {
+                    Logger.LogWarning("Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+                    throw new Exception($"Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+                }
+            }
+        }
     }
 
-    private Task<bool> BuildWeeklyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
+    private Task<(bool, DateTimeOffset)> BuildWeeklyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
         => BuildReportForPeriodType(scope, portfolio, tz, ReportType.WEEKLY, portfolio.Metadata!.WeeklyReportPeriodStart, cancellationToken);
 
-    private Task<bool> BuildMonthlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
+    private Task<(bool, DateTimeOffset)> BuildMonthlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
         => BuildReportForPeriodType(scope, portfolio, tz, ReportType.MONTHLY, portfolio.Metadata!.MonthlyReportPeriodStart, cancellationToken);
 
-    private Task<bool> BuildQuarterlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
+    private Task<(bool, DateTimeOffset)> BuildQuarterlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
         => BuildReportForPeriodType(scope, portfolio, tz, ReportType.QUARTERLY, portfolio.Metadata!.QuarterlyReportPeriodStart, cancellationToken);
 
-    private Task<bool> BuildYearlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
+    private Task<(bool, DateTimeOffset)> BuildYearlyReport(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, CancellationToken cancellationToken)
         => BuildReportForPeriodType(scope, portfolio, tz, ReportType.YEARLY, portfolio.Metadata!.YearlyReportPeriodStart, cancellationToken);
 
     /// <summary>
-    /// Determines the next report period (of the given <paramref name="type"/>) due for a portfolio, taking
+    /// Determines the next report period (of the given <paramref name="reportType"/>) due for a portfolio, taking
     /// the portfolio's timezone, first-day-of-week and fiscal-year-start-month into account, then logs it.
     /// </summary>
     /// <param name="lastPeriodStartTimestamp">
-    /// Unix-seconds marker of the last reported period start for this <paramref name="type"/> (0 when never reported).
+    /// Unix-seconds marker of the last reported period start for this <paramref name="reportType"/> (0 when never reported).
     /// </param>
     /// <remarks>
     /// Status rules for the next period (relative to NOW in the portfolio's timezone):
     /// NOW &lt; period start =&gt; nothing to do; period start &lt;= NOW &lt;= period end =&gt; not-final; NOW &gt; period end =&gt; final.
     /// </remarks>
-    private async Task<bool> BuildReportForPeriodType(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, ReportType type, long lastPeriodStartTimestamp, CancellationToken cancellationToken)
+    private async Task<(bool, DateTimeOffset)> BuildReportForPeriodType(IServiceScope scope, PortfolioEntity portfolio, TimeZoneInfo tz, ReportType reportType, long lastPeriodStartTimestamp, CancellationToken cancellationToken)
     {
         var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var metadata = portfolio.Metadata!;
-        // if (metadata is null)
-        // {
-        //     Logger.LogWarning("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': metadata is null.", type, portfolio.Id, portfolio.Name);
-        //     return false;
-        // }
         var firstDayOfWeek = metadata.FirstDayOfWeek!;
         var fiscalStartMonth = metadata.FiscalYearStartMonth!;
-        // if (firstDayOfWeek is null || fiscalStartMonth is null)
-        // {
-        //     Logger.LogWarning("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': FirstDayOfWeek or FiscalYearStartMonth is not set.", type, portfolio.Id, portfolio.Name);
-        //     return false;
-        // }
 
         DateTimeOffset nextPeriodStartLocal;
         if (lastPeriodStartTimestamp > 0)
         {
             // already reported before: the next period is the one right after the last reported period
             var lastStartLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.FromUnixTimeSeconds(lastPeriodStartTimestamp), tz);
-            nextPeriodStartLocal = NextPeriodStart(type, lastStartLocal);
+            nextPeriodStartLocal = NextPeriodStart(reportType, lastStartLocal);
         }
         else
         {
@@ -155,37 +205,45 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             var firstSettlement = await portfolioRepository.GetFirstTxSettlementByPortfolioId(portfolio.Id, cancellationToken);
             if (firstSettlement is null)
             {
-                Logger.LogInformation("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': no settlement record found.", type, portfolio.Id, portfolio.Name);
-                return false;
+                Logger.LogInformation("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': no settlement record found.", reportType, portfolio.Id, portfolio.Name);
+                return (false, DateTimeOffset.MinValue);
             }
             var firstSettlementLocal = TimeZoneInfo.ConvertTime(firstSettlement.TxTime, tz);
-            nextPeriodStartLocal = StartOfPeriod(type, firstSettlementLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            nextPeriodStartLocal = StartOfPeriod(reportType, firstSettlementLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
         }
 
-        var periodEndLocal = NextPeriodStart(type, nextPeriodStartLocal).AddDays(-1);
+        var periodEndLocal = NextPeriodStart(reportType, nextPeriodStartLocal).AddDays(-1);
         var nowLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tz).Date;
 
-        Logger.LogInformation("Next {reportType} report period for portfolio '{portfolioId}: {portfolioName}': {periodStart:yyyy-MM-dd} - {periodEnd:yyyy-MM-dd}.",
-            type, portfolio.Id, portfolio.Name, nextPeriodStartLocal, periodEndLocal);
+        Logger.LogInformation("Next {reportType} report period for portfolio '{portfolioId}: {portfolioName}': {periodStart:yyyy-MM-dd HH:mm zzz} - {periodEnd:yyyy-MM-dd HH:mm zzz}.",
+            reportType, portfolio.Id, portfolio.Name, nextPeriodStartLocal, periodEndLocal);
 
         if (nowLocal < nextPeriodStartLocal)
         {
             // the next report period has not started yet: nothing to report
-            Logger.LogInformation("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': the next period has not started yet.", type, portfolio.Id, portfolio.Name);
-            return false;
+            Logger.LogInformation("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': the next period has not started yet.", reportType, portfolio.Id, portfolio.Name);
+            return (false, DateTimeOffset.MinValue);
         }
 
-        // period start <= NOW <= period end => the period is still in progress => the report is not final yet;
-        // NOW > period end => the period is over => the report is final.
-        var isFinal = nowLocal > periodEndLocal;
-        Logger.LogInformation("{reportType} report for portfolio '{portfolioId}: {portfolioName}' is {reportStatus}.", type, portfolio.Id, portfolio.Name, isFinal ? "final" : "not-final");
+        var pnlSummaryList = await portfolioRepository.GetPnlSummaryForPortfolioForPeriodAsync(portfolio.Id, nextPeriodStartLocal, periodEndLocal, cancellationToken);
+        foreach (var pnlSummary in pnlSummaryList)
+        {
+            var reports = ReportUtils.BuildReportEntries(pnlSummary, Globals.Markets, reportType, nextPeriodStartLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            var dbresult = await portfolioRepository.SaveReportsAsync(reports, cancellationToken);
+            if (!dbresult)
+            {
+                Logger.LogWarning("P&L summary for {reportType} report period for portfolio '{portfolioId}: {portfolioName}': {pnlSummary}.", reportType, portfolio.Id, portfolio.Name, JsonSerializer.Serialize(pnlSummary));
+                Logger.LogWarning("Saving reports for {reportType} report period for portfolio '{portfolioId}: {portfolioName}' failed.", reportType, portfolio.Id, portfolio.Name);
+                throw new Exception($"Saving reports for {reportType} report period for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+            }
+        }
 
-        // TODO: compute the period's P&L summary via IPortfolioRepository.GetPnlSummaryForPortfolioForPeriodAsync
-        // TODO: build & persist the report entity (carry the final / not-final status)
-        // TODO: when the report is final, advance the portfolio's last-report timestamp and period-start markers,
-        //       then persist the portfolio via IPortfolioRepository.UpdatePortfolioAsync
-        // for now, stop after calculating & logging the next report period
-        return false;
+        // period start <= NOW < period end ==> the period is still in progress => the report is not final yet;
+        // period end <= NOW ==> the period is over => the report is final.
+        var isFinal = periodEndLocal <= nowLocal;
+        Logger.LogInformation("{reportType} report for portfolio '{portfolioId}: {portfolioName}' is {reportStatus}.", reportType, portfolio.Id, portfolio.Name, isFinal ? "final" : "not-final");
+
+        return (isFinal, nextPeriodStartLocal);
     }
 
     /// <summary>

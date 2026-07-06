@@ -10,3 +10,4 @@
 - patch: MyPortfolioAdd page accepts new query parameter parentId.
 - impr(UX): Reorder returned TxSettlements list.
 - impr(UI): User can now quickly switch to another portfolio from the MyPortfolioDetails page.
+- fix(UI): Fix an error when Datatables is not loaded/initialized properly.
