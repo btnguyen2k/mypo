@@ -112,6 +112,7 @@ public interface IFinHubClient
     public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_OVERVIEW = "/stocks/{symbol}/overview";
     public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_INFO = "/stocks/{symbol}/info";
     public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_QUOTE_AT = "/stocks/{symbol}/quote_at/{date}";
+    public const string API_FINHUB_ENDPOINT_STOCK_SYMBOL_QUOTE_HISTORY = "/stocks/{symbol}/history";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_ENDPOINT_STOCK_QUOTES"/> to get stock quotes for the given symbols.
@@ -153,6 +154,17 @@ public interface IFinHubClient
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
     /// <returns></returns>
     public Task<ApiResp<HistoryPoint>> GetStockQuoteAtDateAsync(string symbol, string date, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_ENDPOINT_STOCK_SYMBOL_QUOTE_HISTORY"/> to get historical price data of a stock symbol for the past number of days.
+    /// </summary>
+    /// <param name="symbol">The symbol to get quote for.</param>
+    /// <param name="days">The number of past days to get historical data for, optional, default is 100.</param>
+    /// <param name="baseUrl"></param>
+    /// param name="httpClient"></param>
+    /// param name="cancellationToken"></param>
+    /// <returns></returns>
+    public Task<ApiResp<IEnumerable<HistoryPoint>>> GetStockQuoteHistoryAsync(string symbol, int? days = 100, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /*----------------------------------------------------------------------*/
 

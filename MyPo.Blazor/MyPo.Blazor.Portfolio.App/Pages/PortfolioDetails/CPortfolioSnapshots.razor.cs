@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
@@ -9,14 +8,14 @@ namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
 public partial class CPortfolioSnapshots : CBase
 {
-    public sealed class ReportHoldingRow
+    public sealed class ReportItemRow
     {
-        public string Symbol { get; set; } = string.Empty;
+        public string ItemCode { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public decimal OpenValue { get; set; }
-        public decimal CloseValue { get; set; }
-        public decimal Pnl => CloseValue - OpenValue;
-        public decimal PnlPct => OpenValue != 0 ? Pnl / OpenValue : 0;
+        public string TxType { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public decimal Cost { get; set; }
+        public bool IsFinal { get; set; }
     }
 
     public sealed class PortfolioReport
@@ -26,12 +25,21 @@ public partial class CPortfolioSnapshots : CBase
         public string Scope { get; set; } = string.Empty;
         public DateTime GeneratedUtc { get; set; }
         public string Currency { get; set; } = string.Empty;
-        public decimal OpeningValue { get; set; }
-        public decimal ClosingValue { get; set; }
-        public decimal NetPnl => ClosingValue - OpeningValue;
-        public decimal NetPnlPct => OpeningValue != 0 ? NetPnl / OpeningValue : 0;
-        public IReadOnlyList<ReportHoldingRow> Holdings { get; set; } = [];
-        public string Narrative { get; set; } = string.Empty;
+
+        /// <summary>Per-symbol entries (ItemCode in EXCHANGE:SYMBOL form); rendered as a table.</summary>
+        public IReadOnlyList<ReportItemRow> ItemRows { get; set; } = [];
+
+        /// <summary>Aggregated whole-portfolio entries (ItemCode == "*"); rendered as a chart.</summary>
+        public IReadOnlyList<ReportItemRow> AggregateRows { get; set; } = [];
+
+        /// <summary>Chart.js configuration for the aggregate section, or null when there is no aggregate.</summary>
+        public object? AggregateChartConfig { get; set; }
+
+        public bool HasItems => ItemRows.Count > 0;
+        public bool HasAggregate => AggregateRows.Count > 0;
+
+        public bool IsFinal => (AggregateRows.Count > 0 || ItemRows.Count > 0)
+            && AggregateRows.Concat(ItemRows).All(r => r.IsFinal);
     }
 
     [Parameter]
@@ -42,12 +50,12 @@ public partial class CPortfolioSnapshots : CBase
 
     private ReportType SelectedType { get; set; } = ReportType.WEEKLY;
 
-    private IReadOnlyList<string> AvailablePeriods { get; set; } = [];
+    private IReadOnlyList<ReportPeriod> AvailablePeriods { get; set; } = [];
     private string SelectedPeriodKey { get; set; } = string.Empty;
 
     // Report periods rarely change, so they are fetched once per portfolio (for every report type)
     // and cached here; switching report type then just reads from this cache.
-    private readonly Dictionary<ReportType, IReadOnlyList<string>> _periodsByType = new();
+    private readonly Dictionary<ReportType, IReadOnlyList<ReportPeriod>> _periodsByType = new();
 
     private IReadOnlyList<AssetResp> Symbols { get; set; } = [];
 
@@ -80,7 +88,7 @@ public partial class CPortfolioSnapshots : CBase
         {
             return true;
         }
-        ShowAlert("info", "Loading portfolio symbols from server...");
+        ShowAlert("info", "Loading portfolio symbols...");
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         var resp = await apiClient.GetMyPortfolioAssetsAsync(Portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
         if (!resp.IsSuccess)
@@ -108,7 +116,7 @@ public partial class CPortfolioSnapshots : CBase
         {
             return true;
         }
-        ShowAlert("info", "Loading report periods from server...");
+        ShowAlert("info", "Loading report periods...");
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         var authToken = await GetAuthTokenAsync();
         foreach (var type in Enum.GetValues<ReportType>())
@@ -154,125 +162,148 @@ public partial class CPortfolioSnapshots : CBase
     private void ApplyPeriodsForSelectedType()
     {
         AvailablePeriods = _periodsByType.TryGetValue(SelectedType, out var periods) ? periods : [];
-        SelectedPeriodKey = AvailablePeriods.FirstOrDefault() ?? string.Empty;
+        SelectedPeriodKey = AvailablePeriods.FirstOrDefault()?.Start ?? string.Empty;
     }
 
-    private void BtnClickGenerate()
+    private async Task BtnClickGenerate()
     {
+        if (Portfolio is null)
+        {
+            return;
+        }
         if (string.IsNullOrEmpty(SelectedPeriodKey))
         {
             ShowAlert("warning", "Please select a report period first.");
             return;
         }
         Generating = true;
+        CurrentReport = null;
         CloseAlert();
-        CurrentReport = BuildMockReport(SelectedType, SelectedPeriodKey, SelectedSymbol);
+
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var resp = await apiClient.GetReportSnapshotAsync(
+            Portfolio.Id, SelectedType, SelectedPeriodKey, SelectedSymbol,
+            await GetAuthTokenAsync(), ApiBaseUrl);
         Generating = false;
+
+        if (!resp.IsSuccess)
+        {
+            ShowAlert("error", $"Failed to generate report: {resp.Message}");
+            return;
+        }
+
+        var entries = resp.Data?.ToList() ?? [];
+        if (entries.Count == 0)
+        {
+            ShowAlert("info", "No report data is available for the selected period yet.");
+            return;
+        }
+
+        CurrentReport = BuildReport(SelectedType, SelectedPeriodKey, SelectedSymbol, entries);
     }
 
-    // ---------------------------------------------------------------------
-    // Mock / dummy data generators (to be replaced by the real reporting engine).
-    // ---------------------------------------------------------------------
-
-    private static readonly (string Symbol, string Name)[] MockUniverse =
-    {
-        ("HOSE:VNM", "Vietnam Dairy Products"),
-        ("HOSE:FPT", "FPT Corporation"),
-        ("HOSE:VCB", "Vietcombank"),
-        ("NASDAQ:AAPL", "Apple Inc."),
-        ("NASDAQ:MSFT", "Microsoft Corp."),
-        ("NYSE:KO", "The Coca-Cola Company"),
-    };
-
-    private PortfolioReport BuildMockReport(ReportType type, string period, string symbol)
+    /// <summary>Maps the report snapshot rows fetched from the server into the view model.</summary>
+    private PortfolioReport BuildReport(ReportType type, string periodStart, string symbol, IReadOnlyList<ReportEntity> entries)
     {
         var currency = Portfolio?.Currency ?? "USD";
-        var seed = HashCode.Combine((int)type, period, symbol, Portfolio?.Id ?? string.Empty);
-        var rnd = new Random(seed);
 
-        // Use the portfolio's real holdings when available; fall back to a demo universe otherwise.
-        var portfolioUniverse = Symbols.Count > 0
-            ? Symbols.Select(a => (Symbol: a.ItemCode, Name: a.Metadata?.CorpName ?? a.ItemCode)).ToArray()
-            : MockUniverse;
-        var universe = string.IsNullOrEmpty(symbol)
-            ? portfolioUniverse
-            : portfolioUniverse
-                .Where(x => string.Equals(x.Symbol, symbol, StringComparison.OrdinalIgnoreCase))
-                .DefaultIfEmpty((Symbol: symbol, Name: symbol))
-                .ToArray();
+        // Prefer the label the server stored on the report rows; fall back to the selected period's label.
+        var periodLabel = entries.Select(e => e.PeriodLabel).FirstOrDefault(l => !string.IsNullOrEmpty(l))
+            ?? AvailablePeriods.FirstOrDefault(p => p.Start == periodStart)?.Label
+            ?? periodStart;
 
-        var holdings = universe.Select(x =>
+        ReportItemRow Map(ReportEntity e) => new()
         {
-            var open = Math.Round((decimal)(rnd.NextDouble() * 9000 + 1000), 2);
-            // change in range roughly -9% .. +11%
-            var change = (decimal)((rnd.NextDouble() - 0.45) * 0.2);
-            var close = Math.Round(open * (1 + change), 2);
-            return new ReportHoldingRow
-            {
-                Symbol = x.Symbol,
-                Name = x.Name,
-                OpenValue = open,
-                CloseValue = close,
-            };
-        }).ToList();
+            ItemCode = e.ItemCode,
+            Name = ResolveSymbolName(e.ItemCode),
+            TxType = e.TxType,
+            Quantity = e.Metadata?.Quantity ?? 0,
+            Cost = e.Metadata?.Cost ?? 0,
+            IsFinal = e.IsFinal,
+        };
+
+        // Per-symbol entries (EXCHANGE:SYMBOL) feed the table; the aggregate ("*") entries feed the chart.
+        var itemRows = entries
+            .Where(e => !string.Equals(e.ItemCode, "*", StringComparison.Ordinal))
+            .OrderBy(e => e.ItemCode, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(e => e.TxType, StringComparer.OrdinalIgnoreCase)
+            .Select(Map)
+            .ToList();
+        var aggregateRows = entries
+            .Where(e => string.Equals(e.ItemCode, "*", StringComparison.Ordinal))
+            .OrderBy(e => e.TxType, StringComparer.OrdinalIgnoreCase)
+            .Select(Map)
+            .ToList();
 
         var report = new PortfolioReport
         {
             Type = type,
-            PeriodLabel = period,
+            PeriodLabel = periodLabel,
             Scope = string.IsNullOrEmpty(symbol) ? "Entire portfolio" : symbol,
             GeneratedUtc = DateTime.UtcNow,
             Currency = currency,
-            OpeningValue = holdings.Sum(h => h.OpenValue),
-            ClosingValue = holdings.Sum(h => h.CloseValue),
-            Holdings = holdings,
+            ItemRows = itemRows,
+            AggregateRows = aggregateRows,
         };
-        report.Narrative = BuildMockNarrative(report);
+        report.AggregateChartConfig = BuildAggregateChartConfig(report);
         return report;
+    }
+
+    /// <summary>
+    /// Builds a Chart.js bar-chart configuration summarizing the aggregated portfolio value by transaction type.
+    /// Returns null when there is no aggregate ("*") data to plot.
+    /// </summary>
+    private static object? BuildAggregateChartConfig(PortfolioReport report)
+    {
+        if (report.AggregateRows.Count == 0)
+        {
+            return null;
+        }
+        var labels = report.AggregateRows.Select(r => r.TxType).ToArray();
+        var data = report.AggregateRows.Select(r => r.Cost).ToArray();
+        return new
+        {
+            type = "bar",
+            data = new
+            {
+                labels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = $"Value by transaction type ({report.Currency})",
+                        data,
+                        backgroundColor = "rgba(50, 31, 219, 0.65)",
+                        borderColor = "#321fdb",
+                        borderWidth = 1,
+                    },
+                },
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new { legend = new { display = false } },
+                scales = new
+                {
+                    x = new { grid = new { display = false } },
+                    y = new { beginAtZero = true },
+                },
+            },
+        };
+    }
+
+    /// <summary>Resolves a friendly name for an item code, using the loaded portfolio symbols when available.</summary>
+    private string ResolveSymbolName(string itemCode)
+    {
+        if (string.Equals(itemCode, "*", StringComparison.Ordinal))
+        {
+            return "Entire portfolio";
+        }
+        var asset = Symbols.FirstOrDefault(a => string.Equals(a.ItemCode, itemCode, StringComparison.OrdinalIgnoreCase));
+        return asset?.Metadata?.CorpName ?? itemCode;
     }
 
     private static string Money(decimal value, string currency)
         => $"{FormatUtils.FormatValueMaxDecimals(value, 2)} {currency}";
-
-    private static string Percent(decimal fraction)
-        => $"{FormatUtils.FormatValueMaxDecimals(fraction * 100, 2)}%";
-
-    private static string BuildMockNarrative(PortfolioReport report)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("> ⚠️ _Sample data — the reporting engine has not been implemented yet._");
-        sb.AppendLine();
-        sb.AppendLine($"**{TypeTitle(report.Type)} report** for **{report.Scope}** covering **{report.PeriodLabel}**.");
-        sb.AppendLine();
-
-        var best = report.Holdings.OrderByDescending(h => h.PnlPct).FirstOrDefault();
-        var worst = report.Holdings.OrderBy(h => h.PnlPct).FirstOrDefault();
-
-        sb.AppendLine("### Highlights");
-        sb.AppendLine();
-        sb.AppendLine($"- Opening value: **{Money(report.OpeningValue, report.Currency)}**");
-        sb.AppendLine($"- Closing value: **{Money(report.ClosingValue, report.Currency)}**");
-        sb.AppendLine($"- Net P&L: **{Money(report.NetPnl, report.Currency)}** ({Percent(report.NetPnlPct)})");
-        if (best is not null)
-        {
-            sb.AppendLine($"- 🟢 Top performer: **{best.Symbol}** ({Percent(best.PnlPct)})");
-        }
-        if (worst is not null && report.Holdings.Count > 1)
-        {
-            sb.AppendLine($"- 🔴 Laggard: **{worst.Symbol}** ({Percent(worst.PnlPct)})");
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("### Holdings breakdown");
-        sb.AppendLine();
-        sb.AppendLine("| Symbol | Name | Open | Close | P&L | P&L % |");
-        sb.AppendLine("|---|---|--:|--:|--:|--:|");
-        foreach (var h in report.Holdings.OrderByDescending(h => h.PnlPct))
-        {
-            sb.AppendLine($"| `{h.Symbol}` | {h.Name} | {Money(h.OpenValue, report.Currency)} | {Money(h.CloseValue, report.Currency)} | {Money(h.Pnl, report.Currency)} | {Percent(h.PnlPct)} |");
-        }
-        sb.AppendLine();
-        sb.AppendLine($"_Generated at {report.GeneratedUtc:yyyy-MM-dd HH:mm} UTC._");
-        return sb.ToString();
-    }
 }

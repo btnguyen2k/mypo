@@ -10,10 +10,11 @@ CREATE TABLE mypo_report (
     portfolio_id varchar(48) NOT NULL,
     item_code varchar(16) NOT NULL,             -- in EXCHANGE:SYMBOL format
     tx_type varchar(16) NOT NULL,               -- BUY, SELL, TAX, etc
-    item_quantity numeric(20,6) NOT NULL DEFAULT 0,
-    item_cost numeric(20,6) NOT NULL DEFAULT 0,
-    open_value numeric(20,6) NOT NULL DEFAULT 0,
-    close_value numeric(20,6) NOT NULL DEFAULT 0,
+    report_metadata jsonb NULL,                 -- additional metadata for the report
+    -- item_quantity numeric(20,6) NOT NULL DEFAULT 0,
+    -- item_cost numeric(20,6) NOT NULL DEFAULT 0,
+    -- open_value numeric(20,6) NOT NULL DEFAULT 0,
+    -- close_value numeric(20,6) NOT NULL DEFAULT 0,
     is_final boolean NOT NULL DEFAULT FALSE,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -79,8 +79,9 @@ MyPo.Portfolio.Shared (portfolio EF models/repos)
   - `MyPo.Portfolio.Shared/`
   Do not modify or update other directories unless explicitly asked, as they belong to the template.
 - **Target framework**: .NET 8 (`net8.0`) across all projects.
-- **Code style — always use braces**: Always wrap statement blocks in `{` and `}`, even single statements. In particular, a `try`/`foreach`/`if`/`while` body that directly follows a `using (...)` or `for (...)`/`foreach (...)` must still be enclosed in braces — do not rely on the implicit single-statement form.
-- **Icons — prefer Bootstrap (BIcon) over CoreUI (CIcon)**: Use the `<BIcon icon="bi-..." />` (Bootstrap Icons) component for UI icons. Only fall back to `<CIcon icon="cil-..." />` (CoreUI Icons) when no suitable Bootstrap icon exists.
+- **Code style - always use braces**: Always wrap statement blocks in `{` and `}`, even single statements. In particular, a `try`/`foreach`/`if`/`while` body that directly follows a `using (...)` or `for (...)`/`foreach (...)` must still be enclosed in braces - do not rely on the implicit single-statement form.
+- **Text - no em-dash**: Do not use the em-dash character (`—`) anywhere (code, comments, docs, commit messages, UI text). Use a regular hyphen (`-`) instead.
+- **Icons - prefer Bootstrap (BIcon) over CoreUI (CIcon)**: Use the `<BIcon icon="bi-..." />` (Bootstrap Icons) component for UI icons. Only fall back to `<CIcon icon="cil-..." />` (CoreUI Icons) when no suitable Bootstrap icon exists.
 - **Database schemas**: Managed via SQL scripts in `dbschema/pgsql/`. Patches follow naming: `patch_pgsql_{module}-post-{version}.sql`.
 - **Config files**: `appsettings.json` variants exist but are `.disabled` in source. Runtime config lives in `config/` directories.
 - **Non-root Docker**: Production container runs as `appuser` (non-root).

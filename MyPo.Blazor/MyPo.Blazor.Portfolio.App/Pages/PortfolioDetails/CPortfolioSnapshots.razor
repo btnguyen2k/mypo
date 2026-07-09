@@ -45,7 +45,7 @@
                             <select class="form-select" id="reportPeriod" value="@SelectedPeriodKey" @onchange="OnPeriodChanged">
                                 @foreach (var period in AvailablePeriods)
                                 {
-                                    <option value="@period">@period</option>
+                                    <option value="@period.Start">@period.Label</option>
                                 }
                             </select>
                         </div>
@@ -54,10 +54,10 @@
                                 <BIcon icon="bi-graph-up" extraClassName="me-1" />Symbol (optional)
                             </label>
                             <select class="form-select" id="reportSymbol" value="@SelectedSymbol" @onchange="OnSymbolChanged">
-                                <option value="">Entire portfolio</option>
+                                <option value="*">Entire portfolio</option>
                                 @foreach (var sym in Symbols)
                                 {
-                                    <option value="@sym.ItemCode">@sym.ItemCode — @(sym.Metadata?.CorpName ?? sym.ItemCode)</option>
+                                    <option value="@sym.ItemCode">@sym.ItemCode - @(sym.Metadata?.CorpName ?? sym.ItemCode)</option>
                                 }
                             </select>
                         </div>
@@ -82,7 +82,6 @@
                     else if (CurrentReport is not null)
                     {
                         var report = CurrentReport;
-                        var pnlClass = report.NetPnl >= 0 ? "text-success" : "text-danger";
 
                         <!-- Report header -->
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -90,50 +89,77 @@
                                 @TypeTitle(report.Type) report
                                 <span class="text-muted fs-6">· @report.Scope</span>
                             </h5>
-                            <span class="badge bg-light text-dark border">
-                                <BIcon icon="bi-calendar-range" extraClassName="me-1" />@report.PeriodLabel
-                            </span>
-                        </div>
-
-                        <!-- Summary stat cards -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-6 col-lg-3">
-                                <div class="card h-100 border-0 bg-light">
-                                    <div class="card-body py-3">
-                                        <div class="text-muted small text-uppercase">Opening value</div>
-                                        <div class="fs-5 fw-semibold">@Money(report.OpeningValue, report.Currency)</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <div class="card h-100 border-0 bg-light">
-                                    <div class="card-body py-3">
-                                        <div class="text-muted small text-uppercase">Closing value</div>
-                                        <div class="fs-5 fw-semibold">@Money(report.ClosingValue, report.Currency)</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <div class="card h-100 border-0 bg-light">
-                                    <div class="card-body py-3">
-                                        <div class="text-muted small text-uppercase">Net P&amp;L</div>
-                                        <div class="fs-5 fw-semibold @pnlClass">@Money(report.NetPnl, report.Currency)</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-lg-3">
-                                <div class="card h-100 border-0 bg-light">
-                                    <div class="card-body py-3">
-                                        <div class="text-muted small text-uppercase">Net P&amp;L %</div>
-                                        <div class="fs-5 fw-semibold @pnlClass">@Percent(report.NetPnlPct)</div>
-                                    </div>
-                                </div>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!report.IsFinal)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="This report period is not yet finalized; values may still change.">
+                                        <BIcon icon="bi-hourglass-split" extraClassName="me-1" />Provisional
+                                    </span>
+                                }
+                                <span class="badge bg-light text-dark border">
+                                    <BIcon icon="bi-calendar-range" extraClassName="me-1" />@report.PeriodLabel
+                                </span>
                             </div>
                         </div>
 
-                        <!-- Detailed narrative (Markdown) -->
-                        <div class="border rounded p-3">
-                            <WidgetMarkdownViewer Content="@report.Narrative" />
+                        @if (report.HasAggregate)
+                        {
+                            <!-- Aggregated portfolio report (graph-like) -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-transparent fw-semibold">
+                                    <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Portfolio value by transaction type
+                                </div>
+                                <div class="card-body">
+                                    <WidgetChart Config="@report.AggregateChartConfig" Style="position: relative; height: 320px;" />
+                                </div>
+                            </div>
+                        }
+
+                        @if (report.HasItems)
+                        {
+                            <!-- Per-symbol report (table-like) -->
+                            <div class="card mb-2">
+                                <div class="card-header bg-transparent fw-semibold">
+                                    <BIcon icon="bi-table" extraClassName="me-1" />Per-symbol breakdown
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Name</th>
+                                                <th>Type</th>
+                                                <th class="text-end">Quantity</th>
+                                                <th class="text-end">Cost</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var row in report.ItemRows)
+                                            {
+                                                <tr>
+                                                    <td><code>@row.ItemCode</code></td>
+                                                    <td>@row.Name</td>
+                                                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis">@row.TxType</span></td>
+                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Quantity, 4)</td>
+                                                    <td class="text-end">@Money(row.Cost, report.Currency)</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!report.HasAggregate && !report.HasItems)
+                        {
+                            <div class="text-center text-muted py-4">
+                                <BIcon icon="bi-inbox" extraClassName="fs-3 d-block mb-2" />
+                                No report entries for this period.
+                            </div>
+                        }
+
+                        <div class="text-muted small mt-2">
+                            Generated at @report.GeneratedUtc.ToString("yyyy-MM-dd HH:mm") UTC.
                         </div>
                     }
                     else

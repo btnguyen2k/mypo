@@ -305,13 +305,29 @@ sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<Repo
         builder.Property(e => e.PortfolioId).HasColumnName("portfolio_id");
         builder.Property(e => e.ItemCode).HasColumnName("item_code");
         builder.Property(e => e.TxType).HasColumnName("tx_type");
-        builder.Property(e => e.Quantity).HasColumnName("item_quantity");
-        builder.Property(e => e.Cost).HasColumnName("item_cost");
-        builder.Property(e => e.OpenValue).HasColumnName("open_value");
-        builder.Property(e => e.CloseValue).HasColumnName("close_value");
+        builder.Property(e => e.Metadata).HasColumnName("report_metadata")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonHelper.SafeDeserialize<ReportEntityMetadata>(v)
+            )
+            .HasColumnType("jsonb")
+            .Metadata.SetValueComparer(new ValueComparer<ReportEntityMetadata?>(
+                (a, b) => MetadataEquals(a, b),
+                v => MetadataHashCode(v),
+                v => MetadataSnapshot(v)
+            ));
         builder.Property(e => e.IsFinal).HasColumnName("is_final");
         builder.Property(e => e.CreatedAt).HasColumnName("created_at");
         builder.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         builder.Property(e => e.ConcurrencyStamp).HasColumnName("concurrency_stamp").IsConcurrencyToken();
     }
+
+    private static bool MetadataEquals(ReportEntityMetadata? a, ReportEntityMetadata? b)
+        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+
+    private static int MetadataHashCode(ReportEntityMetadata? v)
+        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+
+    private static ReportEntityMetadata? MetadataSnapshot(ReportEntityMetadata? v)
+        => v is null ? null : JsonHelper.SafeDeserialize<ReportEntityMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
 }
