@@ -148,26 +148,48 @@
                                 </div>
                             </div>
 
-                            @* Composition views are shown side by side for now; pick the preferred one later. *@
-                            @if (report.CompositionChartConfig is not null)
+                            @* Insight charts - review the options below and finalize the preferred ones later. *@
+                            @if (report.PeriodPnlChartConfig is not null)
                             {
                                 <div class="card mb-4">
                                     <div class="card-header bg-transparent fw-semibold">
-                                        <BIcon icon="bi-pie-chart" extraClassName="me-1" />Option 1 · Composition by close value
+                                        <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Option A · Period P&amp;L contribution by symbol
                                     </div>
                                     <div class="card-body">
-                                        <WidgetChart Config="@report.CompositionChartConfig" Style="position: relative; height: 320px;" />
+                                        <WidgetChart Config="@report.PeriodPnlChartConfig" Style="position: relative; height: 320px;" />
                                     </div>
                                 </div>
                             }
-                            @if (report.OpenCloseChartConfig is not null)
+                            @if (report.TotalReturnChartConfig is not null)
                             {
                                 <div class="card mb-4">
                                     <div class="card-header bg-transparent fw-semibold">
-                                        <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Option 3 · Open vs close value
+                                        <BIcon icon="bi-graph-up-arrow" extraClassName="me-1" />Option B · Total return by symbol
                                     </div>
                                     <div class="card-body">
-                                        <WidgetChart Config="@report.OpenCloseChartConfig" Style="position: relative; height: 320px;" />
+                                        <WidgetChart Config="@report.TotalReturnChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.IncomeChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-cash-coin" extraClassName="me-1" />Option C · Income by symbol (accumulated dividends + distributions)
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.IncomeChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.IncomeYieldChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-percent" extraClassName="me-1" />Option D · Income yield by symbol (% of current value)
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.IncomeYieldChartConfig" Style="position: relative; height: 320px;" />
                                     </div>
                                 </div>
                             }

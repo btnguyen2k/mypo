@@ -21,6 +21,10 @@ public partial class CPortfolioSnapshots : CBase
         public decimal Dividends { get; set; }
         public decimal Distributions { get; set; }
         public decimal Interest { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) dividends.</summary>
+        public decimal AccumulatedDividends { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) distributions.</summary>
+        public decimal AccumulatedDistributions { get; set; }
         public decimal Fees { get; set; }
         public decimal Tax { get; set; }
         public decimal Buys { get; set; }
@@ -73,12 +77,15 @@ public partial class CPortfolioSnapshots : CBase
         public IReadOnlyList<SnapshotRow> Items { get; set; } = [];
 
         /// <summary>Chart.js configs for the entire-portfolio charts (null when there is nothing to plot).</summary>
-        public object? CompositionChartConfig { get; set; }
-        public object? OpenCloseChartConfig { get; set; }
+        public object? PeriodPnlChartConfig { get; set; }
+        public object? TotalReturnChartConfig { get; set; }
+        public object? IncomeChartConfig { get; set; }
+        public object? IncomeYieldChartConfig { get; set; }
 
         public bool HasPortfolio => Portfolio is not null;
         public bool HasItems => Items.Count > 0;
-        public bool HasCharts => CompositionChartConfig is not null || OpenCloseChartConfig is not null;
+        public bool HasCharts => PeriodPnlChartConfig is not null
+            || TotalReturnChartConfig is not null || IncomeChartConfig is not null || IncomeYieldChartConfig is not null;
     }
 
     [Parameter]
@@ -300,6 +307,8 @@ public partial class CPortfolioSnapshots : CBase
                 Dividends = m.Dividends ?? 0m,
                 Distributions = m.Distributions ?? 0m,
                 Interest = m.Interest ?? 0m,
+                AccumulatedDividends = m.AccumulatedDividends ?? 0m,
+                AccumulatedDistributions = m.AccumulatedDistributions ?? 0m,
                 Fees = m.Fees ?? 0m,
                 Tax = m.Tax ?? 0m,
                 Buys = m.Buys ?? 0m,
@@ -346,44 +355,43 @@ public partial class CPortfolioSnapshots : CBase
             Items = items,
             IsFinal = (hasPortfolioRow ? portfolioSnapshot.IsFinal : true) && items.All(i => i.IsFinal) && (hasPortfolioRow || items.Count > 0),
         };
-        report.CompositionChartConfig = BuildCompositionChartConfig(report);
-        report.OpenCloseChartConfig = BuildOpenCloseChartConfig(report);
+        report.PeriodPnlChartConfig = BuildPeriodPnlChartConfig(report);
+        report.TotalReturnChartConfig = BuildTotalReturnChartConfig(report);
+        report.IncomeChartConfig = BuildIncomeChartConfig(report);
+        report.IncomeYieldChartConfig = BuildIncomeYieldChartConfig(report);
         return report;
     }
 
     /// <summary>Period profit/loss: value change over the period adjusted for the period's own cash flows.</summary>
     private static decimal PeriodPnl(ReportEntityMetadata m)
         => (m.CloseValue ?? 0m) - (m.OpenValue ?? 0m)
-           - (m.Cost ?? 0m)
+           - (m.Cost/* ?? 0m*/)     // Cost = buys - sells
            + (m.Dividends ?? 0m) + (m.Distributions ?? 0m) + (m.Interest ?? 0m)
            - (m.Tax ?? 0m) - (m.Fees ?? 0m);
 
     /// <summary>Total return since inception: current value less net invested plus accumulated income and costs.</summary>
     private static decimal TotalReturn(ReportEntityMetadata m)
-        => (m.CloseValue ?? 0m) - (m.AccumulatedCost ?? 0m)
+        => (m.CloseValue ?? 0m) - (m.AccumulatedCost/* ?? 0m*/)     // AccumulatedCost = accumulated buys - accumulated sells
            + (m.AccumulatedDividends ?? 0m) + (m.AccumulatedDistributions ?? 0m) + (m.AccumulatedInterest ?? 0m)
            - (m.AccumulatedTax ?? 0m) - (m.AccumulatedFees ?? 0m);
 
-    private static readonly string[] BaseColors =
-    {
-        "#321fdb", "#2eb85c", "#e55353", "#f9b115", "#3399ff",
-        "#6f42c1", "#20c997", "#fd7e14", "#d63384", "#0dcaf0",
-    };
+    // Semi-transparent fills with solid borders for signed (gain/loss) bars.
+    private const string GainFill = "rgba(46, 184, 92, 0.65)";
+    private const string LossFill = "rgba(229, 83, 83, 0.65)";
+    private const string GainBorder = "#2eb85c";
+    private const string LossBorder = "#e55353";
 
-    private static string[] Palette(int count)
-        => [.. Enumerable.Range(0, count).Select(i => BaseColors[i % BaseColors.Length])];
-
-    /// <summary>Doughnut chart of each symbol's close value (portfolio composition).</summary>
-    private static object? BuildCompositionChartConfig(PortfolioReport report)
+    /// <summary>Horizontal bar of each symbol's period P&L (green gains / red losses), sorted best-first.</summary>
+    private static object? BuildPeriodPnlChartConfig(PortfolioReport report)
     {
-        var rows = report.Items.Where(i => i.CloseValue > 0).ToList();
+        var rows = report.Items.Where(i => i.PeriodPnl != 0m).OrderByDescending(i => i.PeriodPnl).ToList();
         if (rows.Count == 0)
         {
             return null;
         }
         return new
         {
-            type = "doughnut",
+            type = "bar",
             data = new
             {
                 labels = rows.Select(r => r.ItemCode).ToArray(),
@@ -391,26 +399,80 @@ public partial class CPortfolioSnapshots : CBase
                 {
                     new
                     {
-                        label = $"Close value ({report.Currency})",
-                        data = rows.Select(r => r.CloseValue).ToArray(),
-                        backgroundColor = Palette(rows.Count),
+                        label = $"Period P&L ({report.Currency})",
+                        data = rows.Select(r => r.PeriodPnl).ToArray(),
+                        backgroundColor = rows.Select(r => r.PeriodPnl >= 0 ? GainFill : LossFill).ToArray(),
+                        borderColor = rows.Select(r => r.PeriodPnl >= 0 ? GainBorder : LossBorder).ToArray(),
                         borderWidth = 1,
                     },
                 },
             },
             options = new
             {
+                indexAxis = "y",
                 responsive = true,
                 maintainAspectRatio = false,
-                plugins = new { legend = new { position = "right" } },
+                plugins = new { legend = new { display = false } },
+                scales = new
+                {
+                    x = new { beginAtZero = true },
+                    y = new { grid = new { display = false } },
+                },
             },
         };
     }
 
-    /// <summary>Grouped bar chart comparing each symbol's open and close value for the period.</summary>
-    private static object? BuildOpenCloseChartConfig(PortfolioReport report)
+    /// <summary>Horizontal bar of each symbol's total return since inception (green gains / red losses), sorted best-first.</summary>
+    private static object? BuildTotalReturnChartConfig(PortfolioReport report)
     {
-        var rows = report.Items.Where(i => i.OpenValue != 0 || i.CloseValue != 0).ToList();
+        var rows = report.Items.Where(i => i.TotalReturn != 0m).OrderByDescending(i => i.TotalReturn).ToList();
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+        return new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = rows.Select(r => r.ItemCode).ToArray(),
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = $"Total return ({report.Currency})",
+                        data = rows.Select(r => r.TotalReturn).ToArray(),
+                        backgroundColor = rows.Select(r => r.TotalReturn >= 0 ? GainFill : LossFill).ToArray(),
+                        borderColor = rows.Select(r => r.TotalReturn >= 0 ? GainBorder : LossBorder).ToArray(),
+                        borderWidth = 1,
+                    },
+                },
+            },
+            options = new
+            {
+                indexAxis = "y",
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new { legend = new { display = false } },
+                scales = new
+                {
+                    x = new { beginAtZero = true },
+                    y = new { grid = new { display = false } },
+                },
+            },
+        };
+    }
+
+    /// <summary>
+    /// Stacked bar of each symbol's accumulated (lifetime-to-period-end) income - dividends and distributions,
+    /// sorted by total income descending. Interest is excluded as it is booked at portfolio (cash) level, not per symbol.
+    /// </summary>
+    private static object? BuildIncomeChartConfig(PortfolioReport report)
+    {
+        var rows = report.Items
+            .Where(i => i.AccumulatedDividends != 0m || i.AccumulatedDistributions != 0m)
+            .OrderByDescending(i => i.AccumulatedDividends + i.AccumulatedDistributions)
+            .ToList();
         if (rows.Count == 0)
         {
             return null;
@@ -424,22 +486,8 @@ public partial class CPortfolioSnapshots : CBase
                 labels,
                 datasets = new[]
                 {
-                    new
-                    {
-                        label = "Open",
-                        data = rows.Select(r => r.OpenValue).ToArray(),
-                        backgroundColor = "rgba(153, 153, 153, 0.65)",
-                        borderColor = "#999999",
-                        borderWidth = 1,
-                    },
-                    new
-                    {
-                        label = "Close",
-                        data = rows.Select(r => r.CloseValue).ToArray(),
-                        backgroundColor = "rgba(50, 31, 219, 0.65)",
-                        borderColor = "#321fdb",
-                        borderWidth = 1,
-                    },
+                    new { label = "Dividends", data = rows.Select(r => r.AccumulatedDividends).ToArray(), backgroundColor = "rgba(50, 31, 219, 0.65)", stack = "income" },
+                    new { label = "Distributions", data = rows.Select(r => r.AccumulatedDistributions).ToArray(), backgroundColor = "rgba(32, 201, 151, 0.65)", stack = "income" },
                 },
             },
             options = new
@@ -449,8 +497,56 @@ public partial class CPortfolioSnapshots : CBase
                 plugins = new { legend = new { position = "top" } },
                 scales = new
                 {
-                    x = new { grid = new { display = false } },
-                    y = new { beginAtZero = true },
+                    x = new { stacked = true, grid = new { display = false } },
+                    y = new { stacked = true, beginAtZero = true },
+                },
+            },
+        };
+    }
+
+    /// <summary>
+    /// Horizontal bar of each symbol's income yield: accumulated income (dividends + distributions) as a percentage
+    /// of its current close value, sorted descending. Shows how income-productive each holding is relative to its size.
+    /// </summary>
+    private static object? BuildIncomeYieldChartConfig(PortfolioReport report)
+    {
+        var rows = report.Items
+            .Where(i => i.CloseValue > 0 && (i.AccumulatedDividends + i.AccumulatedDistributions) != 0m)
+            .Select(i => new { i.ItemCode, Yield = (i.AccumulatedDividends + i.AccumulatedDistributions) / i.CloseValue * 100m })
+            .OrderByDescending(x => x.Yield)
+            .ToList();
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+        return new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = rows.Select(r => r.ItemCode).ToArray(),
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = "Income yield (% of value)",
+                        data = rows.Select(r => r.Yield).ToArray(),
+                        backgroundColor = "rgba(32, 201, 151, 0.65)",
+                        borderColor = "#20c997",
+                        borderWidth = 1,
+                    },
+                },
+            },
+            options = new
+            {
+                indexAxis = "y",
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new { legend = new { display = false } },
+                scales = new
+                {
+                    x = new { beginAtZero = true },
+                    y = new { grid = new { display = false } },
                 },
             },
         };

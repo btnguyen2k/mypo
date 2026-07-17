@@ -75,17 +75,27 @@ public sealed class ReportEntityMetadata
     [JsonPropertyName("accumulated_quantity"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? AccumulatedQuantity { get; set; }
 
-    [JsonPropertyName("cost"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public decimal? Cost { get; set; }
+    // [JsonPropertyName("cost"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    // public decimal? Cost { get; set; }
+    [JsonIgnore]
+    public decimal Cost => (Buys ?? 0m) - (Sells ?? 0m);
 
-    [JsonPropertyName("accumulated_cost"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public decimal? AccumulatedCost { get; set; }
+    // [JsonPropertyName("accumulated_cost"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    // public decimal? AccumulatedCost { get; set; }
+    [JsonIgnore]
+    public decimal AccumulatedCost => (AccumulatedBuys ?? 0m) - (AccumulatedSells ?? 0m);
 
     [JsonPropertyName("buys"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? Buys { get; set; }
 
+    [JsonPropertyName("accumulated_buys"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? AccumulatedBuys { get; set; }
+
     [JsonPropertyName("sells"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? Sells { get; set; }
+
+    [JsonPropertyName("accumulated_sells"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? AccumulatedSells { get; set; }
 
     [JsonPropertyName("open_value"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? OpenValue { get; set; }
@@ -139,7 +149,7 @@ public sealed class ReportEntityMetadata
     [JsonIgnore]
     public decimal Cash =>
         (Cashin ?? 0m) - (Cashout ?? 0m)
-        - (Cost ?? 0m)                                   // Cost = buys - sells
+        - (Cost/* ?? 0m*/)                                   // Cost = buys - sells
         + (Dividends ?? 0m) + (Distributions ?? 0m) + (Interest ?? 0m)
         - (Tax ?? 0m) - (Fees ?? 0m);
 
@@ -147,7 +157,7 @@ public sealed class ReportEntityMetadata
     [JsonIgnore]
     public decimal AccumulatedCash =>
         (AccumulatedCashin ?? 0m) - (AccumulatedCashout ?? 0m)
-        - (AccumulatedCost ?? 0m)
+        - (AccumulatedCost/* ?? 0m*/)
         + (AccumulatedDividends ?? 0m) + (AccumulatedDistributions ?? 0m) + (AccumulatedInterest ?? 0m)
         - (AccumulatedTax ?? 0m) - (AccumulatedFees ?? 0m);
 }

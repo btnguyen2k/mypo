@@ -63,7 +63,7 @@ public static class ReportUtils
                 Metadata = new ReportEntityMetadata
                 {
                     Quantity = pnlSummary.TotalBuyQuantity - pnlSummary.TotalSellQuantity,
-                    Cost = pnlSummary.TotalBuyValue - pnlSummary.TotalSellValue,
+                    // Cost = pnlSummary.TotalBuyValue - pnlSummary.TotalSellValue,
                     Buys = pnlSummary.TotalBuyValue,
                     Sells = pnlSummary.TotalSellValue,
                     Tax = pnlSummary.TotalTax,
@@ -83,7 +83,9 @@ public static class ReportUtils
 
         // then, carry the running holding forward
         entry.Metadata.AccumulatedQuantity = (entry.Metadata.Quantity??0m) + (prevEntry.Metadata.AccumulatedQuantity??0m);
-        entry.Metadata.AccumulatedCost = (entry.Metadata.Cost??0m) + (prevEntry.Metadata.AccumulatedCost??0m);
+        entry.Metadata.AccumulatedBuys = (entry.Metadata.Buys??0m) + (prevEntry.Metadata.AccumulatedBuys??0m);
+        entry.Metadata.AccumulatedSells = (entry.Metadata.Sells??0m) + (prevEntry.Metadata.AccumulatedSells??0m);
+        // entry.Metadata.AccumulatedCost = (entry.Metadata.Cost??0m) + (prevEntry.Metadata.AccumulatedCost??0m);
         entry.Metadata.AccumulatedTax = (entry.Metadata.Tax??0m) + (prevEntry.Metadata.AccumulatedTax??0m);
         entry.Metadata.AccumulatedFees = (entry.Metadata.Fees??0m) + (prevEntry.Metadata.AccumulatedFees??0m);
         entry.Metadata.AccumulatedInterest = (entry.Metadata.Interest??0m) + (prevEntry.Metadata.AccumulatedInterest??0m);
@@ -163,7 +165,7 @@ public static class ReportUtils
                 TxType = ReportEntity.TX_TYPE_POSITION,
                 Metadata = new ReportEntityMetadata
                 {
-                    Cost = pnlSummary.TotalBuyValue - pnlSummary.TotalSellValue,
+                    // Cost = pnlSummary.TotalBuyValue - pnlSummary.TotalSellValue,
                     Buys = pnlSummary.TotalBuyValue,
                     Sells = pnlSummary.TotalSellValue,
                     Tax = pnlSummary.TotalTax,
@@ -182,7 +184,9 @@ public static class ReportUtils
         prevEntry.Metadata ??= new();
 
         // then, carry the running holding forward
-        entry.Metadata.AccumulatedCost = (entry.Metadata.Cost??0m) + (prevEntry.Metadata.AccumulatedCost??0m);
+        entry.Metadata.AccumulatedBuys = (entry.Metadata.Buys??0m) + (prevEntry.Metadata.AccumulatedBuys??0m);
+        entry.Metadata.AccumulatedSells = (entry.Metadata.Sells??0m) + (prevEntry.Metadata.AccumulatedSells??0m);
+        // entry.Metadata.AccumulatedCost = (entry.Metadata.Cost??0m) + (prevEntry.Metadata.AccumulatedCost??0m);
         entry.Metadata.AccumulatedTax = (entry.Metadata.Tax??0m) + (prevEntry.Metadata.AccumulatedTax??0m);
         entry.Metadata.AccumulatedFees = (entry.Metadata.Fees??0m) + (prevEntry.Metadata.AccumulatedFees??0m);
         entry.Metadata.AccumulatedInterest = (entry.Metadata.Interest??0m) + (prevEntry.Metadata.AccumulatedInterest??0m);
