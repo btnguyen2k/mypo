@@ -89,7 +89,7 @@ public partial class PortfolioController
     /// </summary>
     /// <returns></returns>
     [HttpGet(IPortfolioApiClient.API_REPORT_SNAPSHOT)]
-    public async ValueTask<ActionResult<ApiResp<IEnumerable<ReportEntity>>>> GetReportSnapshot([FromRoute] string type, [FromQuery] string pid, [FromQuery] string start, [FromQuery] string symbol)
+    public async ValueTask<ActionResult<ApiResp<IEnumerable<ReportResp>>>> GetReportSnapshot([FromRoute] string type, [FromQuery] string pid, [FromQuery] string start, [FromQuery] string symbol)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -110,16 +110,15 @@ public partial class PortfolioController
             return ResponseNoData(400, $"Invalid report type '{type}'. Valid types are: WEEKLY, MONTHLY, QUARTERLY, YEARLY.");
         }
 
-        // // validate the period start date; it must be in the yyyy-MM-dd format.
-        // if (!DateTime.TryParseExact(start, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var periodStart))
-        // {
-        //     return ResponseNoData(400, $"Invalid period start '{start}'. Expected format is yyyy-MM-dd.");
-        // }
-
         // fetch the report snapshot from the database; the repository normalizes an empty symbol to the
         // whole-portfolio marker ("*") on our behalf.
         // var reportPeriod = periodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var snapshot = await PortfolioRepository.GetSnapshotReportAsync(existingPortfolio, reportType, start, symbol);
-        return ResponseOk(snapshot);
+        var result = new List<ReportResp>();
+        foreach (var entry in snapshot)
+        {
+            result.Add(ReportResp.BuildFrom(entry));
+        }
+        return ResponseOk(result);
     }
 }

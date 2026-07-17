@@ -28,6 +28,7 @@ public partial class CPortfolioPreferences : CBase
     private bool IsContainer { get; set; } = false;
     private DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Monday;
     private int FiscalYearStartMonth { get; set; } = 1;
+    private bool ResetReports { get; set; } = false;
 
     private string? _loadedPortfolioId;
 
@@ -48,6 +49,7 @@ public partial class CPortfolioPreferences : CBase
         IsContainer = metadata?.IsContainer ?? false;
         FirstDayOfWeek = metadata?.FirstDayOfWeek ?? DayOfWeek.Monday;
         FiscalYearStartMonth = metadata?.FiscalYearStartMonth ?? 1;
+        ResetReports = false;
         CloseAlert();
     }
 
@@ -82,6 +84,19 @@ public partial class CPortfolioPreferences : CBase
             {
                 Portfolio.Metadata = resp.Data.Metadata;
             }
+
+            if (ResetReports)
+            {
+                var resetResp = await apiClient.ResetReportsAsync(Portfolio.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+                if (!resetResp.IsSuccess)
+                {
+                    ShowAlert("error", $"Portfolio preferences saved, but failed to reset reports: {resetResp.Message}");
+                    Saving = false;
+                    return;
+                }
+                ResetReports = false;
+            }
+
             ShowAlert("success", "Portfolio preferences saved successfully!");
             if (oldPref != IsContainer)
             {

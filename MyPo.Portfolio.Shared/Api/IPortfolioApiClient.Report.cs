@@ -46,5 +46,5 @@ public partial interface IPortfolioApiClient
     /// <param name="requestHttpClient"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public Task<ApiResp<IEnumerable<ReportEntity>>> GetReportSnapshotAsync(string portfolioId, ReportType type, string periodStart, string symbol, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+    public Task<ApiResp<IEnumerable<ReportResp>>> GetReportSnapshotAsync(string portfolioId, ReportType type, string periodStart, string symbol, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 }

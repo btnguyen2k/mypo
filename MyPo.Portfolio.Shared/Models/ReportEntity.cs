@@ -81,6 +81,12 @@ public sealed class ReportEntityMetadata
     [JsonPropertyName("accumulated_cost"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? AccumulatedCost { get; set; }
 
+    [JsonPropertyName("buys"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? Buys { get; set; }
+
+    [JsonPropertyName("sells"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? Sells { get; set; }
+
     [JsonPropertyName("open_value"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? OpenValue { get; set; }
 
@@ -128,6 +134,22 @@ public sealed class ReportEntityMetadata
 
     [JsonPropertyName("accumulated_distributions"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public decimal? AccumulatedDistributions { get; set; }
+
+    /// <summary>Period net cash flow (derived, not persisted).</summary>
+    [JsonIgnore]
+    public decimal Cash =>
+        (Cashin ?? 0m) - (Cashout ?? 0m)
+        - (Cost ?? 0m)                                   // Cost = buys - sells
+        + (Dividends ?? 0m) + (Distributions ?? 0m) + (Interest ?? 0m)
+        - (Tax ?? 0m) - (Fees ?? 0m);
+
+    /// <summary>Running cash balance through this period (derived, not persisted).</summary>
+    [JsonIgnore]
+    public decimal AccumulatedCash =>
+        (AccumulatedCashin ?? 0m) - (AccumulatedCashout ?? 0m)
+        - (AccumulatedCost ?? 0m)
+        + (AccumulatedDividends ?? 0m) + (AccumulatedDistributions ?? 0m) + (AccumulatedInterest ?? 0m)
+        - (AccumulatedTax ?? 0m) - (AccumulatedFees ?? 0m);
 }
 
 public sealed class ReportPeriod

@@ -40,7 +40,7 @@ public partial class PortfolioApiClient
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResp<IEnumerable<ReportEntity>>> GetReportSnapshotAsync(string portfolioId, ReportType type, string periodStart, string symbol, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+    public async Task<ApiResp<IEnumerable<ReportResp>>> GetReportSnapshotAsync(string portfolioId, ReportType type, string periodStart, string symbol, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
     {
         var queryParams = new Dictionary<string, string?> {
             { "pid", portfolioId },
@@ -56,6 +56,6 @@ public partial class PortfolioApiClient
             NoData,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<IEnumerable<ReportEntity>>(httpResult, cancellationToken);
+        return await ReadAndCloseResponseAsync<IEnumerable<ReportResp>>(httpResult, cancellationToken);
     }
 }

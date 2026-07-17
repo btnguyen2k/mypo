@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Ddth.Utilities.Tempus;
+﻿using Ddth.Utilities.Tempus;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
@@ -97,103 +96,99 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
             return;
         }
 
+        // cache to store stock quote history
         var quoteHistoryCache = new Dictionary<string, HistoryPoint[]>();
 
         // resolve the portfolio's timezone from its default market; fall back to UTC when not configured
         var market = Globals.MarketsMap.TryGetValue(metadata.DefaultMarketId?.ToUpper() ?? string.Empty, out var mkt) ? mkt : null;
         var tz = market?.TZ ?? TimeZoneInfo.Utc;
-        var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+        var nowUTC = DateTimeOffset.UtcNow;
 
-        // WEEKLY report, covering 1 year
-        if (now - portfolio.Metadata!.LastWeeklyReportTimestamp < TimeSpan.FromDays(1).TotalSeconds)
-        {
-            Logger.LogInformation("Skipping weekly report for portfolio '{portfolioId}: {portfolioName}': last report was less than 1 day ago.", portfolio.Id, portfolio.Name);
-        }
-        else
-        {
-            for (var count = 0; count < 53; count++)
-            {
-                portfolio.Metadata!.LastWeeklyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var (isFinal, nextPeriodStart) = await BuildWeeklyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
-                if (isFinal)
-                {
-                    portfolio.Metadata!.WeeklyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
-                    Logger.LogInformation("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.WeeklyReportPeriodStartUTC);
-                    var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
-                    if (dbresult is null)
-                    {
-                        Logger.LogWarning("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
-                        throw new Exception($"Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
-                    }
-                }
-                else break;
-            }
-        }
+        // // WEEKLY report, covering 1+ year
+        var daysTillReportRun = 1;
+        // if (nowUTC - portfolio.Metadata!.LastWeeklyReportUTC < TimeSpan.FromDays(daysTillReportRun))
+        // {
+        //     Logger.LogInformation("Skipping WEEKLY report for portfolio '{portfolioId}: {portfolioName}': last report was less than {daysTillReportRun} day(s) ago.", portfolio.Id, portfolio.Name, daysTillReportRun);
+        // }
+        // else for (var count = 0; count < 53; count++)
+        // {
+        //     portfolio.Metadata!.LastWeeklyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //     var (isFinal, periodStart) = await BuildWeeklyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
+        //     if (isFinal)
+        //     {
+        //         portfolio.Metadata!.WeeklyReportPeriodStart = periodStart.ToUnixTimeSeconds();
+        //         Logger.LogInformation("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.WeeklyReportPeriodStartUTC);
+        //         var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+        //         if (dbresult is null)
+        //         {
+        //             Logger.LogWarning("Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+        //             throw new Exception($"Updating portfolio metadata 'WeeklyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+        //         }
+        //     }
+        //     else break;
+        // }
 
-        // MONTHLY report, covering 1 year
-        if (now - portfolio.Metadata!.LastMonthlyReportTimestamp < TimeSpan.FromDays(3).TotalSeconds)
-        {
-            Logger.LogInformation("Skipping monthly report for portfolio '{portfolioId}: {portfolioName}': last report was less than 3 days ago.", portfolio.Id, portfolio.Name);
-        }
-        else
-        {
-            for (var count = 0; count < 12; count++)
-            {
-                portfolio.Metadata!.LastMonthlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var (isFinal, nextPeriodStart) = await BuildMonthlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
-                if (isFinal)
-                {
-                    portfolio.Metadata!.MonthlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
-                    Logger.LogInformation("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.MonthlyReportPeriodStartUTC);
-                    var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
-                    if (dbresult is null)
-                    {
-                        Logger.LogWarning("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
-                        throw new Exception($"Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
-                    }
-                }
-                else break;
-            }
-        }
+        // MONTHLY report, covering 1+ year
+        daysTillReportRun = 3;
+        // if (nowUTC - portfolio.Metadata!.LastMonthlyReportUTC < TimeSpan.FromDays(daysTillReportRun))
+        // {
+        //     Logger.LogInformation("Skipping MONTHLY report for portfolio '{portfolioId}: {portfolioName}': last report was less than {daysTillReportRun} day(s) ago.", portfolio.Id, portfolio.Name, daysTillReportRun);
+        // }
+        // else for (var count = 0; count < 13; count++)
+        // {
+        //     portfolio.Metadata!.LastMonthlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //     var (isFinal, periodStart) = await BuildMonthlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
+        //     if (isFinal)
+        //     {
+        //         portfolio.Metadata!.MonthlyReportPeriodStart = periodStart.ToUniversalTime().ToUnixTimeSeconds();
+        //         Logger.LogInformation("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.MonthlyReportPeriodStartUTC);
+        //         var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+        //         if (dbresult is null)
+        //         {
+        //             Logger.LogWarning("Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+        //             throw new Exception($"Updating portfolio metadata 'MonthlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+        //         }
+        //     }
+        //     else break;
+        // }
 
-        // QUARTERLY report, covering 1 year
-        if (now - portfolio.Metadata!.LastQuarterlyReportTimestamp < TimeSpan.FromDays(5).TotalSeconds)
-        {
-            Logger.LogInformation("Skipping quarterly report for portfolio '{portfolioId}: {portfolioName}': last report was less than 5 days ago.", portfolio.Id, portfolio.Name);
-        }
-        else
-        {
-            for (var count = 0; count < 4; count++)
-            {
-                portfolio.Metadata!.LastQuarterlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var (isFinal, nextPeriodStart) = await BuildQuarterlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
-                if (isFinal)
-                {
-                    portfolio.Metadata!.QuarterlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
-                    Logger.LogInformation("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.QuarterlyReportPeriodStartUTC);
-                    var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
-                    if (dbresult is null)
-                    {
-                        Logger.LogWarning("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
-                        throw new Exception($"Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
-                    }
-                }
-                else break;
-            }
-        }
+        // QUARTERLY report, covering 1+ year
+        daysTillReportRun = 5;
+        // if (nowUTC - portfolio.Metadata!.LastQuarterlyReportUTC < TimeSpan.FromDays(daysTillReportRun))
+        // {
+        //     Logger.LogInformation("Skipping QUARTERLY report for portfolio '{portfolioId}: {portfolioName}': last report was less than {daysTillReportRun} day(s) ago.", portfolio.Id, portfolio.Name, daysTillReportRun);
+        // }
+        // else for (var count = 0; count < 5; count++)
+        // {
+        //     portfolio.Metadata!.LastQuarterlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+        //     var (isFinal, periodStart) = await BuildQuarterlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
+        //     if (isFinal)
+        //     {
+        //         portfolio.Metadata!.QuarterlyReportPeriodStart = periodStart.ToUniversalTime().ToUnixTimeSeconds();
+        //         Logger.LogInformation("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.QuarterlyReportPeriodStartUTC);
+        //         var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
+        //         if (dbresult is null)
+        //         {
+        //             Logger.LogWarning("Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' failed.", portfolio.Id, portfolio.Name);
+        //             throw new Exception($"Updating portfolio metadata 'QuarterlyReportPeriodStart' for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+        //         }
+        //     }
+        //     else break;
+        // }
 
-        // YEARLY report, covering 1 year
-        if (now - portfolio.Metadata!.LastYearlyReportTimestamp < TimeSpan.FromDays(6).TotalSeconds)
+        // YEARLY report, covering 1+ year
+        daysTillReportRun = 7;
+        if (nowUTC - portfolio.Metadata!.LastYearlyReportUTC < TimeSpan.FromDays(daysTillReportRun))
         {
-            Logger.LogInformation("Skipping yearly report for portfolio '{portfolioId}: {portfolioName}': last report was less than 6 days ago.", portfolio.Id, portfolio.Name);
+            Logger.LogInformation("Skipping YEARLY report for portfolio '{portfolioId}: {portfolioName}': last report was less than {daysTillReportRun} day(s) ago.", portfolio.Id, portfolio.Name, daysTillReportRun);
         }
-        else
+        else for (var count = 0; count < 2; count++)
         {
             portfolio.Metadata!.LastYearlyReportTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            var (isFinal, nextPeriodStart) = await BuildYearlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
+            var (isFinal, periodStart) = await BuildYearlyReport(scope, portfolio, tz, quoteHistoryCache, cancellationToken);
             if (isFinal)
             {
-                portfolio.Metadata!.YearlyReportPeriodStart = nextPeriodStart.ToUnixTimeSeconds();
+                portfolio.Metadata!.YearlyReportPeriodStart = periodStart.ToUniversalTime().ToUnixTimeSeconds();
                 Logger.LogInformation("Updating portfolio metadata 'YearlyReportPeriodStart' for portfolio '{portfolioId}: {portfolioName}' to {nextPeriodStart:yyyy-MM-dd HH:mm zzz}.", portfolio.Id, portfolio.Name, portfolio.Metadata!.YearlyReportPeriodStartUTC);
                 var dbresult = await portfolioRepository.UpdatePortfolioAsync(portfolio, cancellationToken);
                 if (dbresult is null)
@@ -232,7 +227,7 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
     /// the portfolio's timezone, first-day-of-week and fiscal-year-start-month into account, then logs it.
     /// </summary>
     /// <param name="lastPeriodStartTimestamp">
-    /// Unix-seconds marker of the last reported period start for this <paramref name="reportType"/> (0 when never reported).
+    /// Unix-seconds marker of the last reported period start for this <paramref name="reportType"/> - as UTC timestamp (0 when never reported).
     /// </param>
     /// <remarks>
     /// Status rules for the next period (relative to NOW in the portfolio's timezone):
@@ -253,12 +248,13 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
         var firstDayOfWeek = metadata.FirstDayOfWeek!;
         var fiscalStartMonth = metadata.FiscalYearStartMonth!;
 
-        DateTimeOffset nextPeriodStartLocal;
+        DateTimeOffset nextPeriodStartLocal, periodEndLocal;
         if (lastPeriodStartTimestamp > 0)
         {
             // already reported before: the next period is the one right after the last reported period
-            var lastStartLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.FromUnixTimeSeconds(lastPeriodStartTimestamp), tz);
-            nextPeriodStartLocal = NextPeriodStart(reportType, lastStartLocal);
+            var lastStartLocal = DateTimeOffset.FromUnixTimeSeconds(lastPeriodStartTimestamp).ToTimeZoneSilently(tz.Id)!.Value;
+            nextPeriodStartLocal = ReportUtils.NextPeriodStart(reportType, lastStartLocal);
+            (_, nextPeriodStartLocal, periodEndLocal) = ReportUtils.ComputePeriod(reportType, nextPeriodStartLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
         }
         else
         {
@@ -269,12 +265,11 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
                 Logger.LogInformation("Skipping {reportType} report for portfolio '{portfolioId}: {portfolioName}': no settlement record found.", reportType, portfolio.Id, portfolio.Name);
                 return (false, DateTimeOffset.MinValue);
             }
-            var firstSettlementLocal = TimeZoneInfo.ConvertTime(firstSettlement.TxTime, tz);
-            nextPeriodStartLocal = StartOfPeriod(reportType, firstSettlementLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            var firstSettlementLocal = firstSettlement.TxTime.ToTimeZoneSilently(tz.Id)!.Value;
+            (_, nextPeriodStartLocal, periodEndLocal) = ReportUtils.ComputePeriod(reportType, firstSettlementLocal, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
         }
 
-        var periodEndLocal = NextPeriodStart(reportType, nextPeriodStartLocal).AddDays(-1);
-        var nowLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tz).Date;
+        var nowLocal = DateTimeOffset.UtcNow.ToTimeZoneSilently(tz.Id)!.Value;
 
         Logger.LogInformation("Next {reportType} report period for portfolio '{portfolioId}: {portfolioName}': {periodStart:yyyy-MM-dd HH:mm zzz} - {periodEnd:yyyy-MM-dd HH:mm zzz}.",
             reportType, portfolio.Id, portfolio.Name, nextPeriodStartLocal, periodEndLocal);
@@ -288,16 +283,48 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
 
         var pnlSummaryList = (await portfolioRepository.GetPnlSummaryForPortfolioForPeriodAsync(portfolio.Id, nextPeriodStartLocal, periodEndLocal, cancellationToken)).ToList();
         var reportEntries = new List<ReportEntity>();
+
         // first round: build item report entries
         foreach (var pnlSummary in pnlSummaryList)
         {
-            var report = await ReportUtils.BuildItemReport(pnlSummary, Globals.Markets, reportType, nextPeriodStartLocal, portfolioRepository, finHubClient, quoteHistoryCache, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            var report = await ReportUtils.BuildItemReport(
+                pnlSummary, Globals.Markets, reportType, nextPeriodStartLocal,
+                portfolioRepository, finHubClient, quoteHistoryCache,
+                firstDayOfWeek!.Value, fiscalStartMonth!.Value);
             if (report is not null) reportEntries.Add(report);
         }
+
+        // carry-forward round for held-but-not-traded positions
+        // For every open position not traded this period, synthesize a mark-to-market POSITION row
+        // so it appears in the holdings breakdown AND is included in the portfolio CloseValue sum below.
+        var tradedCodes = reportEntries
+            .Where(r => r.ItemCode != ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO)
+            .Select(r => r.ItemCode)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var openPositions = await portfolioRepository.GetOpenPositionsAsOfAsync(portfolio, reportType, nextPeriodStartLocal.ToString("yyyy-MM-dd"), cancellationToken);
+        foreach (var pos in openPositions)
+        {
+            if (tradedCodes.Contains(pos.ItemCode)) continue; // already reported this period
+
+            // synthesize a zero-activity PnlSummary and run BuildItemReport to mark-to-market
+            // #1: Create zero-activity PnlSummary
+            var zeroSummary = PnlSummary.New(portfolio.Id);
+            zeroSummary.RefItemCode = pos.ItemCode;
+            // #2: Build carried forward entry
+            var carried = await ReportUtils.BuildItemReport(
+                zeroSummary, Globals.Markets, reportType, nextPeriodStartLocal,
+                portfolioRepository, finHubClient, quoteHistoryCache,
+                firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            if (carried is not null) reportEntries.Add(carried);
+        }
+
         // second round: build portfolio level report
         foreach (var pnlSummary in pnlSummaryList)
         {
-            var report = await ReportUtils.BuildPortfolioReport(pnlSummary, Globals.Markets, reportType, nextPeriodStartLocal, portfolioRepository, reportEntries, firstDayOfWeek!.Value, fiscalStartMonth!.Value);
+            var report = await ReportUtils.BuildPortfolioReport(
+                pnlSummary, Globals.Markets, reportType,
+                nextPeriodStartLocal, portfolioRepository, reportEntries,
+                firstDayOfWeek!.Value, fiscalStartMonth!.Value);
             if (report is not null) reportEntries.Add(report);
         }
 
@@ -315,28 +342,4 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
 
         return (isFinal, nextPeriodStartLocal);
     }
-
-    /// <summary>
-    /// Returns the start date of the period (of <paramref name="type"/>) that contains <paramref name="localDate"/>.
-    /// </summary>
-    private static DateTimeOffset StartOfPeriod(ReportType type, DateTimeOffset localDate, DayOfWeek firstDayOfWeek, int fiscalStartMonth) => type switch
-    {
-        ReportType.WEEKLY => localDate.StartOfWeek(firstDayOfWeek),
-        ReportType.MONTHLY => localDate.StartOfMonth(),
-        ReportType.QUARTERLY => localDate.StartOfQuarter(),
-        ReportType.YEARLY => localDate.StartOfFiscalYear(fiscalStartMonth),
-        _ => localDate,
-    };
-
-    /// <summary>
-    /// Returns the start date of the period that immediately follows the one starting at <paramref name="periodStart"/>.
-    /// </summary>
-    private static DateTimeOffset NextPeriodStart(ReportType type, DateTimeOffset periodStart) => type switch
-    {
-        ReportType.WEEKLY => periodStart.AddDays(7),
-        ReportType.MONTHLY => periodStart.AddMonths(1),
-        ReportType.QUARTERLY => periodStart.AddMonths(3),
-        ReportType.YEARLY => periodStart.AddYears(1),
-        _ => periodStart,
-    };
 }

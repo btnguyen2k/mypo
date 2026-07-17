@@ -102,25 +102,80 @@
                             </div>
                         </div>
 
-                        @if (report.HasAggregate)
+                        @if (report.HasPortfolio)
                         {
-                            <!-- Aggregated portfolio report (graph-like) -->
+                            <!-- Entire-portfolio snapshot -->
                             <div class="card mb-4">
                                 <div class="card-header bg-transparent fw-semibold">
-                                    <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Portfolio value by transaction type
+                                    <BIcon icon="bi-speedometer2" extraClassName="me-1" />Portfolio summary
                                 </div>
                                 <div class="card-body">
-                                    <WidgetChart Config="@report.AggregateChartConfig" Style="position: relative; height: 320px;" />
+                                    <div class="row g-3">
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Net asset value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.Nav, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Holdings value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.CloseValue, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Cash</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.AccumulatedCash, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Open value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.OpenValue, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Period P&amp;L</div>
+                                            <div class="fs-5 fw-semibold @PnlClass(report.Portfolio!.PeriodPnl)">@Money(report.Portfolio!.PeriodPnl, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Total return</div>
+                                            <div class="fs-5 fw-semibold @PnlClass(report.Portfolio!.TotalReturn)">@Money(report.Portfolio!.TotalReturn, report.Currency)</div>
+                                        </div>
+                                    </div>
+                                    <hr class="my-3" />
+                                    <div class="row g-3 small">
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Dividends</span>@Money(report.Portfolio!.Dividends, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Distributions</span>@Money(report.Portfolio!.Distributions, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Interest</span>@Money(report.Portfolio!.Interest, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Fees</span>@Money(report.Portfolio!.Fees, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Tax</span>@Money(report.Portfolio!.Tax, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Cash in / out</span>@Money(report.Portfolio!.CashIn, report.Currency) / @Money(report.Portfolio!.CashOut, report.Currency)</div>
+                                    </div>
                                 </div>
                             </div>
-                        }
 
-                        @if (report.HasItems)
-                        {
-                            <!-- Per-symbol report (table-like) -->
+                            @* Composition views are shown side by side for now; pick the preferred one later. *@
+                            @if (report.CompositionChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-pie-chart" extraClassName="me-1" />Option 1 · Composition by close value
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.CompositionChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.OpenCloseChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Option 3 · Open vs close value
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.OpenCloseChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Per-symbol holdings breakdown -->
                             <div class="card mb-2">
                                 <div class="card-header bg-transparent fw-semibold">
-                                    <BIcon icon="bi-table" extraClassName="me-1" />Per-symbol breakdown
+                                    <BIcon icon="bi-table" extraClassName="me-1" />Holdings breakdown
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover align-middle mb-0">
@@ -128,20 +183,26 @@
                                             <tr>
                                                 <th>Symbol</th>
                                                 <th>Name</th>
-                                                <th>Type</th>
-                                                <th class="text-end">Quantity</th>
-                                                <th class="text-end">Cost</th>
+                                                <th class="text-end">Holdings</th>
+                                                <th class="text-end">Open</th>
+                                                <th class="text-end">Close</th>
+                                                <th class="text-end">Weight</th>
+                                                <th class="text-end">Period P&amp;L</th>
+                                                <th class="text-end">Total return</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var row in report.ItemRows)
+                                            @foreach (var row in report.Items)
                                             {
                                                 <tr>
                                                     <td><code>@row.ItemCode</code></td>
                                                     <td>@row.Name</td>
-                                                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis">@row.TxType</span></td>
-                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Quantity, 4)</td>
-                                                    <td class="text-end">@Money(row.Cost, report.Currency)</td>
+                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Holdings, 4)</td>
+                                                    <td class="text-end">@Money(row.OpenValue, report.Currency)</td>
+                                                    <td class="text-end">@Money(row.CloseValue, report.Currency)</td>
+                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Weight, 2)%</td>
+                                                    <td class="text-end @PnlClass(row.PeriodPnl)">@Money(row.PeriodPnl, report.Currency)</td>
+                                                    <td class="text-end @PnlClass(row.TotalReturn)">@Money(row.TotalReturn, report.Currency)</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -149,8 +210,50 @@
                                 </div>
                             </div>
                         }
-
-                        @if (!report.HasAggregate && !report.HasItems)
+                        else if (report.HasItems)
+                        {
+                            <!-- Single-symbol snapshot detail -->
+                            @foreach (var row in report.Items)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-graph-up" extraClassName="me-1" /><code>@row.ItemCode</code> <span class="text-muted">@row.Name</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Holdings</div>
+                                                <div class="fs-5 fw-semibold">@FormatUtils.FormatValueMaxDecimals(row.Holdings, 4)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Close value</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.CloseValue, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Open value</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.OpenValue, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Period P&amp;L</div>
+                                                <div class="fs-5 fw-semibold @PnlClass(row.PeriodPnl)">@Money(row.PeriodPnl, report.Currency)</div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-3" />
+                                        <div class="row g-3 small">
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Total return</span><span class="@PnlClass(row.TotalReturn)">@Money(row.TotalReturn, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Dividends</span>@Money(row.Dividends, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Distributions</span>@Money(row.Distributions, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Interest</span>@Money(row.Interest, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Fees</span>@Money(row.Fees, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Tax</span>@Money(row.Tax, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Buys</span>@Money(row.Buys, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Sells</span>@Money(row.Sells, report.Currency)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
                         {
                             <div class="text-center text-muted py-4">
                                 <BIcon icon="bi-inbox" extraClassName="fs-3 d-block mb-2" />

@@ -96,6 +96,37 @@
 		</li>
     </ul>
     <div class="sidebar-footer border-top d-none d-md-flex">
+        <button class="btn btn-sm float-start d-narrow-none" type="button" title="Debug" aria-label="Debug" @onclick="OpenDebugDialog">
+            <BIcon icon="bi-bug" />
+        </button>
         <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
     </div>
+
+    <CModal @ref="@ModalDebug" title="Debug" centered="true" type="warning" size="large">
+        <div class="card">
+            <div class="card-body">
+                @if (DebugOutput != null)
+                {
+                    <pre class="mb-0" style="max-height:60vh;overflow:auto;white-space:pre-wrap;">@string.Join(Environment.NewLine, DebugOutput)</pre>
+                }
+                else
+                {
+                    <p class="text-body-secondary mb-0">Click the Debug button to run the diagnostics.</p>
+                }
+                <hr/>
+                <button type="button" class="btn btn-primary" disabled="@DebugRunning" @onclick="RunDebugAsync">
+                    @if (DebugRunning)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        <span>Running...</span>
+                    }
+                    else
+                    {
+                        <BIcon icon="bi-bug" /><span class="ms-1">Debug</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="() => ModalDebug.Close()"><BIcon icon="bi-x-circle" /> Close</button>
+            </div>
+        </div>
+    </CModal>
 </div>

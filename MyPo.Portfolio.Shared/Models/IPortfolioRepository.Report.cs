@@ -21,13 +21,13 @@ public partial interface IPortfolioRepository
     /// <summary>
     /// Fetches report snapshot for a given symbol from a portfolio of a given type and period start date.
     /// </summary>
-    /// <param name="portfolio"></param>
-    /// <param name="reportType"></param>
-    /// <param name="reportPeriod"></param>
-    /// <param name="symbol"></param>
+    /// <param name="portfolio">The portfolio to query snapshot report entries.</param>
+    /// <param name="reportType">The report type to query.</param>
+    /// <param name="reportStartDate">Query entries which have the specific report start date (in "yyyy-MM-dd" format)</param>
+    /// <param name="symbol">Query entries that match the specific symbol (should be in format "EXCHANGE:SYMBOL" or <see cref="ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO"/>)</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public ValueTask<IEnumerable<ReportEntity>> GetSnapshotReportAsync(PortfolioEntity portfolio, ReportType reportType, string reportPeriod, string symbol, CancellationToken cancellationToken = default);
+    public ValueTask<IEnumerable<ReportEntity>> GetSnapshotReportAsync(PortfolioEntity portfolio, ReportType reportType, string reportStartDate, string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches the immediate previous report record (if any) for a given report entity.
@@ -37,6 +37,21 @@ public partial interface IPortfolioRepository
     /// <returns></returns>
     /// <remarks>The previous report record will match (portfolio, report-type, item-code, tx-type) with the supplied one.</remarks>
     public ValueTask<ReportEntity?> GetPrevReportAsync(ReportEntity reportEntity, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetches the most recent <see cref="ReportEntity.TX_TYPE_POSITION"> report entry per symbol (excluding the portfolio
+    /// aggregate <see cref="ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO" />) that is still open (non-zero accumulated quantity)
+    /// as of just before <paramref name="beforePeriodStart"/>.
+    /// </summary>
+    /// <param name="portfolio">The portfolio to query report entries.</param>
+    /// <param name="reportType">The report type to query.</param>
+    /// <param name="beforePeriodStart">Query only entries BEFORE this date (in "yyyy-MM-dd" format).</param>
+    /// <remarks>
+    /// Used to carry held-but-not-traded positions forward so every period marks them to market.
+    /// <paramref name="beforePeriodStart"/> is the current period's PeriodStart ("yyyy-MM-dd"); entries with
+    /// PeriodStart strictly less than it are considered.
+    /// </remarks>
+    public ValueTask<IEnumerable<ReportEntity>> GetOpenPositionsAsOfAsync(PortfolioEntity portfolio, ReportType reportType, string beforePeriodStart, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resets (deletes) all report records for a given portfolio.
