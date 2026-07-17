@@ -242,34 +242,105 @@
                                         <BIcon icon="bi-graph-up" extraClassName="me-1" /><code>@row.ItemCode</code> <span class="text-muted">@row.Name</span>
                                     </div>
                                     <div class="card-body">
+                                        <!-- Position facts (holdings, cost basis, avg cost vs current price) -->
                                         <div class="row g-3">
                                             <div class="col-6 col-lg-3">
                                                 <div class="text-muted small">Holdings</div>
                                                 <div class="fs-5 fw-semibold">@FormatUtils.FormatValueMaxDecimals(row.Holdings, 4)</div>
                                             </div>
                                             <div class="col-6 col-lg-3">
-                                                <div class="text-muted small">Close value</div>
+                                                <div class="text-muted small">Market value</div>
                                                 <div class="fs-5 fw-semibold">@Money(row.CloseValue, report.Currency)</div>
                                             </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Cost basis (net invested)</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.CostBasis, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Avg cost -&gt; current price</div>
+                                                <div class="fs-6 fw-semibold">
+                                                    @Price(row.AvgCost, report.Currency)<BIcon icon="bi-arrow-right" extraClassName="mx-1" />@Price(row.CurrentPrice, report.Currency)
+                                                </div>
+                                                <div class="small @PnlClass(row.PriceChangePct ?? 0m)">@Pct(row.PriceChangePct)</div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-3" />
+                                        <!-- Performance (period P&L and total return, with percentages) -->
+                                        <div class="row g-3">
                                             <div class="col-6 col-lg-3">
                                                 <div class="text-muted small">Open value</div>
                                                 <div class="fs-5 fw-semibold">@Money(row.OpenValue, report.Currency)</div>
                                             </div>
                                             <div class="col-6 col-lg-3">
                                                 <div class="text-muted small">Period P&amp;L</div>
-                                                <div class="fs-5 fw-semibold @PnlClass(row.PeriodPnl)">@Money(row.PeriodPnl, report.Currency)</div>
+                                                <div class="fs-5 fw-semibold @PnlClass(row.PeriodPnl)">@MoneySigned(row.PeriodPnl, report.Currency)</div>
+                                                <div class="small @PnlClass(row.PeriodReturnPct ?? 0m)">@Pct(row.PeriodReturnPct)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Total return</div>
+                                                <div class="fs-5 fw-semibold @PnlClass(row.TotalReturn)">@MoneySigned(row.TotalReturn, report.Currency)</div>
+                                                <div class="small @PnlClass(row.TotalReturnPct ?? 0m)">@Pct(row.TotalReturnPct)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Yield on cost / on value</div>
+                                                <div class="fs-6 fw-semibold">@Pct(row.YieldOnCost) <span class="text-muted">/</span> @Pct(row.YieldOnValue)</div>
                                             </div>
                                         </div>
+
+                                        <!-- Option: Return attribution (how total return was earned) -->
                                         <hr class="my-3" />
+                                        <div class="small text-muted mb-2">
+                                            <BIcon icon="bi-signpost-split" extraClassName="me-1" />Option · Return attribution (how total return was earned)
+                                        </div>
                                         <div class="row g-3 small">
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Total return</span><span class="@PnlClass(row.TotalReturn)">@Money(row.TotalReturn, report.Currency)</span></div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Dividends</span>@Money(row.Dividends, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Distributions</span>@Money(row.Distributions, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Interest</span>@Money(row.Interest, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Fees</span>@Money(row.Fees, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Tax</span>@Money(row.Tax, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Buys</span>@Money(row.Buys, report.Currency)</div>
-                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Sells</span>@Money(row.Sells, report.Currency)</div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Capital (price)</span><span class="@PnlClass(row.AttribCapital)">@MoneySigned(row.AttribCapital, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Income (div + dist + interest)</span><span class="@PnlClass(row.AttribIncome)">@MoneySigned(row.AttribIncome, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Costs (fees + tax)</span><span class="@PnlClass(row.AttribCosts)">@MoneySigned(row.AttribCosts, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">= Total return</span><span class="@PnlClass(row.TotalReturn)">@MoneySigned(row.TotalReturn, report.Currency)</span></div>
+                                        </div>
+
+                                        <!-- Option: Income & activity - this period vs lifetime -->
+                                        <hr class="my-3" />
+                                        <div class="small text-muted mb-2">
+                                            <BIcon icon="bi-list-columns" extraClassName="me-1" />Option · Income &amp; activity (this period vs lifetime)
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th></th>
+                                                        <th class="text-end">Dividends</th>
+                                                        <th class="text-end">Distributions</th>
+                                                        <th class="text-end">Interest</th>
+                                                        <th class="text-end">Fees</th>
+                                                        <th class="text-end">Tax</th>
+                                                        <th class="text-end">Buys</th>
+                                                        <th class="text-end">Sells</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <th class="text-muted fw-normal">This period</th>
+                                                        <td class="text-end">@Money(row.Dividends, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Distributions, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Interest, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Fees, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Tax, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Buys, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Sells, report.Currency)</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="text-muted fw-normal">Lifetime</th>
+                                                        <td class="text-end">@Money(row.AccumulatedDividends, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedDistributions, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedInterest, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedFees, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedTax, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedBuys, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedSells, report.Currency)</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>

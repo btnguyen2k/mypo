@@ -25,13 +25,60 @@ public partial class CPortfolioSnapshots : CBase
         public decimal AccumulatedDividends { get; set; }
         /// <summary>Accumulated (lifetime-to-period-end) distributions.</summary>
         public decimal AccumulatedDistributions { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) interest.</summary>
+        public decimal AccumulatedInterest { get; set; }
         public decimal Fees { get; set; }
         public decimal Tax { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) fees.</summary>
+        public decimal AccumulatedFees { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) tax.</summary>
+        public decimal AccumulatedTax { get; set; }
         public decimal Buys { get; set; }
         public decimal Sells { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) gross buys.</summary>
+        public decimal AccumulatedBuys { get; set; }
+        /// <summary>Accumulated (lifetime-to-period-end) gross sells.</summary>
+        public decimal AccumulatedSells { get; set; }
+        /// <summary>Net invested capital (cost basis) = accumulated buys - accumulated sells.</summary>
+        public decimal CostBasis { get; set; }
         /// <summary>Share of the portfolio's total close value (%).</summary>
         public decimal Weight { get; set; }
         public bool IsFinal { get; set; }
+
+        // --- Derived insight metrics (computed on the fly from the figures above) ---
+
+        /// <summary>Lifetime income (dividends + distributions + interest) to the period end.</summary>
+        public decimal AccumulatedIncome => AccumulatedDividends + AccumulatedDistributions + AccumulatedInterest;
+
+        /// <summary>Average cost per unit held = cost basis / holdings.</summary>
+        public decimal AvgCost => Holdings != 0m ? CostBasis / Holdings : 0m;
+
+        /// <summary>Current market price per unit = close value / holdings.</summary>
+        public decimal CurrentPrice => Holdings != 0m ? CloseValue / Holdings : 0m;
+
+        /// <summary>Period return as a percentage of the opening value (null when not computable).</summary>
+        public decimal? PeriodReturnPct => OpenValue > 0m ? PeriodPnl / OpenValue * 100m : null;
+
+        /// <summary>Total return as a percentage of net invested capital (null when not computable).</summary>
+        public decimal? TotalReturnPct => CostBasis > 0m ? TotalReturn / CostBasis * 100m : null;
+
+        /// <summary>Price appreciation of the average unit vs current price (null when not computable).</summary>
+        public decimal? PriceChangePct => AvgCost > 0m ? (CurrentPrice - AvgCost) / AvgCost * 100m : null;
+
+        /// <summary>Lifetime income as a percentage of net invested capital (yield on cost).</summary>
+        public decimal? YieldOnCost => CostBasis > 0m ? AccumulatedIncome / CostBasis * 100m : null;
+
+        /// <summary>Lifetime income as a percentage of current market value (yield on value).</summary>
+        public decimal? YieldOnValue => CloseValue > 0m ? AccumulatedIncome / CloseValue * 100m : null;
+
+        /// <summary>Capital (price) component of total return = current value - cost basis.</summary>
+        public decimal AttribCapital => CloseValue - CostBasis;
+
+        /// <summary>Income component of total return = lifetime income.</summary>
+        public decimal AttribIncome => AccumulatedIncome;
+
+        /// <summary>Cost drag component of total return = -(accumulated fees + tax).</summary>
+        public decimal AttribCosts => -(AccumulatedFees + AccumulatedTax);
     }
 
     /// <summary>The entire-portfolio ("*") snapshot summary for the selected period.</summary>
@@ -309,10 +356,16 @@ public partial class CPortfolioSnapshots : CBase
                 Interest = m.Interest ?? 0m,
                 AccumulatedDividends = m.AccumulatedDividends ?? 0m,
                 AccumulatedDistributions = m.AccumulatedDistributions ?? 0m,
+                AccumulatedInterest = m.AccumulatedInterest ?? 0m,
                 Fees = m.Fees ?? 0m,
                 Tax = m.Tax ?? 0m,
+                AccumulatedFees = m.AccumulatedFees ?? 0m,
+                AccumulatedTax = m.AccumulatedTax ?? 0m,
                 Buys = m.Buys ?? 0m,
                 Sells = m.Sells ?? 0m,
+                AccumulatedBuys = m.AccumulatedBuys ?? 0m,
+                AccumulatedSells = m.AccumulatedSells ?? 0m,
+                CostBasis = m.AccumulatedCost,
                 Weight = portfolioCloseValue != 0 ? close / portfolioCloseValue * 100m : 0m,
                 IsFinal = e.IsFinal,
             };
@@ -569,4 +622,16 @@ public partial class CPortfolioSnapshots : CBase
 
     private static string Money(decimal value, string currency)
         => $"{FormatUtils.FormatValueMaxDecimals(value, 2)} {currency}";
+
+    /// <summary>Formats a signed value with its explicit sign, e.g. "+1,234.00 USD".</summary>
+    private static string MoneySigned(decimal value, string currency)
+        => $"{(value > 0 ? "+" : "")}{FormatUtils.FormatValueMaxDecimals(value, 2)} {currency}";
+
+    /// <summary>Formats a nullable percentage with an explicit sign, or a dash when not computable.</summary>
+    private static string Pct(decimal? value)
+        => value is null ? "-" : $"{(value > 0 ? "+" : "")}{FormatUtils.FormatValueMaxDecimals(value.Value, 2)}%";
+
+    /// <summary>Formats a per-unit price using up to 4 decimals.</summary>
+    private static string Price(decimal value, string currency)
+        => $"{FormatUtils.FormatValueMaxDecimals(value, 4)} {currency}";
 }
