@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ddth.Utilities" Version="0.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.28" />
+    <PackageReference Include="Ddth.Utilities" Version="0.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.29" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.17">
       <TreatAsUsed>true</TreatAsUsed>
     </PackageReference>

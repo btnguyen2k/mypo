@@ -8,6 +8,9 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class MyPortfolioAdd : BasePage
 {
+    [Parameter, SupplyParameterFromQuery(Name = "parentId")]
+    public string? ParentId { get; set; }
+
     private string ParentPortfolioId { get; set; } = string.Empty;
     private string Name { get; set; } = string.Empty;
     private string Currency { get; set; } = string.Empty;
@@ -27,7 +30,14 @@ public partial class MyPortfolioAdd : BasePage
 
     private void BtnClickCancel()
     {
-        NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
+        if (string.IsNullOrEmpty(ParentId))
+        {
+            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
+        }
+        else
+        {
+            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", ParentId, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private async Task BtnClickSaveAndOpen()
@@ -121,6 +131,12 @@ public partial class MyPortfolioAdd : BasePage
             {
                 var allPortfolios = portfolioResult.Data ?? [];
                 MyPortfolioTree = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+
+                // preset parent when supplied via query (e.g. creating a child from a container portfolio)
+                if (!string.IsNullOrEmpty(ParentId) && allPortfolios.Any(p => p.Id == ParentId))
+                {
+                    ParentPortfolioId = ParentId;
+                }
             }
             else
             {

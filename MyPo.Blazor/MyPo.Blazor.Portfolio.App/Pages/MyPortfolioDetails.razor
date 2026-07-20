@@ -2,6 +2,7 @@
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Identity
 
@@ -20,9 +21,54 @@
     <li class="breadcrumb-item">
         <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
     </li>
-    <li class="breadcrumb-item active">
-        <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
-    </li>
+    @if(PortfoliosMap.TryGetValue(SelectedPortfolio?.ParentId??string.Empty, out var parent))
+    {
+        <li class="breadcrumb-item">
+            <a href="#" @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(parent.Id)">@(parent.Name)</a>
+        </li>
+    }
+    @if (!HideUI && SelectedPortfolio is not null)
+    {
+        <li class="breadcrumb-item active">
+            <div class="dropdown d-inline-block">
+                <a class="dropdown-toggle text-decoration-none" href="#" role="button"
+                    data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>
+                    @SelectedPortfolio.Name
+                </a>
+                <ul class="dropdown-menu">
+                    @foreach (var (p, level) in FlattenPortfolioTree())
+                    {
+                        var isCurrent = string.Equals(p.Id, SelectedPortfolio.Id, StringComparison.Ordinal);
+                        <li>
+                            <a class="dropdown-item @(isCurrent?"active":"")" href="#"
+                                style="padding-left:@($"{0.5 + level * 1.25}rem")"
+                                @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(p.Id)">
+                                @if (p.Metadata?.IsContainer ?? false)
+                                {
+                                    <BIcon icon="bi-diagram-3" extraClassName="text-muted me-1" />
+                                }
+                                @if (isCurrent)
+                                {
+                                    <BIcon icon="bi-check-lg" extraClassName="me-1" />
+                                }
+                                @p.Name
+                                @if (!p.IsActive)
+                                {
+                                    <span class="text-muted ms-1" title="Inactive"><BIcon icon="bi-slash-circle" /></span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </li>
+    }
+    else
+    {
+        <li class="breadcrumb-item active">
+            <span>@(SelectedPortfolio?.Name ?? PortfolioId)</span>
+        </li>
+    }
 </SectionContent>
 
 <AuthorizeView>
@@ -35,73 +81,173 @@
     <Authorized>
         <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
-            <div class="card border-top-primary border-top-3 mb-4">
+            <div class="card @((SelectedPortfolio?.IsActive??false)?"border-top-primary":"border-top-secondary") border-top-3 mb-4">
                 <div class="card-body">
                     <CAlert @ref="@Alert" />
                     @if (!HideUI)
                     {
-                        <nav>
-                            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                                <button class="nav-link @(ActiveTab==TabIdSummary?"active":"")"
-                                    @onclick="(()=>SwitchTab(TabIdSummary))" id="@TabIdSummary"
-                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdSummary)-content"
-                                    type="button" role="tab" aria-controls="@(TabIdSummary)-content"
-                                    aria-selected="@(ActiveTab==TabIdSummary?"true":"false")">Summary</button>
-                                <button class="nav-link @(ActiveTab==TabIdPositions?"active":"")"
-                                    @onclick="(()=>SwitchTab(TabIdPositions))" id="@TabIdPositions"
-                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdPositions)-content"
-                                    type="button" role="tab" aria-controls="@(TabIdPositions)-content"
-                                    aria-selected="@(ActiveTab==TabIdPositions?"true":"false")">Positions</button>
-                                <button class="nav-link @(ActiveTab==TabIdTxBuysSells?"active":"")"
-                                    @onclick="(()=>SwitchTab(TabIdTxBuysSells))" id="@TabIdTxBuysSells"
-                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxBuysSells)-content"
-                                    type="button" role="tab" aria-controls="@(TabIdTxBuysSells)-content"
-                                    aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Buys/Sells</button>
-                                <button class="nav-link @(ActiveTab==TabIdTxSettled?"active":"")"
-                                    @onclick="(()=>SwitchTab(TabIdTxSettled))" id="@TabIdTxSettled"
-                                    data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxSettled)-content"
-                                    type="button" role="tab" aria-controls="@(TabIdTxSettled)-content"
-                                    aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Settlements</button>
+                        if (SelectedPortfolio?.Metadata?.IsContainer ?? false)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><BIcon icon="bi-diagram-3" extraClassName="me-1" />@(ShowContainerPreferences ? "Container Preferences" : "Child Portfolios")</h5>
+                                <div class="d-flex gap-2">
+                                    <button class="btn @(ShowContainerPreferences?"btn-primary":"btn-outline-primary") btn-sm" @onclick="ToggleContainerPreferences">
+                                        <BIcon icon="bi-sliders" extraClassName="me-1" />Preferences
+                                    </button>
+                                    @if (!ShowContainerPreferences)
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="BtnClickCreatePortfolio">
+                                            <BIcon icon="bi-plus-lg" extraClassName="me-1" />Create portfolio
+                                        </button>
+                                    }
+                                </div>
                             </div>
-                        </nav>
-                        <div class="tab-content" id="nav-tabContent">
-                            <div class="tab-pane fade @(ActiveTab==TabIdSummary?"show active":"")"
-                                    id="@(TabIdSummary)-content" role="tabpanel" aria-labelledby="@TabIdSummary" tabindex="0">
-                                <CPortfolioSummary
-                                    QuotesMap="@(QuotesMap)"
-                                    Assets="@(Assets)"
+                            @if (ShowContainerPreferences)
+                            {
+                                <CPortfolioPreferences
                                     Portfolio="@(SelectedPortfolio)"
-                                    TxSettlements="@(TxSettlements)"
                                     Markets="@(Markets)" />
+                            }
+                            else if (SelectedPortfolio.Children == null || !SelectedPortfolio.Children.Any())
+                            {
+                                <div class="text-center text-muted py-5">
+                                    <BIcon icon="bi-briefcase" extraClassName="fs-1" />
+                                    <p class="mt-2">This container has no child portfolios yet.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                                    @foreach (var child in SelectedPortfolio.Children)
+                                    {
+                                        var m = DefaultMarket(child);
+                                        <div class="col">
+                                            <div class="card h-100 @(child.IsActive?"border-top-primary":"border-top-secondary") border-top-3"
+                                                style="cursor:pointer;" @onclick="()=>BtnClickOpenPortfolio(child.Id)">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        @child.Name
+                                                        <span class="badge bg-secondary ms-1 @(child.IsActive?"d-none":"")">Inactive</span>
+                                                    </h5>
+                                                    <div class="mb-2"><CBadgeRandom Text="@child.Currency" /></div>
+                                                    @if (!string.IsNullOrEmpty(child.Description))
+                                                    {
+                                                        <p class="card-text small text-muted">@child.Description</p>
+                                                    }
+                                                    <div class="d-flex justify-content-between small">
+                                                        <span class="text-muted">Mkt. Value</span>
+                                                        <span>@((m?.CurrencySymbol??"--")+" ")@(child.TotalMarketValue==0?"--":FormatUtils.FormatValueWithScale(child.TotalMarketValue, m?.PriceScale??1, m?.ValueFormat??""))</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between small @(child.TotalPnl>0?"text-success":(child.TotalPnl<0?"text-danger":""))">
+                                                        <span>P/L</span>
+                                                        <span>@(child.TotalCosts==0?"--":child.TotalPnlPct.ToString("P2"))</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <nav>
+                                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                    <button class="nav-link @(ActiveTab==TabIdSummary?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdSummary))" id="@TabIdSummary"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdSummary)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdSummary)-content"
+                                        aria-selected="@(ActiveTab==TabIdSummary?"true":"false")">Summary</button>
+                                    <button class="nav-link @(ActiveTab==TabIdPositions?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdPositions))" id="@TabIdPositions"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdPositions)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdPositions)-content"
+                                        aria-selected="@(ActiveTab==TabIdPositions?"true":"false")">Positions</button>
+                                    <button class="nav-link @(ActiveTab==TabIdTxBuysSells?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdTxBuysSells))" id="@TabIdTxBuysSells"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxBuysSells)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdTxBuysSells)-content"
+                                        aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Buys/Sells</button>
+                                    <button class="nav-link @(ActiveTab==TabIdTxSettled?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdTxSettled))" id="@TabIdTxSettled"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdTxSettled)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdTxSettled)-content"
+                                        aria-selected="@(ActiveTab==TabIdTxBuysSells?"true":"false")">Settlements</button>
+                                    <button class="nav-link @(ActiveTab==TabIdSnapshots?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdSnapshots))" id="@TabIdSnapshots"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdSnapshots)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdSnapshots)-content"
+                                        aria-selected="@(ActiveTab==TabIdSnapshots?"true":"false")">Snapshots</button>
+                                    <button class="nav-link @(ActiveTab==TabIdTrends?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdTrends))" id="@TabIdTrends"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdTrends)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdTrends)-content"
+                                        aria-selected="@(ActiveTab==TabIdTrends?"true":"false")">Trends</button>
+                                    <button class="nav-link ms-auto @(ActiveTab==TabIdPreferences?"active":"")"
+                                        @onclick="(()=>SwitchTab(TabIdPreferences))" id="@TabIdPreferences"
+                                        data-coreui-toggle="tab" data-coreui-target="#@(TabIdPreferences)-content"
+                                        type="button" role="tab" aria-controls="@(TabIdPreferences)-content"
+                                        aria-selected="@(ActiveTab==TabIdPreferences?"true":"false")">
+                                        <BIcon icon="bi-sliders" extraClassName="me-1" />Preferences</button>
+                                </div>
+                            </nav>
+                            <div class="tab-content" id="nav-tabContent">
+                                <div class="tab-pane fade @(ActiveTab==TabIdSummary?"show active":"")"
+                                        id="@(TabIdSummary)-content" role="tabpanel" aria-labelledby="@TabIdSummary" tabindex="0">
+                                    <CPortfolioSummary
+                                        QuotesMap="@(QuotesMap)"
+                                        Assets="@(Assets)"
+                                        Portfolio="@(SelectedPortfolio)"
+                                        TxSettlements="@(TxSettlements)"
+                                        Markets="@(Markets)" />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdPositions?"show active":"")"
+                                        id="@(TabIdPositions)-content" role="tabpanel" aria-labelledby="@TabIdPositions" tabindex="0">
+                                    <CPortfolioAssets
+                                        QuotesMap="@(QuotesMap)"
+                                        Portfolio="@(SelectedPortfolio)"
+                                        Assets="@(Assets?.OrderBy(a=>a.ItemCode))"
+                                        Markets="@(Markets)"
+                                    />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdTxBuysSells?"show active":"")"
+                                        id="@(TabIdTxBuysSells)-content" role="tabpanel" aria-labelledby="@TabIdTxBuysSells" tabindex="0">
+                                    <CPortfolioTxBuysSells
+                                        Portfolio="@(SelectedPortfolio)"
+                                        Transactions="@(TxBuySells)"
+                                        Markets="@(Markets)" />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdTxSettled?"show active":"")"
+                                        id="@(TabIdTxSettled)-content" role="tabpanel" aria-labelledby="@TabIdTxSettled" tabindex="0">
+                                    <CPortfolioTxSettled
+                                        Portfolio="@(SelectedPortfolio)"
+                                        TxSettlements="@(TxSettlements)"
+                                        Markets="@(Markets)" />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdSnapshots?"show active":"")"
+                                        id="@(TabIdSnapshots)-content" role="tabpanel" aria-labelledby="@TabIdSnapshots" tabindex="0">
+                                    <CPortfolioSnapshots
+                                        Portfolio="@(SelectedPortfolio)"
+                                        Markets="@(Markets)" />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdTrends?"show active":"")"
+                                        id="@(TabIdTrends)-content" role="tabpanel" aria-labelledby="@TabIdTrends" tabindex="0">
+                                    <CPortfolioTrends
+                                        Portfolio="@(SelectedPortfolio)"
+                                        Markets="@(Markets)" />
+                                </div>
+                                <div class="tab-pane fade @(ActiveTab==TabIdPreferences?"show active":"")"
+                                        id="@(TabIdPreferences)-content" role="tabpanel" aria-labelledby="@TabIdPreferences" tabindex="0">
+                                    <CPortfolioPreferences
+                                        Portfolio="@(SelectedPortfolio)"
+                                        Markets="@(Markets)" />
+                                </div>
                             </div>
-                            <div class="tab-pane fade @(ActiveTab==TabIdPositions?"show active":"")"
-                                    id="@(TabIdPositions)-content" role="tabpanel" aria-labelledby="@TabIdPositions" tabindex="0">
-                                <CPortfolioAssets
-                                    QuotesMap="@(QuotesMap)"
-                                    Portfolio="@(SelectedPortfolio)"
-                                    Assets="@(Assets?.OrderBy(a=>a.ItemCode))"
-                                    Markets="@(Markets)"
-                                />
-                            </div>
-                            <div class="tab-pane fade @(ActiveTab==TabIdTxBuysSells?"show active":"")"
-                                    id="@(TabIdTxBuysSells)-content" role="tabpanel" aria-labelledby="@TabIdTxBuysSells" tabindex="0">
-                                <CPortfolioTxBuysSells
-                                    Portfolio="@(SelectedPortfolio)"
-                                    Transactions="@(TxBuySells)"
-                                    Markets="@(Markets)" />
-                            </div>
-                            <div class="tab-pane fade @(ActiveTab==TabIdTxSettled?"show active":"")"
-                                    id="@(TabIdTxSettled)-content" role="tabpanel" aria-labelledby="@TabIdTxSettled" tabindex="0">
-                                <CPortfolioTxSettled
-                                    Portfolio="@(SelectedPortfolio)"
-                                    TxSettlements="@(TxSettlements)"
-                                    Markets="@(Markets)" />
-                            </div>
-                        </div>
+                        }
                     }
                     @if (!string.IsNullOrEmpty(BackgroundMsg))
                     {
-                        <div class="alert alert-light" role="alert">
+                        <div class="alert alert-light mt-4" role="alert">
                             <span style="font-size: small !important;">@BackgroundMsg</span>
                         </div>
                     }

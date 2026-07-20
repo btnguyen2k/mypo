@@ -1,4 +1,4 @@
-# Please see the documentation for all configuration options:
+﻿# Please see the documentation for all configuration options:
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
@@ -13,6 +13,7 @@ updates:
     directories:
       - "/MyPo.Libs"
       - "/MyPo.Shared"
+      - "/MyPo.Shared.Api"
       - "/MyPo.Shared.EF"
       - "/MyPo.Api"
       - "/MyPo.Blazor/MyPo.Blazor"

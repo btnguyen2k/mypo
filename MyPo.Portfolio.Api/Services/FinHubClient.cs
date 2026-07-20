@@ -217,6 +217,27 @@ public partial class FinHubClient : BaseClient, IFinHubClient
         return await ReadAndCloseResponseAsync<HistoryPoint>(httpResult, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public async Task<ApiResp<IEnumerable<HistoryPoint>>> GetStockQuoteHistoryAsync(string symbol, int? days = 100, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> {
+            { "days", days?.ToString() ?? "100" },
+        };
+        var endpoint = QueryHelpers.AddQueryString(
+            IFinHubClient.API_FINHUB_ENDPOINT_STOCK_SYMBOL_QUOTE_HISTORY
+                .Replace("{symbol}", symbol, StringComparison.OrdinalIgnoreCase),
+            queryParams
+        );
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            HttpMethod.Get, baseUrl, endpoint,
+            NoAuth,
+            NoData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsync<IEnumerable<HistoryPoint>>(httpResult, cancellationToken);
+    }
+
     /*----------------------------------------------------------------------*/
 
     /// <inheritdoc/>

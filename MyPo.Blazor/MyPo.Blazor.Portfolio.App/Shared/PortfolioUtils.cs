@@ -69,6 +69,16 @@ public static class PortfolioUtils
         return jsCoreUIChipInput;
     }
 
+    private static IJSObjectReference? jsCharts;
+    public static async ValueTask<IJSObjectReference> LoadJSCharts(IJSRuntime JS)
+    {
+        jsCharts ??= await JS.InvokeAsync<IJSObjectReference>(
+            "import",
+            $"./_content/{typeof(PortfolioUtils).Assembly.GetName().Name!}/js/charts.js"
+        );
+        return jsCharts;
+    }
+
     // public static string Excerpt(string? input, int maxLength = 60)
     // {
     // 	if (string.IsNullOrEmpty(input) || input.Length <= maxLength)

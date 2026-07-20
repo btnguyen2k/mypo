@@ -13,5 +13,6 @@
 
   <ItemGroup>
     <PackageReference Include="Ddth.Signum" Version="0.0.3" />
+    <PackageReference Include="Ddth.Utilities" Version="0.4.0" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,63 @@
 ﻿using Microsoft.AspNetCore.Components;
+using MyPo.Blazor.App.Shared;
 
 namespace MyPo.Blazor.App.Layout;
 
 public partial class Sidebar
 {
+    private CModal ModalDebug { get; set; } = default!;
+
+    /// <summary>
+    /// Delegate that performs the actual "Debug" action.
+    /// </summary>
+    /// <remarks>
+    /// This project (MyPo.Blazor.App) is the base UI layer and does not reference the portfolio module.
+    /// Downstream modules (e.g. MyPo.Blazor.Portfolio.App) register a handler that calls the server-side
+    /// debug API. The handler receives an <see cref="IServiceProvider"/> so it can resolve the services it
+    /// needs (API client, local storage, ...) and returns the lines of output to display.
+    /// </remarks>
+    public static Func<IServiceProvider, Task<string[]>>? DebugHandler { get; set; }
+
+    [Inject]
+    protected IServiceProvider ServiceProvider { get; init; } = default!;
+
+    private bool DebugRunning { get; set; } = false;
+    private string[]? DebugOutput { get; set; } = null;
+
+    private void OpenDebugDialog()
+    {
+        DebugRunning = false;
+        DebugOutput = null;
+        ModalDebug.Open();
+    }
+
+    private async Task RunDebugAsync()
+    {
+        if (DebugHandler == null)
+        {
+            DebugOutput = ["No debug handler is registered."];
+            StateHasChanged();
+            return;
+        }
+
+        DebugRunning = true;
+        DebugOutput = null;
+        StateHasChanged();
+        try
+        {
+            DebugOutput = await DebugHandler(ServiceProvider);
+        }
+        catch (Exception e)
+        {
+            DebugOutput = [$"Error: {e.Message}"];
+        }
+        finally
+        {
+            DebugRunning = false;
+            StateHasChanged();
+        }
+    }
+
 	public class SidebarEntry
 	{
 		public string Id { get; set; }

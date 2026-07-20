@@ -19,14 +19,14 @@ public class MenuBootstrapper
             Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MARKETS,
             Priority = 100,
         });
-        // Sidebar.AddOrReplaceEntry(new Sidebar.SidebarItem
-        // {
-        // 	Id = "stock_symbol_info",
-        // 	Label = "Stock Symbol Info",
-        // 	Icon = "bi-graph-up-arrow",
-        // 	Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO_EMPTY,
-        // 	Priority = 101,
-        // });
+        Sidebar.AddOrReplaceEntry(new Sidebar.SidebarItem
+        {
+        	Id = "events",
+        	Label = "Events",
+        	Icon = "bi-calendar-event",
+        	Url = PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS,
+        	Priority = 101,
+        });
         Sidebar.AddOrReplaceEntry(new Sidebar.SidebarSection
         {
             Id = "portfolio",

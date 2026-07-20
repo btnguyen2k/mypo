@@ -8,6 +8,12 @@ public partial interface IPortfolioRepository
     public ValueTask<PnlSummary> GetPnlSummaryForPortfolioAsync(string portfolioId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets a list of <see cref="PnlSummary"/> for a portfolio for a specific period, one entry per
+    /// (market, item) grouping.
+    /// </summary>
+    public ValueTask<IEnumerable<PnlSummary>> GetPnlSummaryForPortfolioForPeriodAsync(string portfolioId, DateTimeOffset startPeriodIncl, DateTimeOffset endPeriodExcl, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets <see cref="TxSettlementEntity" /> records for a portfolio.
     /// </summary>
     public ValueTask<IEnumerable<TxSettlementEntity>> GetTxSettlementsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
@@ -31,4 +37,9 @@ public partial interface IPortfolioRepository
     /// Deletes an existing <see cref="TxSettlementEntity" /> record.
     /// </summary>
     public ValueTask<bool> DeleteTxSettlementAsync(TxSettlementEntity tx, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the first <see cref="TxSettlementEntity" /> record for a portfolio, ordered by settlement date ascending.
+    /// </summary>
+    public ValueTask<TxSettlementEntity?> GetFirstTxSettlementByPortfolioId(string portfolioId, CancellationToken cancellationToken = default);
 }
