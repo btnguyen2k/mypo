@@ -81,15 +81,6 @@ public partial class CPortfolioTrends : CBase
         }
     }
 
-    private void OnCountChanged(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var count))
-        {
-            SelectedCount = count;
-            ResetReport();
-        }
-    }
-
     private void ResetReport()
     {
         Buckets = [];

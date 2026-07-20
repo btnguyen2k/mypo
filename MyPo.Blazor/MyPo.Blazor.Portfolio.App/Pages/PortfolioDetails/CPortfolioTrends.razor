@@ -41,7 +41,7 @@
                             <label class="form-label fw-semibold d-block mb-1" for="trendCount">
                                 <BIcon icon="bi-list-ol" extraClassName="me-1" />Periods
                             </label>
-                            <select class="form-select" id="trendCount" value="@SelectedCount" @onchange="OnCountChanged">
+                            <select class="form-select" id="trendCount" @bind="SelectedCount" @bind:after="BtnClickGenerate">
                                 @foreach (var count in CountOptions(SelectedGrouping))
                                 {
                                     <option value="@count">Last @count</option>
