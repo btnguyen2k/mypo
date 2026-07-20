@@ -3,10 +3,10 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskNewListingAnnouncementsScanner : BackgroundPortfolioTask
 {
-    public AutoBackgroundNewListingAnnouncementsScanner(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundNewListingAnnouncementsScanner> logger
+    public BackgroundPortfolioTaskNewListingAnnouncementsScanner(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskNewListingAnnouncementsScanner> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -27,6 +27,7 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
         while (!cancellationToken.IsCancellationRequested)
         {
             using (var scope = ServiceProvider.CreateScope())
+            {
                 try
                 {
                     var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
@@ -76,13 +77,8 @@ sealed class AutoBackgroundNewListingAnnouncementsScanner : AutoBackgroundAnnoun
                 {
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
             }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 }

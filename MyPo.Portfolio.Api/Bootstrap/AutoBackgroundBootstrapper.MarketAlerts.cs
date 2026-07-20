@@ -11,10 +11,10 @@ using Telegram.Bot.Extensions;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskSendMarketAlerts : BackgroundPortfolioTask
 {
-    public AutoBackgroundSendMarketAlerts(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundSendMarketAlerts> logger
+    public BackgroundPortfolioTaskSendMarketAlerts(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskSendMarketAlerts> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -49,13 +49,7 @@ sealed class AutoBackgroundSendMarketAlerts : AutoBackgroundAnnouncementScanner
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
-            }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 

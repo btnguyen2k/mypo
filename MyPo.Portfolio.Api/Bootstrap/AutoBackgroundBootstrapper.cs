@@ -12,27 +12,27 @@ public class AutoBackgroundBootstrapper
 {
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
-        appBuilder.Services.AddHostedService<AutoBackgroundOldEventsCleaner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskOldEventsCleaner>();
 
-        appBuilder.Services.AddHostedService<AutoBackgroundUpcomingDividendAnnouncementsScanner>();
-        appBuilder.Services.AddHostedService<AutoBackgroundUpcomingEarningsAnnouncementsScanner>();
-        appBuilder.Services.AddHostedService<AutoBackgroundNewListingAnnouncementsScanner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
 
-        appBuilder.Services.AddHostedService<AutoBackgroundUpdatePortfolioPlansScanner>();
-        appBuilder.Services.AddHostedService<AutoBackgroundAnalyzePortfolioPlansScanner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskAnalyzePortfolioPlans>();
 
-        appBuilder.Services.AddHostedService<AutoBackgroundSendMarketAlerts>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskSendMarketAlerts>();
 
-        appBuilder.Services.AddHostedService<AutoBackgroundReporting>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskBuildPortfolioReports>();
     }
 }
 
-abstract class AutoBackgroundAnnouncementScanner : BackgroundService
+abstract class BackgroundPortfolioTask : BackgroundService
 {
     protected readonly IServiceProvider ServiceProvider;
-    protected readonly ILogger<AutoBackgroundAnnouncementScanner> Logger;
+    protected readonly ILogger<BackgroundPortfolioTask> Logger;
 
-    protected AutoBackgroundAnnouncementScanner(IServiceProvider serviceProvider, ILogger<AutoBackgroundAnnouncementScanner> logger) : base()
+    protected BackgroundPortfolioTask(IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTask> logger) : base()
     {
         this.ServiceProvider = serviceProvider;
         this.Logger = logger;
@@ -204,5 +204,16 @@ abstract class AutoBackgroundAnnouncementScanner : BackgroundService
                 Logger.LogError("Failed to upsert market event for symbol {symbol} in market {market}.", e.Symbol, marketId);
             }
         }
+    }
+
+    protected async Task DelayForRandomInterval(int minSeconds, int maxSeconds, CancellationToken cancellationToken = default)
+    {
+        var delaySecs = Random.Shared.Next(minSeconds, maxSeconds);
+        Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
+        try
+        {
+            await Task.Delay(delaySecs * 1000, cancellationToken);
+        }
+        catch (TaskCanceledException) { }
     }
 }

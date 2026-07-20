@@ -14,10 +14,10 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 /// NOTE: this is a scaffold. The period detection/iteration is implemented, but the actual report
 /// building, persistence and portfolio marker advancement are left as <c>// TODO</c>.
 /// </remarks>
-sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskBuildPortfolioReports : BackgroundPortfolioTask
 {
-    public AutoBackgroundReporting(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundReporting> logger
+    public BackgroundPortfolioTaskBuildPortfolioReports(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskBuildPortfolioReports> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -59,13 +59,7 @@ sealed class AutoBackgroundReporting : AutoBackgroundAnnouncementScanner
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-            try
-            {
-                var delaySecs = Random.Shared.Next(60 * 60, 90 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
-            }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 

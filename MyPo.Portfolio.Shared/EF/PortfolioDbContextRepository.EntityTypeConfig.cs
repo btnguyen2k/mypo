@@ -3,10 +3,8 @@ using MyPo.Shared.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Buffers.Binary;
 using System.Text.Json;
 using MyPo.Shared.Helpers;
-using Ddth.Signum;
 
 namespace MyPo.Portfolio.Shared.EF;
 
@@ -40,10 +38,12 @@ sealed class PortfolioEntityTypeConfiguration : GenericEntityTypeConfiguration<P
     }
 
     private static bool MetadataEquals(PortfolioMetadata? a, PortfolioMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(PortfolioMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static PortfolioMetadata? MetadataSnapshot(PortfolioMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<PortfolioMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -77,10 +77,12 @@ sealed class PortfolioPlanEntityTypeConfiguration : GenericEntityTypeConfigurati
     }
 
     private static bool MetadataEquals(PortfolioPlanMetadata? a, PortfolioPlanMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(PortfolioPlanMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static PortfolioPlanMetadata? MetadataSnapshot(PortfolioPlanMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<PortfolioPlanMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -142,10 +144,12 @@ sealed class AssetEntityTypeConfiguration : GenericEntityTypeConfiguration<Asset
     }
 
     private static bool MetadataEquals(AssetMetadata? a, AssetMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(AssetMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static AssetMetadata? MetadataSnapshot(AssetMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<AssetMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -206,10 +210,12 @@ sealed class SymbolAnalysisEntityTypeConfiguration : GenericEntityTypeConfigurat
     }
 
     private static bool MetadataEquals(SymbolAnalysisMetadata? a, SymbolAnalysisMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(SymbolAnalysisMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static SymbolAnalysisMetadata? MetadataSnapshot(SymbolAnalysisMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<SymbolAnalysisMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -245,10 +251,12 @@ sealed class CheckpointEntityTypeConfiguration : GenericEntityTypeConfiguration<
     }
 
     private static bool MetadataEquals(CheckpointMetadata? a, CheckpointMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(CheckpointMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static CheckpointMetadata? MetadataSnapshot(CheckpointMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<CheckpointMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -283,10 +291,12 @@ sealed class MarketEventEntityTypeConfiguration : GenericEntityTypeConfiguration
     }
 
     private static bool MetadataEquals(MarketEventMetadata? a, MarketEventMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(MarketEventMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static MarketEventMetadata? MetadataSnapshot(MarketEventMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<MarketEventMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));
@@ -323,10 +333,12 @@ sealed class ReportEntityTypeConfiguration : GenericEntityTypeConfiguration<Repo
     }
 
     private static bool MetadataEquals(ReportEntityMetadata? a, ReportEntityMetadata? b)
-        => Signum.Checksum(a, XxHash128Hasher.Factory).AsSpan().SequenceEqual(Signum.Checksum(b, XxHash128Hasher.Factory));
+        // false negative is fine as it causes an extra, harmless UPDATE
+        => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+            == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null);
 
     private static int MetadataHashCode(ReportEntityMetadata? v)
-        => v is null ? 0 : BinaryPrimitives.ReadInt32LittleEndian(Signum.Checksum(v, XxHash128Hasher.Factory));
+        => v is null ? 0 : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(StringComparison.Ordinal);
 
     private static ReportEntityMetadata? MetadataSnapshot(ReportEntityMetadata? v)
         => v is null ? null : JsonHelper.SafeDeserialize<ReportEntityMetadata>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null));

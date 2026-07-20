@@ -3,10 +3,10 @@ using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner : BackgroundPortfolioTask
 {
-    public AutoBackgroundUpcomingDividendAnnouncementsScanner(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundUpcomingDividendAnnouncementsScanner> logger
+    public BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -28,6 +28,7 @@ sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackground
         while (!cancellationToken.IsCancellationRequested)
         {
             using (var scope = ServiceProvider.CreateScope())
+            {
                 try
                 {
                     var country = COUNTRIES[currentCountryIndex++ % COUNTRIES.Count].Trim().ToUpper();
@@ -72,13 +73,8 @@ sealed class AutoBackgroundUpcomingDividendAnnouncementsScanner : AutoBackground
                 {
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
             }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 }
