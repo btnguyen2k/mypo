@@ -22,10 +22,10 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 /// </list>
 /// The cadence is controlled per user by <see cref="PortfolioPlanPreferences.AutoAnalyzeDays"/>.
 /// </summary>
-sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
+sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPortfolioTask
 {
-    public AutoBackgroundAnalyzePortfolioPlansScanner(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundAnalyzePortfolioPlansScanner> logger
+    public BackgroundPortfolioTaskAnalyzePortfolioPlans(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskAnalyzePortfolioPlans> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -60,14 +60,8 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
-            }
-            catch (TaskCanceledException) { }
+            // await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
+            await DelayForRandomInterval(10, 20, cancellationToken);
         }
     }
 
@@ -131,14 +125,15 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
         var country = market?.Country ?? "US";
         var allocation = BuildAllocationReqs(plan);
         var changed = false;
-        var now = DateTimeOffset.UtcNow;
+        var nowUtc = DateTimeOffset.UtcNow;
 
         var thisChecksum = plan.Metadata.CalcChecksumAnalysis();
-        var checksumChanged = !string.Equals(thisChecksum, plan.Metadata.LastChecksumAnalysis, StringComparison.OrdinalIgnoreCase);
+        var oldChecksum = plan.Metadata.LastChecksumAnalysis;
+        var checksumChanged = !string.Equals(thisChecksum, oldChecksum, StringComparison.OrdinalIgnoreCase);
 
         // normal analysis: persisted only, no alert
         var lastAnalysis = plan.Metadata.AnalysisRefreshTimestamp;
-        if (lastAnalysis <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+        if (lastAnalysis <= 0 || checksumChanged || nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
             if (lastAnalysis <= 0)
             {
@@ -146,9 +141,9 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
             }
             if (checksumChanged)
             {
-                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis", plan.Id, plan.Name);
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis (old-checksum: {oldChecksum} vs new-checksum: {newChecksum})", plan.Id, plan.Name, oldChecksum, thisChecksum);
             }
-            if (now - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+            if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
             {
                 Logger.LogCritical("'{planId}: {planName}' last analysis is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
             }
@@ -157,7 +152,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
             var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (analysis is not null)
             {
-                plan.Metadata.AnalysisRefreshTimestamp = now.ToUnixTimeSeconds();
+                plan.Metadata.AnalysisRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
                 plan.Metadata.Analysis = analysis;
                 changed = true;
             }
@@ -169,7 +164,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
         var lastSpotlight = plan.Metadata.SpotlightRefreshTimestamp;
-        if (lastSpotlight <= 0 || checksumChanged || now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+        if (lastSpotlight <= 0 || checksumChanged || nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
             if (lastAnalysis <= 0)
             {
@@ -177,9 +172,9 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
             }
             if (checksumChanged)
             {
-                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last spotlight", plan.Id, plan.Name);
+                Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis (old-checksum: {oldChecksum} vs new-checksum: {newChecksum})", plan.Id, plan.Name, oldChecksum, thisChecksum);
             }
-            if (now - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+            if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
             {
                 Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
             }
@@ -194,7 +189,7 @@ sealed partial class AutoBackgroundAnalyzePortfolioPlansScanner : AutoBackground
                 var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
                 if (spotlight is not null)
                 {
-                    plan.Metadata.SpotlightRefreshTimestamp = now.ToUnixTimeSeconds();
+                    plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
                     plan.Metadata.Spotlight = spotlight;
                     changed = true;
                     // fire-and-forget: don't block the analysis loop on Telegram delivery

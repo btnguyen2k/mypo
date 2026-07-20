@@ -6,10 +6,10 @@ using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
-sealed class AutoBackgroundOldEventsCleaner : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskOldEventsCleaner : BackgroundPortfolioTask
 {
-    public AutoBackgroundOldEventsCleaner(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundOldEventsCleaner> logger
+    public BackgroundPortfolioTaskOldEventsCleaner(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskOldEventsCleaner> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -25,6 +25,7 @@ sealed class AutoBackgroundOldEventsCleaner : AutoBackgroundAnnouncementScanner
         while (!cancellationToken.IsCancellationRequested)
         {
             using (var scope = ServiceProvider.CreateScope())
+            {
                 try
                 {
                     var checkpoint = await GetOrInitCheckpoint(
@@ -79,13 +80,8 @@ sealed class AutoBackgroundOldEventsCleaner : AutoBackgroundAnnouncementScanner
                 {
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
             }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 }

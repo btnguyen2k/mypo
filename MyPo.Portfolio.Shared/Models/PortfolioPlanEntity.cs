@@ -4,7 +4,6 @@ using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
 
-
 public sealed class PortfolioPlanEntity : Entity<string>
 {
     public const string PLAN_TYPE_ALLOCATION = "ALLOCATION";
