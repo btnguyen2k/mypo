@@ -9,10 +9,10 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 /// Background task that periodically auto-updates (refreshes the holdings of) users' portfolio plans.
 /// The cadence is controlled per user by <see cref="PortfolioPlanPreferences.AutoUpdateDays"/>.
 /// </summary>
-sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncementScanner
+sealed class BackgroundPortfolioTaskUpdatePortfolioPlans : BackgroundPortfolioTask
 {
-    public AutoBackgroundUpdatePortfolioPlansScanner(
-            IServiceProvider serviceProvider, ILogger<AutoBackgroundUpdatePortfolioPlansScanner> logger
+    public BackgroundPortfolioTaskUpdatePortfolioPlans(
+            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskUpdatePortfolioPlans> logger
         ) : base(serviceProvider, logger)
     {
     }
@@ -47,13 +47,7 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-            try
-            {
-                var delaySecs = Random.Shared.Next(10 * 60, 20 * 60);
-                Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
-                await Task.Delay(delaySecs * 1000, cancellationToken);
-            }
-            catch (TaskCanceledException) { }
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
         }
     }
 
@@ -77,7 +71,7 @@ sealed class AutoBackgroundUpdatePortfolioPlansScanner : AutoBackgroundAnnouncem
             if (lastRefresh > 0 && DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(lastRefresh) < updateDelay)
             {
                 // this plan is not due for an auto-update yet
-                Logger.LogInformation("Skipping portfolio plan '{planId}: {planName}' for user '{userName}' (last refresh: {lastRefresh}).", plan.Id, plan.Name, userName, DateTimeOffset.FromUnixTimeSeconds(lastRefresh));
+                Logger.LogInformation("Skipping updating portfolio plan '{planId}: {planName}' for user '{userName}' (last refresh: {lastRefresh}).", plan.Id, plan.Name, userName, DateTimeOffset.FromUnixTimeSeconds(lastRefresh));
                 continue;
             }
 
