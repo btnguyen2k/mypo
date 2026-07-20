@@ -5,7 +5,7 @@ namespace MyPo.Portfolio.Shared.Models;
 
 public enum ReportType
 {
-    UNKNOWN,
+    // UNKNOWN,
     WEEKLY,
     MONTHLY,
     QUARTERLY,

@@ -68,14 +68,14 @@ public sealed partial class PortfolioDbContextRepository
     /// <inheritdoc />
     public async ValueTask<IEnumerable<ReportEntity>> GetSnapshotReportAsync(PortfolioEntity portfolio, ReportType reportType, string reportStartDate, string symbol, CancellationToken cancellationToken = default)
     {
-        symbol = string.IsNullOrEmpty(symbol) ? "*" : symbol.ToUpper();
+        symbol = string.IsNullOrEmpty(symbol) ? ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO : symbol.ToUpper();
         return await ReportStore.AsNoTracking()
             .Where(r =>
                 r.PortfolioId == portfolio.Id &&
                 r.Type == reportType &&
                 r.PeriodStart == reportStartDate)
             .Where(r =>
-                symbol == "*" || r.ItemCode == symbol
+                symbol == ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO || r.ItemCode == symbol
             )
             .ToListAsync(cancellationToken);
     }
@@ -114,6 +114,29 @@ public sealed partial class PortfolioDbContextRepository
             .GroupBy(r => r.ItemCode)
             .Select(g => g.OrderByDescending(x => x.PeriodStart).First())
             .Where(r => (r.Metadata?.AccumulatedQuantity ?? 0m) != 0m)];
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<IEnumerable<ReportEntity>> GetReportTrendAsync(PortfolioEntity portfolio, ReportType reportType, string symbol, int count, CancellationToken cancellationToken = default)
+    {
+        if (count <= 0)
+        {
+            return [];
+        }
+
+        symbol = string.IsNullOrEmpty(symbol) ? ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO : symbol.ToUpper();
+        // Fetch the most-recent 'count' whole-portfolio aggregate entries (PeriodStart is "yyyy-MM-dd" so
+        // string ordering is chronological), then reverse in memory to return them oldest-first for plotting.
+        var latest = await ReportStore.AsNoTracking()
+            .Where(r =>
+                r.PortfolioId == portfolio.Id &&
+                r.Type == reportType &&
+                r.ItemCode == symbol)
+            .OrderByDescending(r => r.PeriodStart)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+        latest.Reverse();
+        return latest;
     }
 
     /// <inheritdoc />

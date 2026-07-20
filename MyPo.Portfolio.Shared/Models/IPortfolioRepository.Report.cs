@@ -26,7 +26,7 @@ public partial interface IPortfolioRepository
     /// <param name="reportStartDate">Query entries which have the specific report start date (in "yyyy-MM-dd" format)</param>
     /// <param name="symbol">Query entries that match the specific symbol (should be in format "EXCHANGE:SYMBOL" or <see cref="ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO"/>)</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>A single snapshot report entry if <paramref name="symbol"/> specifies a single symbol; or all snapshot report entries for the period if <paramref name="symbol"/> is <see cref="ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO"/></returns>
     public ValueTask<IEnumerable<ReportEntity>> GetSnapshotReportAsync(PortfolioEntity portfolio, ReportType reportType, string reportStartDate, string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -52,6 +52,18 @@ public partial interface IPortfolioRepository
     /// PeriodStart strictly less than it are considered.
     /// </remarks>
     public ValueTask<IEnumerable<ReportEntity>> GetOpenPositionsAsOfAsync(PortfolioEntity portfolio, ReportType reportType, string beforePeriodStart, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetches the most recent <paramref name="count"/> aggregate report entries for a given portfolio, report type and symbol;
+    /// ordered oldest-first, so a time-series (trend) can be built.
+    /// </summary>
+    /// <param name="portfolio">The portfolio to query report entries.</param>
+    /// <param name="reportType">The report type to query.</param>
+    /// <param name="symbol">Query entries that match the specific symbol (should be in format "EXCHANGE:SYMBOL" or <see cref="ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO"/>)</param>
+    /// <param name="count">The maximum number of most-recent periods to return.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>The aggregate entries ordered by period start ascending (oldest first).</returns>
+    public ValueTask<IEnumerable<ReportEntity>> GetReportTrendAsync(PortfolioEntity portfolio, ReportType reportType, string symbol, int count, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resets (deletes) all report records for a given portfolio.

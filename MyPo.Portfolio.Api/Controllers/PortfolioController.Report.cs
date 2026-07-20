@@ -85,7 +85,7 @@ public partial class PortfolioController
     }
 
     /// <summary>
-    /// Gets report snapshot for a given portfolio of a given type and period start date.
+    /// Gets report snapshot for a given portfolio of a given type, period start date, and symbol.
     /// </summary>
     /// <returns></returns>
     [HttpGet(IPortfolioApiClient.API_REPORT_SNAPSHOT)]
@@ -104,10 +104,10 @@ public partial class PortfolioController
             return ResponseNoData(404, "Portfolio not found.");
         }
 
-        // check if type is one of WEEKLY, MONTHLY, QUARTERLY, YEARLY; return error 400 if invalid.
+        // check if report type is invalid; return error 400 if invalid.
         if (!Enum.TryParse<ReportType>(type, ignoreCase: true, out var reportType))
         {
-            return ResponseNoData(400, $"Invalid report type '{type}'. Valid types are: WEEKLY, MONTHLY, QUARTERLY, YEARLY.");
+            return ResponseNoData(400, $"Invalid report type '{type}'. Valid types are: {string.Join(",", Enum.GetNames<ReportType>())}.");
         }
 
         // fetch the report snapshot from the database; the repository normalizes an empty symbol to the
@@ -119,6 +119,41 @@ public partial class PortfolioController
         {
             result.Add(ReportResp.BuildFrom(entry));
         }
+        return ResponseOk(result);
+    }
+
+    /// <summary>
+    /// Gets the value/P&amp;L trend (a time series of the last N aggregate report entries)
+    /// for a given portfolio of a given type, and symbol
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet(IPortfolioApiClient.API_REPORT_TREND)]
+    public async ValueTask<ActionResult<ApiResp<IEnumerable<ReportResp>>>> GetReportTrend([FromRoute] string type, [FromQuery] string pid, [FromQuery] string symbol, [FromQuery] int count)
+    {
+        var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
+        if (authErrorResult != null)
+        {
+            // current auth token and signed-in user should all be valid
+            return authErrorResult;
+        }
+
+        var existingPortfolio = await GetPortfolioIfAccessible(currentUser, pid);
+        if (existingPortfolio == null)
+        {
+            return ResponseNoData(404, "Portfolio not found.");
+        }
+
+        // check if report type is invalid; return error 400 if invalid.
+        if (!Enum.TryParse<ReportType>(type, ignoreCase: true, out var reportType))
+        {
+            return ResponseNoData(400, $"Invalid report type '{type}'. Valid types are: {string.Join(",", Enum.GetNames<ReportType>())}.");
+        }
+
+        // clamp the requested number of periods to a sane range (default 12 when unspecified/invalid).
+        count = count <= 0 ? 12 : Math.Min(count, 60);
+
+        var trend = await PortfolioRepository.GetReportTrendAsync(existingPortfolio, reportType, symbol, count);
+        var result = trend.Select(ReportResp.BuildFrom).ToList();
         return ResponseOk(result);
     }
 }

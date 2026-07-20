@@ -45,9 +45,29 @@ public partial class PortfolioApiClient
         var queryParams = new Dictionary<string, string?> {
             { "pid", portfolioId },
             { "start", periodStart },
-            { "symbol", string.IsNullOrEmpty(symbol) ? "*" : symbol },
+            { "symbol", string.IsNullOrEmpty(symbol) ? ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO : symbol.ToUpper() },
         };
         var endpoint = IPortfolioApiClient.API_REPORT_SNAPSHOT.Replace("{type}", type.ToString(), StringComparison.OrdinalIgnoreCase);
+        endpoint = QueryHelpers.AddQueryString(endpoint, queryParams);
+        using var httpResult = await BuildAndSendRequestAsync(
+            requestHttpClient,
+            HttpMethod.Get, baseUrl, endpoint,
+            authToken,
+            NoData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsync<IEnumerable<ReportResp>>(httpResult, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ApiResp<IEnumerable<ReportResp>>> GetReportTrendAsync(string portfolioId, ReportType type, string symbol, int count, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> {
+            { "pid", portfolioId },
+            { "symbol", string.IsNullOrEmpty(symbol) ? ReportEntity.ITEM_CODE_ENTIRE_PORTFOLIO : symbol.ToUpper() },
+            { "count", count.ToString() },
+        };
+        var endpoint = IPortfolioApiClient.API_REPORT_TREND.Replace("{type}", type.ToString(), StringComparison.OrdinalIgnoreCase);
         endpoint = QueryHelpers.AddQueryString(endpoint, queryParams);
         using var httpResult = await BuildAndSendRequestAsync(
             requestHttpClient,
