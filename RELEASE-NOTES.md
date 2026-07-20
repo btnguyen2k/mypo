@@ -1,5 +1,12 @@
 # My Portfolio Tracker release notes
 
+## 2026-07-20 - v2.0.1
+
+### Fixed/Improvements
+
+- Patch(Background Task): Update background tasks sleep time.
+- Fix: Portfolio plan not saved in auto-analyzing background task.
+
 ## 2026-07-20 - v2.0.0
 
 ### Added/Refactoring/Deprecation
