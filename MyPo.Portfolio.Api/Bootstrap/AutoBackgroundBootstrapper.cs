@@ -12,18 +12,18 @@ public class AutoBackgroundBootstrapper
 {
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskOldEventsCleaner>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskOldEventsCleaner>();
 
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner>();
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner>();
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
 
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
         appBuilder.Services.AddHostedService<BackgroundPortfolioTaskAnalyzePortfolioPlans>();
 
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskSendMarketAlerts>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskSendMarketAlerts>();
 
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskBuildPortfolioReports>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskBuildPortfolioReports>();
     }
 }
 
