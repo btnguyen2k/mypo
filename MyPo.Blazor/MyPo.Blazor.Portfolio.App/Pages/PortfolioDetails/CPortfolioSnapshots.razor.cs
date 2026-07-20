@@ -406,7 +406,7 @@ public partial class CPortfolioSnapshots : CBase
             // Only expose the aggregate snapshot for an entire-portfolio query; otherwise render the single-symbol detail.
             Portfolio = hasPortfolioRow ? portfolioSnapshot : null,
             Items = items,
-            IsFinal = (hasPortfolioRow ? portfolioSnapshot.IsFinal : true) && items.All(i => i.IsFinal) && (hasPortfolioRow || items.Count > 0),
+            IsFinal = (!hasPortfolioRow || portfolioSnapshot.IsFinal) && items.All(i => i.IsFinal) && (hasPortfolioRow || items.Count > 0),
         };
         report.PeriodPnlChartConfig = BuildPeriodPnlChartConfig(report);
         report.TotalReturnChartConfig = BuildTotalReturnChartConfig(report);

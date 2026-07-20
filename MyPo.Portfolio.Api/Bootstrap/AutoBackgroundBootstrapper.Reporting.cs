@@ -296,10 +296,8 @@ sealed class BackgroundPortfolioTaskBuildPortfolioReports : BackgroundPortfolioT
             .Select(r => r.ItemCode)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var openPositions = await portfolioRepository.GetOpenPositionsAsOfAsync(portfolio, reportType, nextPeriodStartLocal.ToString("yyyy-MM-dd"), cancellationToken);
-        foreach (var pos in openPositions)
+        foreach (var pos in openPositions.Where(p => !tradedCodes.Contains(p.ItemCode)))
         {
-            if (tradedCodes.Contains(pos.ItemCode)) continue; // already reported this period
-
             // synthesize a zero-activity PnlSummary and run BuildItemReport to mark-to-market
             // #1: Create zero-activity PnlSummary
             var zeroSummary = PnlSummary.New(portfolio.Id);
