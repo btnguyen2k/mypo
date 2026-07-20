@@ -30,14 +30,19 @@ public partial class CPortfolioTxSettled : CBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
-
-        if (firstRender)
+        if (firstRender && TxSettlements is not null && Markets is not null && Portfolio is not null)
         {
             var jsDatetimePicker = await PortfolioUtils.LoadJSDatetimePicker(JS);
-            await jsDatetimePicker.InvokeAsync<string>("InitDatetimePickers");
+            _ = Task.Run(async() => {
+                await Task.Delay(2000); // wait for a few seconds to ensure the datetime picker is loaded
+                await jsDatetimePicker.InvokeAsync<string>("InitDatetimePickers");
+            });
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblTxSettlements");
+            _ = Task.Run(async() => {
+                await Task.Delay(2000); // wait for a few seconds to ensure the datatable is loaded
+                await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblTxSettlements");
+            });
         }
     }
 

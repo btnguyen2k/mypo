@@ -41,6 +41,7 @@ public sealed partial class PortfolioDbContextRepository : DbContext, IPortfolio
         new SymbolAnalysisEntityTypeConfiguration().Configure(modelBuilder.Entity<SymbolAnalysisEntity>());
         new CheckpointEntityTypeConfiguration().Configure(modelBuilder.Entity<CheckpointEntity>());
         new MarketEventEntityTypeConfiguration().Configure(modelBuilder.Entity<MarketEventEntity>());
+        new ReportEntityTypeConfiguration().Configure(modelBuilder.Entity<ReportEntity>());
     }
 
     private static T PrepareForUpdate<T>(T t) where T : Entity<string>

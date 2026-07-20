@@ -1,0 +1,75 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+<div class="row mt-2 mb-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <CAlert @ref="@Alert" />
+
+                @if (Portfolio is not null && !Saving)
+                {
+                    <form novalidate>
+                        <!-- Container portfolio -->
+                        <div class="mb-4 p-3 border rounded">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="isContainer" @bind="IsContainer" />
+                                <label class="form-check-label fw-semibold" for="isContainer">Container portfolio</label>
+                            </div>
+                            <div class="form-text">
+                                When enabled, this portfolio acts as a parent/container only and is not used to track stocks directly.
+                            </div>
+                        </div>
+
+                        <!-- Reporting settings -->
+                        <div class="mb-4 p-3 border rounded">
+                            <h6 class="fw-semibold mb-3">📅 Reporting</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="firstDayOfWeek">First day of the week</label>
+                                    <select class="form-select" id="firstDayOfWeek" @bind="FirstDayOfWeek">
+                                        @foreach (var day in WeekDays)
+                                        {
+                                            <option value="@day">@day</option>
+                                        }
+                                    </select>
+                                    <div class="form-text">Determines the start of weekly reporting periods.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" for="fiscalMonth">First month of the fiscal year</label>
+                                    <select class="form-select" id="fiscalMonth" @bind="FiscalYearStartMonth">
+                                        @foreach (var month in FiscalMonths)
+                                        {
+                                            <option value="@month.Key">@month.Value</option>
+                                        }
+                                    </select>
+                                    <div class="form-text">Determines yearly (fiscal) reporting periods.</div>
+                                </div>
+                            </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="resetReports" @bind="ResetReports" />
+                                <label class="form-check-label fw-semibold text-danger" for="resetReports">Reset reports</label>
+                                <div class="form-text">
+                                    When enabled, all generated report data for this portfolio is deleted on save and will be regenerated from scratch.
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-start gap-2">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="()=>LoadFromPortfolio()">Reset</button>
+                            <button type="button" class="btn btn-primary" @onclick="()=>BtnClickSave()"><BIcon icon="bi-floppy" extraClassName="me-1"/>Save</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

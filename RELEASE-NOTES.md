@@ -1,5 +1,23 @@
 # My Portfolio Tracker release notes
 
+## 2026-07-20 - v2.0.0
+
+### Added/Refactoring/Deprecation
+
+- Refactor: Move the current Dashboard to new page Events.
+- Feat: Portfolio perferences.
+- Feat: Portfolio reports.
+
+### Fixed/Improvements
+
+- Fix(UI): Fix datatables warning if portfolio has no transactions.
+- Fix(UI): Fix datatables reinitialise warning.
+- Impr(UI): Rework Portfolio Details page for inactive portfolios.
+- Patch: MyPortfolioAdd page accepts new query parameter parentId.
+- Impr(UX): Reorder returned TxSettlements list.
+- Impr(UI): User can now quickly switch to another portfolio from the MyPortfolioDetails page.
+- Fix(UI): Fix an error when Datatables is not loaded/initialized properly.
+
 ## 2026-06-21 - v1.6.3
 
 ### Fixed/Improvements

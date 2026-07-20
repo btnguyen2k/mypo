@@ -1,0 +1,388 @@
+﻿@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages
+@using MyPo.Blazor.Portfolio.App.Pages.Widgets
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
+@using MyPo.Portfolio.Shared.Models
+
+@inherits CBase
+
+<div class="row mt-2 mb-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <CAlert @ref="@Alert" />
+
+                @if (Portfolio is null)
+                {
+                    <div class="text-muted">No portfolio selected.</div>
+                }
+                else
+                {
+                    <!-- Report type selector -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block mb-1">
+                            <BIcon icon="bi-calendar3" extraClassName="me-1" />Report type
+                        </label>
+                        <div class="btn-group flex-wrap" role="group" aria-label="Report type">
+                            @foreach (var type in ReportTypes)
+                            {
+                                <button type="button"
+                                        class="btn @(SelectedType==type?"btn-primary":"btn-outline-primary")"
+                                        @onclick="()=>SelectType(type)">
+                                    @TypeTitle(type)
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Period + symbol + generate -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold mb-1" for="reportPeriod">
+                                <BIcon icon="bi-clock-history" extraClassName="me-1" />Period
+                            </label>
+                            <select class="form-select" id="reportPeriod" value="@SelectedPeriodKey" @onchange="OnPeriodChanged">
+                                @foreach (var period in AvailablePeriods)
+                                {
+                                    <option value="@period.Start">@period.Label</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label class="form-label fw-semibold mb-1" for="reportSymbol">
+                                <BIcon icon="bi-graph-up" extraClassName="me-1" />Symbol (optional)
+                            </label>
+                            <select class="form-select" id="reportSymbol" value="@SelectedSymbol" @onchange="OnSymbolChanged">
+                                <option value="*">Entire portfolio</option>
+                                @foreach (var sym in Symbols)
+                                {
+                                    <option value="@sym.ItemCode">@sym.ItemCode - @(sym.Metadata?.CorpName ?? sym.ItemCode)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <button type="button" class="btn btn-success w-100"
+                                    disabled="@(Generating || string.IsNullOrEmpty(SelectedPeriodKey))"
+                                    @onclick="BtnClickGenerate">
+                                <BIcon icon="bi-file-earmark-bar-graph" extraClassName="me-1" />Generate report
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    @if (Generating)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                            <div class="mt-2">Generating report...</div>
+                        </div>
+                    }
+                    else if (CurrentReport is not null)
+                    {
+                        var report = CurrentReport;
+
+                        <!-- Report header -->
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                @TypeTitle(report.Type) report
+                                <span class="text-muted fs-6">· @report.Scope</span>
+                            </h5>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!report.IsFinal)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="This report period is not yet finalized; values may still change.">
+                                        <BIcon icon="bi-hourglass-split" extraClassName="me-1" />Provisional
+                                    </span>
+                                }
+                                <span class="badge bg-light text-dark border">
+                                    <BIcon icon="bi-calendar-range" extraClassName="me-1" />@report.PeriodLabel
+                                </span>
+                            </div>
+                        </div>
+
+                        @if (report.HasPortfolio)
+                        {
+                            <!-- Entire-portfolio snapshot -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-transparent fw-semibold">
+                                    <BIcon icon="bi-speedometer2" extraClassName="me-1" />Portfolio summary
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Net asset value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.Nav, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Holdings value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.CloseValue, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Cash</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.AccumulatedCash, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Open value</div>
+                                            <div class="fs-5 fw-semibold">@Money(report.Portfolio!.OpenValue, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Period P&amp;L</div>
+                                            <div class="fs-5 fw-semibold @PnlClass(report.Portfolio!.PeriodPnl)">@Money(report.Portfolio!.PeriodPnl, report.Currency)</div>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <div class="text-muted small">Total return</div>
+                                            <div class="fs-5 fw-semibold @PnlClass(report.Portfolio!.TotalReturn)">@Money(report.Portfolio!.TotalReturn, report.Currency)</div>
+                                        </div>
+                                    </div>
+                                    <hr class="my-3" />
+                                    <div class="row g-3 small">
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Dividends</span>@Money(report.Portfolio!.Dividends, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Distributions</span>@Money(report.Portfolio!.Distributions, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Interest</span>@Money(report.Portfolio!.Interest, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Fees</span>@Money(report.Portfolio!.Fees, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Tax</span>@Money(report.Portfolio!.Tax, report.Currency)</div>
+                                        <div class="col-6 col-lg-2"><span class="text-muted d-block">Cash in / out</span>@Money(report.Portfolio!.CashIn, report.Currency) / @Money(report.Portfolio!.CashOut, report.Currency)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Insight charts - review the options below and finalize the preferred ones later. *@
+                            @if (report.PeriodPnlChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-bar-chart-line" extraClassName="me-1" />Option A · Period P&amp;L contribution by symbol
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.PeriodPnlChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.TotalReturnChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-graph-up-arrow" extraClassName="me-1" />Option B · Total return by symbol
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.TotalReturnChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.IncomeChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-cash-coin" extraClassName="me-1" />Option C · Income by symbol (accumulated dividends + distributions)
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.IncomeChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+                            @if (report.IncomeYieldChartConfig is not null)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-percent" extraClassName="me-1" />Option D · Income yield by symbol (% of current value)
+                                    </div>
+                                    <div class="card-body">
+                                        <WidgetChart Config="@report.IncomeYieldChartConfig" Style="position: relative; height: 320px;" />
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Per-symbol holdings breakdown -->
+                            <div class="card mb-2">
+                                <div class="card-header bg-transparent fw-semibold">
+                                    <BIcon icon="bi-table" extraClassName="me-1" />Holdings breakdown
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Name</th>
+                                                <th class="text-end">Holdings</th>
+                                                <th class="text-end">Open</th>
+                                                <th class="text-end">Close</th>
+                                                <th class="text-end">Weight</th>
+                                                <th class="text-end">Period P&amp;L</th>
+                                                <th class="text-end">Total return</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var row in report.Items)
+                                            {
+                                                <tr>
+                                                    <td><code>@row.ItemCode</code></td>
+                                                    <td>@row.Name</td>
+                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Holdings, 4)</td>
+                                                    <td class="text-end">@Money(row.OpenValue, report.Currency)</td>
+                                                    <td class="text-end">@Money(row.CloseValue, report.Currency)</td>
+                                                    <td class="text-end">@FormatUtils.FormatValueMaxDecimals(row.Weight, 2)%</td>
+                                                    <td class="text-end @PnlClass(row.PeriodPnl)">@Money(row.PeriodPnl, report.Currency)</td>
+                                                    <td class="text-end @PnlClass(row.TotalReturn)">@Money(row.TotalReturn, report.Currency)</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                        else if (report.HasItems)
+                        {
+                            <!-- Single-symbol snapshot detail -->
+                            @foreach (var row in report.Items)
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-transparent fw-semibold">
+                                        <BIcon icon="bi-graph-up" extraClassName="me-1" /><code>@row.ItemCode</code> <span class="text-muted">@row.Name</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Position facts (holdings, cost basis, avg cost vs current price) -->
+                                        <div class="row g-3">
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Holdings</div>
+                                                <div class="fs-5 fw-semibold">@FormatUtils.FormatValueMaxDecimals(row.Holdings, 4)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Market value</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.CloseValue, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Cost basis (net invested)</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.CostBasis, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Avg cost -&gt; current price</div>
+                                                <div class="fs-6 fw-semibold">
+                                                    @Price(row.AvgCost, report.Currency)<BIcon icon="bi-arrow-right" extraClassName="mx-1" />@Price(row.CurrentPrice, report.Currency)
+                                                </div>
+                                                <div class="small @PnlClass(row.PriceChangePct ?? 0m)">@Pct(row.PriceChangePct)</div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-3" />
+                                        <!-- Performance (period P&L and total return, with percentages) -->
+                                        <div class="row g-3">
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Open value</div>
+                                                <div class="fs-5 fw-semibold">@Money(row.OpenValue, report.Currency)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Period P&amp;L</div>
+                                                <div class="fs-5 fw-semibold @PnlClass(row.PeriodPnl)">@MoneySigned(row.PeriodPnl, report.Currency)</div>
+                                                <div class="small @PnlClass(row.PeriodReturnPct ?? 0m)">@Pct(row.PeriodReturnPct)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Total return</div>
+                                                <div class="fs-5 fw-semibold @PnlClass(row.TotalReturn)">@MoneySigned(row.TotalReturn, report.Currency)</div>
+                                                <div class="small @PnlClass(row.TotalReturnPct ?? 0m)">@Pct(row.TotalReturnPct)</div>
+                                            </div>
+                                            <div class="col-6 col-lg-3">
+                                                <div class="text-muted small">Yield on cost / on value</div>
+                                                <div class="fs-6 fw-semibold">@Pct(row.YieldOnCost) <span class="text-muted">/</span> @Pct(row.YieldOnValue)</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Option: Return attribution (how total return was earned) -->
+                                        <hr class="my-3" />
+                                        <div class="small text-muted mb-2">
+                                            <BIcon icon="bi-signpost-split" extraClassName="me-1" />Option · Return attribution (how total return was earned)
+                                        </div>
+                                        <div class="row g-3 small">
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Capital (price)</span><span class="@PnlClass(row.AttribCapital)">@MoneySigned(row.AttribCapital, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Income (div + dist + interest)</span><span class="@PnlClass(row.AttribIncome)">@MoneySigned(row.AttribIncome, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">Costs (fees + tax)</span><span class="@PnlClass(row.AttribCosts)">@MoneySigned(row.AttribCosts, report.Currency)</span></div>
+                                            <div class="col-6 col-lg-3"><span class="text-muted d-block">= Total return</span><span class="@PnlClass(row.TotalReturn)">@MoneySigned(row.TotalReturn, report.Currency)</span></div>
+                                        </div>
+
+                                        <!-- Option: Income & activity - this period vs lifetime -->
+                                        <hr class="my-3" />
+                                        <div class="small text-muted mb-2">
+                                            <BIcon icon="bi-list-columns" extraClassName="me-1" />Option · Income &amp; activity (this period vs lifetime)
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th></th>
+                                                        <th class="text-end">Dividends</th>
+                                                        <th class="text-end">Distributions</th>
+                                                        <th class="text-end">Interest</th>
+                                                        <th class="text-end">Fees</th>
+                                                        <th class="text-end">Tax</th>
+                                                        <th class="text-end">Buys</th>
+                                                        <th class="text-end">Sells</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <th class="text-muted fw-normal">This period</th>
+                                                        <td class="text-end">@Money(row.Dividends, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Distributions, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Interest, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Fees, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Tax, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Buys, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.Sells, report.Currency)</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="text-muted fw-normal">Lifetime</th>
+                                                        <td class="text-end">@Money(row.AccumulatedDividends, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedDistributions, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedInterest, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedFees, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedTax, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedBuys, report.Currency)</td>
+                                                        <td class="text-end">@Money(row.AccumulatedSells, report.Currency)</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <BIcon icon="bi-inbox" extraClassName="fs-3 d-block mb-2" />
+                                No report entries for this period.
+                            </div>
+                        }
+
+                        <div class="text-muted small mt-2">
+                            Generated at @report.GeneratedUtc.ToString("yyyy-MM-dd HH:mm") UTC.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <BIcon icon="bi-file-earmark-bar-graph" extraClassName="fs-1 d-block mb-2" />
+                            Select a report type and period, then click <strong>Generate report</strong>.
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly ReportType[] ReportTypes =
+    {
+        ReportType.WEEKLY, ReportType.MONTHLY, ReportType.QUARTERLY, ReportType.YEARLY,
+    };
+
+    private static string TypeTitle(ReportType type) => type switch
+    {
+        ReportType.WEEKLY => "Weekly",
+        ReportType.MONTHLY => "Monthly",
+        ReportType.QUARTERLY => "Quarterly",
+        ReportType.YEARLY => "Yearly (Fiscal)",
+        _ => type.ToString(),
+    };
+}

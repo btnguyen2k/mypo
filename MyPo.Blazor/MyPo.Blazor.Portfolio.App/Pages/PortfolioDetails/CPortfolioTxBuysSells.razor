@@ -21,6 +21,12 @@
 </AuthorizeView>
 
 <div class="table-responsive">
+    @if (Transactions is null || Transactions.Count() == 0)
+    {
+        <CAlert Type="info">
+            No transactions found.
+        </CAlert>
+    }
     <table class="table table-sm table-hover align-middle" id="tblTxBuysSells" data-order='[[ 2, "desc" ]]'>
         <thead>
             <tr>
@@ -42,57 +48,48 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @if (Transactions == null || Transactions.Count() == 0)
+            @foreach (var tx in Transactions??[])
             {
                 <tr>
-                    <td colspan="10" class="text-center">No data found.</td>
+                    <td class="text-center w-auto">
+                        @(tx.IsSettled?"✅":"")@if(!tx.IsSettled)
+                        {
+                            <input class="form-check-input" type="checkbox"
+                                disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+                                @checked="@(SelectedTransactionsMap.ContainsKey(tx.Id))"
+                                @onchange="()=>TxCheckboxClicked(tx.Id)"
+                            />
+                        }
+                    </td>
+                    <td class="text-center w-auto">
+                        <CBadgeTxType Text="@tx.Type" />
+                    </td>
+                    <td class="text-center text-nowrap w-auto">@(tx.Time.ToString("yyyy-MM-dd HH:mm"))</td>
+                    <td class="text-start">@(tx.Market?.Code??"--"):@(tx.ItemCode)</td>
+                    <td class="text-end w-auto">@(tx.QuantityStr)</td>
+                    <td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+                    <td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+                    <td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+                    <td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
+                    <td class="text-center text-nowrap w-auto">
+                        <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                            <Authorized>
+                                <button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
+                                        disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
+                                        title="Update transaction" @onclick="(()=>BtnClickUpdateTx(tx.Id))">
+                                    <CIcon icon="cil-pencil" />
+                                </button>
+                                <button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled?"btn-outline-secondary":"btn-outline-danger")"
+                                        disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled)" title="Delete transaction" @onclick="(()=>BtnClickDeleteTx(tx.Id))">
+                                    <CIcon icon="cil-x" />
+                                </button>
+                            </Authorized>
+                            <NotAuthorized>
+                                <span>-</span>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </td>
                 </tr>
-            }
-            else
-            {
-                @foreach (var tx in Transactions)
-                {
-                    <tr>
-                        <td class="text-center w-auto">
-                            @(tx.IsSettled?"✅":"")@if(!tx.IsSettled)
-                            {
-                                <input class="form-check-input" type="checkbox"
-                                    disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
-                                    @checked="@(SelectedTransactionsMap.ContainsKey(tx.Id))"
-                                    @onchange="()=>TxCheckboxClicked(tx.Id)"
-                                />
-                            }
-                        </td>
-                        <td class="text-center w-auto">
-                            <CBadgeTxType Text="@tx.Type" />
-                        </td>
-                        <td class="text-center text-nowrap w-auto">@(tx.Time.ToString("yyyy-MM-dd HH:mm"))</td>
-                        <td class="text-start">@(tx.Market?.Code??"--"):@(tx.ItemCode)</td>
-                        <td class="text-end w-auto">@(tx.QuantityStr)</td>
-                        <td class="text-end w-auto">@(tx.Price>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.Price, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-                        <td class="text-end w-auto">@(tx.FeeTx>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTx, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-                        <td class="text-end w-auto">@(tx.FeeTax>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeTax, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-                        <td class="text-end w-auto">@(tx.FeeOther>0?$"{tx.Market?.CurrencySymbol??string.Empty} {FormatUtils.FormatValueWithScale(tx.FeeOther, tx.Market?.PriceScale??1, tx.Market?.ValueFormat??null)}":"--")</td>
-                        <td class="text-center text-nowrap w-auto">
-                            <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
-                                <Authorized>
-                                    <button class="btn btn-sm @(Portfolio?.OwnerUserId==CurrentUser?.Id?"btn-outline-info":"btn-outline-secondary")"
-                                            disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id)"
-                                            title="Update transaction" @onclick="(()=>BtnClickUpdateTx(tx.Id))">
-                                        <CIcon icon="cil-pencil" />
-                                    </button>
-                                    <button class="btn btn-sm @(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled?"btn-outline-secondary":"btn-outline-danger")"
-                                            disabled="@(Portfolio?.OwnerUserId!=CurrentUser?.Id || tx.IsSettled)" title="Delete transaction" @onclick="(()=>BtnClickDeleteTx(tx.Id))">
-                                        <CIcon icon="cil-x" />
-                                    </button>
-                                </Authorized>
-                                <NotAuthorized>
-                                    <span>-</span>
-                                </NotAuthorized>
-                            </AuthorizeView>
-                        </td>
-                    </tr>
-                }
             }
         </tbody>
     </table>

@@ -12,6 +12,8 @@ public class AutoBackgroundBootstrapper
 {
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
+        appBuilder.Services.AddHostedService<AutoBackgroundOldEventsCleaner>();
+
         appBuilder.Services.AddHostedService<AutoBackgroundUpcomingDividendAnnouncementsScanner>();
         appBuilder.Services.AddHostedService<AutoBackgroundUpcomingEarningsAnnouncementsScanner>();
         appBuilder.Services.AddHostedService<AutoBackgroundNewListingAnnouncementsScanner>();
@@ -21,7 +23,7 @@ public class AutoBackgroundBootstrapper
 
         appBuilder.Services.AddHostedService<AutoBackgroundSendMarketAlerts>();
 
-        appBuilder.Services.AddHostedService<AutoBackgroundOldEventsCleaner>();
+        appBuilder.Services.AddHostedService<AutoBackgroundReporting>();
     }
 }
 
