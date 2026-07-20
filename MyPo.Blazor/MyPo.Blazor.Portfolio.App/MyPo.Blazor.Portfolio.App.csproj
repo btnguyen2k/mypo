@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.45.0" />
-    <PackageReference Include="System.IO.Hashing" Version="10.0.9" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.10" />
   </ItemGroup>
 
 </Project>
