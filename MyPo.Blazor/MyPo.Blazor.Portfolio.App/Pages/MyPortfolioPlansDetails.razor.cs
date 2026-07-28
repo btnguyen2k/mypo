@@ -148,6 +148,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         }
         SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+        SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
 
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }

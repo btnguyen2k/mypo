@@ -100,7 +100,8 @@ public partial class FinHubController
         {
             Country = market?.Country ?? "US",
             InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = BuildHoldingTickersReq(plan)
+            CurrentAllocation = BuildHoldingTickersReq(plan),
+            BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
         };
         return await FinHubClient.AnalyzePortfolioAsync(req);
     }

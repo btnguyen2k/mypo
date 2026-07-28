@@ -227,8 +227,19 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         var countPositive = holdings.Count(ht => ht.Shares > 0);
         var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
         var resp = buildNew
-            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken)
-            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
+            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq
+                {
+                    Country = country,
+                    InvestorTheme = plan.Metadata?.Description,
+                    CurrentAllocation = allocation,
+                }, cancellationToken: cancellationToken)
+            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq
+                {
+                    Country = country,
+                    InvestorTheme = plan.Metadata?.Description,
+                    CurrentAllocation = allocation,
+                    BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
+                }, cancellationToken: cancellationToken);
         if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
         {
             Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);

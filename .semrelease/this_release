@@ -3,4 +3,5 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.0.2
 - patch(CodeQL): Fix CodeQL warnings.
-- patch(Background Task): Minor fix background task sleep time.
+- patch(background-tasks): Minor fix background task sleep time.
+- feat(analyze-portfolio): Add rebalance plan, adapt to FinHub v0.14.1.
