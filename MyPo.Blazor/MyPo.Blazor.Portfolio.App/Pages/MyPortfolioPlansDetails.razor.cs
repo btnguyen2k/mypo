@@ -98,16 +98,16 @@ public partial class MyPortfolioPlansDetails : BasePage
 
         _ = Task.Run(async () =>
         {
-            var start = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var start = DateTimeOffset.UtcNow;
             while (analyzing)
             {
-                var delta = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - start;
+                var delta = DateTimeOffset.UtcNow - start;
                 if (analyzing)
                 {
                     var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
-                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta}s)");
+                    ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta.TotalSeconds}s)");
                 }
-                await Task.Delay(1000);
+                await Task.Delay(750);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
