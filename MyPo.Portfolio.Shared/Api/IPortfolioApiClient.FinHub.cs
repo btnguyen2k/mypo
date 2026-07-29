@@ -3,7 +3,7 @@ using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Shared.Api;
 
-public partial interface IPortfolioApiClient : IApiClient
+public partial interface IPortfolioApiClient
 {
     public const string API_FINHUB_STOCKS_GET_QUOTES = "/api/finhub/stocks/quotes";
     public const string API_FINHUB_STOCKS_SYMBOL_INFO = "/api/finhub/stocks/{symbol}/info";

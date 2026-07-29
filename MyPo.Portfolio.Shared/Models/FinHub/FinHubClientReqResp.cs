@@ -37,7 +37,11 @@ public class BasePortfolioPlanReq
 
 public sealed class SpotLightPortfolioReq : BasePortfolioPlanReq { }
 
-public sealed class AnalyzePortfolioReq : BasePortfolioPlanReq { }
+public sealed class AnalyzePortfolioReq : BasePortfolioPlanReq
+{
+    [JsonPropertyName("rebalance_plan")]
+    public bool BuildRebalancePlan { get; set; } = false;
+}
 
 public sealed class BuildPortfolioReq : BasePortfolioPlanReq { }
 

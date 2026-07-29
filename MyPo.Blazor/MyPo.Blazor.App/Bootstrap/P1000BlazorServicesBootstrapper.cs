@@ -7,6 +7,7 @@ using Blazored.LocalStorage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging;
 
 namespace MyPo.Blazor.App.Bootstrap;
 
@@ -22,7 +23,11 @@ public class BlazorServicesBootstrapper
 	public static void ConfigureServices(IServiceCollection services)
 	{
 		services.AddHttpClient();
-		services.AddSingleton<IApiClient, ApiClient>();
+		services.AddSingleton<IApiClient, ApiClient>((sp) => {
+            var httpClient = sp.GetRequiredService<HttpClient>();
+            var logger = sp.GetService<ILogger<ApiClient>>();
+            return new ApiClient(httpClient, baseUrl: Globals.ApiBaseUrl??string.Empty, logger: logger);
+        });
 		services.AddBlazoredLocalStorage();
 		services.AddScoped<LocalStorageHelper>();
 		services.AddTaskOperator();

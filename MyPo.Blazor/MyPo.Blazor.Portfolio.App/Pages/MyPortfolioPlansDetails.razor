@@ -78,7 +78,7 @@
                             <CPnLPlanDetails Plan="SelectedPortfolioPlan" Parent="this" />
                         }
 
-                        @if (HasAnalysis || HasSpotlight)
+                        @if (HasAnalysis || HasSpotlight || HasRebalancePlan)
                         {
                             <style>
                             #analysis-result h1 {font-size: 1.5rem !important;}
@@ -118,6 +118,19 @@
                                                     </a>
                                                 </button>
                                             }
+                                            @if (HasRebalancePlan && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                            {
+                                                <button class="nav-link @(EffectiveAnalysisTab==TabIdRebalancePlan?"active":"")"
+                                                    @onclick="(()=>SwitchAnalysisTab(TabIdRebalancePlan))" id="@TabIdRebalancePlan"
+                                                    type="button" role="tab" aria-controls="@(TabIdRebalancePlan)-content"
+                                                    aria-selected="@(EffectiveAnalysisTab==TabIdRebalancePlan?"true":"false")">
+                                                    <BIcon icon="bi-arrow-left-right" extraClassName="me-1" />Rebalance Plan
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdRebalancePlan)-content', 'Rebalance Plan - @(SelectedPortfolioPlan.Name)')" title="Print">
+                                                        <BIcon icon="bi-printer" />
+                                                    </a>
+                                                </button>
+                                            }
                                         </div>
                                     </nav>
                                 </div>
@@ -135,6 +148,13 @@
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdAnalysis?"show active":"")"
                                                 id="@(TabIdAnalysis)-content" role="tabpanel" aria-labelledby="@TabIdAnalysis" tabindex="0">
                                                 <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                            </div>
+                                        }
+                                        @if (HasRebalancePlan && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
+                                        {
+                                            <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdRebalancePlan?"show active":"")"
+                                                id="@(TabIdRebalancePlan)-content" role="tabpanel" aria-labelledby="@TabIdRebalancePlan" tabindex="0">
+                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.RebalancePlan)" />
                                             </div>
                                         }
                                     </div>

@@ -1,3 +1,7 @@
-# This file has been cleaned up post-releasing version 2.0.1.
+﻿# This file has been cleaned up post-releasing version 2.0.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+#!VERSION=2.0.2
+- patch(CodeQL): Fix CodeQL warnings.
+- patch(background-tasks): Minor fix background task sleep time.
+- feat(analyze-portfolio): Add rebalance plan, adapt to FinHub v0.14.1.

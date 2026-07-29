@@ -87,6 +87,8 @@ public class AnalysisResult : BaseAIResult
 
 public sealed class PortfolioAnalysis : AnalysisResult
 {
+    [JsonPropertyName("rebalance_plan")]
+    public string RebalancePlan { get; set; } = string.Empty;
 }
 
 public sealed class TickerAnalysis : AnalysisResult

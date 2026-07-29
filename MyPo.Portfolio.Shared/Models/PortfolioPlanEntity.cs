@@ -87,6 +87,8 @@ public sealed class PortfolioPlanMetadata : ISignumFingerprintable
 
     [JsonPropertyName("analysis")]
     public string Analysis { get; set; } = string.Empty;
+    [JsonPropertyName("rebalance_plan")]
+    public string RebalancePlan { get; set; } = string.Empty;
 
     [JsonPropertyName("trefresh_spotlight")]
     public long SpotlightRefreshTimestamp { get; set; }

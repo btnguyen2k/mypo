@@ -1,12 +1,26 @@
-﻿using MyPo.Blazor.App.Services;
+﻿using Microsoft.Extensions.Logging;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Services;
 
-public partial class PortfolioApiClient : ApiClient, IPortfolioApiClient
+public partial class PortfolioApiClient : BaseApiClient, IPortfolioApiClient
 {
-    public PortfolioApiClient(HttpClient httpClient) : base(httpClient) { }
+    public PortfolioApiClient(
+        HttpClient httpClient,
+        string baseUrl = "",
+        IDictionary<string, string>? attachedHeaders = null,
+        ILogger<PortfolioApiClient>? logger = null) : base(httpClient, baseUrl, attachedHeaders, logger) { }
+
+    private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(10 * 60);
+    /// <inheritdoc/>
+    protected override void SetupDefaultHttpClient(HttpClient defaultHttpClient)
+    {
+        base.SetupDefaultHttpClient(defaultHttpClient);
+        defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
+    }
+
+    /*----------------------------------------------------------------------*/
 
     /// <inheritdoc/>
     public async Task<ApiResp<string[]>> DebugAsync(string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default)
