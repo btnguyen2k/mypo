@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
@@ -100,9 +101,13 @@ public partial class FinHubController
         {
             Country = market?.Country ?? "US",
             InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = BuildHoldingTickersReq(plan)
+            CurrentAllocation = BuildHoldingTickersReq(plan),
+            BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
         };
-        return await FinHubClient.AnalyzePortfolioAsync(req);
+        Console.WriteLine($"[DEBUG] AnalyzePortfolio({plan.Name}): {JsonSerializer.Serialize(req)}");
+        var analysisResult = await FinHubClient.AnalyzePortfolioAsync(req);
+        Console.WriteLine($"[DEBUG] AnalyzePortfolio({plan.Name}): RebalancePlan - {JsonSerializer.Serialize(analysisResult.Data?.RebalancePlan?.Length)}");
+        return analysisResult;
     }
 
     [HttpGet(IPortfolioApiClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO)]

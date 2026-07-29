@@ -33,7 +33,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         // delay a bit to avoid all instances running at the same time after deployment or restart
-        await Task.Delay(Random.Shared.Next(10000, 30000), cancellationToken);
+        await DelayForRandomInterval(10, 30, "executing background job", cancellationToken: cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -60,8 +60,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-            // await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
-            await DelayForRandomInterval(10, 20, cancellationToken);
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken: cancellationToken); // delay 1-2 hours before next execution
         }
     }
 
@@ -228,8 +227,19 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         var countPositive = holdings.Count(ht => ht.Shares > 0);
         var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
         var resp = buildNew
-            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken)
-            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
+            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq
+                {
+                    Country = country,
+                    InvestorTheme = plan.Metadata?.Description,
+                    CurrentAllocation = allocation,
+                }, cancellationToken: cancellationToken)
+            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq
+                {
+                    Country = country,
+                    InvestorTheme = plan.Metadata?.Description,
+                    CurrentAllocation = allocation,
+                    BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
+                }, cancellationToken: cancellationToken);
         if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
         {
             Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
