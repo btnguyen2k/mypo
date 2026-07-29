@@ -4,18 +4,30 @@ using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Services;
 
-public partial class FinHubClient : BaseClient, IFinHubClient
+public partial class FinHubClient : BaseApiClient, IFinHubClient
 {
-    public FinHubClient(ILogger<FinHubClient> logger, HttpClient httpClient, string baseUrl = "") : base(logger, httpClient, baseUrl)
+    public FinHubClient(
+        HttpClient httpClient,
+        string baseUrl = "",
+        IDictionary<string, string>? attachedHeaders = null,
+        ILogger<FinHubClient>? logger = null) : base(httpClient, baseUrl, attachedHeaders, logger)
     {
         var apiKey = Environment.GetEnvironmentVariable("FINHUB_API_KEY");
         if (!string.IsNullOrEmpty(apiKey))
         {
-            AddDefaultHeaders(new Dictionary<string, string>
+            AddAttachedHeaders(new Dictionary<string, string>
             {
                 { "X-Api-Key", apiKey },
             });
         }
+    }
+
+    private readonly TimeSpan MIN_TIMEOUT = TimeSpan.FromSeconds(10 * 60);
+    /// <inheritdoc/>
+    protected override void SetupDefaultHttpClient(HttpClient defaultHttpClient)
+    {
+        base.SetupDefaultHttpClient(defaultHttpClient);
+        defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
     }
 
     /*----------------------------------------------------------------------*/

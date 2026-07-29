@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
+using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -149,32 +150,45 @@ public partial class MyPortfolioPlansDetails : BasePage
         SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
         SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
+        Console.WriteLine($"[DEBUG] AnalyzePortfolio({SelectedPortfolioPlan.Name}): RebalancePlan - {JsonSerializer.Serialize(SelectedPortfolioPlan.Metadata.RebalancePlan.Length)}");
 
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }
 
     private const string TabIdSpotlight = "nav-spotlight-tab";
     private const string TabIdAnalysis = "nav-analysis-tab";
+    private const string TabIdRebalancePlan = "nav-rebalance-plan-tab";
     private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
 
     private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
     private bool HasSpotlight => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Spotlight);
+    private bool HasRebalancePlan => !string.IsNullOrWhiteSpace(SelectedPortfolioPlan?.Metadata?.RebalancePlan);
 
     /// <summary>
     /// Resolves <see cref="ActiveAnalysisTab"/> to a tab that is actually visible (has content),
-    /// preferring Spotlight. Falls back to the other tab when the selected one has no content.
+    /// preferring Spotlight, then Analysis, then Rebalance Plan.
     /// </summary>
     private string EffectiveAnalysisTab
     {
         get
         {
-            if (ActiveAnalysisTab == TabIdSpotlight && !HasSpotlight)
+            if ((ActiveAnalysisTab == TabIdSpotlight && HasSpotlight)
+                || (ActiveAnalysisTab == TabIdAnalysis && HasAnalysis)
+                || (ActiveAnalysisTab == TabIdRebalancePlan && HasRebalancePlan))
+            {
+                return ActiveAnalysisTab;
+            }
+            if (HasSpotlight)
+            {
+                return TabIdSpotlight;
+            }
+            if (HasAnalysis)
             {
                 return TabIdAnalysis;
             }
-            if (ActiveAnalysisTab == TabIdAnalysis && !HasAnalysis)
+            if (HasRebalancePlan)
             {
-                return TabIdSpotlight;
+                return TabIdRebalancePlan;
             }
             return ActiveAnalysisTab;
         }

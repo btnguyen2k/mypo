@@ -35,9 +35,9 @@ public class ExternalServicesBootstrapper
         var finhubBaseUrl = externalServicesSettings.GetValue<string>("FinHub:Url");
         appBuilder.Services.AddSingleton<IFinHubClient, FinHubClient>(sp =>
         {
-            var logger = sp.GetRequiredService<ILogger<FinHubClient>>();
             var httpClient = sp.GetRequiredService<HttpClient>();
-            return new FinHubClient(logger, httpClient, finhubBaseUrl ?? string.Empty);
+            var logger = sp.GetService<ILogger<FinHubClient>>();
+            return new FinHubClient(httpClient, baseUrl: finhubBaseUrl??string.Empty, logger: logger);
         });
     }
 }
