@@ -1,5 +1,5 @@
 {
-    "date": "2026-04-24",
+    "date": "2026-07-28",
     "data": [
         {
             "symbol": "NYSE:AA",
@@ -70,6 +70,11 @@
             "symbol": "NYSE:ALLY",
             "company": "Ally Financial",
             "sector": "Financials"
+        },
+        {
+            "symbol": "NYSE:ALSN",
+            "company": "Allison Transmission",
+            "sector": "Industrials"
         },
         {
             "symbol": "NYSE:ALV",
@@ -237,24 +242,9 @@
             "sector": "Utilities"
         },
         {
-            "symbol": "NYSE:BLD",
-            "company": "TopBuild Corp.",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NASDAQ:BLKB",
-            "company": "Blackbaud",
-            "sector": "Information Technology"
-        },
-        {
             "symbol": "NASDAQ:BMRN",
             "company": "BioMarin Pharmaceutical",
             "sector": "Health Care"
-        },
-        {
-            "symbol": "NYSE:BRBR",
-            "company": "BellRing Brands",
-            "sector": "Consumer Staples"
         },
         {
             "symbol": "NASDAQ:BRKR",
@@ -275,6 +265,11 @@
             "symbol": "NASDAQ:BSY",
             "company": "Bentley Systems",
             "sector": "Information Technology"
+        },
+        {
+            "symbol": "NASDAQ:BTSG",
+            "company": "BrightSpring Health Services",
+            "sector": "Health Care"
         },
         {
             "symbol": "NYSE:BURL",
@@ -332,6 +327,11 @@
             "sector": "Materials"
         },
         {
+            "symbol": "NYSE:CDE",
+            "company": "Coeur Mining",
+            "sector": "Materials"
+        },
+        {
             "symbol": "NYSE:CDP",
             "company": "COPT Defense Properties",
             "sector": "Real Estate"
@@ -348,7 +348,7 @@
         },
         {
             "symbol": "NASDAQ:CG",
-            "company": "Carlyle Group",
+            "company": "Carlyle Group (The)",
             "sector": "Financials"
         },
         {
@@ -417,11 +417,6 @@
             "sector": "Energy"
         },
         {
-            "symbol": "NASDAQ:CNXC",
-            "company": "Concentrix",
-            "sector": "Industrials"
-        },
-        {
             "symbol": "NASDAQ:COKE",
             "company": "Coca-Cola Consolidated",
             "sector": "Consumer Staples"
@@ -435,11 +430,6 @@
             "symbol": "NASDAQ:COLM",
             "company": "Columbia Sportswear",
             "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NYSE:COTY",
-            "company": "Coty",
-            "sector": "Consumer Staples"
         },
         {
             "symbol": "NYSE:CPRI",
@@ -712,19 +702,9 @@
             "sector": "Consumer Discretionary"
         },
         {
-            "symbol": "NASDAQ:FLEX",
-            "company": "Flex Ltd.",
-            "sector": "Information Technology"
-        },
-        {
             "symbol": "NYSE:FLG",
             "company": "Flagstar Bank",
             "sector": "Financials"
-        },
-        {
-            "symbol": "NYSE:FLO",
-            "company": "Flowers Foods",
-            "sector": "Consumer Staples"
         },
         {
             "symbol": "NYSE:FLR",
@@ -832,16 +812,6 @@
             "sector": "Materials"
         },
         {
-            "symbol": "NASDAQ:GT",
-            "company": "Goodyear Tire &amp; Rubber",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NYSE:GTLS",
-            "company": "Chart Industries",
-            "sector": "Industrials"
-        },
-        {
             "symbol": "NYSE:GWRE",
             "company": "Guidewire Software",
             "sector": "Information Technology"
@@ -942,6 +912,11 @@
             "sector": "Information Technology"
         },
         {
+            "symbol": "NASDAQ:IESC",
+            "company": "IES Holdings",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NASDAQ:ILMN",
             "company": "Illumina, Inc.",
             "sector": "Health Care"
@@ -958,7 +933,7 @@
         },
         {
             "symbol": "NYSE:IRT",
-            "company": "IRT Living",
+            "company": "Independence Realty Trust",
             "sector": "Real Estate"
         },
         {
@@ -974,11 +949,6 @@
         {
             "symbol": "NYSE:JEF",
             "company": "Jefferies",
-            "sector": "Financials"
-        },
-        {
-            "symbol": "NYSE:JHG",
-            "company": "Janus Henderson",
             "sector": "Financials"
         },
         {
@@ -1032,6 +1002,11 @@
             "sector": "Real Estate"
         },
         {
+            "symbol": "NASDAQ:KRYS",
+            "company": "Krystal Biotech",
+            "sector": "Health Care"
+        },
+        {
             "symbol": "NASDAQ:KTOS",
             "company": "Kratos Defense &amp; Security Solutions",
             "sector": "Industrials"
@@ -1079,7 +1054,7 @@
         {
             "symbol": "NYSE:LPX",
             "company": "Louisiana-Pacific",
-            "sector": "Materials"
+            "sector": "Industrials"
         },
         {
             "symbol": "NASDAQ:LSCC ",
@@ -1100,11 +1075,6 @@
             "symbol": "NASDAQ:MANH",
             "company": "Manhattan Associates",
             "sector": "Information Technology"
-        },
-        {
-            "symbol": "NASDAQ:MASI",
-            "company": "Masimo",
-            "sector": "Health Care"
         },
         {
             "symbol": "NASDAQ:MAT",
@@ -1140,6 +1110,11 @@
             "symbol": "NYSE:MOG.A",
             "company": "Moog Inc.",
             "sector": "Industrials"
+        },
+        {
+            "symbol": "NYSE:MOH",
+            "company": "Molina Healthcare",
+            "sector": "Health Care"
         },
         {
             "symbol": "NASDAQ:MORN",
@@ -1240,11 +1215,6 @@
             "symbol": "NASDAQ:NOVT",
             "company": "Novanta",
             "sector": "Information Technology"
-        },
-        {
-            "symbol": "NYSE:NSA",
-            "company": "National Storage Affiliates Trust",
-            "sector": "Real Estate"
         },
         {
             "symbol": "NASDAQ:NTNX",
@@ -1362,6 +1332,11 @@
             "sector": "Financials"
         },
         {
+            "symbol": "NYSE:P",
+            "company": "Everpure",
+            "sector": "Information Technology"
+        },
+        {
             "symbol": "NYSE:PAG",
             "company": "Penske Automotive Group",
             "sector": "Consumer Discretionary"
@@ -1457,11 +1432,6 @@
             "sector": "Industrials"
         },
         {
-            "symbol": "NYSE:PSTG",
-            "company": "Everpure",
-            "sector": "Information Technology"
-        },
-        {
             "symbol": "NYSE:PVH",
             "company": "PVH Corp.",
             "sector": "Consumer Discretionary"
@@ -1532,6 +1502,11 @@
             "sector": "Health Care"
         },
         {
+            "symbol": "NASDAQ:ROKU",
+            "company": "Roku, Inc.",
+            "sector": "Communication Services"
+        },
+        {
             "symbol": "NYSE:RPM",
             "company": "RPM International",
             "sector": "Materials"
@@ -1575,6 +1550,11 @@
             "symbol": "NYSE:SAM",
             "company": "Boston Beer Company",
             "sector": "Consumer Staples"
+        },
+        {
+            "symbol": "NASDAQ:SANM",
+            "company": "Sanmina Corporation",
+            "sector": "Information Technology"
         },
         {
             "symbol": "NYSE:SARO",
@@ -1622,6 +1602,11 @@
             "sector": "Financials"
         },
         {
+            "symbol": "NASDAQ:SIRI",
+            "company": "SiriusXM",
+            "sector": "Communication Services"
+        },
+        {
             "symbol": "NASDAQ:SITM",
             "company": "SiTime",
             "sector": "Information Technology"
@@ -1645,6 +1630,16 @@
             "symbol": "NYSE:SMG",
             "company": "Scotts Miracle-Gro Company",
             "sector": "Materials"
+        },
+        {
+            "symbol": "NASDAQ:SMTC",
+            "company": "Semtech",
+            "sector": "Information Technology"
+        },
+        {
+            "symbol": "NYSE:SN",
+            "company": "SharkNinja",
+            "sector": "Consumer Discretionary"
         },
         {
             "symbol": "NYSE:SNX",
@@ -1747,11 +1742,6 @@
             "sector": "Utilities"
         },
         {
-            "symbol": "NYSE:TMHC",
-            "company": "Taylor Morrison",
-            "sector": "Consumer Discretionary"
-        },
-        {
             "symbol": "NYSE:TNL",
             "company": "Travel + Leisure Co.",
             "sector": "Consumer Discretionary"
@@ -1760,6 +1750,11 @@
             "symbol": "NYSE:TOL",
             "company": "Toll Brothers",
             "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NYSE:TOST",
+            "company": "Toast, Inc.",
+            "sector": "Financials"
         },
         {
             "symbol": "NYSE:TREX",
@@ -1855,6 +1850,11 @@
             "symbol": "NYSE:VFC",
             "company": "VF Corporation",
             "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NASDAQ:VIAV",
+            "company": "Viavi Solutions",
+            "sector": "Information Technology"
         },
         {
             "symbol": "NASDAQ:VICR",
