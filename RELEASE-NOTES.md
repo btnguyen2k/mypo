@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-07-29 - v2.0.2
+
+### Added/Refactoring/Deprecation
+
+- Feat(analyze-portfolio): Add rebalance plan, adapt to FinHub v0.14.1.
+
+### Fixed/Improvements
+
+- Patch(CodeQL): Fix CodeQL warnings.
+- Patch(background-tasks): Minor fix background task sleep time.
+
 ## 2026-07-20 - v2.0.1
 
 ### Fixed/Improvements
