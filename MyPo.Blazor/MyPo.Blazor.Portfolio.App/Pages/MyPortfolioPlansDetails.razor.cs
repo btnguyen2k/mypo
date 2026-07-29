@@ -108,7 +108,7 @@ public partial class MyPortfolioPlansDetails : BasePage
                     var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
                     ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta.TotalSeconds}s)");
                 }
-                await Task.Delay(750);
+                await Task.Delay(1000);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();

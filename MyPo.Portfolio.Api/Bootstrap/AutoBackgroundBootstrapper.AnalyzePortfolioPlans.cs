@@ -4,6 +4,7 @@ using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -148,11 +149,12 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             }
 
             Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
-            var analysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-            if (analysis is not null)
+            var portfolioAnalysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+            if (portfolioAnalysis is not null)
             {
                 plan.Metadata.AnalysisRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                plan.Metadata.Analysis = analysis;
+                plan.Metadata.Analysis = portfolioAnalysis.Analysis;
+                plan.Metadata.RebalancePlan = portfolioAnalysis.RebalancePlan;
                 changed = true;
             }
         }
@@ -185,14 +187,14 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             else
             {
                 Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
-                var spotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-                if (spotlight is not null)
+                var portfolioSpotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+                if (portfolioSpotlight is not null)
                 {
                     plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                    plan.Metadata.Spotlight = spotlight;
+                    plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
                     changed = true;
                     // fire-and-forget: don't block the analysis loop on Telegram delivery
-                    _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, spotlight, cancellationToken), cancellationToken);
+                    _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, portfolioSpotlight.Analysis, cancellationToken), cancellationToken);
                 }
             }
         }
@@ -220,7 +222,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
     /// fresh portfolio when there are no (or mostly empty) holdings, otherwise analyzes the existing one.
     /// Returns the analysis text, or <c>null</c> if the call failed or the LLM reported an error.
     /// </summary>
-    private async Task<string?> RunNormalAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    private async Task<PortfolioAnalysis?> RunNormalAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
     {
         var holdings = plan.Metadata?.HoldingTickers ?? [];
         var countEntries = holdings.Count;
@@ -245,14 +247,14 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
             return null;
         }
-        return resp.Data.Analysis;
+        return resp.Data;
     }
 
     /// <summary>
     /// Runs the spotlight portfolio analysis (immediate risks/actions). Returns the analysis text, or
     /// <c>null</c> if the call failed or the LLM reported an error.
     /// </summary>
-    private async Task<string?> RunSpotlightAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    private async Task<PortfolioAnalysis?> RunSpotlightAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
     {
         var resp = await finHubClient.SpotlightPortfolioAsync(new SpotLightPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
         if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
@@ -260,7 +262,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             Logger.LogWarning("Failed to spotlight portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
             return null;
         }
-        return resp.Data.Analysis;
+        return resp.Data;
     }
 
     /// <summary>
