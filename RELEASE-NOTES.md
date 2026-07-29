@@ -1,5 +1,12 @@
 # My Portfolio Tracker release notes
 
+## 2026-07-29 - v2.0.3
+
+### Fixed/Improvements
+
+- Fix(review-portfolio-plan): portfolio plan rebalance plan not saved when portfolio plan analyzed manually.
+- Fix(background-task): portfolio plan rebalance plan not saved when portfolio plan analyzed periodically.
+
 ## 2026-07-29 - v2.0.2
 
 ### Added/Refactoring/Deprecation
