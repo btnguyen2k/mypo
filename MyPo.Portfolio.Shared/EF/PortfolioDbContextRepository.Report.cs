@@ -150,10 +150,14 @@ public sealed partial class PortfolioDbContextRepository
                 if (existingPortfolio is not null)
                 {
                     existingPortfolio.Metadata ??= new();
-                    existingPortfolio.Metadata.LastWeeklyReportTimestamp = existingPortfolio.Metadata.WeeklyReportPeriodStart = 0;
-                    existingPortfolio.Metadata.LastMonthlyReportTimestamp = existingPortfolio.Metadata.MonthlyReportPeriodStart = 0;
-                    existingPortfolio.Metadata.LastQuarterlyReportTimestamp = existingPortfolio.Metadata.QuarterlyReportPeriodStart = 0;
-                    existingPortfolio.Metadata.LastYearlyReportTimestamp = existingPortfolio.Metadata.YearlyReportPeriodStart = 0;
+                    existingPortfolio.Metadata.LastWeeklyReportTimestamp = 0;
+                    existingPortfolio.Metadata.WeeklyReportPeriodStart = 0;
+                    existingPortfolio.Metadata.LastMonthlyReportTimestamp = 0;
+                    existingPortfolio.Metadata.MonthlyReportPeriodStart = 0;
+                    existingPortfolio.Metadata.LastQuarterlyReportTimestamp = 0;
+                    existingPortfolio.Metadata.QuarterlyReportPeriodStart = 0;
+                    existingPortfolio.Metadata.LastYearlyReportTimestamp = 0;
+                    existingPortfolio.Metadata.YearlyReportPeriodStart = 0;
                     await SaveChangesAsync(cancellationToken);
 
                     await ReportStore.Where(r => r.PortfolioId == portfolioId).ExecuteDeleteAsync(cancellationToken);

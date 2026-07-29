@@ -206,10 +206,11 @@ abstract class BackgroundPortfolioTask : BackgroundService
         }
     }
 
-    protected async Task DelayForRandomInterval(int minSeconds, int maxSeconds, CancellationToken cancellationToken = default)
+    protected async Task DelayForRandomInterval(int minSeconds, int maxSeconds, string action = "", CancellationToken cancellationToken = default)
     {
         var delaySecs = Random.Shared.Next(minSeconds, maxSeconds);
-        Logger.LogInformation("Waiting for {delaySecs} seconds before the next execution...", delaySecs);
+        action = string.IsNullOrEmpty(action) ? "the next execution" : action;
+        Logger.LogInformation("Waiting for {delaySecs} seconds before {action}...", delaySecs, action);
         try
         {
             await Task.Delay(delaySecs * 1000, cancellationToken);

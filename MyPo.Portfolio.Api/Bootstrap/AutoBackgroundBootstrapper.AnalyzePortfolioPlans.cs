@@ -33,7 +33,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         // delay a bit to avoid all instances running at the same time after deployment or restart
-        await Task.Delay(Random.Shared.Next(10000, 30000), cancellationToken);
+        await DelayForRandomInterval(10, 30, "executing background job", cancellationToken: cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -60,7 +60,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
-            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken); // delay 1-2 hours before next execution
+            await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken: cancellationToken); // delay 1-2 hours before next execution
         }
     }
 
