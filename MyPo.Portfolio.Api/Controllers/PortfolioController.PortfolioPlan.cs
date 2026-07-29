@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Api;
 using MyPo.Shared.Identity;
 

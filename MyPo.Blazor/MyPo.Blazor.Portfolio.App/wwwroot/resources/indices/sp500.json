@@ -1,5 +1,5 @@
 {
-    "date": "2026-04-24",
+    "date": "2026-07-28",
     "data": [
         {
             "symbol": "NYSE:MMM",
@@ -342,7 +342,7 @@
             "sector": "Financials"
         },
         {
-            "symbol": "NYSE:BK",
+            "symbol": "NYSE:BNY",
             "company": "BNY Mellon",
             "sector": "Financials"
         },
@@ -417,11 +417,6 @@
             "sector": "Real Estate"
         },
         {
-            "symbol": "NYSE:CPB",
-            "company": "Campbell's Company (The)",
-            "sector": "Consumer Staples"
-        },
-        {
             "symbol": "NYSE:COF",
             "company": "Capital One",
             "sector": "Financials"
@@ -433,7 +428,7 @@
         },
         {
             "symbol": "NYSE:CCL",
-            "company": "Carnival",
+            "company": "Carnival Corporation",
             "sector": "Consumer Discretionary"
         },
         {
@@ -612,11 +607,6 @@
             "sector": "Industrials"
         },
         {
-            "symbol": "NYSE:CAG",
-            "company": "Conagra Brands",
-            "sector": "Consumer Staples"
-        },
-        {
             "symbol": "NYSE:COP",
             "company": "ConocoPhillips",
             "sector": "Energy"
@@ -670,11 +660,6 @@
             "symbol": "NASDAQ:COST",
             "company": "Costco",
             "sector": "Consumer Staples"
-        },
-        {
-            "symbol": "NYSE:CTRA",
-            "company": "Coterra",
-            "sector": "Energy"
         },
         {
             "symbol": "NYSE:CRH",
@@ -832,7 +817,7 @@
             "sector": "Consumer Discretionary"
         },
         {
-            "symbol": "NASDAQ:SATS",
+            "symbol": "NASDAQ:ECHO",
             "company": "EchoStar",
             "sector": "Communication Services"
         },
@@ -880,11 +865,6 @@
             "symbol": "NYSE:EOG",
             "company": "EOG Resources",
             "sector": "Energy"
-        },
-        {
-            "symbol": "NYSE:EPAM",
-            "company": "EPAM Systems",
-            "sector": "Information Technology"
         },
         {
             "symbol": "NYSE:EQT",
@@ -997,12 +977,17 @@
             "sector": "Industrials"
         },
         {
+            "symbol": "NYSE:FDXF",
+            "company": "FedEx Freight",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NYSE:FIS",
             "company": "Fidelity National Information Services",
             "sector": "Financials"
         },
         {
-            "symbol": "NASDAQ:FITB",
+            "symbol": "NYSE:FITB",
             "company": "Fifth Third Bancorp",
             "sector": "Financials"
         },
@@ -1020,6 +1005,11 @@
             "symbol": "NASDAQ:FISV",
             "company": "Fiserv",
             "sector": "Financials"
+        },
+        {
+            "symbol": "NASDAQ:FLEX",
+            "company": "Flex Ltd.",
+            "sector": "Information Technology"
         },
         {
             "symbol": "NYSE:F",
@@ -1187,8 +1177,13 @@
             "sector": "Consumer Discretionary"
         },
         {
+            "symbol": "NASDAQ:HONA",
+            "company": "Honeywell Aerospace",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NASDAQ:HON",
-            "company": "Honeywell",
+            "company": "Honeywell Technologies",
             "sector": "Industrials"
         },
         {
@@ -1515,6 +1510,11 @@
             "symbol": "NYSE:MLM",
             "company": "Martin Marietta Materials",
             "sector": "Materials"
+        },
+        {
+            "symbol": "NASDAQ:MRVL",
+            "company": "Marvell Technology",
+            "sector": "Information Technology"
         },
         {
             "symbol": "NYSE:MAS",
@@ -1855,11 +1855,6 @@
             "symbol": "NYSE:PNC",
             "company": "PNC Financial Services",
             "sector": "Financials"
-        },
-        {
-            "symbol": "NASDAQ:POOL",
-            "company": "Pool Corporation",
-            "sector": "Consumer Discretionary"
         },
         {
             "symbol": "NYSE:PPG",
@@ -2330,6 +2325,11 @@
             "symbol": "NYSE:VLO",
             "company": "Valero Energy",
             "sector": "Energy"
+        },
+        {
+            "symbol": "NYSE:VEEV",
+            "company": "Veeva Systems",
+            "sector": "Health Care"
         },
         {
             "symbol": "NYSE:VTR",

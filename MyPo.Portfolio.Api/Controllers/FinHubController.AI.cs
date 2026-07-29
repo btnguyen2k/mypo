@@ -64,7 +64,9 @@ public partial class FinHubController
             portfolioPlan.Metadata ??= new();
             portfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Analysis = result.Analysis;
-            await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+            portfolioPlan.Metadata.RebalancePlan = result.RebalancePlan;
+            // update portfolio plan's metadata in background
+            _ = Task.Run(async () => await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan));
         }
         return ResponseOk(result);
     }
@@ -157,7 +159,8 @@ public partial class FinHubController
             portfolioPlan.Metadata ??= new();
             portfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Spotlight = result.Analysis;
-            await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+            // update portfolio plan's metadata in background
+            _ = Task.Run(async () => await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan));
         }
         return ResponseOk(result);
     }
