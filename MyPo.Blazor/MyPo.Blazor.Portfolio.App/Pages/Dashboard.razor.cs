@@ -1,168 +1,305 @@
-﻿using Microsoft.AspNetCore.Components;
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
-using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
 public partial class Dashboard : BasePage
 {
-    private List<MarketEventResp>? MarketEventsList { get; set; }
-    private List<MarketEventResp> EventsDistribution => MarketEventsList?.Where(e => MarketEventEntity.EVENT_DIVIDEND.Equals(e.EventType, StringComparison.OrdinalIgnoreCase)
-            || MarketEventEntity.EVENT_DISTRIBUTION.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
-        .Where(e => e.Metadata?.Dividend?.Amount >= 0.03m)
-        .OrderBy(e => e.EventTime)
-        .ToList() ?? [];
-    private List<MarketEventResp> EventsEarnings => MarketEventsList?.Where(e => MarketEventEntity.EVENT_EARNINGS.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
-        .OrderBy(e => e.EventTime)
-        .ToList() ?? [];
-    private List<MarketEventResp> EventsListing => MarketEventsList?.Where(e => MarketEventEntity.EVENT_LISTING.Equals(e.EventType, StringComparison.OrdinalIgnoreCase))
-        .OrderBy(e => e.EventTime)
-        .ToList() ?? [];
+    private static readonly TimeSpan StaleValuationAge = TimeSpan.FromHours(24);
 
-    private string ActiveTab { get; set; } = TabIdDividend;
-    private const string TabIdDividend = "nav-dividend-tab";
-    private const string TabIdListing = "nav-listing-tab";
-    private const string TabIdEarnings = "nav-earnings-tab";
+    private List<PortfolioResp> Portfolios { get; set; } = [];
 
-    // map {symbol --> quote}
-    private readonly Dictionary<string, StockQuote> QuotesMap = [];
+    private List<PortfolioResp> ActivePortfolios => Portfolios
+        .Where(p => p.IsActive)
+        .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
-    // map {symbol --> yield_vs_current_price}
-    private readonly Dictionary<string, decimal> YieldsMap = [];
+    private List<PortfolioResp> InvestmentPortfolios => ActivePortfolios
+        .Where(p => !(p.Metadata?.IsContainer ?? false))
+        .ToList();
 
-    // map {symbol --> market close price before ex-dividend date}
-    private readonly Dictionary<string, decimal> PreExDivPrice = [];
+    private int ActiveContainerCount => ActivePortfolios.Count(p => p.Metadata?.IsContainer ?? false);
 
-    [Inject]
-    private IJSRuntime JS { get; set; } = default!;
-
-    private async void SwitchToSavedTab()
-    {
-        var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        var savedTab = await jsLocalStorage.InvokeAsync<string>("LocalStoreGet", "Dashboard-active-tab");
-        ActiveTab = string.IsNullOrEmpty(savedTab) ? TabIdDividend : savedTab;
-        if (ActiveTab != TabIdDividend && ActiveTab != TabIdListing && ActiveTab != TabIdEarnings)
+    private List<CurrencySummary> CurrencySummaries => InvestmentPortfolios
+        .GroupBy(p => NormalizeCurrency(p.Currency), StringComparer.OrdinalIgnoreCase)
+        .Select(group => new CurrencySummary
         {
-            ActiveTab = TabIdDividend;
-        }
-        StateHasChanged();
-    }
+            Currency = group.Key,
+            PortfolioCount = group.Count(),
+            TotalCosts = group.Sum(p => p.TotalCosts),
+            MarketValue = group.Sum(p => p.TotalMarketValue),
+        })
+        .OrderBy(summary => summary.Currency, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
-    private async void SwitchTab(string tab)
-    {
-        CloseAlert();
-        var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "Dashboard-active-tab", tab);
-    }
+    private List<AttentionItem> AttentionItems => ActivePortfolios
+        .Select(BuildAttentionItem)
+        .Where(item => item is not null)
+        .Cast<AttentionItem>()
+        .OrderBy(item => item.Priority)
+        .ThenBy(item => item.PortfolioName, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
-    private async void GetStocksQuotesBackground()
+    private List<PortfolioResp> PortfoliosWithReturns => InvestmentPortfolios
+        .Where(p => p.TotalCosts > 0 && p.TotalMarketValue > 0)
+        .ToList();
+
+    private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(p => p.TotalPnlPct);
+
+    private PortfolioResp? WeakestPerformer => PortfoliosWithReturns.Count > 1
+        ? PortfoliosWithReturns.MinBy(p => p.TotalPnlPct)
+        : null;
+
+    private string AggregatePnlTextClass
     {
-        var symbolsList = MarketEventsList?
-            .Where(e => !e.EventType.Equals(MarketEventEntity.EVENT_EARNINGS, StringComparison.CurrentCultureIgnoreCase))
-            .Select(e => e.ItemCode).Distinct().ToList() ?? [];
-        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var authToken = await GetAuthTokenAsync();
-        await TickerUtils.FetchQuotesForTickers(
-            symbolsList,
-            apiClient,
-            authToken,
-            ApiBaseUrl,
-            callbackPrefetch: (currentChunk) =>
+        get
+        {
+            var summaries = CurrencySummaries;
+            if (summaries.Any(summary => summary.TotalPnl > 0)
+                && summaries.All(summary => summary.TotalPnl >= 0))
             {
-                var symbols = string.Join(",", currentChunk);
-                SetBackgroundMsg($"⌛Fetching quotes for symbols: {symbols}");
-            },
-            callbackPostfetch: (quotesResp) =>
-            {
-                if (quotesResp.IsSuccess)
-                {
-                    foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
-                    {
-                        QuotesMap[quote.Key] = quote.Value;
-                        var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-                        YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
-                    }
-                    StateHasChanged();
-                }
-                else
-                {
-                    var symbols = string.Join(",", quotesResp.Data?.Keys ?? []);
-                    SetBackgroundMsg($"❗Failed to fetch quotes for symbols: {symbols}. Status: {quotesResp.Status}, Message: {quotesResp.Message}");
-                }
-                return true;
+                return "text-success";
             }
-        );
-        SetBackgroundMsg(string.Empty);
+            if (summaries.Any(summary => summary.TotalPnl < 0)
+                && summaries.All(summary => summary.TotalPnl <= 0))
+            {
+                return "text-danger";
+            }
+            return "text-muted";
+        }
     }
 
-    // private async void GetPricePreExDivBackground()
-    // {
-    // 	var now = DateTimeOffset.UtcNow;
-    // 	var events = MarketEventsList?
-    // 		.Where(e => e.EventType.Equals(MarketEventEntity.EVENT_DIVIDEND, StringComparison.CurrentCultureIgnoreCase)
-    // 			|| e.EventType.Equals(MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.CurrentCultureIgnoreCase))
-    // 		.Where(e => e.EventTime < now) ?? [];
-    // 	var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-    // 	foreach (var e in events)
-    // 	{
-    // 		var tz = e.MarketId.ToUpper() switch
-    // 		{
-    // 			"AU" => "Australia/Sydney",
-    // 			"VN" => "Asia/Ho_Chi_Minh",
-    // 			"US" => "America/New_York",
-    // 			_ => "UTC"
-    // 		};
-    // 		var dateAt = (e.EventTime.ToTimeZoneSilently(tz) ?? e.EventTime).AddDays(-1).Date;
-    // 		var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
-    // 		if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
-    // 		{
-    // 			PreExDivPrice[e.ItemCode] = quoteAtResp.Data.Close;
-    // 			StateHasChanged();
-    // 		}
-    // 	}
-    // }
+    private string AggregatePnlBorderClass
+    {
+        get
+        {
+            return AggregatePnlTextClass switch
+            {
+                "text-success" => "border-start-success",
+                "text-danger" => "border-start-danger",
+                _ => "border-start-secondary",
+            };
+        }
+    }
+
+    private string BestPerformerBorderClass => BestPerformer?.TotalPnl switch
+    {
+        > 0 => "border-success",
+        < 0 => "border-danger",
+        _ => "border-secondary",
+    };
+
+    private string WeakestPerformerBorderClass => WeakestPerformer?.TotalPnl < 0
+        ? "border-danger"
+        : "border-secondary";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
         {
-            HideUI = true;
-            ShowAlert("info", "Loading upcoming market events...");
-            var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-            var result = await apiClient.GetUpcomingMarketEventsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (result.Status == 200)
-            {
-                HideUI = false;
-                MarketEventsList = [.. result.Data ?? []];
-                var (alertType, alertMessage) = GetPassedMessageFromQuery();
-                if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-                {
-                    ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
-                }
-                else
-                {
-                    CloseAlert();
-                    await Task.Run(GetStocksQuotesBackground);
-                    // await Task.Run(GetPricePreExDivBackground);
-                }
-            }
-            else
-            {
-                ShowAlert("danger", result.Message ?? "Error loading portfolios.");
-            }
-
-            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblDividendEvents");
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblListingEvents");
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblEarningsEvents");
-
-            SwitchToSavedTab();
+            await LoadPortfoliosAsync();
         }
     }
+
+    private async Task LoadPortfoliosAsync()
+    {
+        HideUI = true;
+        ShowAlert("info", "Loading portfolio dashboard...");
+
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+
+        HideUI = false;
+        if (!result.IsSuccess)
+        {
+            ShowAlert("danger", result.Message ?? "Error loading portfolios.");
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        Portfolios = [.. result.Data ?? []];
+        CloseAlert();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private AttentionItem? BuildAttentionItem(PortfolioResp portfolio)
+    {
+        if (portfolio.Metadata is null)
+        {
+            return new AttentionItem(
+                portfolio.Id,
+                portfolio.Name,
+                "Portfolio metadata is unavailable.",
+                "bi-exclamation-triangle",
+                "text-danger",
+                0);
+        }
+
+        if (portfolio.Metadata.IsContainer)
+        {
+            var hasChildren = Portfolios.Any(p => string.Equals(p.ParentId, portfolio.Id, StringComparison.Ordinal));
+            return hasChildren
+                ? null
+                : new AttentionItem(
+                    portfolio.Id,
+                    portfolio.Name,
+                    "This container has no child portfolios.",
+                    "bi-diagram-3",
+                    "text-warning",
+                    3);
+        }
+
+        if (portfolio.TotalCosts > 0 && portfolio.TotalMarketValue <= 0)
+        {
+            return new AttentionItem(
+                portfolio.Id,
+                portfolio.Name,
+                "Current market value is unavailable.",
+                "bi-exclamation-triangle",
+                "text-danger",
+                0);
+        }
+
+        if (portfolio.Metadata.MetadataRefreshTimestamp <= 0)
+        {
+            return new AttentionItem(
+                portfolio.Id,
+                portfolio.Name,
+                "Valuation has not been refreshed.",
+                "bi-clock-history",
+                "text-warning",
+                1);
+        }
+
+        var age = DateTimeOffset.UtcNow - portfolio.Metadata.MetadataRefreshUTC;
+        if (age > StaleValuationAge)
+        {
+            return new AttentionItem(
+                portfolio.Id,
+                portfolio.Name,
+                $"Valuation is stale ({FreshnessText(portfolio)}).",
+                "bi-clock-history",
+                "text-warning",
+                2);
+        }
+
+        return null;
+    }
+
+    private string ParentName(PortfolioResp portfolio)
+    {
+        if (string.IsNullOrEmpty(portfolio.ParentId))
+        {
+            return string.Empty;
+        }
+
+        return Portfolios.FirstOrDefault(p => string.Equals(p.Id, portfolio.ParentId, StringComparison.Ordinal))?.Name
+            ?? string.Empty;
+    }
+
+    private static string PortfolioDetailsUrl(string portfolioId)
+    {
+        return PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS
+            .Replace("{PortfolioId}", portfolioId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeCurrency(string? currency)
+    {
+        return string.IsNullOrWhiteSpace(currency)
+            ? "N/A"
+            : currency.Trim().ToUpperInvariant();
+    }
+
+    private static string FormatAmount(decimal value)
+    {
+        return value.ToString("N2", CultureInfo.CurrentCulture);
+    }
+
+    private static string FormatSignedAmount(decimal value)
+    {
+        return value switch
+        {
+            > 0 => $"+{FormatAmount(value)}",
+            < 0 => FormatAmount(value),
+            _ => "0.00",
+        };
+    }
+
+    private static string FormatPercentage(decimal value)
+    {
+        return value switch
+        {
+            > 0 => $"+{value:P2}",
+            _ => value.ToString("P2", CultureInfo.CurrentCulture),
+        };
+    }
+
+    private static string PnlTextClass(decimal value)
+    {
+        return value switch
+        {
+            > 0 => "text-success",
+            < 0 => "text-danger",
+            _ => "text-muted",
+        };
+    }
+
+    private static string FreshnessText(PortfolioResp portfolio)
+    {
+        var timestamp = portfolio.Metadata?.MetadataRefreshTimestamp ?? 0;
+        if (timestamp <= 0)
+        {
+            return "Not refreshed";
+        }
+
+        var age = DateTimeOffset.UtcNow - portfolio.Metadata!.MetadataRefreshUTC;
+        if (age < TimeSpan.Zero || age < TimeSpan.FromMinutes(1))
+        {
+            return "Just now";
+        }
+        if (age < TimeSpan.FromHours(1))
+        {
+            return $"{Math.Floor(age.TotalMinutes):N0} min ago";
+        }
+        if (age < TimeSpan.FromDays(1))
+        {
+            return $"{Math.Floor(age.TotalHours):N0} hr ago";
+        }
+        return $"{Math.Floor(age.TotalDays):N0} d ago";
+    }
+
+    private static string FreshnessBadgeClass(PortfolioResp portfolio)
+    {
+        var timestamp = portfolio.Metadata?.MetadataRefreshTimestamp ?? 0;
+        if (timestamp <= 0)
+        {
+            return "text-bg-warning";
+        }
+
+        return DateTimeOffset.UtcNow - portfolio.Metadata!.MetadataRefreshUTC > StaleValuationAge
+            ? "text-bg-warning"
+            : "text-bg-light";
+    }
+
+    private sealed class CurrencySummary
+    {
+        public string Currency { get; init; } = string.Empty;
+        public int PortfolioCount { get; init; }
+        public decimal TotalCosts { get; init; }
+        public decimal MarketValue { get; init; }
+        public decimal TotalPnl => TotalCosts > 0 && MarketValue > 0 ? MarketValue - TotalCosts : 0;
+        public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
+    }
+
+    private sealed record AttentionItem(
+        string PortfolioId,
+        string PortfolioName,
+        string Message,
+        string Icon,
+        string TextClass,
+        int Priority);
 }
