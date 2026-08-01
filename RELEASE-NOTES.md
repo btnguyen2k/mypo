@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-01 - v2.1.0
+
+### Added/Refactoring/Deprecation
+
+- Feat: Dashboard redesign.
+
 ## 2026-07-29 - v2.0.3
 
 ### Fixed/Improvements
