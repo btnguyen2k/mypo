@@ -11,9 +11,7 @@ public partial class Dashboard : BasePage
 {
     private static readonly TimeSpan StaleValuationAge = TimeSpan.FromHours(24);
     private const int MinActionableRebalancePlanLength = 100;
-    private static readonly Regex SpotlightRiskSummaryRegex = new(
-        @"SUMMARY:\s*(?<count>\d+)\s+Critical/High risks with actions[.!]?(?:\s|[*_])*$",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex SpotlightRiskSummaryRegex = MyRegexSpotlightRiskSummary();
 
     private List<PortfolioResp> Portfolios { get; set; } = [];
     private List<PortfolioPlanResp> PortfolioPlans { get; set; } = [];
@@ -26,8 +24,6 @@ public partial class Dashboard : BasePage
     private List<PortfolioResp> InvestmentPortfolios => [..ActivePortfolios
         .Where(p => !(p.Metadata?.IsContainer ?? false) && (p.Metadata?.TotalMarketValue??0m) > 0m)
     ];
-
-    // private int ActiveContainerCount => ActivePortfolios.Count(p => p.Metadata?.IsContainer ?? false);
 
     private List<CurrencySummary> CurrencySummaries => [..InvestmentPortfolios
         .GroupBy(p => NormalizeCurrency(p.Currency), StringComparer.OrdinalIgnoreCase)
@@ -327,4 +323,7 @@ public partial class Dashboard : BasePage
         string BadgeText,
         string BadgeClass,
         int Priority);
+
+    [GeneratedRegex(@"SUMMARY:\s*(?<count>\d+)\s+Critical/High risks with actions[.!]?(?:\s|[*_])*$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex MyRegexSpotlightRiskSummary();
 }
