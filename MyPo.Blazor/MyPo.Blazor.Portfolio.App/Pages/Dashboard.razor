@@ -1,322 +1,354 @@
 ﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
-@using System.Reflection
-@using MyPo.Portfolio.Shared.Api
-@using MyPo.Portfolio.Shared.Models
-@using MyPo.Portfolio.Shared.Utils
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Identity
 
 @attribute [Route(UIGlobals.ROUTE_HOME)]
 @inherits BasePage
-
-<HeadContent>
-    <!-- Plugins and styles required by this page-->
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.min.css" />
-</HeadContent>
-
-<PageTitle>Home | @AppInfo?.Name</PageTitle>
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
         <a href="@UIGlobals.ROUTE_HOME">Home</a>
     </li>
     <li class="breadcrumb-item active">
-        <span>Dashboard</span>
+        <span>@PAGE_TITLE</span>
     </li>
 </SectionContent>
 
-<div class="container-lg px-4">
-    <div class="card border-top-primary border-top-3 mb-4">
-        <div class="card-body">
+<AuthorizeView>
+    <Authorizing>
+        <AuthorizingView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Authorizing...")" />
+    </Authorizing>
+    <NotAuthorized>
+        <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
+        <div class="container-lg px-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                <div>
+                    <h2 class="mb-1">Portfolio dashboard</h2>
+                    <p class="text-muted mb-0">Current value, performance, and portfolio health at a glance.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadPortfoliosAsync" disabled="@HideUI">
+                        <BIcon icon="bi-arrow-clockwise" extraClassName="me-1" />Refresh
+                    </button>
+                    <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                        <ChildContent Context="ctx_add_portfolio_dashboard">
+                            <a class="btn btn-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD">
+                                <BIcon icon="bi-plus-lg" extraClassName="me-1" />New portfolio
+                            </a>
+                        </ChildContent>
+                    </AuthorizeView>
+                </div>
+            </div>
+
             <CAlert @ref="@Alert" />
-            @if (!HideUI)
+
+            @if (!HideUI && Portfolios.Count == 0)
             {
-                <nav>
-                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <button class="nav-link @(ActiveTab==TabIdDividend?"active":"")"
-                            @onclick="(()=>SwitchTab(TabIdDividend))" id="@TabIdDividend"
-                            data-coreui-toggle="tab" data-coreui-target="#@(TabIdDividend)-content"
-                            type="button" role="tab" aria-controls="@(TabIdDividend)-content"
-                            aria-selected="@(ActiveTab==TabIdDividend?"true":"false")">Upcoming Dividends</button>
-                        <button class="nav-link @(ActiveTab==TabIdListing?"active":"")"
-                            @onclick="(()=>SwitchTab(TabIdListing))" id="@TabIdListing"
-                            data-coreui-toggle="tab" data-coreui-target="#@(TabIdListing)-content"
-                            type="button" role="tab" aria-controls="@(TabIdListing)-content"
-                            aria-selected="@(ActiveTab==TabIdListing?"true":"false")">New Listings</button>
-                        <button class="nav-link @(ActiveTab==TabIdEarnings?"active":"")"
-                            @onclick="(()=>SwitchTab(TabIdEarnings))" id="@TabIdEarnings"
-                            data-coreui-toggle="tab" data-coreui-target="#@(TabIdEarnings)-content"
-                            type="button" role="tab" aria-controls="@(TabIdEarnings)-content"
-                            aria-selected="@(ActiveTab==TabIdEarnings?"true":"false")">Upcoming Earnings</button>
-                    </div>
-                </nav>
-                <div class="tab-content" id="nav-tabContent">
-                    <div class="tab-pane fade @(ActiveTab==TabIdDividend?"show active":"")" id="@(TabIdDividend)-content" role="tabpanel" aria-labelledby="@TabIdDividend" tabindex="0">
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        @if(EventsDistribution.Count <= 0)
-                                        {
-                                            <h5>No Data</h5>
-                                        }
-                                        else
-                                        {
-                                            <table class="table table-sm mb-0 small" id="tblDividendEvents" data-order='[[ 0, "asc" ]]'>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Ex-Date</th>
-                                                        <th class="text-center" data-dt-order="disable">Market</th>
-                                                        <th data-dt-order="disable">Item</th>
-                                                        <th class="text-end" data-dt-order="disable">Amount</th>
-                                                        <th class="text-end" data-dt-order="disable">Yield</th>
-                                                        <th class="text-end" data-dt-order="disable">Cur.Price</th>
-                                                        <th class="text-center" data-dt-order="disable">Drop</th>
-                                                        <th class="text-center" colspan="3" data-dt-order="disable">Recovery</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="table-group-divider">
-                                                    @foreach (var e in EventsDistribution)
-                                                    {
-                                                        <tr class="@(TextFormatDivident(e))">
-                                                            <td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                                            <td class="text-center">@e.MarketId</td>
-                                                            <td class="text-nowrap"><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-                                                            <td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
-                                                            <td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
-                                                            <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{e.Metadata?.CurrencySymbol??"--"} {quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
-                                                            <td class="text-center text-nowrap">
-                                                                @if (e.Metadata?.Dividend?.Analysis != null)
-                                                                {
-                                                                    @(e.Metadata.Dividend.Analysis.DropPriceMin.ToString(DecimalFormatForMarket(e.MarketId)))
-                                                                    @("-")
-                                                                    @(e.Metadata.Dividend.Analysis.DropPriceMax.ToString(DecimalFormatForMarket(e.MarketId)))
-                                                                }
-                                                                else
-                                                                {
-                                                                    @("--")
-                                                                }
-                                                            </td>
-                                                            <td class="text-center text-nowrap">
-                                                                @if (e.Metadata?.Dividend?.Analysis != null)
-                                                                {
-                                                                    @(e.Metadata.Dividend.Analysis.RecoveryPriceMin.ToString(DecimalFormatForMarket(e.MarketId)))
-                                                                    @("-")
-                                                                    @(e.Metadata.Dividend.Analysis.RecoveryPriceMax.ToString(DecimalFormatForMarket(e.MarketId)))
-                                                                }
-                                                                else
-                                                                {
-                                                                    @("--")
-                                                                }
-                                                            </td>
-                                                            <td class="text-center text-nowrap">
-                                                                @if (e.Metadata?.Dividend?.Analysis != null)
-                                                                {
-                                                                    @($"{e.Metadata.Dividend.Analysis.RecoveryDaysMin}-{e.Metadata.Dividend.Analysis.RecoveryDaysMax} d")
-                                                                }
-                                                                else
-                                                                {
-                                                                    @("--")
-                                                                }
-                                                            </td>
-                                                            <td class="text-center text-nowrap">
-                                                                @if (e.Metadata?.Dividend?.Analysis != null)
-                                                                {
-                                                                    @($"{e.Metadata.Dividend.Analysis.RecoveryProb:P0}")
-                                                                }
-                                                                else
-                                                                {
-                                                                    @("--")
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade @(ActiveTab==TabIdListing?"show active":"")" id="@(TabIdListing)-content" role="tabpanel" aria-labelledby="@TabIdListing" tabindex="0">
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        @if(EventsListing.Count <= 0)
-                                        {
-                                            <h5>No Data</h5>
-                                        }
-                                        else
-                                        {
-                                            <table class="table table-sm mb-0 small" id="tblListingEvents" data-order='[[ 0, "asc" ]]'>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th class="text-center" data-dt-order="disable">Market</th>
-                                                        <th data-dt-order="disable">Item</th>
-                                                        <th class="text-end" data-dt-order="disable">Price</th>
-                                                        <th class="text-end" data-dt-order="disable">Cur.Price</th>
-                                                        <th class="text-end" data-dt-order="disable">Capital</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="table-group-divider align-middle">
-                                                    @foreach (var e in EventsListing)
-                                                    {
-                                                        <tr>
-                                                            <td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                                            <td class="text-center">@e.MarketId</td>
-                                                            <td>
-                                                                <a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small>
-                                                                @if (e.Metadata?.Listing?.Analysis != null)
-                                                                {
-                                                                    <br />
-                                                                    <small class="text-muted">
-                                                                    @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false) && w2 != null)
-                                                                    {
-                                                                        @((MarkupString)$"<code>{w2.Direction}</code>: {w2.Confidence} - {w2.Reason}")
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        @("--")
-                                                                    }
-                                                                    </small>
-
-                                                                    <br />
-                                                                    <small class="text-muted">
-                                                                    @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false) && m1 != null)
-                                                                    {
-                                                                        @((MarkupString)$"<code>{m1.Direction}</code>: {m1.Confidence} - {m1.Reason}")
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        @("--")
-                                                                    }
-                                                                    </small>
-
-                                                                    <br />
-                                                                    <small class="text-muted">
-                                                                    @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false) && m3 != null)
-                                                                    {
-                                                                        @((MarkupString)$"<code>{m3.Direction}</code>: {m3.Confidence} - {m3.Reason}")
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        @("--")
-                                                                    }
-                                                                    </small>
-                                                                }
-                                                            </td>
-                                                            <td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
-                                                            <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{e.Metadata?.CurrencySymbol??"--"} {quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
-                                                            <td class="text-end">@(FormatUtils.FormatVolume(e.Metadata?.Capital??0))</td>
-                                                        </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade @(ActiveTab==TabIdEarnings?"show active":"")" id="@(TabIdEarnings)-content" role="tabpanel" aria-labelledby="@TabIdEarnings" tabindex="0">
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        @if(EventsEarnings.Count <= 0)
-                                        {
-                                            <h5>No Data</h5>
-                                        }
-                                        else
-                                        {
-                                            <table class="table table-sm mb-0 small" id="tblEarningsEvents" data-order='[[ 0, "asc" ]]'>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th class="text-center" data-dt-order="disable">Market</th>
-                                                        <th data-dt-order="disable">Item</th>
-                                                        <th data-dt-order="disable">Status</th>
-                                                        <th class="text-end" data-dt-order="disable">Period</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="table-group-divider">
-                                                    @foreach (var e in EventsEarnings)
-                                                    {
-                                                        <tr>
-                                                            <td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                                            <td class="text-center">@e.MarketId</td>
-                                                            <td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-                                                            <td>@(e.Metadata?.Status??"--")</td>
-                                                            <td class="text-end">@(e.Metadata?.Earnings?.ReportPeriod??"--")</td>
-                                                        </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="card border-top-primary border-top-3">
+                    <div class="card-body text-center py-5">
+                        <BIcon icon="bi-briefcase" extraClassName="display-5 text-muted" />
+                        <h3 class="mt-3">Create your first portfolio</h3>
+                        <p class="text-muted">Your portfolio values and health indicators will appear here.</p>
+                        <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
+                            <ChildContent Context="ctx_empty_add_portfolio">
+                                <a class="btn btn-primary" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD">
+                                    <BIcon icon="bi-plus-lg" extraClassName="me-1" />New portfolio
+                                </a>
+                            </ChildContent>
+                        </AuthorizeView>
                     </div>
                 </div>
             }
-            @if (!string.IsNullOrEmpty(BackgroundMsg))
+            else if (!HideUI)
             {
-                <div class="alert alert-light mt-2" role="alert">
-                    <span style="font-size: small !important;">@BackgroundMsg</span>
+                <!-- SECTION: Quick Actions -->
+                <div class="card mb-3">
+                    <div class="card-body d-flex flex-wrap align-items-center gap-2 py-2 px-3">
+                        <span class="small fw-semibold text-muted text-uppercase me-1">Quick actions</span>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
+                            <BIcon icon="bi-briefcase" extraClassName="me-1" />Manage portfolios
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">
+                            <BIcon icon="bi-distribute-vertical" extraClassName="me-1" />Portfolio plans
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS">
+                            <BIcon icon="bi-calendar-event" extraClassName="me-1" />Market events
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE">
+                            <BIcon icon="bi-calculator" extraClassName="me-1" />Buy/sell calculator
+                        </a>
+                    </div>
                 </div>
+
+                <!-- SECTION: Portfolio Summary  -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="text-muted small text-uppercase">Active portfolios</div>
+                                        <div class="display-6 fw-semibold">@ActivePortfolios.Count</div>
+                                    </div>
+                                    <BIcon icon="bi-briefcase" extraClassName="fs-2 text-primary" />
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    @InvestmentPortfolios.Count investment(s)
+                                    @*
+                                    @if (ActiveContainerCount > 0)
+                                    {
+                                        <span> | @ActiveContainerCount container(s)</span>
+                                    }
+                                    *@
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-info">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="text-muted small text-uppercase">Market value</div>
+                                    <BIcon icon="bi-wallet2" extraClassName="fs-3 text-info" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.MarketValue)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="text-muted small text-uppercase">Invested cost</div>
+                                    <BIcon icon="bi-cash-stack" extraClassName="fs-3 text-secondary" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.TotalCosts)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 @AggregatePnlBorderClass">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="text-muted small text-uppercase">Unrealized P/L</div>
+                                    <BIcon icon="bi-graph-up-arrow" extraClassName="@($"fs-3 {AggregatePnlTextClass}")" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.TotalPnl)">
+                                        <span>@summary.Currency</span>
+                                        <span class="fw-semibold">
+                                            @FormatSignedAmount(summary.TotalPnl)
+                                            <small>(@FormatPercentage(summary.TotalPnlPct))</small>
+                                        </span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <!-- SECTION: Portfolio Overview -->
+                    <div class="col-xl-8">
+                        <div class="card h-100 border-top-primary border-top-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="card-title mb-0">Portfolio overview</h4>
+                                    <small class="text-muted">Current valuation for active investment portfolios</small>
+                                </div>
+                                <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
+                                    View all <BIcon icon="bi-arrow-right" extraClassName="ms-1" />
+                                </a>
+                            </div>
+                            <div class="card-body p-0">
+                                @if (InvestmentPortfolios.Count == 0)
+                                {
+                                    <div class="text-center text-muted py-5">
+                                        <BIcon icon="bi-pie-chart" extraClassName="fs-1" />
+                                        <p class="mb-0 mt-2">No active investment portfolios.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="ps-3">Portfolio</th>
+                                                    <th class="text-end">Market value</th>
+                                                    <th class="text-end">Invested cost</th>
+                                                    <th class="text-end">P/L</th>
+                                                    <th>Valuation</th>
+                                                    <th class="text-end pe-3"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="table-group-divider">
+                                                @foreach (var portfolio in InvestmentPortfolios)
+                                                {
+                                                    <tr>
+                                                        <td class="ps-3">
+                                                            <div class="fw-semibold">@portfolio.Name</div>
+                                                            <div class="small text-muted">
+                                                                @portfolio.Currency
+                                                                @if (!string.IsNullOrEmpty(ParentName(portfolio)))
+                                                                {
+                                                                    <span> | @ParentName(portfolio)</span>
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-end text-nowrap">@FormatAmount(portfolio.TotalMarketValue)</td>
+                                                        <td class="text-end text-nowrap">@FormatAmount(portfolio.TotalCosts)</td>
+                                                        <td class="text-end text-nowrap @PnlTextClass(portfolio.TotalPnl)">
+                                                            <div class="fw-semibold">@FormatSignedAmount(portfolio.TotalPnl)</div>
+                                                            <small>@FormatPercentage(portfolio.TotalPnlPct)</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge @FreshnessBadgeClass(portfolio)">@FreshnessText(portfolio)</span>
+                                                        </td>
+                                                        <td class="text-end pe-3">
+                                                            <a class="btn btn-outline-primary btn-sm" href="@PortfolioDetailsUrl(portfolio.Id)" title="Open portfolio">
+                                                                <BIcon icon="bi-arrow-right" />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Attention Center -->
+                    <div class="col-xl-4">
+                        <div class="card h-100 border-top-warning border-top-3">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0">Attention center</h4>
+                                <small class="text-muted">Portfolio plans that may need review</small>
+                            </div>
+                            <div class="card-body">
+                                @if (AttentionItems.Count == 0)
+                                {
+                                    <div class="text-center py-4">
+                                        <BIcon icon="bi-check-circle" extraClassName="display-6 text-success" />
+                                        <h5 class="mt-3 mb-1">Everything looks current</h5>
+                                        <p class="small text-muted mb-0">No portfolio plan actions were found.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var item in AttentionItems)
+                                        {
+                                            <a class="list-group-item list-group-item-action px-0" href="@item.TargetUrl">
+                                                <div class="d-flex gap-3">
+                                                    <BIcon icon="@item.Icon" extraClassName="@($"fs-5 {item.TextClass}")" />
+                                                    <div>
+                                                        <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                                            <span class="fw-semibold">@item.Title</span>
+                                                            <span class="badge @item.BadgeClass">@item.BadgeText</span>
+                                                        </div>
+                                                        <div class="small text-muted">@item.Message</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (BestPerformer is not null || WeakestPerformer is not null)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0">Performance highlights</h4>
+                            <small class="text-muted">Unrealized return based on current market value and invested cost</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                @if (BestPerformer is not null)
+                                {
+                                    <div class="col-md-6">
+                                        <a class="card h-100 text-decoration-none @BestPerformerBorderClass" href="@PortfolioDetailsUrl(BestPerformer.Id)">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between">
+                                                    <div>
+                                                        <div class="small text-muted text-uppercase">Best performer</div>
+                                                        <h5 class="text-body mb-1">@BestPerformer.Name</h5>
+                                                        <span class="text-muted">@BestPerformer.Currency</span>
+                                                    </div>
+                                                    <div class="text-end @PnlTextClass(BestPerformer.TotalPnl)">
+                                                        <BIcon icon="bi-arrow-up-right-circle" extraClassName="fs-3" />
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(BestPerformer.TotalPnlPct)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                @if (WeakestPerformer is not null)
+                                {
+                                    <div class="col-md-6">
+                                        <a class="card h-100 text-decoration-none @WeakestPerformerBorderClass" href="@PortfolioDetailsUrl(WeakestPerformer.Id)">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between">
+                                                    <div>
+                                                        <div class="small text-muted text-uppercase">Lowest return</div>
+                                                        <h5 class="text-body mb-1">@WeakestPerformer.Name</h5>
+                                                        <span class="text-muted">@WeakestPerformer.Currency</span>
+                                                    </div>
+                                                    <div class="text-end @PnlTextClass(WeakestPerformer.TotalPnl)">
+                                                        <BIcon icon="bi-arrow-down-right-circle" extraClassName="fs-3" />
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(WeakestPerformer.TotalPnlPct)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
             }
         </div>
-    </div>
-</div>
+    </Authorized>
+</AuthorizeView>
 
-<!-- Plugins and scripts required by this page-->
-<!--
-<script src="@UIGlobals.COREUI_BASE/vendors/chart.js/js/chart.umd.js"></script>
-<script src="@UIGlobals.COREUI_BASE/vendors/@@coreui/chartjs/js/coreui-chartjs.js"></script>
--->
-<!--<script src="@UIGlobals.COREUI_BASE/js/colors.js"></script>-->
-<!--<script src="@UIGlobals.COREUI_BASE/js/main.js"></script>-->
-
-<!-- Datatables  -->
-<script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.bootstrap5.min.js"></script>
 @code {
-    private static string PaymentDateStr(MarketEventResp e)
-    {
-        if (!string.IsNullOrEmpty(e.Metadata?.Dividend?.PaymentDate??null) && e.Metadata!.Dividend!.PaymentDate!.Length >= 10)
-        {
-            return DateTime.Parse(e.Metadata.Dividend.PaymentDate.Substring(0, 10)).ToString("MMM dd");
-        }
-        return "--";
-    }
-    private decimal PreExDivPriceVsCurrentPrice(MarketEventResp e)
-    {
-        if (QuotesMap.TryGetValue(e.ItemCode, out var quote) && PreExDivPrice.TryGetValue(e.ItemCode, out var preExDivPrice))
-        {
-            if (quote.MarketPrice > 0)
-            {
-                return (quote.MarketPrice+e.Metadata?.Dividend?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
-            }
-        }
-        return 0;
-    }
-
-    private static string DecimalFormatForMarket(string countryCode)
-    {
-        return countryCode.ToUpper() switch
-        {
-            "VN" => "F0",
-            _ => "F2"
-        };
-    }
-
-    private string TextFormatDivident(MarketEventResp e)
-    {
-        var attLevel = MarketEventUtils.AttentionLevelForDividend(e, YieldsMap);
-        return attLevel > 2 ? "bg-danger" : attLevel == 2 ? "bg-success" : attLevel == 1 ? "bg-info" : string.Empty;
-    }
+    private const string PAGE_TITLE = "Dashboard";
 }
