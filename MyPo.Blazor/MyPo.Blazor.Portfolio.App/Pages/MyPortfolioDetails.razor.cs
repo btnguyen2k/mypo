@@ -123,7 +123,7 @@ public partial class MyPortfolioDetails : BasePage
                     var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
                     if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
                     {
-                        // special case
+                        // special case for VN market
                         req.Metadata!.TotalMarketValue /= 1000;
                     }
                     req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();

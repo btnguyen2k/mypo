@@ -1,4 +1,5 @@
-using System.Globalization;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -9,21 +10,26 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class Dashboard : BasePage
 {
     private static readonly TimeSpan StaleValuationAge = TimeSpan.FromHours(24);
+    private const int MinActionableRebalancePlanLength = 100;
+    private static readonly Regex SpotlightRiskSummaryRegex = new(
+        @"SUMMARY:\s*(?<count>\d+)\s+Critical/High risks with actions[.!]?(?:\s|[*_])*$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private List<PortfolioResp> Portfolios { get; set; } = [];
+    private List<PortfolioPlanResp> PortfolioPlans { get; set; } = [];
 
-    private List<PortfolioResp> ActivePortfolios => Portfolios
+    private List<PortfolioResp> ActivePortfolios => [..Portfolios
         .Where(p => p.IsActive)
         .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    ];
 
-    private List<PortfolioResp> InvestmentPortfolios => ActivePortfolios
-        .Where(p => !(p.Metadata?.IsContainer ?? false))
-        .ToList();
+    private List<PortfolioResp> InvestmentPortfolios => [..ActivePortfolios
+        .Where(p => !(p.Metadata?.IsContainer ?? false) && (p.Metadata?.TotalMarketValue??0m) > 0m)
+    ];
 
-    private int ActiveContainerCount => ActivePortfolios.Count(p => p.Metadata?.IsContainer ?? false);
+    // private int ActiveContainerCount => ActivePortfolios.Count(p => p.Metadata?.IsContainer ?? false);
 
-    private List<CurrencySummary> CurrencySummaries => InvestmentPortfolios
+    private List<CurrencySummary> CurrencySummaries => [..InvestmentPortfolios
         .GroupBy(p => NormalizeCurrency(p.Currency), StringComparer.OrdinalIgnoreCase)
         .Select(group => new CurrencySummary
         {
@@ -33,19 +39,22 @@ public partial class Dashboard : BasePage
             MarketValue = group.Sum(p => p.TotalMarketValue),
         })
         .OrderBy(summary => summary.Currency, StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    ];
 
-    private List<AttentionItem> AttentionItems => ActivePortfolios
-        .Select(BuildAttentionItem)
-        .Where(item => item is not null)
-        .Cast<AttentionItem>()
-        .OrderBy(item => item.Priority)
-        .ThenBy(item => item.PortfolioName, StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    private List<AttentionItem> AttentionItems
+    {
+        get
+        {
+            return [.. PortfolioPlans
+                .SelectMany(BuildPlanAttentionItems)
+                .OrderBy(item => item.Priority)
+                .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)];
+        }
+    }
 
-    private List<PortfolioResp> PortfoliosWithReturns => InvestmentPortfolios
+    private List<PortfolioResp> PortfoliosWithReturns => [..InvestmentPortfolios
         .Where(p => p.TotalCosts > 0 && p.TotalMarketValue > 0)
-        .ToList();
+    ];
 
     private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(p => p.TotalPnlPct);
 
@@ -111,83 +120,91 @@ public partial class Dashboard : BasePage
         ShowAlert("info", "Loading portfolio dashboard...");
 
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var result = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
+        var authToken = await GetAuthTokenAsync();
+        var portfolioTask = apiClient.GetMyPortfoliosAsync(authToken, ApiBaseUrl);
+        var portfolioPlanTask = apiClient.GetMyPortfolioPlansAsync(authToken, ApiBaseUrl);
+        await Task.WhenAll(portfolioTask, portfolioPlanTask);
 
         HideUI = false;
-        if (!result.IsSuccess)
+        var portfolioResult = await portfolioTask;
+        if (!portfolioResult.IsSuccess)
         {
-            ShowAlert("danger", result.Message ?? "Error loading portfolios.");
+            ShowAlert("danger", portfolioResult.Message ?? "Error loading portfolios.");
             await InvokeAsync(StateHasChanged);
             return;
         }
 
-        Portfolios = [.. result.Data ?? []];
-        CloseAlert();
+        Portfolios = [.. portfolioResult.Data ?? []];
+
+        var portfolioPlanResult = await portfolioPlanTask;
+        if (!portfolioPlanResult.IsSuccess)
+        {
+            PortfolioPlans = [];
+            ShowAlert("warning", portfolioPlanResult.Message ?? "Portfolio values loaded, but portfolio plans could not be loaded.");
+        }
+        else
+        {
+            PortfolioPlans = [.. portfolioPlanResult.Data ?? []];
+            CloseAlert();
+        }
         await InvokeAsync(StateHasChanged);
     }
 
-    private AttentionItem? BuildAttentionItem(PortfolioResp portfolio)
+    private static IEnumerable<AttentionItem> BuildPlanAttentionItems(PortfolioPlanResp plan)
     {
-        if (portfolio.Metadata is null)
+        var riskCount = GetSpotlightRiskCount(plan.Metadata?.Spotlight);
+        if (riskCount > 0)
         {
-            return new AttentionItem(
-                portfolio.Id,
-                portfolio.Name,
-                "Portfolio metadata is unavailable.",
-                "bi-exclamation-triangle",
+            yield return new AttentionItem(
+                PortfolioPlanDetailsUrl(plan.Id),
+                plan.Name,
+                $"Spotlight identified {riskCount} critical/high {(riskCount == 1 ? "risk" : "risks")}.",
+                "bi-shield-exclamation",
                 "text-danger",
+                "Risk",
+                "text-bg-danger",
                 0);
         }
 
-        if (portfolio.Metadata.IsContainer)
+        if (HasActionableRebalancePlan(plan.Metadata?.RebalancePlan))
         {
-            var hasChildren = Portfolios.Any(p => string.Equals(p.ParentId, portfolio.Id, StringComparison.Ordinal));
-            return hasChildren
-                ? null
-                : new AttentionItem(
-                    portfolio.Id,
-                    portfolio.Name,
-                    "This container has no child portfolios.",
-                    "bi-diagram-3",
-                    "text-warning",
-                    3);
-        }
-
-        if (portfolio.TotalCosts > 0 && portfolio.TotalMarketValue <= 0)
-        {
-            return new AttentionItem(
-                portfolio.Id,
-                portfolio.Name,
-                "Current market value is unavailable.",
-                "bi-exclamation-triangle",
-                "text-danger",
-                0);
-        }
-
-        if (portfolio.Metadata.MetadataRefreshTimestamp <= 0)
-        {
-            return new AttentionItem(
-                portfolio.Id,
-                portfolio.Name,
-                "Valuation has not been refreshed.",
-                "bi-clock-history",
+            yield return new AttentionItem(
+                PortfolioPlanDetailsUrl(plan.Id),
+                plan.Name,
+                "A rebalance plan is available.",
+                "bi-arrow-left-right",
                 "text-warning",
+                "Rebalance",
+                "text-bg-warning",
                 1);
         }
+    }
 
-        var age = DateTimeOffset.UtcNow - portfolio.Metadata.MetadataRefreshUTC;
-        if (age > StaleValuationAge)
+    private static int GetSpotlightRiskCount(string? spotlight)
+    {
+        if (string.IsNullOrWhiteSpace(spotlight))
         {
-            return new AttentionItem(
-                portfolio.Id,
-                portfolio.Name,
-                $"Valuation is stale ({FreshnessText(portfolio)}).",
-                "bi-clock-history",
-                "text-warning",
-                2);
+            return 0;
         }
 
-        return null;
+        var match = SpotlightRiskSummaryRegex.Match(spotlight);
+        return match.Success
+            && int.TryParse(match.Groups["count"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var count)
+            && count > 0
+                ? count
+                : 0;
+    }
+
+    private static bool HasActionableRebalancePlan(string? rebalancePlan)
+    {
+        if (string.IsNullOrWhiteSpace(rebalancePlan))
+        {
+            return false;
+        }
+
+        var normalizedPlan = rebalancePlan.Trim();
+        return normalizedPlan.Length >= MinActionableRebalancePlanLength
+            && !normalizedPlan.Contains("No rebalance needed", StringComparison.OrdinalIgnoreCase);
     }
 
     private string ParentName(PortfolioResp portfolio)
@@ -205,6 +222,12 @@ public partial class Dashboard : BasePage
     {
         return PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS
             .Replace("{PortfolioId}", portfolioId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string PortfolioPlanDetailsUrl(string portfolioPlanId)
+    {
+        return PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW
+            .Replace("{PlanId}", portfolioPlanId, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeCurrency(string? currency)
@@ -296,10 +319,12 @@ public partial class Dashboard : BasePage
     }
 
     private sealed record AttentionItem(
-        string PortfolioId,
-        string PortfolioName,
+        string TargetUrl,
+        string Title,
         string Message,
         string Icon,
         string TextClass,
+        string BadgeText,
+        string BadgeClass,
         int Priority);
 }

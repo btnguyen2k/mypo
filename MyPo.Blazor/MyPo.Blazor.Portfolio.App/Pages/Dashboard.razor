@@ -1,4 +1,4 @@
-@using MyPo.Blazor.App.Layout
+﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Identity
@@ -65,6 +65,26 @@
             }
             else if (!HideUI)
             {
+                <!-- SECTION: Quick Actions -->
+                <div class="card mb-3">
+                    <div class="card-body d-flex flex-wrap align-items-center gap-2 py-2 px-3">
+                        <span class="small fw-semibold text-muted text-uppercase me-1">Quick actions</span>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
+                            <BIcon icon="bi-briefcase" extraClassName="me-1" />Manage portfolios
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">
+                            <BIcon icon="bi-distribute-vertical" extraClassName="me-1" />Portfolio plans
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS">
+                            <BIcon icon="bi-calendar-event" extraClassName="me-1" />Market events
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE">
+                            <BIcon icon="bi-calculator" extraClassName="me-1" />Buy/sell calculator
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SECTION: Portfolio Summary  -->
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6 col-xl-3">
                         <div class="card h-100 border-start border-start-4 border-start-primary">
@@ -77,11 +97,13 @@
                                     <BIcon icon="bi-briefcase" extraClassName="fs-2 text-primary" />
                                 </div>
                                 <div class="small text-muted mt-2">
-                                    @InvestmentPortfolios.Count investments
+                                    @InvestmentPortfolios.Count investment(s)
+                                    @*
                                     @if (ActiveContainerCount > 0)
                                     {
-                                        <span> | @ActiveContainerCount containers</span>
+                                        <span> | @ActiveContainerCount container(s)</span>
                                     }
+                                    *@
                                 </div>
                             </div>
                         </div>
@@ -155,6 +177,7 @@
                 </div>
 
                 <div class="row g-4 mb-4">
+                    <!-- SECTION: Portfolio Overview -->
                     <div class="col-xl-8">
                         <div class="card h-100 border-top-primary border-top-3">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -226,11 +249,12 @@
                         </div>
                     </div>
 
+                    <!-- SECTION: Attention Center -->
                     <div class="col-xl-4">
                         <div class="card h-100 border-top-warning border-top-3">
                             <div class="card-header">
                                 <h4 class="card-title mb-0">Attention center</h4>
-                                <small class="text-muted">Items that may need review</small>
+                                <small class="text-muted">Portfolio plans that may need review</small>
                             </div>
                             <div class="card-body">
                                 @if (AttentionItems.Count == 0)
@@ -238,7 +262,7 @@
                                     <div class="text-center py-4">
                                         <BIcon icon="bi-check-circle" extraClassName="display-6 text-success" />
                                         <h5 class="mt-3 mb-1">Everything looks current</h5>
-                                        <p class="small text-muted mb-0">No valuation issues were found.</p>
+                                        <p class="small text-muted mb-0">No portfolio plan actions were found.</p>
                                     </div>
                                 }
                                 else
@@ -246,11 +270,14 @@
                                     <div class="list-group list-group-flush">
                                         @foreach (var item in AttentionItems)
                                         {
-                                            <a class="list-group-item list-group-item-action px-0" href="@PortfolioDetailsUrl(item.PortfolioId)">
+                                            <a class="list-group-item list-group-item-action px-0" href="@item.TargetUrl">
                                                 <div class="d-flex gap-3">
                                                     <BIcon icon="@item.Icon" extraClassName="@($"fs-5 {item.TextClass}")" />
                                                     <div>
-                                                        <div class="fw-semibold">@item.PortfolioName</div>
+                                                        <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                                            <span class="fw-semibold">@item.Title</span>
+                                                            <span class="badge @item.BadgeClass">@item.BadgeText</span>
+                                                        </div>
                                                         <div class="small text-muted">@item.Message</div>
                                                     </div>
                                                 </div>
@@ -317,35 +344,6 @@
                     </div>
                 }
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0">Quick actions</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-sm-6 col-lg-3">
-                                <a class="btn btn-outline-primary w-100 text-start py-3" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
-                                    <BIcon icon="bi-briefcase" extraClassName="me-2" />Manage portfolios
-                                </a>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <a class="btn btn-outline-primary w-100 text-start py-3" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">
-                                    <BIcon icon="bi-distribute-vertical" extraClassName="me-2" />Portfolio plans
-                                </a>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <a class="btn btn-outline-primary w-100 text-start py-3" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS">
-                                    <BIcon icon="bi-calendar-event" extraClassName="me-2" />Market events
-                                </a>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <a class="btn btn-outline-primary w-100 text-start py-3" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE">
-                                    <BIcon icon="bi-calculator" extraClassName="me-2" />Buy/sell calculator
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             }
         </div>
     </Authorized>
