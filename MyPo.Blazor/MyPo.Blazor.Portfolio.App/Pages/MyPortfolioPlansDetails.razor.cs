@@ -12,6 +12,7 @@ public partial class MyPortfolioPlansDetails : BasePage
     [Parameter]
     public string PlanId { get; set; } = string.Empty;
     private PortfolioPlanResp SelectedPortfolioPlan { get; set; } = default!;
+    private List<PortfolioPlanResp> PortfolioPlans { get; set; } = [];
 
     private CModal ModalDialogDelete { get; set; } = default!;
 
@@ -20,30 +21,64 @@ public partial class MyPortfolioPlansDetails : BasePage
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
         {
-            HideUI = true;
-            var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-
-            ShowAlert("info", "Loading portfolio plan...");
-            var planResp = await apiClient.GetMyPortfolioPlanByIdAsync(PlanId, await GetAuthTokenAsync(), ApiBaseUrl);
-            if (!planResp.IsSuccess || planResp.Data is null)
-            {
-                ShowAlert("danger", planResp.Message ?? "Error loading portfolio plan.");
-                return;
-            }
-            SelectedPortfolioPlan = planResp.Data;
-
-            ShowAlert("info", "Loading market info...");
-            var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (!marketResult.IsSuccess)
-            {
-                ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
-                return;
-            }
-            SelectedPortfolioPlan.Market = marketResult.Data?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolioPlan.Portfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
-
-            HideUI = false;
-            ShowPassedMessageOrCloseAlert();
+            await LoadPageAsync(PlanId);
         }
+    }
+
+    private async Task LoadPageAsync(string planId)
+    {
+        HideUI = true;
+        ShowAlert("info", "Loading portfolio plan...");
+
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var authToken = await GetAuthTokenAsync();
+        var planTask = apiClient.GetMyPortfolioPlanByIdAsync(planId, authToken, ApiBaseUrl);
+        var plansTask = apiClient.GetMyPortfolioPlansAsync(authToken, ApiBaseUrl);
+        var marketsTask = apiClient.GetMarketsAsync(authToken, ApiBaseUrl);
+        await Task.WhenAll(planTask, plansTask, marketsTask);
+
+        var planResp = await planTask;
+        if (!planResp.IsSuccess || planResp.Data is null)
+        {
+            ShowAlert("danger", planResp.Message ?? "Error loading portfolio plan.");
+            return;
+        }
+
+        var plansResp = await plansTask;
+        if (!plansResp.IsSuccess)
+        {
+            ShowAlert("danger", plansResp.Message ?? "Error loading portfolio plans.");
+            return;
+        }
+
+        var marketResult = await marketsTask;
+        if (!marketResult.IsSuccess)
+        {
+            ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
+            return;
+        }
+
+        SelectedPortfolioPlan = planResp.Data;
+        PortfolioPlans = [.. plansResp.Data ?? []];
+        SelectedPortfolioPlan.Market = marketResult.Data?.FirstOrDefault(m =>
+            string.Equals(m.Id, SelectedPortfolioPlan.Portfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
+        ActiveAnalysisTab = TabIdSpotlight;
+
+        HideUI = false;
+        ShowPassedMessageOrCloseAlert();
+    }
+
+    private async Task BtnClickOpenPlan(string planId)
+    {
+        if (string.Equals(planId, SelectedPortfolioPlan.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW
+            .Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
+        NavigationManager.NavigateTo(url);
+        await LoadPageAsync(planId);
     }
 
     private void BtnClickEdit()
