@@ -1,5 +1,12 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-02 - v2.1.1
+
+### Fixed/Improvements
+
+- Impr(portfolio-plan-details): Add portfolio plan selector to the plan details breadcrumb.
+- Fix(portfolio-details): Settlements tab - Fix data table ordering.
+
 ## 2026-08-01 - v2.1.0
 
 ### Added/Refactoring/Deprecation
