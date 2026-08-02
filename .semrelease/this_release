@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.1.1
 - impr(portfolio-plan-details): Add portfolio plan selector to the plan details breadcrumb.
+- fix(portfolio-details): Settlements tab - Fix data table ordering.
