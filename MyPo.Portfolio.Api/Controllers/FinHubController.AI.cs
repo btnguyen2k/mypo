@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
@@ -65,8 +64,13 @@ public partial class FinHubController
             portfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Analysis = result.Analysis;
             portfolioPlan.Metadata.RebalancePlan = result.RebalancePlan;
-            // update portfolio plan's metadata in background
-            _ = Task.Run(async () => await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan));
+            Logger?.LogInformation("Persisting analysis for portfolio '{id}: {name}'...", portfolioPlan.Id, portfolioPlan.Name);
+            var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+            if (dbresult == null)
+            {
+                Logger?.LogError("Failed to persist analysis for portfolio '{id}: {name}'.", portfolioPlan.Id, portfolioPlan.Name);
+                // return ResponseNoData(500, $"Failed to persist analysis for portfolio plan '{portfolioPlan.Name}'.");
+            }
         }
         return ResponseOk(result);
     }
@@ -106,9 +110,7 @@ public partial class FinHubController
             CurrentAllocation = BuildHoldingTickersReq(plan),
             BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
         };
-        Console.WriteLine($"[DEBUG] AnalyzePortfolio({plan.Name}): {JsonSerializer.Serialize(req)}");
         var analysisResult = await FinHubClient.AnalyzePortfolioAsync(req);
-        Console.WriteLine($"[DEBUG] AnalyzePortfolio({plan.Name}): RebalancePlan - {JsonSerializer.Serialize(analysisResult.Data?.RebalancePlan?.Length)}");
         return analysisResult;
     }
 
@@ -159,8 +161,13 @@ public partial class FinHubController
             portfolioPlan.Metadata ??= new();
             portfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Spotlight = result.Analysis;
-            // update portfolio plan's metadata in background
-            _ = Task.Run(async () => await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan));
+            Logger?.LogInformation("Persisting spotlight analysis for portfolio '{id}: {name}'...", portfolioPlan.Id, portfolioPlan.Name);
+            var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+            if (dbresult == null)
+            {
+                Logger?.LogError("Failed to persist spotlight analysis for portfolio '{id}: {name}'.", portfolioPlan.Id, portfolioPlan.Name);
+                // return ResponseNoData(500, $"Failed to persist spotlight analysis for portfolio plan '{portfolioPlan.Name}'.");
+            }
         }
         return ResponseOk(result);
     }
