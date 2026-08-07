@@ -1,6 +1,7 @@
 ﻿@using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages
 @using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Models
 @using MyPo.Portfolio.Shared.Utils
 
 @inherits CBasePlanView
@@ -63,18 +64,50 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Ticker</th>
-                    <th class="text-end">Shares</th>
-                    <th class="text-end">Avg. Price</th>
-                    <th class="text-end">Cost Basic</th>
-                    <th class="text-end">Mkt. Price</th>
-                    <th class="text-end">Mkt. Value</th>
-                    <th class="text-end">Unsettled P&L</th>
-                    <th class="text-end">Overall Return</th>
+                    <th aria-sort="@ariaSort(HoldingSortColumn.Ticker)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.Ticker)">
+                            Ticker <BIcon icon="@sortIcon(HoldingSortColumn.Ticker)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.Shares)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.Shares)">
+                            Shares <BIcon icon="@sortIcon(HoldingSortColumn.Shares)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.AveragePrice)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.AveragePrice)">
+                            Avg. Price <BIcon icon="@sortIcon(HoldingSortColumn.AveragePrice)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.CostBasis)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.CostBasis)">
+                            Cost Basic <BIcon icon="@sortIcon(HoldingSortColumn.CostBasis)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.MarketPrice)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.MarketPrice)">
+                            Mkt. Price <BIcon icon="@sortIcon(HoldingSortColumn.MarketPrice)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.MarketValue)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.MarketValue)">
+                            Mkt. Value <BIcon icon="@sortIcon(HoldingSortColumn.MarketValue)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.UnsettledPnL)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.UnsettledPnL)">
+                            Unsettled P&amp;L <BIcon icon="@sortIcon(HoldingSortColumn.UnsettledPnL)" />
+                        </button>
+                    </th>
+                    <th class="text-end" aria-sort="@ariaSort(HoldingSortColumn.OverallReturn)">
+                        <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>sortBy(HoldingSortColumn.OverallReturn)">
+                            Overall Return <BIcon icon="@sortIcon(HoldingSortColumn.OverallReturn)" />
+                        </button>
+                    </th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
-                @foreach (var ht in Plan.Metadata?.HoldingTickers??[])
+                @foreach (var ht in sortedHoldings)
                 {
                     <tr>
                         <td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
@@ -95,6 +128,77 @@
 @code {
     [Parameter]
     public MyPortfolioPlansDetails Parent { get; set; } = default!;
+
+    private enum HoldingSortColumn
+    {
+        Ticker,
+        Shares,
+        AveragePrice,
+        CostBasis,
+        MarketPrice,
+        MarketValue,
+        UnsettledPnL,
+        OverallReturn,
+    }
+
+    private HoldingSortColumn sortColumn = HoldingSortColumn.UnsettledPnL;
+    private bool sortDescending = true;
+
+    private IEnumerable<HoldingTicker> sortedHoldings
+    {
+        get
+        {
+            var holdings = Plan.Metadata?.HoldingTickers ?? [];
+            IOrderedEnumerable<HoldingTicker> sorted = (sortColumn, sortDescending) switch
+            {
+                (HoldingSortColumn.Ticker, false) => holdings.OrderBy(ht => ht.Ticker, StringComparer.OrdinalIgnoreCase),
+                (HoldingSortColumn.Ticker, true) => holdings.OrderByDescending(ht => ht.Ticker, StringComparer.OrdinalIgnoreCase),
+                (HoldingSortColumn.Shares, false) => holdings.OrderBy(ht => ht.Shares),
+                (HoldingSortColumn.Shares, true) => holdings.OrderByDescending(ht => ht.Shares),
+                (HoldingSortColumn.AveragePrice, false) => holdings.OrderBy(ht => ht.AveragePrice),
+                (HoldingSortColumn.AveragePrice, true) => holdings.OrderByDescending(ht => ht.AveragePrice),
+                (HoldingSortColumn.CostBasis, false) => holdings.OrderBy(Plan.CostBasic),
+                (HoldingSortColumn.CostBasis, true) => holdings.OrderByDescending(Plan.CostBasic),
+                (HoldingSortColumn.MarketPrice, false) => holdings.OrderBy(ht => ht.MarketPrice),
+                (HoldingSortColumn.MarketPrice, true) => holdings.OrderByDescending(ht => ht.MarketPrice),
+                (HoldingSortColumn.MarketValue, false) => holdings.OrderBy(ht => ht.Shares * ht.MarketPrice),
+                (HoldingSortColumn.MarketValue, true) => holdings.OrderByDescending(ht => ht.Shares * ht.MarketPrice),
+                (HoldingSortColumn.UnsettledPnL, false) => holdings.OrderBy(Plan.UnsettledPnL),
+                (HoldingSortColumn.UnsettledPnL, true) => holdings.OrderByDescending(Plan.UnsettledPnL),
+                (HoldingSortColumn.OverallReturn, false) => holdings.OrderBy(Plan.UnsettledPnLYield),
+                (HoldingSortColumn.OverallReturn, true) => holdings.OrderByDescending(Plan.UnsettledPnLYield),
+                _ => holdings.OrderBy(ht => ht.Ticker, StringComparer.OrdinalIgnoreCase),
+            };
+            return sorted.ThenBy(ht => ht.Ticker, StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private void sortBy(HoldingSortColumn column)
+    {
+        if (sortColumn == column)
+        {
+            sortDescending = !sortDescending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortDescending = false;
+        }
+    }
+
+    private string sortIcon(HoldingSortColumn column)
+    {
+        return sortColumn != column
+            ? "bi-arrow-down-up"
+            : sortDescending ? "bi-caret-down-fill" : "bi-caret-up-fill";
+    }
+
+    private string ariaSort(HoldingSortColumn column)
+    {
+        return sortColumn != column
+            ? "none"
+            : sortDescending ? "descending" : "ascending";
+    }
 
     private string pnlCssClass(decimal pnl)
     {

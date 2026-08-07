@@ -1,5 +1,15 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-07 - v2.2.0
+
+### Added/Refactoring/Deprecation
+
+- Feat(UI/portfolio-plan-details): Add dynamic sorting to holdings table.
+
+### Fixed/Improvements
+
+- Fix: Portfolio plan is not saved after manual analyzing.
+
 ## 2026-08-02 - v2.1.1
 
 ### Fixed/Improvements
