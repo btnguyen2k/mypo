@@ -174,7 +174,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         analyzing = false;
         if (!analysisResult.IsSuccess || analysisResult.Data is null)
         {
-            ShowAlert("danger", analysisResult.Message ?? "Error analyzing portfolio plan.");
+            ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
             return;
         }
         if (analysisResult.Data.LLMError)
