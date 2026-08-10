@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.2.1
 - patch(UI): Fix breadcrumb dropdown list on My Portfolio Details page.
+- fix(background-task): Fix DB error when no report entry to save.
