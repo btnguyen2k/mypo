@@ -33,16 +33,13 @@ public partial class FinHubController
             : null;
         var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
 
-        /*
-        if current holdings is empty, or >=half of tickers are at 0 allocation ==> call FinHub API to build the portfolio
-        otherwise call FinHub API to analyze the portfolio
-        */
-
         // Step 0: check portfolio plan's holdings
-        var countPositiveAllocation = (portfolioPlan.Metadata?.HoldingTickers ?? []).Where(ht => ht.Shares > 0).Count();
+        var countPositiveAllocation = (portfolioPlan.Metadata?.HoldingTickers ?? []).Count(ht => ht.Shares > 0);
         var countEntries = (portfolioPlan.Metadata?.HoldingTickers ?? []).Count;
 
         // Step 1: make API call
+        // if no holdings, or more than half of tickers are at 0 allocation ==> Build portfolio
+        // otherwise Analyze portfolio
         var finhubResult = countEntries == 0 || (double)countPositiveAllocation / countEntries <= 0.5
             ? await BuildPortfolio(portfolioPlan, market)
             : await AnalyzePortfolio(portfolioPlan, market);
@@ -61,6 +58,7 @@ public partial class FinHubController
         if (!result.LLMError)
         {
             portfolioPlan.Metadata ??= new();
+            portfolioPlan.Metadata.LastChecksumAnalysis = portfolioPlan.Metadata.CalcChecksumAnalysis();
             portfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Analysis = result.Analysis;
             portfolioPlan.Metadata.RebalancePlan = result.RebalancePlan;
@@ -135,13 +133,6 @@ public partial class FinHubController
             : null;
         var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
 
-        // Step 0: if current holding is empty, failed immediately
-        var countPositiveAllocation = (portfolioPlan.Metadata?.HoldingTickers ?? []).Where(ht => ht.Shares > 0).Count();
-        if (countPositiveAllocation == 0)
-        {
-            return ResponseNoData(400, "Portfolio plan has no holdings, unable to provide spotlight analysis.");
-        }
-
         // Step 1: make API call
         var finhubResult = await SpotlightPortfolio(portfolioPlan, market);
 
@@ -159,6 +150,7 @@ public partial class FinHubController
         if (!result.LLMError)
         {
             portfolioPlan.Metadata ??= new();
+            portfolioPlan.Metadata.LastChecksumAnalysis = portfolioPlan.Metadata.CalcChecksumAnalysis();
             portfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             portfolioPlan.Metadata.Spotlight = result.Analysis;
             Logger?.LogInformation("Persisting spotlight analysis for portfolio '{id}: {name}'...", portfolioPlan.Id, portfolioPlan.Name);

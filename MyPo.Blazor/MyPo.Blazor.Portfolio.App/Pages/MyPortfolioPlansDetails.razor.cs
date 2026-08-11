@@ -150,7 +150,7 @@ public partial class MyPortfolioPlansDetails : BasePage
         SelectedPortfolioPlan.Metadata ??= new();
 
         step = "spotlight";
-        if (SelectedPortfolioPlan.Metadata.HoldingTickers.Count > 0)
+        // Since FinHub v0.15.0+ no longer need to check for empty holdings as that is now handled at the server side.
         {
             var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
             if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
@@ -170,22 +170,23 @@ public partial class MyPortfolioPlansDetails : BasePage
         }
 
         step = "analysis";
-        var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-        analyzing = false;
-        if (!analysisResult.IsSuccess || analysisResult.Data is null)
         {
-            ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
-            return;
+            var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+            analyzing = false;
+            if (!analysisResult.IsSuccess || analysisResult.Data is null)
+            {
+                ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
+                return;
+            }
+            if (analysisResult.Data.LLMError)
+            {
+                ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
+                return;
+            }
+            SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+            SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
         }
-        if (analysisResult.Data.LLMError)
-        {
-            ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
-            return;
-        }
-        SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
-        SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
-        Console.WriteLine($"[DEBUG] AnalyzePortfolio({SelectedPortfolioPlan.Name}): RebalancePlan - {JsonSerializer.Serialize(SelectedPortfolioPlan.Metadata.RebalancePlan.Length)}");
 
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }
