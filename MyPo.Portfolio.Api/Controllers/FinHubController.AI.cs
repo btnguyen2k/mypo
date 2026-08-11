@@ -50,7 +50,7 @@ public partial class FinHubController
         // Step 2: build and return result
         if (!finhubResult.IsSuccess)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extra);
         }
         var result = finhubResult.Data ?? new PortfolioAnalysis
         {
@@ -148,7 +148,7 @@ public partial class FinHubController
         // Step 2: build and return result
         if (!finhubResult.IsSuccess)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to spotlight analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to spotlight analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extra);
         }
         var result = finhubResult.Data ?? new PortfolioAnalysis
         {
@@ -236,7 +236,7 @@ public partial class FinHubController
 
         if (!fhResult.IsSuccess)
         {
-            return ResponseNoData(fhResult.Status, fhResult.Message ?? $"Failed to analyze ticker '{req.Symbol}'", fhResult.Extras);
+            return ResponseNoData(fhResult.Status, fhResult.Message ?? $"Failed to analyze ticker '{req.Symbol}'", fhResult.Extra);
         }
         var result = fhResult.Data ?? new TickerAnalysis
         {

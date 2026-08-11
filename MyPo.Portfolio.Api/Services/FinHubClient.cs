@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using System.Net;
+using Microsoft.AspNetCore.WebUtilities;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 
@@ -30,81 +31,239 @@ public partial class FinHubClient : BaseApiClient, IFinHubClient
         defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
     }
 
+    private static async Task<ApiResp<T>> SendRequestAndPool<T>(
+        Func<Task<HttpResponseMessage>> buildAndSendTaskRequest,
+        Func<string, Task<HttpResponseMessage>> buildAndSendPollRequest,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        var start = DateTimeOffset.Now;
+
+        using var httpResultTask = await buildAndSendTaskRequest();
+        var apiResultTask = await ReadAndCloseResponseAsync<T>(httpResultTask, cancellationToken: cancellationToken);
+        var taskInfo = apiResultTask.ExtraAs<AsyncTaskInfo>();
+        var taskId = taskInfo?.TaskId ?? string.Empty;
+        if (string.IsNullOrEmpty(taskId) && apiResultTask.Status != (int)HttpStatusCode.OK)
+        {
+            return new ApiResp<T>()
+            {
+                Status = apiResultTask.IsSuccess ? (int)HttpStatusCode.InternalServerError : apiResultTask.Status,
+                Message = string.IsNullOrEmpty(apiResultTask.Message)
+                    ? "No task-id returned from server"
+                    : apiResultTask.Message,
+            };
+        }
+
+        while (apiResultTask.IsSuccess)
+        {
+            if (apiResultTask.Status == (int)HttpStatusCode.OK)
+            {
+                return apiResultTask;
+            }
+            if (DateTimeOffset.Now - start > timeout)
+            {
+                return new ApiResp<T>()
+                {
+                    Status = (int)HttpStatusCode.RequestTimeout,
+                    Message = $"Timeout exceeded {timeout.TotalMilliseconds} ms",
+                };
+            }
+            var delayMs = Random.Shared.Next(5000, 10000); // delay randomly 5-10 secs
+            await Task.Delay(delayMs, cancellationToken: cancellationToken);
+            using (var httpResultPoll = await buildAndSendPollRequest(taskId))
+            {
+                apiResultTask = await ReadAndCloseResponseAsync<T>(httpResultPoll, cancellationToken: cancellationToken);
+            }
+        }
+
+        return apiResultTask;
+    }
+
     /*----------------------------------------------------------------------*/
 
     /// <inheritdoc/>
     public async Task<ApiResp<TickerAnalysis>> AnalyzeTickerAsync(AnalyzeTickerReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER;
-        using var httpResult = await BuildAndSendRequestAsync(
+        // var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER;
+        // using var httpResult = await BuildAndSendRequestAsync(
+        //     httpClient,
+        //     HttpMethod.Post, baseUrl, endpoint,
+        //     NoAuth,
+        //     req,
+        //     cancellationToken
+        // );
+        // return await ReadAndCloseResponseAsync<TickerAnalysis>(httpResult, cancellationToken);
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER}_async";
+        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
             httpClient,
             HttpMethod.Post, baseUrl, endpoint,
             NoAuth,
             req,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<TickerAnalysis>(httpResult, cancellationToken);
+        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
+        {
+            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
+            return await BuildAndSendRequestAsync(
+                httpClient,
+                HttpMethod.Post, baseUrl, endpointPoll,
+                NoAuth,
+                req,
+                cancellationToken
+            );
+        }
+        return await SendRequestAndPool<TickerAnalysis>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<ApiResp<DividendEventAnalysis>> AnalyzeDividendEventAsync(string symbol, string exDate, decimal divAmount, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
+        // var queryParams = new Dictionary<string, string?> {
+        //     { "symbol", symbol },
+        //     { "ex_date", exDate },
+        //     { "div_amount", divAmount.ToString("F2") },
+        // };
+        // var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT, queryParams);
+        // using var httpResult = await BuildAndSendRequestAsync(
+        //     httpClient,
+        //     HttpMethod.Get, baseUrl, endpoint,
+        //     NoAuth,
+        //     NoData,
+        //     cancellationToken
+        // );
+        // return await ReadAndCloseResponseAsync<DividendEventAnalysis>(httpResult, cancellationToken);
         var queryParams = new Dictionary<string, string?> {
             { "symbol", symbol },
             { "ex_date", exDate },
             { "div_amount", divAmount.ToString("F2") },
         };
-        var endpoint = QueryHelpers.AddQueryString(IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT, queryParams);
-        using var httpResult = await BuildAndSendRequestAsync(
+        var endpoint = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT}_async", queryParams);
+        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
             httpClient,
             HttpMethod.Get, baseUrl, endpoint,
             NoAuth,
             NoData,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<DividendEventAnalysis>(httpResult, cancellationToken);
+        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
+        {
+            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
+            return await BuildAndSendRequestAsync(
+                httpClient,
+                HttpMethod.Get, baseUrl, endpointPoll,
+                NoAuth,
+                NoData,
+                cancellationToken
+            );
+        }
+        return await SendRequestAndPool<DividendEventAnalysis>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<ApiResp<PortfolioAnalysis>> BuildPortfolioAsync(BuildPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = IFinHubClient.API_FINHUB_AI_BUILD_PORTFOLIO;
-        using var httpResult = await BuildAndSendRequestAsync(
+        // var endpoint = IFinHubClient.API_FINHUB_AI_BUILD_PORTFOLIO;
+        // using var httpResult = await BuildAndSendRequestAsync(
+        //     httpClient,
+        //     HttpMethod.Post, baseUrl, endpoint,
+        //     NoAuth,
+        //     req,
+        //     cancellationToken
+        // );
+        // return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_BUILD_PORTFOLIO}_async";
+        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
             httpClient,
             HttpMethod.Post, baseUrl, endpoint,
             NoAuth,
             req,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
+        {
+            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
+            return await BuildAndSendRequestAsync(
+                httpClient,
+                HttpMethod.Post, baseUrl, endpointPoll,
+                NoAuth,
+                req,
+                cancellationToken
+            );
+        }
+        return await SendRequestAndPool<PortfolioAnalysis>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<ApiResp<PortfolioAnalysis>> AnalyzePortfolioAsync(AnalyzePortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO;
-        using var httpResult = await BuildAndSendRequestAsync(
+        // var endpoint = IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO;
+        // using var httpResult = await BuildAndSendRequestAsync(
+        //     httpClient,
+        //     HttpMethod.Post, baseUrl, endpoint,
+        //     NoAuth,
+        //     req,
+        //     cancellationToken
+        // );
+        // return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_PORTFOLIO}_async";
+        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
             httpClient,
             HttpMethod.Post, baseUrl, endpoint,
             NoAuth,
             req,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
+        {
+            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
+            return await BuildAndSendRequestAsync(
+                httpClient,
+                HttpMethod.Post, baseUrl, endpointPoll,
+                NoAuth,
+                req,
+                cancellationToken
+            );
+        }
+        return await SendRequestAndPool<PortfolioAnalysis>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<ApiResp<PortfolioAnalysis>> SpotlightPortfolioAsync(SpotLightPortfolioReq req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO;
-        using var httpResult = await BuildAndSendRequestAsync(
+        // var endpoint = IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO;
+        // using var httpResult = await BuildAndSendRequestAsync(
+        //     httpClient,
+        //     HttpMethod.Post, baseUrl, endpoint,
+        //     NoAuth,
+        //     req,
+        //     cancellationToken
+        // );
+        // return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO}_async";
+        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
             httpClient,
             HttpMethod.Post, baseUrl, endpoint,
             NoAuth,
             req,
             cancellationToken
         );
-        return await ReadAndCloseResponseAsync<PortfolioAnalysis>(httpResult, cancellationToken);
+        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
+        {
+            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
+            return await BuildAndSendRequestAsync(
+                httpClient,
+                HttpMethod.Post, baseUrl, endpointPoll,
+                NoAuth,
+                req,
+                cancellationToken
+            );
+        }
+        return await SendRequestAndPool<PortfolioAnalysis>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
     /*----------------------------------------------------------------------*/

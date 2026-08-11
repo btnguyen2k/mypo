@@ -36,7 +36,7 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockQuotesAsync(string.Join(',', yfSymbolMap.Keys));
         if (finhubResult.Status != 200)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub", finhubResult.Extra);
         }
         var result = new Dictionary<string, StockQuote>();
         var quotes = finhubResult.Data ?? new Dictionary<string, StockQuote>();
@@ -66,7 +66,7 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockSymbolOverviewAsync(yfSymbol);
         if (finhubResult.Status != 200)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol overview for '{symbol}' from FinHub", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol overview for '{symbol}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);
     }
@@ -90,7 +90,7 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockSymbolInfoAsync(yfSymbol);
         if (finhubResult.Status != 200)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol info for '{symbol}' from FinHub", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol info for '{symbol}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);
     }
@@ -115,7 +115,7 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockQuoteAtDateAsync(yfSymbol, date);
         if (finhubResult.Status != 200)
         {
-            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quote at date for '{symbol}' at '{date}' from FinHub", finhubResult.Extras);
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quote at date for '{symbol}' at '{date}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);
     }

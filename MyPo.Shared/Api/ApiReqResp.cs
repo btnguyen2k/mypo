@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Shared.Api;
 
@@ -26,9 +28,14 @@ public class ApiResp
 	/// <summary>
 	/// Extra data if any.
 	/// </summary>
-	[JsonPropertyName("extras")]
+	[JsonPropertyName("extra")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public object? Extras { get; set; }
+	public object? Extra { get; set; }
+
+    public T? ExtraAs<T>() where T : class
+    {
+        return JsonHelper.SafeDeserialize<T>(JsonSerializer.Serialize(Extra, (JsonSerializerOptions?)null));
+    }
 
 	/// <summary>
 	/// Debug information if any.
