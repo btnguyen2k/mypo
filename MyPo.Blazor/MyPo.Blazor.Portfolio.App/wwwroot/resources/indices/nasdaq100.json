@@ -1,5 +1,5 @@
 {
-    "date": "2026-07-28",
+    "date": "2026-08-08",
     "data": [
         {
             "symbol": "NASDAQ:NVDA",
@@ -62,9 +62,9 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:AZN",
-            "company": "AstraZeneca PLC",
-            "sector": "Healthcare"
+            "symbol": "NASDAQ:NXPI",
+            "company": "NXP Semiconductors N.V.",
+            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:INTC",
@@ -77,23 +77,23 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:AMAT",
-            "company": "Applied Materials, Inc.",
-            "sector": "Technology"
-        },
-        {
             "symbol": "NASDAQ:COST",
             "company": "Costco Wholesale Corporation",
             "sector": "Consumer Staples"
         },
         {
-            "symbol": "NASDAQ:LRCX",
-            "company": "Lam Research Corporation",
+            "symbol": "NASDAQ:AMAT",
+            "company": "Applied Materials, Inc.",
             "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:PLTR",
             "company": "Palantir Technologies Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:LRCX",
+            "company": "Lam Research Corporation",
             "sector": "Technology"
         },
         {
@@ -107,14 +107,24 @@
             "sector": "Technology"
         },
         {
+            "symbol": "NASDAQ:PANW",
+            "company": "Palo Alto Networks, Inc.",
+            "sector": "Technology"
+        },
+        {
             "symbol": "NASDAQ:TXN",
             "company": "Texas Instruments Incorporated",
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:PANW",
-            "company": "Palo Alto Networks, Inc.",
+            "symbol": "NASDAQ:KLAC",
+            "company": "KLA Corporation",
             "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:AZN",
+            "company": "AstraZeneca PLC",
+            "sector": "Healthcare"
         },
         {
             "symbol": "NASDAQ:LIN",
@@ -132,9 +142,19 @@
             "sector": "Communication Services"
         },
         {
+            "symbol": "NASDAQ:SHOP",
+            "company": "Shopify Inc.",
+            "sector": "Technology"
+        },
+        {
             "symbol": "NASDAQ:PEP",
             "company": "PepsiCo, Inc.",
             "sector": "Consumer Staples"
+        },
+        {
+            "symbol": "NASDAQ:MRVL",
+            "company": "Marvell Technology, Inc.",
+            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:ADI",
@@ -147,9 +167,9 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:MRVL",
-            "company": "Marvell Technology, Inc.",
-            "sector": "Technology"
+            "symbol": "NASDAQ:BKNG",
+            "company": "Booking Holdings Inc.",
+            "sector": "Consumer Discretionary"
         },
         {
             "symbol": "NASDAQ:GILD",
@@ -157,38 +177,18 @@
             "sector": "Healthcare"
         },
         {
-            "symbol": "NASDAQ:HON",
-            "company": "Honeywell International Inc.",
-            "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:SHOP",
-            "company": "Shopify Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:BKNG",
-            "company": "Booking Holdings Inc.",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NASDAQ:APP",
-            "company": "AppLovin Corporation",
-            "sector": "Communication Services"
-        },
-        {
             "symbol": "NASDAQ:PDD",
             "company": "PDD Holdings Inc.",
             "sector": "Consumer Discretionary"
         },
         {
-            "symbol": "NASDAQ:VRTX",
-            "company": "Vertex Pharmaceuticals Incorporated",
+            "symbol": "NASDAQ:ISRG",
+            "company": "Intuitive Surgical, Inc.",
             "sector": "Healthcare"
         },
         {
-            "symbol": "NASDAQ:ISRG",
-            "company": "Intuitive Surgical, Inc.",
+            "symbol": "NASDAQ:VRTX",
+            "company": "Vertex Pharmaceuticals Incorporated",
             "sector": "Healthcare"
         },
         {
@@ -202,9 +202,9 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:MAR",
-            "company": "Marriott International, Inc.",
-            "sector": "Consumer Discretionary"
+            "symbol": "NASDAQ:APP",
+            "company": "AppLovin Corporation",
+            "sector": "Communication Services"
         },
         {
             "symbol": "NASDAQ:ADP",
@@ -212,14 +212,29 @@
             "sector": "Technology"
         },
         {
+            "symbol": "NASDAQ:ADBE",
+            "company": "Adobe Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:MAR",
+            "company": "Marriott International, Inc.",
+            "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NASDAQ:DASH",
+            "company": "DoorDash, Inc.",
+            "sector": "Consumer Discretionary"
+        },
+        {
             "symbol": "NASDAQ:CSX",
             "company": "CSX Corporation",
             "sector": "Industrials"
         },
         {
-            "symbol": "NASDAQ:CEG",
-            "company": "Constellation Energy Corporation",
-            "sector": "Utilities"
+            "symbol": "NASDAQ:CDNS",
+            "company": "Cadence Design Systems, Inc.",
+            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:MNST",
@@ -232,8 +247,23 @@
             "sector": "Consumer Discretionary"
         },
         {
-            "symbol": "NASDAQ:ADBE",
-            "company": "Adobe Inc.",
+            "symbol": "NASDAQ:CEG",
+            "company": "Constellation Energy Corporation",
+            "sector": "Utilities"
+        },
+        {
+            "symbol": "NASDAQ:ABNB",
+            "company": "Airbnb, Inc.",
+            "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NASDAQ:CMCSA",
+            "company": "Comcast Corporation",
+            "sector": "Communication Services"
+        },
+        {
+            "symbol": "NASDAQ:INTU",
+            "company": "Intuit Inc.",
             "sector": "Technology"
         },
         {
@@ -242,59 +272,9 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:CDNS",
-            "company": "Cadence Design Systems, Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:ABNB",
-            "company": "Airbnb, Inc.",
-            "sector": "Consumer Discretionary"
-        },
-        {
             "symbol": "NASDAQ:CTAS",
             "company": "Cintas Corporation",
             "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:INTU",
-            "company": "Intuit Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:CMCSA",
-            "company": "Comcast Corporation",
-            "sector": "Communication Services"
-        },
-        {
-            "symbol": "NASDAQ:MDLZ",
-            "company": "Mondelez International, Inc.",
-            "sector": "Consumer Staples"
-        },
-        {
-            "symbol": "NASDAQ:ROST",
-            "company": "Ross Stores, Inc.",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NASDAQ:DASH",
-            "company": "DoorDash, Inc.",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NASDAQ:AEP",
-            "company": "American Electric Power Company, Inc.",
-            "sector": "Utilities"
-        },
-        {
-            "symbol": "NASDAQ:ORLY",
-            "company": "O'Reilly Automotive, Inc.",
-            "sector": "Consumer Discretionary"
-        },
-        {
-            "symbol": "NASDAQ:SNPS",
-            "company": "Synopsys, Inc.",
-            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:REGN",
@@ -302,24 +282,44 @@
             "sector": "Healthcare"
         },
         {
+            "symbol": "NASDAQ:ROST",
+            "company": "Ross Stores, Inc.",
+            "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NASDAQ:MDLZ",
+            "company": "Mondelez International, Inc.",
+            "sector": "Consumer Staples"
+        },
+        {
+            "symbol": "NASDAQ:SNPS",
+            "company": "Synopsys, Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:ORLY",
+            "company": "O'Reilly Automotive, Inc.",
+            "sector": "Consumer Discretionary"
+        },
+        {
+            "symbol": "NASDAQ:HON",
+            "company": "Honeywell International Inc.",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NASDAQ:PCAR",
             "company": "PACCAR Inc",
             "sector": "Industrials"
         },
         {
-            "symbol": "NASDAQ:NXPI",
-            "company": "NXP Semiconductors N.V.",
-            "sector": "Technology"
+            "symbol": "NASDAQ:AEP",
+            "company": "American Electric Power Company, Inc.",
+            "sector": "Utilities"
         },
         {
             "symbol": "NASDAQ:WBD",
             "company": "Warner Bros. Discovery, Inc.",
             "sector": "Communication Services"
-        },
-        {
-            "symbol": "NASDAQ:FANG",
-            "company": "Diamondback Energy, Inc.",
-            "sector": "Energy"
         },
         {
             "symbol": "NASDAQ:BKR",
@@ -332,6 +332,16 @@
             "sector": "Industrials"
         },
         {
+            "symbol": "NASDAQ:FANG",
+            "company": "Diamondback Energy, Inc.",
+            "sector": "Energy"
+        },
+        {
+            "symbol": "NASDAQ:CRWD",
+            "company": "CrowdStrike Holdings, Inc.",
+            "sector": "Technology"
+        },
+        {
             "symbol": "NASDAQ:EA",
             "company": "Electronic Arts Inc.",
             "sector": "Communication Services"
@@ -342,8 +352,28 @@
             "sector": "Financials"
         },
         {
+            "symbol": "NASDAQ:ADSK",
+            "company": "Autodesk, Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:CCEP",
+            "company": "Coca-Cola Europacific Partners PLC",
+            "sector": "\u2014"
+        },
+        {
             "symbol": "NASDAQ:XEL",
             "company": "Xcel Energy Inc.",
+            "sector": "Utilities"
+        },
+        {
+            "symbol": "NASDAQ:IDXX",
+            "company": "IDEXX Laboratories, Inc.",
+            "sector": "Healthcare"
+        },
+        {
+            "symbol": "NASDAQ:EXC",
+            "company": "Exelon Corporation",
             "sector": "Utilities"
         },
         {
@@ -352,64 +382,9 @@
             "sector": "Industrials"
         },
         {
-            "symbol": "NASDAQ:EXC",
-            "company": "Exelon Corporation",
-            "sector": "Utilities"
-        },
-        {
-            "symbol": "NASDAQ:CCEP",
-            "company": "Coca-Cola Europacific Partners PLC",
-            "sector": "\u2014"
-        },
-        {
-            "symbol": "NASDAQ:CRWD",
-            "company": "CrowdStrike Holdings, Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:ADSK",
-            "company": "Autodesk, Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:IDXX",
-            "company": "IDEXX Laboratories, Inc.",
-            "sector": "Healthcare"
-        },
-        {
-            "symbol": "NASDAQ:MCHP",
-            "company": "Microchip Technology Incorporated",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:TTWO",
-            "company": "Take-Two Interactive Software, Inc.",
-            "sector": "Communication Services"
-        },
-        {
-            "symbol": "NASDAQ:AXON",
-            "company": "Axon Enterprise, Inc.",
-            "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:PAYX",
-            "company": "Paychex, Inc.",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:KDP",
-            "company": "Keurig Dr Pepper Inc.",
-            "sector": "Consumer Staples"
-        },
-        {
             "symbol": "NASDAQ:TRI",
             "company": "Thomson Reuters Corporation",
             "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:ROP",
-            "company": "Roper Technologies, Inc.",
-            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:WDAY",
@@ -417,8 +392,33 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:ON",
-            "company": "ON Semiconductor Corporation",
+            "symbol": "NASDAQ:PAYX",
+            "company": "Paychex, Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:AXON",
+            "company": "Axon Enterprise, Inc.",
+            "sector": "Industrials"
+        },
+        {
+            "symbol": "NASDAQ:TTWO",
+            "company": "Take-Two Interactive Software, Inc.",
+            "sector": "Communication Services"
+        },
+        {
+            "symbol": "NASDAQ:KDP",
+            "company": "Keurig Dr Pepper Inc.",
+            "sector": "Consumer Staples"
+        },
+        {
+            "symbol": "NASDAQ:MCHP",
+            "company": "Microchip Technology Incorporated",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:ROP",
+            "company": "Roper Technologies, Inc.",
             "sector": "Technology"
         },
         {
@@ -427,13 +427,18 @@
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:KHC",
-            "company": "The Kraft Heinz Company",
-            "sector": "Consumer Staples"
+            "symbol": "NASDAQ:DXCM",
+            "company": "DexCom, Inc.",
+            "sector": "Healthcare"
         },
         {
-            "symbol": "NASDAQ:GFS",
-            "company": "GLOBALFOUNDRIES Inc.",
+            "symbol": "NASDAQ:GEHC",
+            "company": "GE HealthCare Technologies Inc.",
+            "sector": "Healthcare"
+        },
+        {
+            "symbol": "NASDAQ:ON",
+            "company": "ON Semiconductor Corporation",
             "sector": "Technology"
         },
         {
@@ -442,34 +447,9 @@
             "sector": "Healthcare"
         },
         {
-            "symbol": "NASDAQ:DXCM",
-            "company": "DexCom, Inc.",
-            "sector": "Healthcare"
-        },
-        {
-            "symbol": "NASDAQ:KLAC",
-            "company": "KLA Corporation",
-            "sector": "Technology"
-        },
-        {
-            "symbol": "NASDAQ:GEHC",
-            "company": "GE HealthCare Technologies Inc.",
-            "sector": "Healthcare"
-        },
-        {
-            "symbol": "NASDAQ:VRSK",
-            "company": "Verisk Analytics, Inc.",
-            "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:CPRT",
-            "company": "Copart, Inc.",
-            "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:ZS",
-            "company": "Zscaler, Inc.",
-            "sector": "Technology"
+            "symbol": "NASDAQ:KHC",
+            "company": "The Kraft Heinz Company",
+            "sector": "Consumer Staples"
         },
         {
             "symbol": "NASDAQ:TEAM",
@@ -477,19 +457,39 @@
             "sector": "Technology"
         },
         {
+            "symbol": "NASDAQ:GFS",
+            "company": "GLOBALFOUNDRIES Inc.",
+            "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:CPRT",
+            "company": "Copart, Inc.",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NASDAQ:CTSH",
             "company": "Cognizant Technology Solutions Corporation",
             "sector": "Technology"
         },
         {
-            "symbol": "NASDAQ:CDW",
-            "company": "CDW Corporation",
+            "symbol": "NASDAQ:ZS",
+            "company": "Zscaler, Inc.",
             "sector": "Technology"
+        },
+        {
+            "symbol": "NASDAQ:VRSK",
+            "company": "Verisk Analytics, Inc.",
+            "sector": "Industrials"
         },
         {
             "symbol": "NASDAQ:CHTR",
             "company": "Charter Communications, Inc.",
             "sector": "Communication Services"
+        },
+        {
+            "symbol": "NASDAQ:CDW",
+            "company": "CDW Corporation",
+            "sector": "Technology"
         },
         {
             "symbol": "NASDAQ:LULU",

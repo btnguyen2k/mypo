@@ -180,22 +180,15 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
                 Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
             }
 
-            if (plan.Metadata.HoldingTickers is null || plan.Metadata.HoldingTickers.Count == 0)
+            Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
+            var portfolioSpotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
+            if (portfolioSpotlight is not null)
             {
-                Logger.LogInformation("Skipping spotlight analysis for portfolio plan '{planId}: {planName}': no holdings.", plan.Id, plan.Name);
-            }
-            else
-            {
-                Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
-                var portfolioSpotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
-                if (portfolioSpotlight is not null)
-                {
-                    plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                    plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
-                    changed = true;
-                    // fire-and-forget: don't block the analysis loop on Telegram delivery
-                    _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, portfolioSpotlight.Analysis, cancellationToken), cancellationToken);
-                }
+                plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
+                plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
+                changed = true;
+                // fire-and-forget: don't block the analysis loop on Telegram delivery
+                _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, portfolioSpotlight.Analysis, cancellationToken), cancellationToken);
             }
         }
         else

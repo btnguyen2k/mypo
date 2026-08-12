@@ -23,7 +23,7 @@ public class ControllersBootstrapper
 					{
 						Status = 400,
 						Message = $"Bad request: {string.Join(", ", errors)}",
-						Extras = errors
+						Extra = errors
 					});
 				};
 			});
@@ -45,7 +45,7 @@ public class ControllersBootstrapper
 				{
 					Status = 500,
 					Message = exception?.Message ?? "An unexpected error occurred.",
-					Extras = exception?.Message
+					Extra = exception?.Message
 				};
 
 				context.Response.ContentType = "application/json";

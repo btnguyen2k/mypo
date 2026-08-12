@@ -79,7 +79,7 @@ public abstract class ApiBaseController : ControllerBase
 		{
 			Status = statusCode,
 			Message = message,
-			Extras = extras,
+			Extra = extras,
 		}
 	)
 	{

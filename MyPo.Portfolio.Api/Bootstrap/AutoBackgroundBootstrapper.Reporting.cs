@@ -320,11 +320,18 @@ sealed class BackgroundPortfolioTaskBuildPortfolioReports : BackgroundPortfolioT
             if (report is not null) reportEntries.Add(report);
         }
 
-        var dbresult = await portfolioRepository.SaveReportsAsync(reportEntries, cancellationToken);
-        if (!dbresult)
+        if (reportEntries.Count > 0)
         {
-            Logger.LogWarning("Saving reports for {reportType} report period for portfolio '{portfolioId}: {portfolioName}' failed.", reportType, portfolio.Id, portfolio.Name);
-            throw new Exception($"Saving reports for {reportType} report period for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+            var dbresult = await portfolioRepository.SaveReportsAsync(reportEntries, cancellationToken);
+            if (!dbresult)
+            {
+                Logger.LogWarning("Saving reports for {reportType} report period for portfolio '{portfolioId}: {portfolioName}' failed.", reportType, portfolio.Id, portfolio.Name);
+                throw new Exception($"Saving reports for {reportType} report period for portfolio '{portfolio.Id}: {portfolio.Name}' failed.");
+            }
+        }
+        else
+        {
+            Logger.LogWarning("Empty {reportType} report period for portfolio '{portfolioId}: {portfolioName}'.", reportType, portfolio.Id, portfolio.Name);
         }
 
         // period start <= NOW < period end ==> the period is still in progress => the report is not final yet;

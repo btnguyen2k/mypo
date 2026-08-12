@@ -53,3 +53,12 @@ public sealed class AnalyzeTickerReq
     [JsonPropertyName("intent"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Intent { get; set; }
 }
+
+public sealed class AsyncTaskInfo
+{
+    [JsonPropertyName("task_id")]
+    public string TaskId { get; set; } = string.Empty;
+
+    [JsonPropertyName("state"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? State { get; set; }
+}
