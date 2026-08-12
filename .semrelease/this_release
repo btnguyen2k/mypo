@@ -1,11 +1,3 @@
-﻿# This file has been cleaned up post-releasing version 2.2.0.
+# This file has been cleaned up post-releasing version 2.2.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
-#!VERSION=2.2.1
-- patch(UI): Fix breadcrumb dropdown list on My Portfolio Details page.
-- fix(background task): Fix DB error when no report entry to save.
-- impr(FinHub client): Migrate APIs to task/poll (async) version (FinHub v0.15.0+)
-- patch: No longer check for empty holdings when spotlighting a portfolio (FinHub v0.15.0+ covers that at server side).
-- patch: Save last checksum analysis when spotlighting/analyzing a portfolio.
-- patch: Update static data (market indices).
-
