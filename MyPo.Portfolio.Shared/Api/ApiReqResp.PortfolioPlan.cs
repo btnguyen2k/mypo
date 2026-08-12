@@ -79,7 +79,9 @@ public sealed class PortfolioPlanResp
     public MarketDefResp? Market { get; set; }
 
     [JsonIgnore]
-    public string HoldingSymbols => Metadata?.HoldingTickers.Select(ht => ht.Ticker.Split(":")[1]).Aggregate((a, b) => $"{a}, {b}") ?? string.Empty;
+    public string HoldingSymbols => (Metadata?.HoldingTickers.Count ?? 0) > 0
+        ? Metadata!.HoldingTickers.Select(ht => ht.Ticker.Split(":")[1]).Aggregate((a, b) => $"{a}, {b}")
+        : "<No holdings>";
 
     [JsonIgnore]
     public decimal TotalMarketValue => Metadata?.HoldingTickers.Sum(ht => ht.Shares * ht.MarketPrice) ?? 0;
