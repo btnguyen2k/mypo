@@ -1,5 +1,16 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-12 - v2.2.1
+
+### Fixed/Improvements
+
+- Patch(UI): Fix breadcrumb dropdown list on My Portfolio Details page.
+- Fix(background task): Fix DB error when no report entry to save.
+- Impr(FinHub client): Migrate APIs to task/poll (async) version (FinHub v0.15.0+)
+- Patch: No longer check for empty holdings when spotlighting a portfolio (FinHub v0.15.0+ covers that at server side).
+- Patch: Save last checksum analysis when spotlighting/analyzing a portfolio.
+- Patch: Update static data (market indices).
+
 ## 2026-08-07 - v2.2.0
 
 ### Added/Refactoring/Deprecation
