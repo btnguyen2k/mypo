@@ -7,3 +7,5 @@
 - impr(FinHub client): Migrate APIs to task/poll (async) version (FinHub v0.15.0+)
 - patch: No longer check for empty holdings when spotlighting a portfolio (FinHub v0.15.0+ covers that at server side).
 - patch: Save last checksum analysis when spotlighting/analyzing a portfolio.
+- patch: Update static data (market indices).
+

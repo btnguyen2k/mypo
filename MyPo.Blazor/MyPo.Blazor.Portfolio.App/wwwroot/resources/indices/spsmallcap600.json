@@ -1,5 +1,5 @@
 {
-    "date": "2026-07-28",
+    "date": "2026-08-08",
     "data": [
         {
             "symbol": "NYSE:AAMI",
@@ -295,11 +295,6 @@
             "symbol": "NYSE:AVA",
             "company": "Avista Corporation",
             "sector": "Utilities"
-        },
-        {
-            "symbol": "NYSE:AVNS",
-            "company": "Avanos Medical, Inc.",
-            "sector": "Health Care"
         },
         {
             "symbol": "NYSE:AWI",
@@ -1032,6 +1027,11 @@
             "sector": "Financials"
         },
         {
+            "symbol": "NASDAQ:FIVN",
+            "company": "Five9, Inc.",
+            "sector": "Information Technology"
+        },
+        {
             "symbol": "NASDAQ:FIZZ",
             "company": "National Beverage Corp.",
             "sector": "Consumer Staples"
@@ -1480,11 +1480,6 @@
             "symbol": "NYSE:KRMN",
             "company": "Karman Holdings",
             "sector": "Industrials"
-        },
-        {
-            "symbol": "NASDAQ:KRYS",
-            "company": "Krystal Biotech, Inc.",
-            "sector": "Health Care"
         },
         {
             "symbol": "NYSE:KSS",
@@ -2652,6 +2647,11 @@
             "sector": "Health Care"
         },
         {
+            "symbol": "NYSE:TPC",
+            "company": "Tutor Perini Corporation",
+            "sector": "Industrials"
+        },
+        {
             "symbol": "NYSE:TR",
             "company": "Tootsie Roll Industries, Inc.",
             "sector": "Consumer Staples"
@@ -2684,11 +2684,6 @@
         {
             "symbol": "NASDAQ:TRUP",
             "company": "Trupanion",
-            "sector": "Financials"
-        },
-        {
-            "symbol": "NYSE:TWO",
-            "company": "Two Harbors Investment Corp.",
             "sector": "Financials"
         },
         {
@@ -2865,6 +2860,11 @@
             "symbol": "NYSE:VTOL",
             "company": "Bristow Group Inc.",
             "sector": "Energy"
+        },
+        {
+            "symbol": "NYSE:VVX",
+            "company": "V2X, Inc.",
+            "sector": "Industrials"
         },
         {
             "symbol": "NYSE:VYX",
