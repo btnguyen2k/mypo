@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-12 - v2.2.2
+
+### Fixed/Improvements
+
+- Fix(my portfolio plans): Exception when displaying portfolio plans with no tickers.
+
 ## 2026-08-12 - v2.2.1
 
 ### Fixed/Improvements
