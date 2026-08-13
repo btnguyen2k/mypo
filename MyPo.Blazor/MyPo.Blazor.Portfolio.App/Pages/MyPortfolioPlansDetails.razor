@@ -240,7 +240,7 @@
 @code {
     private const string PAGE_TITLE = "My Portfolio Plan";
     private const int DescriptionPreviewLength = 256;
-    private bool DescriptionExpanded { get; set; }
+    private bool DescriptionExpanded { get; set; } = false;
 
     private string Description => SelectedPortfolioPlan?.Metadata?.Description?.SingleLine() ?? string.Empty;
 
