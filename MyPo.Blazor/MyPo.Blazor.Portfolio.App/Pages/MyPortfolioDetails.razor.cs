@@ -17,6 +17,8 @@ public partial class MyPortfolioDetails : BasePage
     public string PortfolioId { get; set; } = string.Empty;
     private PortfolioResp? SelectedPortfolio { get; set; }
 
+    private bool IsPortfolioOwner() => SelectedPortfolio?.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.OrdinalIgnoreCase) ?? false;
+
     private Dictionary<string, PortfolioResp> PortfoliosMap { get; set; } = [];
 
     // root portfolios (with Children populated) used to render the breadcrumb jump-to dropdown as a tree
@@ -105,7 +107,7 @@ public partial class MyPortfolioDetails : BasePage
         }
 
         var metadataUpdateDelay = TimeSpan.FromMinutes(60);
-        if (!hasError && myTaskId == RefreshBackgroundTaskId &&
+        if (!hasError && myTaskId == RefreshBackgroundTaskId && IsPortfolioOwner() &&
             DateTimeOffset.UtcNow.ToUnixTimeSeconds() - metadataUpdateDelay.TotalSeconds > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp ?? 0))
         {
             // Sync portfolio metadata
@@ -295,6 +297,7 @@ public partial class MyPortfolioDetails : BasePage
                 {
                     a.Metadata.Tags.Add("ETF");
                 }
+                if (!IsPortfolioOwner()) continue;
                 SetBackgroundMsg($"⌛Updating asset metadata for '{symbol}'...");
                 var updateReq = CreateOrUpdateAssetReq.NewRequest(a);
                 var updateResp = await apiClient.UpdateMyPortfolioAssetAsync(updateReq, await GetAuthTokenAsync(), ApiBaseUrl);

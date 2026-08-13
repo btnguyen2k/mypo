@@ -22,7 +22,7 @@ public partial class FinHubController
             return authErrorResult;
         }
 
-        var portfolioPlan = await GetPortfolioPlanIfOwnedByUser(currentUser, id);
+        var portfolioPlan = await GetPortfolioPlanIfAccessible(currentUser, id);
         if (portfolioPlan == null)
         {
             return ResponseNoData(404, "Portfolio plan not found.");
@@ -122,7 +122,7 @@ public partial class FinHubController
             return authErrorResult;
         }
 
-        var portfolioPlan = await GetPortfolioPlanIfOwnedByUser(currentUser, id);
+        var portfolioPlan = await GetPortfolioPlanIfAccessible(currentUser, id);
         if (portfolioPlan == null)
         {
             return ResponseNoData(404, "Portfolio plan not found.");
