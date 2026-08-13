@@ -91,10 +91,10 @@
                                                         </ul>
                                                     </div>
                                                 </div>
-                                                <p class="text-secondary small mb-2">@(plan.HoldingSymbols.Excerpt(50))</p>
+                                                <p class="text-secondary small mb-2">@(plan.HoldingSymbols.Excerpt(36))</p>
                                                 @if(plan.Metadata is not null && !string.IsNullOrEmpty(plan.Metadata.Description))
                                                 {
-                                                    <p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine().Excerpt(50))</p>
+                                                    <p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine().Excerpt(48))</p>
                                                 }
                                                 <p class="text-secondary small mb-2">
                                                     <BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
