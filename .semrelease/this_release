@@ -4,3 +4,5 @@
 #!VERSION=2.2.3
 - impr(my-portfolio-plans/UI): UI fixes and improvements.
 - impr: Extend portfolio metadata to capture tobal buys/sells/fees/tax/interest/income.
+- patch(portfolio-metadata): Update P&L formula to include total buys/sells/fees/tax/interest/income.
+- refactor(dashboard/UI): Refactor dashboard UI to use new portfolio metadata.

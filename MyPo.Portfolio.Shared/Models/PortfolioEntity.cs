@@ -57,17 +57,17 @@ public sealed class PortfolioMetadata
     [JsonIgnore]
     public DateTimeOffset MetadataRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(MetadataRefreshTimestamp);
 
-    [JsonPropertyName("total_costs")]
-    public decimal TotalCosts { get; set; } = 0;
+    [JsonPropertyName("cost_basic")]
+    public decimal CostBasic { get; set; } = 0;
 
-    [JsonPropertyName("total_market_value")]
-    public decimal TotalMarketValue { get; set; } = 0;
-
-    [JsonIgnore]
-    public decimal TotalPnl => TotalCosts > 0 && TotalMarketValue > 0 ? TotalMarketValue - TotalCosts : 0;
+    [JsonPropertyName("market_value")]
+    public decimal MarketValue { get; set; } = 0;
 
     [JsonIgnore]
-    public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
+    public decimal UnrealizedPnl => CostBasic > 0 && MarketValue > 0 ? MarketValue - CostBasic : 0;
+
+    [JsonIgnore]
+    public decimal UnrealizedPnlPct => CostBasic > 0 ? UnrealizedPnl / CostBasic : 0;
 
     [JsonPropertyName("total_buys")]
     public decimal TotalBuys { get; set; } = 0;
@@ -86,6 +86,18 @@ public sealed class PortfolioMetadata
 
     [JsonPropertyName("total_income")]
     public decimal TotalIncome { get; set; } = 0;
+
+    [JsonIgnore]
+    public decimal TotalInvestment => TotalBuys + TotalFees + TotalTax;
+
+    [JsonIgnore]
+    public decimal TotalReturn => TotalSells + TotalInterest + TotalIncome + MarketValue;
+
+    [JsonIgnore]
+    public decimal TotalPnl => TotalReturn - TotalInvestment;
+
+    [JsonIgnore]
+    public decimal TotalPnlPct => TotalInvestment > 0 ? TotalPnl / TotalInvestment : 0;
 
     /// <summary>
     /// When <c>true</c>, this portfolio is not used for tracking stocks directly; it acts as a

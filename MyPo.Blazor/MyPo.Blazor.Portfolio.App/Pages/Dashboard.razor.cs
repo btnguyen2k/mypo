@@ -22,7 +22,7 @@ public partial class Dashboard : BasePage
     ];
 
     private List<PortfolioResp> InvestmentPortfolios => [..ActivePortfolios
-        .Where(p => !(p.Metadata?.IsContainer ?? false) && ((p.Metadata?.TotalMarketValue??0m) > 0m || (p.Metadata?.TotalBuys??0m) > 0m))
+        .Where(p => !(p.Metadata?.IsContainer ?? false) && (GetMarketValue(p) > 0m || (p.Metadata?.TotalBuys ?? 0m) > 0m))
     ];
 
     private List<CurrencySummary> CurrencySummaries => [..InvestmentPortfolios
@@ -31,8 +31,8 @@ public partial class Dashboard : BasePage
         {
             Currency = group.Key,
             PortfolioCount = group.Count(),
-            TotalCosts = group.Sum(p => p.TotalCosts),
-            MarketValue = group.Sum(p => p.TotalMarketValue),
+            CostBasic = group.Sum(GetCostBasic),
+            MarketValue = group.Sum(GetMarketValue),
         })
         .OrderBy(summary => summary.Currency, StringComparer.OrdinalIgnoreCase)
     ];
@@ -49,13 +49,13 @@ public partial class Dashboard : BasePage
     }
 
     private List<PortfolioResp> PortfoliosWithReturns => [..InvestmentPortfolios
-        .Where(p => p.TotalCosts > 0 && p.TotalMarketValue > 0)
+        .Where(p => GetCostBasic(p) > 0 && GetMarketValue(p) > 0)
     ];
 
-    private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(p => p.TotalPnlPct);
+    private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(GetUnrealizedPnlPct);
 
     private PortfolioResp? WeakestPerformer => PortfoliosWithReturns.Count > 1
-        ? PortfoliosWithReturns.MinBy(p => p.TotalPnlPct)
+        ? PortfoliosWithReturns.MinBy(GetUnrealizedPnlPct)
         : null;
 
     private string AggregatePnlTextClass
@@ -63,13 +63,13 @@ public partial class Dashboard : BasePage
         get
         {
             var summaries = CurrencySummaries;
-            if (summaries.Any(summary => summary.TotalPnl > 0)
-                && summaries.All(summary => summary.TotalPnl >= 0))
+            if (summaries.Any(summary => summary.UnrealizedPnl > 0)
+                && summaries.All(summary => summary.UnrealizedPnl >= 0))
             {
                 return "text-success";
             }
-            if (summaries.Any(summary => summary.TotalPnl < 0)
-                && summaries.All(summary => summary.TotalPnl <= 0))
+            if (summaries.Any(summary => summary.UnrealizedPnl < 0)
+                && summaries.All(summary => summary.UnrealizedPnl <= 0))
             {
                 return "text-danger";
             }
@@ -90,14 +90,16 @@ public partial class Dashboard : BasePage
         }
     }
 
-    private string BestPerformerBorderClass => BestPerformer?.TotalPnl switch
+    private string BestPerformerBorderClass => BestPerformer is null
+        ? "border-secondary"
+        : GetUnrealizedPnl(BestPerformer) switch
     {
         > 0 => "border-success",
         < 0 => "border-danger",
         _ => "border-secondary",
     };
 
-    private string WeakestPerformerBorderClass => WeakestPerformer?.TotalPnl < 0
+    private string WeakestPerformerBorderClass => WeakestPerformer is not null && GetUnrealizedPnl(WeakestPerformer) < 0
         ? "border-danger"
         : "border-secondary";
 
@@ -231,6 +233,26 @@ public partial class Dashboard : BasePage
             : currency.Trim().ToUpperInvariant();
     }
 
+    private static decimal GetCostBasic(PortfolioResp portfolio)
+    {
+        return portfolio.Metadata?.CostBasic ?? 0m;
+    }
+
+    private static decimal GetMarketValue(PortfolioResp portfolio)
+    {
+        return portfolio.Metadata?.MarketValue ?? 0m;
+    }
+
+    private static decimal GetUnrealizedPnl(PortfolioResp portfolio)
+    {
+        return portfolio.Metadata?.UnrealizedPnl ?? 0m;
+    }
+
+    private static decimal GetUnrealizedPnlPct(PortfolioResp portfolio)
+    {
+        return portfolio.Metadata?.UnrealizedPnlPct ?? 0m;
+    }
+
     private static string FormatAmount(decimal value)
     {
         return value.ToString("N2", CultureInfo.CurrentCulture);
@@ -306,10 +328,10 @@ public partial class Dashboard : BasePage
     {
         public string Currency { get; init; } = string.Empty;
         public int PortfolioCount { get; init; }
-        public decimal TotalCosts { get; init; }
+        public decimal CostBasic { get; init; }
         public decimal MarketValue { get; init; }
-        public decimal TotalPnl => TotalCosts > 0 && MarketValue > 0 ? MarketValue - TotalCosts : 0;
-        public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
+        public decimal UnrealizedPnl => CostBasic > 0 && MarketValue > 0 ? MarketValue - CostBasic : 0;
+        public decimal UnrealizedPnlPct => CostBasic > 0 ? UnrealizedPnl / CostBasic : 0;
     }
 
     private sealed record AttentionItem(

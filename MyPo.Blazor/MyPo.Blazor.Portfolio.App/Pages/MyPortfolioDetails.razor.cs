@@ -111,10 +111,10 @@ public partial class MyPortfolioDetails : BasePage
             // Sync portfolio metadata
             var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
 
-            req.Metadata!.TotalCosts = Assets?
+            req.Metadata!.CostBasic = Assets?
                 .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
                 .Sum(a => a.AveragePrice * a.Quantity) ?? 0;
-            req.Metadata!.TotalMarketValue = Assets?
+            req.Metadata!.MarketValue = Assets?
                 .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
                 .Sum(a =>
                 {
@@ -143,7 +143,7 @@ public partial class MyPortfolioDetails : BasePage
             if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
             {
                 // special case for VN market
-                req.Metadata!.TotalMarketValue /= 1000;
+                req.Metadata!.MarketValue /= 1000;
             }
             req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
