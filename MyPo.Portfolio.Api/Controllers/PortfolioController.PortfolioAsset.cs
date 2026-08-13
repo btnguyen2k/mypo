@@ -69,7 +69,7 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or asset does not belong to the portfolio.");
         }
 
         // only asset's metadata can be updated
