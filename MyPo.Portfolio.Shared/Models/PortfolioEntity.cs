@@ -69,6 +69,24 @@ public sealed class PortfolioMetadata
     [JsonIgnore]
     public decimal TotalPnlPct => TotalCosts > 0 ? TotalPnl / TotalCosts : 0;
 
+    [JsonPropertyName("total_buys")]
+    public decimal TotalBuys { get; set; } = 0;
+
+    [JsonPropertyName("total_sells")]
+    public decimal TotalSells { get; set; } = 0;
+
+    [JsonPropertyName("total_fees")]
+    public decimal TotalFees { get; set; } = 0;
+
+    [JsonPropertyName("total_tax")]
+    public decimal TotalTax { get; set; } = 0;
+
+    [JsonPropertyName("total_interest")]
+    public decimal TotalInterest { get; set; } = 0;
+
+    [JsonPropertyName("total_income")]
+    public decimal TotalIncome { get; set; } = 0;
+
     /// <summary>
     /// When <c>true</c>, this portfolio is not used for tracking stocks directly; it acts as a
     /// parent/container portfolio only.

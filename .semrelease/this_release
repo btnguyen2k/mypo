@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.2.3
 - impr(my-portfolio-plans/UI): UI fixes and improvements.
+- impr: Extend portfolio metadata to capture tobal buys/sells/fees/tax/interest/income.

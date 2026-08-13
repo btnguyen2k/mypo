@@ -22,7 +22,7 @@ public partial class Dashboard : BasePage
     ];
 
     private List<PortfolioResp> InvestmentPortfolios => [..ActivePortfolios
-        .Where(p => !(p.Metadata?.IsContainer ?? false) && (p.Metadata?.TotalMarketValue??0m) > 0m)
+        .Where(p => !(p.Metadata?.IsContainer ?? false) && ((p.Metadata?.TotalMarketValue??0m) > 0m || (p.Metadata?.TotalBuys??0m) > 0m))
     ];
 
     private List<CurrencySummary> CurrencySummaries => [..InvestmentPortfolios
@@ -125,25 +125,23 @@ public partial class Dashboard : BasePage
         var portfolioResult = await portfolioTask;
         if (!portfolioResult.IsSuccess)
         {
+            Portfolios = [];
             ShowAlert("danger", portfolioResult.Message ?? "Error loading portfolios.");
-            await InvokeAsync(StateHasChanged);
             return;
         }
-
         Portfolios = [.. portfolioResult.Data ?? []];
 
         var portfolioPlanResult = await portfolioPlanTask;
         if (!portfolioPlanResult.IsSuccess)
         {
             PortfolioPlans = [];
-            ShowAlert("warning", portfolioPlanResult.Message ?? "Portfolio values loaded, but portfolio plans could not be loaded.");
+            ShowAlert("warning", portfolioPlanResult.Message ?? "Error loading portfolio plans.");
+            return;
         }
-        else
-        {
-            PortfolioPlans = [.. portfolioPlanResult.Data ?? []];
-            CloseAlert();
-        }
-        await InvokeAsync(StateHasChanged);
+        PortfolioPlans = [.. portfolioPlanResult.Data ?? []];
+        Console.WriteLine($"Loaded {Portfolios.Count} portfolios and {PortfolioPlans.Count} portfolio plans.");
+
+        CloseAlert();
     }
 
     private static IEnumerable<AttentionItem> BuildPlanAttentionItems(PortfolioPlanResp plan)

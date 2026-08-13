@@ -25,7 +25,7 @@ public partial class MyPortfolioDetails : BasePage
     // depth-first flatten of the portfolio tree into (portfolio, indent-level) pairs, ordered by name
     private IEnumerable<(PortfolioResp Portfolio, int Level)> FlattenPortfolioTree()
     {
-        IEnumerable<(PortfolioResp, int)> Walk(PortfolioResp p, int level)
+        static IEnumerable<(PortfolioResp, int)> Walk(PortfolioResp p, int level)
         {
             yield return (p, level);
             foreach (var child in p.Children ?? [])
@@ -97,49 +97,65 @@ public partial class MyPortfolioDetails : BasePage
             return myTaskId == RefreshBackgroundTaskId;
         }
 
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var authToken = await GetAuthTokenAsync();
         if (symbolsList.Count > 0 && myTaskId == RefreshBackgroundTaskId)
         {
-            var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-            var authToken = await GetAuthTokenAsync();
             await TickerUtils.FetchQuotesForTickers(symbolsList, apiClient, authToken, ApiBaseUrl, prefetchCallback, postfetchCallback);
+        }
 
-            if (!hasError)
-            {
-                var now = DateTimeOffset.UtcNow;
-                if (now.ToUnixTimeSeconds() - 3600 > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp ?? 0))
+        var metadataUpdateDelay = TimeSpan.FromMinutes(60);
+        if (!hasError && myTaskId == RefreshBackgroundTaskId &&
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds() - metadataUpdateDelay.TotalSeconds > (SelectedPortfolio!.Metadata?.MetadataRefreshTimestamp ?? 0))
+        {
+            // Sync portfolio metadata
+            var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
+
+            req.Metadata!.TotalCosts = Assets?
+                .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
+                .Sum(a => a.AveragePrice * a.Quantity) ?? 0;
+            req.Metadata!.TotalMarketValue = Assets?
+                .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
+                .Sum(a =>
                 {
-                    // calculate base cost and market value for the portfolio
-                    var req = CreateOrUpdatePortfolioReq.NewRequest(SelectedPortfolio!);
-                    req.Metadata!.TotalCosts = Assets?
-                        .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
-                        .Sum(a => a.AveragePrice * a.Quantity) ?? 0;
-                    req.Metadata!.TotalMarketValue = Assets?
-                        .Where(a => a.Market?.Currency.Equals(SelectedPortfolio?.Currency, StringComparison.OrdinalIgnoreCase) ?? false)
-                        .Sum(a =>
-                        {
-                            var symbol = $"{a.Market?.Code ?? string.Empty}:{a.ItemCode}";
-                            return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
-                        }) ?? 0;
-                    var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase));
-                    if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // special case for VN market
-                        req.Metadata!.TotalMarketValue /= 1000;
-                    }
-                    req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
-                    if (resp.IsSuccess)
-                    {
-                        SelectedPortfolio = resp.Data;
-                        StateHasChanged();
-                    }
-                }
+                    var symbol = $"{a.Market?.Code ?? string.Empty}:{a.ItemCode}";
+                    return (QuotesMap.TryGetValue(symbol, out var quote) ? quote.MarketPrice : 0) * a.Quantity;
+                }) ?? 0;
+            req.Metadata!.TotalBuys = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_BUY)
+                .Sum(t => t.TxValue) ?? 0;
+            req.Metadata!.TotalSells = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_SELL)
+                .Sum(t => t.TxValue) ?? 0;
+            req.Metadata!.TotalFees = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_FEE)
+                .Sum(t => t.TxValue) ?? 0;
+            req.Metadata!.TotalTax = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_TAX)
+                .Sum(t => t.TxValue) ?? 0;
+            req.Metadata!.TotalInterest = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_INTEREST)
+                .Sum(t => t.TxValue) ?? 0;
+            req.Metadata!.TotalIncome = TxSettlements?
+                .Where(t => t.TxType == TxSettlementEntity.TX_TYPE_DISTRIBUTION || t.TxType == TxSettlementEntity.TX_TYPE_DIVIDEND)
+                .Sum(t => t.TxValue) ?? 0;
+            var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio!.Metadata!.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
+            if (market is not null && "VND".Equals(market.Currency, StringComparison.OrdinalIgnoreCase))
+            {
+                // special case for VN market
+                req.Metadata!.TotalMarketValue /= 1000;
+            }
+            req.Metadata!.MetadataRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var resp = await apiClient.UpdateMyPortfolioAsync(SelectedPortfolio!.Id, req, authToken, ApiBaseUrl);
+            if (resp.IsSuccess)
+            {
+                SelectedPortfolio = resp.Data;
+                StateHasChanged();
             }
 
             if (myTaskId == RefreshBackgroundTaskId)
             {
                 var sleepTime = Random.Shared.NextInt64(30 * 1000, 60 * 1000);
-                var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, SelectedPortfolio?.Metadata?.DefaultMarketId, StringComparison.OrdinalIgnoreCase))?.ToModel();
                 if (market == null)
                 {
                     SetBackgroundMsg($"❗Default market '{SelectedPortfolio?.Metadata?.DefaultMarketId}' not found in markets metadata. Not refreshing quotes.");
