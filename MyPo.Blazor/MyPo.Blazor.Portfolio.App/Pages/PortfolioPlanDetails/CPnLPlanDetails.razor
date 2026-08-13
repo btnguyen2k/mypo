@@ -9,33 +9,45 @@
 <!-- Summary cards -->
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-lg-3">
-        <div class="card text-center">
-            <div class="card-body py-3">
-                <div class="text-muted small">Market Value</div>
+        <div class="card h-100 border-start border-start-4 border-start-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                    <div class="text-uppercase">Market value</div>
+                    <BIcon icon="bi-wallet2" extraClassName="text-info" />
+                </div>
                 <div class="h5 mb-0">@(Plan.TotalMarketValueStr()??"--")</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card text-center">
-            <div class="card-body py-3">
-                <div class="text-muted small">Cost Basic</div>
+        <div class="card h-100 border-start border-start-4 border-start-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                    <div class="text-uppercase">Cost basic</div>
+                    <BIcon icon="bi-cash-stack" extraClassName="text-secondary" />
+                </div>
                 <div class="h5 mb-0">@Plan.TotalCostBasicStr()</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card text-center">
-            <div class="card-body py-3">
-                <div class="text-muted small">Unsettled P&L</div>
+        <div class="card h-100 border-start border-start-4 @pnlBorderCssClass(Plan.TotalUnsettledPnL)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                    <div class="text-uppercase">Unsettled P&amp;L</div>
+                    <BIcon icon="bi-graph-up-arrow" extraClassName="@pnlCssClass(Plan.TotalUnsettledPnL)" />
+                </div>
                 <div class="h5 mb-0 @(pnlCssClass(Plan.TotalUnsettledPnL))">@(Plan.TotalUnsettledPnLStr())</div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card text-center">
-            <div class="card-body py-3">
-                <div class="text-muted small">Overall Return</div>
+        <div class="card h-100 border-start border-start-4 @pnlBorderCssClass(Plan.TotalUnsettledPnL)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                    <div class="text-uppercase">Overall return</div>
+                    <BIcon icon="bi-percent" extraClassName="@pnlCssClass(Plan.TotalUnsettledPnL)" />
+                </div>
                 <div class="h5 mb-0 @(pnlCssClass(Plan.TotalUnsettledPnL))">@(Plan.TotalUnsettledPnLYieldStr())</div>
             </div>
         </div>
@@ -200,16 +212,4 @@
             : sortDescending ? "descending" : "ascending";
     }
 
-    private string pnlCssClass(decimal pnl)
-    {
-        if (pnl > 0)
-        {
-            return "text-success";
-        }
-        if (pnl < 0)
-        {
-            return "text-danger";
-        }
-        return "text-muted";
-    }
 }
