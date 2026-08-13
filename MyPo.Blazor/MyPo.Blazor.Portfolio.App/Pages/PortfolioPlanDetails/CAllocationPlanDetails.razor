@@ -182,12 +182,15 @@
             <tbody class="table-group-divider">
                 @foreach (var ht in sortedHoldings)
                 {
+                    var payout = payoutFrequency(ht.PayoutFrequency);
                     <tr>
                         <td title="@ht.Tags">@FormatUtils.ExtractFirstCharIfEmoji(ht.Tags)@ht.Ticker</td>
                         <td class="text-end">@Plan.NumSharesStr(ht)</td>
                         <td class="text-end">@Plan.MarketPriceStr(ht)</td>
                         <td class="text-end">@Plan.MarketValueStr(ht)</td>
-                        <td class="text-end">@($"{ht.DividendYield:N1}%")</td>
+                        <td class="text-end">
+                            @($"{ht.DividendYield:N1}%")<span class="text-muted fw-semibold ms-1" title="@payout.Label" aria-label="@payout.Label">@payout.Marker</span>
+                        </td>
                         <td class="text-end">@Plan.EstYearlyDividendStr(ht)</td>
                         <td class="text-end">@Plan.CurrentAllocationPct(ht).ToString("N1")%</td>
                         <td class="text-end">@Plan.TargetAllocationPct(ht).ToString("N0")%</td>
@@ -281,6 +284,18 @@
         return sortColumn != column
             ? "none"
             : sortDescending ? "descending" : "ascending";
+    }
+
+    private static (string Marker, string Label) payoutFrequency(int frequency)
+    {
+        return frequency switch
+        {
+            12 => ("M", "Monthly"),
+            4 => ("Q", "Quarterly"),
+            2 => ("S", "Semi-annual"),
+            1 => ("Y", "Annual"),
+            _ => ("O", "Other"),
+        };
     }
 
     private string barCssClass(decimal dev)

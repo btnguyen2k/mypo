@@ -7,5 +7,4 @@
 - patch(portfolio-metadata): Update P&L formula to include total buys/sells/fees/tax/interest/income.
 - refactor(dashboard/UI): Refactor dashboard UI to use new portfolio metadata.
 - fix: Viewers cannot see portfolio and portfolio plans.
-- impr(my-portfolio-plans/UI): UI improvement when displaying long description.
-- impr(my-portfolio-plan-details/UI): UI improvement.
+- impr(my-portfolio-plan-details): UI/UX improvement.
