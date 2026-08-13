@@ -76,6 +76,7 @@
                                     <div class="col-md-6 col-lg-4" @onclick="()=>BtnClickViewPlan(plan.Id)">
                                         <div class="card plan-card h-100">
                                             <div class="card-body">
+                                                <!-- Plan name and action menu -->
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <h5 class="card-title mb-0">
                                                         @(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL?"💸":"⚖️")@(plan.Name)
@@ -91,29 +92,33 @@
                                                         </ul>
                                                     </div>
                                                 </div>
-                                                <p class="text-secondary small mb-2">@(plan.HoldingSymbols.Excerpt(36))</p>
+
+                                                <!-- Holdings and Description -->
+                                                <p class="text-secondary mb-2">@(plan.HoldingSymbols.Excerpt(36))</p>
                                                 @if(plan.Metadata is not null && !string.IsNullOrEmpty(plan.Metadata.Description))
                                                 {
                                                     <p class="card-text small text-muted mb-2">@(plan.Metadata.Description.SingleLine().Excerpt(48))</p>
                                                 }
+
+                                                <!-- Linked portfolio -->
                                                 <p class="text-secondary small mb-2">
                                                     <BIcon icon="bi-link-45deg" extraClassName="me-1" />@(plan.Portfolio!=null?plan.Portfolio.Name:"No linked portfolio")
                                                 </p>
-                                                <p class="h5 mb-1">
+
+                                                <!-- Market value, dividend, and PnL -->
+                                                <p class="h6 mb-1 small">
                                                     🏦@(plan.TotalMarketValueStr())
                                                     -
                                                     <span class="small">
-                                                        @if(plan.Type==PortfolioPlanEntity.PLAN_TYPE_PL)
-                                                        {
-                                                            @(plan.TotalUnsettledPnL<0?"📉":"📈")
-                                                            <span class="@(plan.TotalUnsettledPnL<0?"text-danger":"text-success")">
-                                                                @($"{plan.TotalUnsettledPnLStr()} ({plan.TotalUnsettledPnLYieldStr()})")
-                                                            </span>
-                                                        }
-                                                        else
+                                                        @if(plan.Type==PortfolioPlanEntity.PLAN_TYPE_ALLOCATION)
                                                         {
                                                             @($"📅{plan.EstTotalYearlyDividendStr()} ({plan.EstTotalYearlyDividendYieldStr()})")
+                                                            @("-")
                                                         }
+                                                        @(plan.TotalUnsettledPnL<0?"📉":"📈")
+                                                        <span class="@(plan.TotalUnsettledPnL<0?"text-danger":"text-success")">
+                                                            @($"{plan.TotalUnsettledPnLStr()} ({plan.TotalUnsettledPnLYieldStr()})")
+                                                        </span>
                                                     </span>
                                                 </p>
                                                 <p class="text-muted small mb-0">Refreshed @((plan.Metadata?.HoldingsRefreshUTC.ToString("MMM-dd HH:mm")+" UTC")??"N/A")</p>

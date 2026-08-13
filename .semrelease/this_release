@@ -2,4 +2,4 @@
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.2.3
-- patch(my-portfolio-plans): Cap max length of plan desc to 48 and holding symbols to 36.
+- impr(my-portfolio-plans/UI): UI fixes and improvements.
