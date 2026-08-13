@@ -65,59 +65,18 @@
             }
             else if (!HideUI)
             {
-                <!-- SECTION: Quick Actions -->
-                <div class="card mb-3">
-                    <div class="card-body d-flex flex-wrap align-items-center gap-2 py-2 px-3">
-                        <span class="small fw-semibold text-muted text-uppercase me-1">Quick actions</span>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
-                            <BIcon icon="bi-briefcase" extraClassName="me-1" />Manage portfolios
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">
-                            <BIcon icon="bi-distribute-vertical" extraClassName="me-1" />Portfolio plans
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS">
-                            <BIcon icon="bi-calendar-event" extraClassName="me-1" />Market events
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE">
-                            <BIcon icon="bi-calculator" extraClassName="me-1" />Buy/sell calculator
-                        </a>
-                    </div>
-                </div>
-
-                <!-- SECTION: Portfolio Summary  -->
+                <!-- SECTION: Currency Summary -->
                 <div class="row g-3 mb-4">
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-primary">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="text-muted small text-uppercase">Investment portfolios</div>
-                                        <div class="display-6 fw-semibold">@InvestmentPortfolios.Count</div>
-                                    </div>
-                                    <BIcon icon="bi-briefcase" extraClassName="fs-2 text-primary" />
-                                </div>
-                                <div class="small text-muted mt-2">
-                                    @* @InvestmentPortfolios.Count investment(s) *@
-                                    @*
-                                    @if (ActiveContainerCount > 0)
-                                    {
-                                        <span> | @ActiveContainerCount container(s)</span>
-                                    }
-                                    *@
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
                         <div class="card h-100 border-start border-start-4 border-start-danger">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Cost basic</div>
-                                    <BIcon icon="bi-cash-stack" extraClassName="fs-3 text-secondary" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Cost basic</div>
+                                    <BIcon icon="bi-cash-stack" extraClassName="text-secondary" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2">
+                                    <div class="d-flex justify-content-between gap-2 small">
                                         <span class="text-muted">@summary.Currency</span>
                                         <span class="fw-semibold">@FormatAmount(summary.CostBasic)</span>
                                     </div>
@@ -129,16 +88,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-xl-3">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
                         <div class="card h-100 border-start border-start-4 border-start-info">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Market value</div>
-                                    <BIcon icon="bi-wallet2" extraClassName="fs-3 text-info" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Market value</div>
+                                    <BIcon icon="bi-wallet2" extraClassName="text-info" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2">
+                                    <div class="d-flex justify-content-between gap-2 small">
                                         <span class="text-muted">@summary.Currency</span>
                                         <span class="fw-semibold">@FormatAmount(summary.MarketValue)</span>
                                     </div>
@@ -150,20 +109,86 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-xl-3">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
                         <div class="card h-100 border-start border-start-4 @AggregatePnlBorderClass">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Unrealized P/L</div>
-                                    <BIcon icon="bi-graph-up-arrow" extraClassName="@($"fs-3 {AggregatePnlTextClass}")" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Unrealized P/L</div>
+                                    <BIcon icon="bi-graph-up-arrow" extraClassName="@($"{AggregatePnlTextClass}")" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.UnrealizedPnl)">
+                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.UnrealizedPnl) small">
                                         <span>@summary.Currency</span>
                                         <span class="fw-semibold">
                                             @FormatSignedAmount(summary.UnrealizedPnl)
                                             <small>(@FormatPercentage(summary.UnrealizedPnlPct))</small>
+                                        </span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ investment</div>
+                                    <BIcon icon="bi-bank" extraClassName="text-primary" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 small">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.TotalInvestment)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-success">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ return</div>
+                                    <BIcon icon="bi-cash-coin" extraClassName="text-success" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 small">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.TotalReturn)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 @AggregateTotalUnrealizedPnlBorderClass">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ unrealized P/L</div>
+                                    <BIcon icon="bi-graph-up" extraClassName="@($"{AggregateTotalUnrealizedPnlTextClass}")" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.TotalUnrealizedPnl) small">
+                                        <span>@summary.Currency</span>
+                                        <span class="fw-semibold">
+                                            @FormatSignedAmount(summary.TotalUnrealizedPnl)
+                                            <small>(@FormatPercentage(summary.TotalUnrealizedPnlPct))</small>
                                         </span>
                                     </div>
                                 }

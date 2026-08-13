@@ -30,9 +30,10 @@ public partial class Dashboard : BasePage
         .Select(group => new CurrencySummary
         {
             Currency = group.Key,
-            PortfolioCount = group.Count(),
-            CostBasic = group.Sum(GetCostBasic),
-            MarketValue = group.Sum(GetMarketValue),
+            CostBasic = group.Sum(p => p.Metadata?.CostBasic ?? 0m),
+            MarketValue = group.Sum(p => p.Metadata?.MarketValue ?? 0m),
+            TotalInvestment = group.Sum(p => p.Metadata?.TotalInvestment ?? 0m),
+            TotalReturn = group.Sum(p => p.Metadata?.TotalReturn ?? 0m),
         })
         .OrderBy(summary => summary.Currency, StringComparer.OrdinalIgnoreCase)
     ];
@@ -58,36 +59,38 @@ public partial class Dashboard : BasePage
         ? PortfoliosWithReturns.MinBy(p => p.Metadata?.TotalUnrealizedPnlPct??0m)
         : null;
 
-    private string AggregatePnlTextClass
+    private string AggregatePnlTextClass => GetAggregatePnlTextClass(summary => summary.UnrealizedPnl);
+
+    private string AggregatePnlBorderClass => GetAggregatePnlBorderClass(AggregatePnlTextClass);
+
+    private string AggregateTotalUnrealizedPnlTextClass =>
+        GetAggregatePnlTextClass(summary => summary.TotalUnrealizedPnl);
+
+    private string AggregateTotalUnrealizedPnlBorderClass =>
+        GetAggregatePnlBorderClass(AggregateTotalUnrealizedPnlTextClass);
+
+    private string GetAggregatePnlTextClass(Func<CurrencySummary, decimal> valueSelector)
     {
-        get
+        var values = CurrencySummaries.Select(valueSelector).ToList();
+        if (values.Any(value => value > 0) && values.All(value => value >= 0))
         {
-            var summaries = CurrencySummaries;
-            if (summaries.Any(summary => summary.UnrealizedPnl > 0)
-                && summaries.All(summary => summary.UnrealizedPnl >= 0))
-            {
-                return "text-success";
-            }
-            if (summaries.Any(summary => summary.UnrealizedPnl < 0)
-                && summaries.All(summary => summary.UnrealizedPnl <= 0))
-            {
-                return "text-danger";
-            }
-            return "text-muted";
+            return "text-success";
         }
+        if (values.Any(value => value < 0) && values.All(value => value <= 0))
+        {
+            return "text-danger";
+        }
+        return "text-muted";
     }
 
-    private string AggregatePnlBorderClass
+    private static string GetAggregatePnlBorderClass(string textClass)
     {
-        get
+        return textClass switch
         {
-            return AggregatePnlTextClass switch
-            {
-                "text-success" => "border-start-success",
-                "text-danger" => "border-start-danger",
-                _ => "border-start-secondary",
-            };
-        }
+            "text-success" => "border-start-success",
+            "text-danger" => "border-start-danger",
+            _ => "border-start-secondary",
+        };
     }
 
     private string BestPerformerBorderClass => BestPerformer is null
@@ -248,11 +251,6 @@ public partial class Dashboard : BasePage
         return portfolio.Metadata?.UnrealizedPnl ?? 0m;
     }
 
-    private static decimal GetUnrealizedPnlPct(PortfolioResp portfolio)
-    {
-        return portfolio.Metadata?.UnrealizedPnlPct ?? 0m;
-    }
-
     private static string FormatAmount(decimal value)
     {
         return value.ToString("N2", CultureInfo.CurrentCulture);
@@ -327,11 +325,14 @@ public partial class Dashboard : BasePage
     private sealed class CurrencySummary
     {
         public string Currency { get; init; } = string.Empty;
-        public int PortfolioCount { get; init; }
         public decimal CostBasic { get; init; }
         public decimal MarketValue { get; init; }
         public decimal UnrealizedPnl => CostBasic > 0 && MarketValue > 0 ? MarketValue - CostBasic : 0;
         public decimal UnrealizedPnlPct => CostBasic > 0 ? UnrealizedPnl / CostBasic : 0;
+        public decimal TotalInvestment { get; init; }
+        public decimal TotalReturn { get; init; }
+        public decimal TotalUnrealizedPnl => TotalReturn - TotalInvestment;
+        public decimal TotalUnrealizedPnlPct => TotalInvestment > 0 ? TotalUnrealizedPnl / TotalInvestment : 0;
     }
 
     private sealed record AttentionItem(
