@@ -49,13 +49,13 @@ public partial class Dashboard : BasePage
     }
 
     private List<PortfolioResp> PortfoliosWithReturns => [..InvestmentPortfolios
-        .Where(p => GetCostBasic(p) > 0 && GetMarketValue(p) > 0)
+        .Where(p => (p.Metadata?.TotalInvestment??0) > 0 && (p.Metadata?.TotalReturn??0) > 0)
     ];
 
-    private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(GetUnrealizedPnlPct);
+    private PortfolioResp? BestPerformer => PortfoliosWithReturns.MaxBy(p => p.Metadata?.TotalUnrealizedPnlPct??0m);
 
     private PortfolioResp? WeakestPerformer => PortfoliosWithReturns.Count > 1
-        ? PortfoliosWithReturns.MinBy(GetUnrealizedPnlPct)
+        ? PortfoliosWithReturns.MinBy(p => p.Metadata?.TotalUnrealizedPnlPct??0m)
         : null;
 
     private string AggregatePnlTextClass

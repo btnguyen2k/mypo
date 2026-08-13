@@ -202,10 +202,10 @@
                                     <div class="list-group list-group-flush">
                                         @foreach (var portfolio in InvestmentPortfolios)
                                         {
-                                            var unrealizedPnl = GetUnrealizedPnl(portfolio);
-                                            var unrealizedPnlPct = GetUnrealizedPnlPct(portfolio);
-                                            var totalPnl = portfolio.Metadata?.TotalPnl ?? 0m;
-                                            var totalPnlPct = portfolio.Metadata?.TotalPnlPct ?? 0m;
+                                            var unrealizedPnl = portfolio.Metadata?.UnrealizedPnl ?? 0m;
+                                            var unrealizedPnlPct = portfolio.Metadata?.UnrealizedPnlPct ?? 0m;
+                                            var totalUnrealizedPnl = portfolio.Metadata?.TotalUnrealizedPnl ?? 0m;
+                                            var totalUnrealizedPnlPct = portfolio.Metadata?.TotalUnrealizedPnlPct ?? 0m;
 
                                             <div class="list-group-item p-3">
                                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
@@ -253,9 +253,9 @@
                                                     </div>
                                                     <div class="col-6 col-md-4">
                                                         <div class="small text-muted">Total unrealized P/L</div>
-                                                        <div class="text-nowrap @PnlTextClass(totalPnl)">
-                                                            <span class="fw-semibold">@FormatSignedAmount(totalPnl)</span>
-                                                            <small>(@FormatPercentage(totalPnlPct))</small>
+                                                        <div class="text-nowrap @PnlTextClass(totalUnrealizedPnl)">
+                                                            <span class="fw-semibold">@FormatSignedAmount(totalUnrealizedPnl)</span>
+                                                            <small>(@FormatPercentage(totalUnrealizedPnlPct))</small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -308,6 +308,7 @@
                     </div>
                 </div>
 
+                <!-- SECTION: Performance highlights -->
                 @if (BestPerformer is not null || WeakestPerformer is not null)
                 {
                     <div class="card mb-4">
@@ -328,9 +329,9 @@
                                                         <h5 class="text-body mb-1">@BestPerformer.Name</h5>
                                                         <span class="text-muted">@BestPerformer.Currency</span>
                                                     </div>
-                                                    <div class="text-end @PnlTextClass(GetUnrealizedPnl(BestPerformer))">
+                                                    <div class="text-end @PnlTextClass(BestPerformer.Metadata?.TotalUnrealizedPnl??0m)">
                                                         <BIcon icon="bi-arrow-up-right-circle" extraClassName="fs-3" />
-                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(GetUnrealizedPnlPct(BestPerformer))</div>
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(BestPerformer.Metadata?.TotalUnrealizedPnlPct??0m)</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -348,9 +349,9 @@
                                                         <h5 class="text-body mb-1">@WeakestPerformer.Name</h5>
                                                         <span class="text-muted">@WeakestPerformer.Currency</span>
                                                     </div>
-                                                    <div class="text-end @PnlTextClass(GetUnrealizedPnl(WeakestPerformer))">
+                                                    <div class="text-end @PnlTextClass(WeakestPerformer.Metadata?.TotalUnrealizedPnl??0m)">
                                                         <BIcon icon="bi-arrow-down-right-circle" extraClassName="fs-3" />
-                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(GetUnrealizedPnlPct(WeakestPerformer))</div>
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(WeakestPerformer.Metadata?.TotalUnrealizedPnlPct??0m)</div>
                                                     </div>
                                                 </div>
                                             </div>

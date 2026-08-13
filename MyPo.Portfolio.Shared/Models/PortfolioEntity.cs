@@ -94,10 +94,10 @@ public sealed class PortfolioMetadata
     public decimal TotalReturn => TotalSells + TotalInterest + TotalIncome + MarketValue;
 
     [JsonIgnore]
-    public decimal TotalPnl => TotalReturn - TotalInvestment;
+    public decimal TotalUnrealizedPnl => TotalReturn - TotalInvestment;
 
     [JsonIgnore]
-    public decimal TotalPnlPct => TotalInvestment > 0 ? TotalPnl / TotalInvestment : 0;
+    public decimal TotalUnrealizedPnlPct => TotalInvestment > 0 ? TotalUnrealizedPnl / TotalInvestment : 0;
 
     /// <summary>
     /// When <c>true</c>, this portfolio is not used for tracking stocks directly; it acts as a
