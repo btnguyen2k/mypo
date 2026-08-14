@@ -37,6 +37,12 @@ public struct MarketEventResp
     [JsonPropertyName("event_time")]
     public DateTimeOffset EventTime { get; set; }
 
+    /// <summary>
+    /// Event attention level: 0 (none), 1 (low), 2 (medium), or 3 (high).
+    /// </summary>
+    [JsonPropertyName("attention_level")]
+    public int AttentionLevel { get; set; }
+
     [JsonIgnore]
     public readonly DateTimeOffset EventTimeLocalTz => EventTime.ToLocalTime();
 

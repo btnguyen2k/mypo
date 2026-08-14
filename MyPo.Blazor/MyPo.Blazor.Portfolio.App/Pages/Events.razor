@@ -4,7 +4,6 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Models
-@using MyPo.Portfolio.Shared.Utils
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS)]
 @inherits BasePage
@@ -320,9 +319,9 @@
         };
     }
 
-    private string TextFormatDivident(MarketEventResp e)
+    private static string TextFormatDivident(MarketEventResp e)
     {
-        var attLevel = MarketEventUtils.AttentionLevelForDividend(e, YieldsMap);
+        var attLevel = e.AttentionLevel;
         return attLevel > 2 ? "bg-danger" : attLevel == 2 ? "bg-success" : attLevel == 1 ? "bg-info" : string.Empty;
     }
 }

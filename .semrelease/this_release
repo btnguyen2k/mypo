@@ -8,3 +8,4 @@
 - refactor(dashboard/UI): Refactor dashboard UI to use new portfolio metadata.
 - fix: Viewers cannot see portfolio and portfolio plans.
 - impr(my-portfolio-plan-details): UI/UX improvement.
+- optimize(static-data): Load index constituents from FinHub instead of local resources.
