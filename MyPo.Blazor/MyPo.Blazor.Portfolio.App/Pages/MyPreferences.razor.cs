@@ -37,7 +37,7 @@ public partial class MyPreferences : BasePage
         CloseAlert();
         ActiveTab = tab;
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", LOCAL_STORAGE_KEY_ACTIVE_TAB, tab);
+        await jsLocalStorage.InvokeVoidAsync("LocalStoreSet", LOCAL_STORAGE_KEY_ACTIVE_TAB, tab);
     }
 
     private async Task SwitchToSavedTab()
@@ -47,7 +47,7 @@ public partial class MyPreferences : BasePage
         if (!string.IsNullOrEmpty(savedTab) && PreferenceGroups.Any(g => g.Id == savedTab))
         {
             ActiveTab = savedTab;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

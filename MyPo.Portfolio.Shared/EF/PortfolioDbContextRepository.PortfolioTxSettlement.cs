@@ -193,7 +193,6 @@ public sealed partial class PortfolioDbContextRepository
     /// <inheritdoc />
     public async ValueTask<IEnumerable<TxSettlementEntity>> GetTxSettlementsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"[DEBUG] GetTxSettlementsByPortfolioIdAsync({portfolioId})");
         return await TxSettlementStore.AsNoTracking()
             .Where(rr => rr.PortfolioId == portfolioId).Where(rr => rr.Status != TxSettlementEntity.STATUS_ARCHIVED)
             .OrderByDescending(rr => rr.TxTime).ThenBy(rr => rr.RefItemCode).ThenBy(rr => rr.TxType)

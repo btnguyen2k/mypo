@@ -62,13 +62,13 @@ public partial class Profile
 		}
 	}
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		ProfileAlertMessage = EmailAlertMessage = PasswordAlertMessage = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	private void ShowAlert(string section, string type, string message)
+	private async void ShowAlert(string section, string type, string message)
 	{
 		ProfileAlertMessage = EmailAlertMessage = PasswordAlertMessage = string.Empty;
 		if (section == "profile")
@@ -86,7 +86,7 @@ public partial class Profile
 			PasswordAlertType = type;
 			PasswordAlertMessage = message;
 		}
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private async void BtnClickedSaveProfile()

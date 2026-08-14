@@ -69,17 +69,24 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or asset does not belong to the portfolio.");
         }
 
         // only asset's metadata can be updated
         existingAsset.Metadata ??= new AssetMetadata();
-        // sort tags alphabetically for better readability
-        existingAsset.Metadata.Tags = new SortedSet<string>(existingAsset.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
         existingAsset.Metadata.CorpName = req.Metadata?.CorpName ?? existingAsset.Metadata.CorpName;
         existingAsset.Metadata.Industry = req.Metadata?.Industry ?? existingAsset.Metadata.Industry;
         existingAsset.Metadata.Sector = req.Metadata?.Sector ?? existingAsset.Metadata.Sector;
         existingAsset.Metadata.AssetType = req.Metadata?.AssetType ?? existingAsset.Metadata.AssetType;
+
+        // update tags
+        existingAsset.Metadata.Tags ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (req.Metadata?.Tags is not null)
+        {
+            existingAsset.Metadata.Tags = req.Metadata.Tags;
+        }
+        // sort tags alphabetically for better readability
+        existingAsset.Metadata.Tags = new SortedSet<string>(existingAsset.Metadata.Tags);
 
         existingAsset = await PortfolioRepository.UpdateAssetAsync(existingAsset);
         if (existingAsset == null)

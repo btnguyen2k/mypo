@@ -72,12 +72,28 @@ public abstract class MyPoBaseController : ApiBaseController
             : null;
     }
 
+    protected async ValueTask<PortfolioEntity?> GetPortfolioIfAccessible(MyPoUser user, string portfolioId)
+    {
+        var portfolioRec = await PortfolioRepository.GetPortfolioByIdAsync(portfolioId);
+        return portfolioRec != null
+            && (portfolioRec.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
+                || (portfolioRec.Metadata?.Viewers?.Contains(user.Email, StringComparer.OrdinalIgnoreCase) ?? false))
+            ? portfolioRec
+            : null;
+    }
+
     protected async ValueTask<PortfolioPlanEntity?> GetPortfolioPlanIfOwnedByUser(MyPoUser user, string planId)
     {
         var plan = await PortfolioRepository.GetPortfolioPlanByIdAsync(planId);
         return plan != null && plan.OwnerUserId.Equals(user.Id, StringComparison.OrdinalIgnoreCase)
             ? plan
             : null;
+    }
+
+    protected async ValueTask<PortfolioPlanEntity?> GetPortfolioPlanIfAccessible(MyPoUser user, string planId)
+    {
+        var accessiblePlans = await PortfolioRepository.GetPortfolioPlansAccessibleByUserAsync(user);
+        return accessiblePlans.FirstOrDefault(plan => plan.Id.Equals(planId, StringComparison.OrdinalIgnoreCase));
     }
 
     protected async ValueTask<IEnumerable<AssetEntity>> GetOwningAssets(string portfolioId)

@@ -34,7 +34,7 @@ public partial class CStockChart : BaseComponent
             {
                 ErrorMessage = $"Charting for exchange '{SymbolInfo.Exchange}' is not supported.";
             }
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

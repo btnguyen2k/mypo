@@ -41,9 +41,7 @@ public partial class PortfolioController
         return ResponseOk(result);
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter
     private static (CreateOrUpdateTxBuySellReq?, ObjectResult?) ValidateTxBuySell(CreateOrUpdateTxBuySellReq reqTx, TxBuySellEntity? existingTx)
-#pragma warning restore IDE0060 // Remove unused parameter
     {
         // validate transaction type, must be either BUY or SELL
         reqTx.Type = reqTx.Type.ToUpper().Trim();
@@ -114,7 +112,7 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(404, "Portfolio not found or not accessible.");
         }
 
         var tx = new TxBuySellEntity
@@ -174,7 +172,7 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or transaction does not belong to the portfolio.");
         }
 
         if (existingTx.IsSettled)
@@ -231,7 +229,7 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(existingTx.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or transaction does not belong to the portfolio.");
         }
 
         if (existingTx.IsSettled)
@@ -286,7 +284,7 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or transaction does not belong to the portfolio.");
         }
 
         existingTx.Type = reqTx!.Value.Type;

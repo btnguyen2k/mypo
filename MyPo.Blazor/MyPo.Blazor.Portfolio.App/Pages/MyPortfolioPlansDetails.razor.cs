@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
-using System.Text.Json;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -230,9 +229,9 @@ public partial class MyPortfolioPlansDetails : BasePage
         }
     }
 
-    private void SwitchAnalysisTab(string tab)
+    private async void SwitchAnalysisTab(string tab)
     {
         ActiveAnalysisTab = tab;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Controllers;
@@ -38,7 +39,19 @@ public partial class PortfolioController
             startDateListing, endDateListing,
             [MarketEventEntity.EVENT_LISTING]);
 
-        var result = eventsDividend.Select(x => MarketEventResp.BuildFrom(x)).ToList();
+        var yieldsMap = eventsDividend
+            .GroupBy(e => e.ItemCode, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => group.First().Metadata?.Dividend?.DividendYield ?? 0m,
+                StringComparer.OrdinalIgnoreCase);
+
+        var result = eventsDividend.Select(e =>
+        {
+            var response = MarketEventResp.BuildFrom(e);
+            response.AttentionLevel = MarketEventUtils.AttentionLevelForDividend(e, yieldsMap);
+            return response;
+        }).ToList();
         result.AddRange(eventsEarnings.Select(x => MarketEventResp.BuildFrom(x)));
         result.AddRange(eventsListing.Select(x => MarketEventResp.BuildFrom(x)));
         return ResponseOk(result.OrderBy(x => x.EventTime));

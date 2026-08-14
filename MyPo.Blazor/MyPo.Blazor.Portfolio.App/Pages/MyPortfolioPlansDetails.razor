@@ -4,9 +4,7 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages.PortfolioPlanDetails
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets
-@using MyPo.Portfolio.Shared.Api
 @using MyPo.Portfolio.Shared.Identity
-@using MyPo.Portfolio.Shared.Utils
 @using MyPo.Portfolio.Shared.Models
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW)]
@@ -92,7 +90,20 @@
                             <div>
                                 @if(SelectedPortfolioPlan?.Metadata is not null && !string.IsNullOrEmpty(SelectedPortfolioPlan.Metadata.Description))
                                 {
-                                    <p class="text-muted small mb-1">@(SelectedPortfolioPlan.Metadata.Description.SingleLine())</p>
+                                    <p class="text-muted small mb-1">
+                                        <span>@VisibleDescription</span>
+                                        @if (CanToggleDescription)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-link btn-sm p-0 ms-1 align-baseline text-muted"
+                                                    title="@(DescriptionExpanded ? "Collapse description" : "Show full description")"
+                                                    aria-label="@(DescriptionExpanded ? "Collapse description" : "Show full description")"
+                                                    aria-expanded="@DescriptionExpanded"
+                                                    @onclick="ToggleDescription">
+                                                <BIcon icon="@(DescriptionExpanded ? "bi-chevron-up" : "bi-three-dots")" />
+                                            </button>
+                                        }
+                                    </p>
                                 }
                                 <p class="small mb-0">
                                     @if (SelectedPortfolioPlan?.Portfolio is not null)
@@ -228,4 +239,19 @@
 <script src="@($"./_content/{this.GetType().Assembly.GetName().Name!}/js/print-utils.js")"></script>
 @code {
     private const string PAGE_TITLE = "My Portfolio Plan";
+    private const int DescriptionPreviewLength = 256;
+    private bool DescriptionExpanded { get; set; } = false;
+
+    private string Description => SelectedPortfolioPlan?.Metadata?.Description?.SingleLine() ?? string.Empty;
+
+    private bool CanToggleDescription => Description.Length > DescriptionPreviewLength;
+
+    private string VisibleDescription => DescriptionExpanded || !CanToggleDescription
+        ? Description
+        : Description.Excerpt(DescriptionPreviewLength);
+
+    private void ToggleDescription()
+    {
+        DescriptionExpanded = !DescriptionExpanded;
+    }
 }

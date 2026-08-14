@@ -36,13 +36,13 @@ public partial class Sidebar
         if (DebugHandler == null)
         {
             DebugOutput = ["No debug handler is registered."];
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
             return;
         }
 
         DebugRunning = true;
         DebugOutput = null;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
         try
         {
             DebugOutput = await DebugHandler(ServiceProvider);
@@ -54,7 +54,7 @@ public partial class Sidebar
         finally
         {
             DebugRunning = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

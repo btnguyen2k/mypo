@@ -14,16 +14,16 @@ public abstract class BasePage : BaseComponent
 
 	protected UserResp? CurrentUser { get; set; }
 
-	protected void SetBackgroundMsg(string msg)
+	protected async void SetBackgroundMsg(string msg)
 	{
 		BackgroundMsg = msg;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	protected void ClearBackgroundMsg()
+	protected async void ClearBackgroundMsg()
 	{
 		BackgroundMsg = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	/// <inheritdoc />
@@ -37,18 +37,18 @@ public abstract class BasePage : BaseComponent
 	protected const int ALERT_AUTO_CLOSE_MS = 15000;
 	protected CAlert? Alert { get; set; } = null;
 
-	protected void CloseAlert()
+	protected async void CloseAlert()
 	{
 		if (Alert == null) return;
 		Alert.Hide();
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	public void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
+	public async void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
 	{
 		if (Alert == null) return;
 		Alert.Show(type, message, autoCloseAfterMs);
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	public const string QUERY_PARM_ALERT_TYPE = "alertType";
