@@ -12,3 +12,4 @@
 - fix(JS): Fix error when calling JS interop/Datatables.
 - optimize(my-portfolio-details): Only fetch quotes for assets with positive holdings.
 - fix(API): UpdateMyPortfolioAsset does not correctly update asset tags.
+- impr(my-portfolio-details): UI/UX improvement.

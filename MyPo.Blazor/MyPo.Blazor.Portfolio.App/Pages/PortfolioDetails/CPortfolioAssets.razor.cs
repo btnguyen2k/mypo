@@ -24,6 +24,19 @@ public partial class CPortfolioAssets : CBase
         }
         return 0;
     }) ?? 0;
+    private decimal TotalUnsettledPnl => TotalCost > 0 && TotalMarketValue > 0 ? TotalMarketValue - TotalCost : 0;
+    private string TotalUnsettledPnlTextClass => TotalUnsettledPnl switch
+    {
+        > 0 => "text-success",
+        < 0 => "text-danger",
+        _ => "text-muted",
+    };
+    private string TotalUnsettledPnlBorderClass => TotalUnsettledPnlTextClass switch
+    {
+        "text-success" => "border-start-success",
+        "text-danger" => "border-start-danger",
+        _ => "border-start-secondary",
+    };
 
     [Parameter]
     public Dictionary<string, StockQuote>? QuotesMap { get; set; } // map {asset-id --> quote}
