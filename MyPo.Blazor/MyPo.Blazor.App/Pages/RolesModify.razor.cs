@@ -100,17 +100,17 @@ public partial class RolesModify
 		NavigationManager.NavigateTo(UIGlobals.ROUTE_IDENTITY_ROLES);
 	}
 
-	private void ShowAlert(string type, string message)
+	private async void ShowAlert(string type, string message)
 	{
 		AlertType = type;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		AlertType = AlertMessage = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private async Task BtnClickSave()

@@ -83,7 +83,7 @@ public partial class CPortfolioAssets : CBase
                     );
                 }
             }
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

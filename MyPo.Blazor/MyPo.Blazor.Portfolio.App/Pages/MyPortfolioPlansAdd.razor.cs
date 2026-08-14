@@ -43,19 +43,19 @@ public partial class MyPortfolioPlansAdd : BasePage
         }
     }
 
-    private void BtnClickAddTicker()
+    private async void BtnClickAddTicker()
     {
         HoldingTickers.Add(new HoldingTicker());
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void BtnClickRemoveTicker(string id)
+    private async void BtnClickRemoveTicker(string id)
     {
         var tickerToRemove = HoldingTickers.FirstOrDefault(ht => ht.Id == id);
         if (tickerToRemove != null)
         {
             HoldingTickers.Remove(tickerToRemove);
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

@@ -19,17 +19,17 @@ public partial class Roles
 	private IDictionary<string, RoleResp>? RoleMap { get; set; }
 	private RoleResp? SelectedRole { get; set; }
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		AlertMessage = string.Empty;
-		StateHasChanged();
+        await InvokeAsync(StateHasChanged);
 	}
 
-	private void ShowAlert(string type, string message)
+	private async void ShowAlert(string type, string message)
 	{
 		AlertType = type;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

@@ -229,9 +229,9 @@ public partial class MyPortfolioPlansDetails : BasePage
         }
     }
 
-    private void SwitchAnalysisTab(string tab)
+    private async void SwitchAnalysisTab(string tab)
     {
         ActiveAnalysisTab = tab;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

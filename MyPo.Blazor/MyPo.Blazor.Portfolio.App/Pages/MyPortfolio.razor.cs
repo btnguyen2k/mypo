@@ -43,7 +43,7 @@ public partial class MyPortfolio : BasePage
                 {
                     PortfolioPnlSummaryMap[portfolio.Id] = result.Data;
                     SetBackgroundMsg($"✅Fetched PnL summary for portfolio '{portfolio.Name}'.");
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
                 }
             });
         }

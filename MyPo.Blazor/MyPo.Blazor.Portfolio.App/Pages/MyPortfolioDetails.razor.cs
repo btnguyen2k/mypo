@@ -94,7 +94,7 @@ public partial class MyPortfolioDetails : BasePage
                 {
                     QuotesMap[quote.Key] = quote.Value;
                 }
-                StateHasChanged();
+                InvokeAsync(StateHasChanged);
             }
             return myTaskId == RefreshBackgroundTaskId;
         }
@@ -152,7 +152,7 @@ public partial class MyPortfolioDetails : BasePage
             if (resp.IsSuccess)
             {
                 SelectedPortfolio = resp.Data;
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
 
             if (myTaskId == RefreshBackgroundTaskId)
@@ -412,6 +412,6 @@ public partial class MyPortfolioDetails : BasePage
             return;
         }
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<object>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
+        await jsLocalStorage.InvokeVoidAsync("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
     }
 }

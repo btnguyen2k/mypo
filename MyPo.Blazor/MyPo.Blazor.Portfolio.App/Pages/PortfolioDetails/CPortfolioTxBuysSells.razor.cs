@@ -41,13 +41,13 @@ public partial class CPortfolioTxBuysSells : CBase
             var jsDatetimePicker = await PortfolioUtils.LoadJSDatetimePicker(JS);
             _ = Task.Run(async() => {
                 await Task.Delay(2000); // wait for a few seconds to ensure the datetime picker is loaded
-                await jsDatetimePicker.InvokeAsync<object>("InitDatetimePickers");
+                await jsDatetimePicker.InvokeVoidAsync("InitDatetimePickers");
             });
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
             _ = Task.Run(async() => {
                 await Task.Delay(2000); // wait for a few seconds to ensure the datatable is loaded
-                await jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblTxBuysSells");
+                await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblTxBuysSells");
             });
         }
     }

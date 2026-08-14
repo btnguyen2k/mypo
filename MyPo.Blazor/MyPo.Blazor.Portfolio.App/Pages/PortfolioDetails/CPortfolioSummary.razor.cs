@@ -51,7 +51,7 @@ public partial class CPortfolioSummary : CBase
             else
             {
                 PnlSummary = pnlSummaryResp.Data;
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         }
     }
@@ -72,7 +72,7 @@ public partial class CPortfolioSummary : CBase
                     MarketPricesMap[asset.Id] = latestPrice;
                 }
             }
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

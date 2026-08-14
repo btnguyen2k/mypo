@@ -39,19 +39,19 @@ public partial class Login : BaseComponent
 	[Inject]
 	private IConfiguration AppConfig { get; set; } = default!;
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		AlertMessage = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private bool alertIntact = true;
-	private void ShowAlert(string type, string message, bool setAlertIntactFlag = false)
+	private async void ShowAlert(string type, string message, bool setAlertIntactFlag = false)
 	{
 		AlertType = type;
 		AlertMessage = message;
 		alertIntact = setAlertIntactFlag;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	[Inject]

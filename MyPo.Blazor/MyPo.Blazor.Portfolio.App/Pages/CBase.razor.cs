@@ -17,15 +17,15 @@ public abstract class CBase : BaseComponent
 
     protected CAlert Alert { get; set; } = new();
 
-    protected void CloseAlert()
+    protected async void CloseAlert()
     {
         Alert.Hide();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
-    protected void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
+    protected async void ShowAlert(string type, string message, int autoCloseAfterMs = 0)
     {
         Alert.Show(type, message, autoCloseAfterMs);
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

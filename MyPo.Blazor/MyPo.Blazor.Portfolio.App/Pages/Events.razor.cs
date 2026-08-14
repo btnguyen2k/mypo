@@ -50,14 +50,14 @@ public partial class Events : BasePage
         {
             ActiveTab = TabIdDividend;
         }
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async void SwitchTab(string tab)
     {
         CloseAlert();
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<object>("LocalStoreSet", "Dashboard-active-tab", tab);
+        await jsLocalStorage.InvokeVoidAsync("LocalStoreSet", "Dashboard-active-tab", tab);
     }
 
     private async void GetStocksQuotesBackground()
@@ -87,7 +87,7 @@ public partial class Events : BasePage
                         var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
                         YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
                     }
-                    StateHasChanged();
+                    InvokeAsync(StateHasChanged);
                 }
                 else
                 {
@@ -99,33 +99,6 @@ public partial class Events : BasePage
         );
         SetBackgroundMsg(string.Empty);
     }
-
-    // private async void GetPricePreExDivBackground()
-    // {
-    // 	var now = DateTimeOffset.UtcNow;
-    // 	var events = MarketEventsList?
-    // 		.Where(e => e.EventType.Equals(MarketEventEntity.EVENT_DIVIDEND, StringComparison.CurrentCultureIgnoreCase)
-    // 			|| e.EventType.Equals(MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.CurrentCultureIgnoreCase))
-    // 		.Where(e => e.EventTime < now) ?? [];
-    // 	var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-    // 	foreach (var e in events)
-    // 	{
-    // 		var tz = e.MarketId.ToUpper() switch
-    // 		{
-    // 			"AU" => "Australia/Sydney",
-    // 			"VN" => "Asia/Ho_Chi_Minh",
-    // 			"US" => "America/New_York",
-    // 			_ => "UTC"
-    // 		};
-    // 		var dateAt = (e.EventTime.ToTimeZoneSilently(tz) ?? e.EventTime).AddDays(-1).Date;
-    // 		var quoteAtResp = await apiClient.GetStockQuoteAtDateAsync(e.ItemCode, dateAt, await GetAuthTokenAsync(), ApiBaseUrl);
-    // 		if (quoteAtResp.Status == 200 && quoteAtResp.Data != null)
-    // 		{
-    // 			PreExDivPrice[e.ItemCode] = quoteAtResp.Data.Close;
-    // 			StateHasChanged();
-    // 		}
-    // 	}
-    // }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -158,9 +131,9 @@ public partial class Events : BasePage
             }
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            var taskDatatableDividendEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblDividendEvents");
-            var taskDatatableListingEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblListingEvents");
-            var taskDatatableEarningsEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblEarningsEvents");
+            var taskDatatableDividendEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblDividendEvents");
+            var taskDatatableListingEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblListingEvents");
+            var taskDatatableEarningsEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
             await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableListingEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
 
             SwitchToSavedTab();

@@ -16,12 +16,12 @@ public abstract class LoginExternalBase : BaseComponent
 	[Inject]
 	protected AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
-	protected void ShowAlert(string type, string message, string title = "")
+	protected async void ShowAlert(string type, string message, string title = "")
 	{
 		AlertType = type;
 		AlertTitle = title;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	protected IDictionary<string, string> ParseQueryParams(bool urlDecode = true, bool htmlDecode = false)
