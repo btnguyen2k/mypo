@@ -1,15 +1,3 @@
-﻿# This file has been cleaned up post-releasing version 2.2.2.
+# This file has been cleaned up post-releasing version 2.3.0.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
-#!VERSION=2.3.0
-- impr(my-portfolio-plans/UI): UI fixes and improvements.
-- impr: Extend portfolio metadata to capture tobal buys/sells/fees/tax/interest/income.
-- patch(portfolio-metadata): Update P&L formula to include total buys/sells/fees/tax/interest/income.
-- refactor(dashboard/UI): Refactor dashboard UI to use new portfolio metadata.
-- fix: Viewers cannot see portfolio and portfolio plans.
-- impr(my-portfolio-plan-details): UI/UX improvement.
-- optimize(static-data): Load index constituents from FinHub instead of local resources.
-- fix(JS): Fix error when calling JS interop/Datatables.
-- optimize(my-portfolio-details): Only fetch quotes for assets with positive holdings.
-- fix(API): UpdateMyPortfolioAsset does not correctly update asset tags.
-- impr(my-portfolio-details): UI/UX improvement.
