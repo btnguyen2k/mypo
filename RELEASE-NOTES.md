@@ -1,5 +1,24 @@
 # My Portfolio Tracker release notes
 
+## 2026-08-14 - v2.3.0
+
+### Added/Refactoring/Deprecation
+
+- Refactor(dashboard/UI): Refactor dashboard UI to use new portfolio metadata.
+
+### Fixed/Improvements
+
+- Impr(my-portfolio-plans/UI): UI fixes and improvements.
+- Impr: Extend portfolio metadata to capture tobal buys/sells/fees/tax/interest/income.
+- Patch(portfolio-metadata): Update P&L formula to include total buys/sells/fees/tax/interest/income.
+- Fix: Viewers cannot see portfolio and portfolio plans.
+- Impr(my-portfolio-plan-details): UI/UX improvement.
+- Optimize(static-data): Load index constituents from FinHub instead of local resources.
+- Fix(JS): Fix error when calling JS interop/Datatables.
+- Optimize(my-portfolio-details): Only fetch quotes for assets with positive holdings.
+- Fix(API): UpdateMyPortfolioAsset does not correctly update asset tags.
+- Impr(my-portfolio-details): UI/UX improvement.
+
 ## 2026-08-12 - v2.2.2
 
 ### Fixed/Improvements
