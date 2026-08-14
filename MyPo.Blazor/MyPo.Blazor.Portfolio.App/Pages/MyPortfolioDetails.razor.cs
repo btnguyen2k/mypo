@@ -264,16 +264,20 @@ public partial class MyPortfolioDetails : BasePage
     private async void AutoPopulateAssetMetadata()
     {
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        foreach (var a in (Assets ?? []).Where(a => a.Metadata is null || string.IsNullOrEmpty(a.Metadata.CorpName)
-                || string.IsNullOrEmpty(a.Metadata.AssetType)
-                || a.Metadata.Tags is null || a.Metadata.Tags.Count == 0
-                || (a.Metadata.AssetType != "ETF" && (string.IsNullOrEmpty(a.Metadata.Industry) || string.IsNullOrEmpty(a.Metadata.Industry)))
-            )
-        )
+        var authToken = await GetAuthTokenAsync();
+        var assetsToUpdate = (Assets ?? [])
+            .Where(a => a.Quantity > 0) // only fetch metadata for assets positive holdings
+            .Where(a => a.Metadata is null
+                || string.IsNullOrEmpty(a.Metadata.CorpName)  // corp name is mandatory
+                || string.IsNullOrEmpty(a.Metadata.AssetType) // asset type is mandatory
+                || a.Metadata.Tags is null || a.Metadata.Tags.Count == 0 // tags should not be empty
+                || (a.Metadata.AssetType != "ETF" && (string.IsNullOrEmpty(a.Metadata.Sector) || string.IsNullOrEmpty(a.Metadata.Industry))) // not ETF but sector/industry is empty
+            ).ToList();
+        foreach (var a in assetsToUpdate)
         {
             var symbol = $"{a.Market?.Code}:{a.ItemCode}";
             SetBackgroundMsg($"🔍Fetching overview info for asset '{symbol}'...");
-            var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, await GetAuthTokenAsync(), ApiBaseUrl);
+            var apiResp = await apiClient.GetStockSymbolOverviewAsync(symbol, authToken, ApiBaseUrl);
             if (!apiResp.IsSuccess)
             {
                 SetBackgroundMsg($"❗Failed to fetch overview info for asset '{symbol}'. Status: {apiResp.Status}, Message: {apiResp.Message}");
@@ -284,10 +288,10 @@ public partial class MyPortfolioDetails : BasePage
                 if (overview is null) continue;
 
                 a.Metadata ??= new AssetMetadata();
-                a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? "";
-                a.Metadata.Industry = overview.Industry?.Trim() ?? "";
-                a.Metadata.Sector = overview.Sector?.Trim() ?? "";
-                a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "";
+                a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? string.Empty;
+                a.Metadata.Industry = overview.Industry?.Trim() ?? string.Empty;
+                a.Metadata.Sector = overview.Sector?.Trim() ?? string.Empty;
+                a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "N/A";
                 a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
                 if (!string.IsNullOrEmpty(a.Metadata.Industry))
                 {
@@ -326,11 +330,15 @@ public partial class MyPortfolioDetails : BasePage
 
         if (!(SelectedPortfolio.Metadata?.IsContainer ?? false))
         {
-            var symbolsList = Assets?.Select(a =>
-            {
-                var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
-                return $"{market?.Code ?? string.Empty}:{a.ItemCode}";
-            }).Distinct().ToList() ?? [];
+            var symbolsList = Assets?
+                .Where(a => a.Quantity > 0) // optimization: only fetch quotes for assets positive holdings
+                .Select(a =>
+                {
+                    var market = Markets?.FirstOrDefault(m => string.Equals(m.Id, a.MarketId, StringComparison.OrdinalIgnoreCase));
+                    return $"{market?.Code ?? string.Empty}:{a.ItemCode}";
+                })
+                .Distinct()
+                .ToList() ?? [];
             SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
             var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
             taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));

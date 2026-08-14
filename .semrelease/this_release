@@ -10,3 +10,5 @@
 - impr(my-portfolio-plan-details): UI/UX improvement.
 - optimize(static-data): Load index constituents from FinHub instead of local resources.
 - fix(JS): Fix error when calling JS interop/Datatables.
+- optimize(my-portfolio-details): Only fetch quotes for assets with positive holdings.
+- fix(API): UpdateMyPortfolioAsset does not correctly update asset tags.
