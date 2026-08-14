@@ -412,6 +412,6 @@ public partial class MyPortfolioDetails : BasePage
             return;
         }
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
+        await jsLocalStorage.InvokeAsync<object>("LocalStoreSet", "MyPortfolioDetails-active-tab", tab);
     }
 }

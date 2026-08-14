@@ -57,7 +57,7 @@ public partial class Events : BasePage
     {
         CloseAlert();
         var jsLocalStorage = await PortfolioUtils.LoadJSLocalStorage(JS);
-        await jsLocalStorage.InvokeAsync<string>("LocalStoreSet", "Dashboard-active-tab", tab);
+        await jsLocalStorage.InvokeAsync<object>("LocalStoreSet", "Dashboard-active-tab", tab);
     }
 
     private async void GetStocksQuotesBackground()
@@ -158,9 +158,10 @@ public partial class Events : BasePage
             }
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblDividendEvents");
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblListingEvents");
-            await jsDatatable.InvokeAsync<string>("MakeDatatable", "#tblEarningsEvents");
+            var taskDatatableDividendEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblDividendEvents");
+            var taskDatatableListingEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblListingEvents");
+            var taskDatatableEarningsEvents = jsDatatable.InvokeAsync<object>("MakeDatatable", "#tblEarningsEvents");
+            await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableListingEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
 
             SwitchToSavedTab();
         }

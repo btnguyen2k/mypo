@@ -144,7 +144,6 @@ public partial class Dashboard : BasePage
             return;
         }
         PortfolioPlans = [.. portfolioPlanResult.Data ?? []];
-        Console.WriteLine($"Loaded {Portfolios.Count} portfolios and {PortfolioPlans.Count} portfolio plans.");
 
         CloseAlert();
     }

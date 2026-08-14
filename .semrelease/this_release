@@ -9,3 +9,4 @@
 - fix: Viewers cannot see portfolio and portfolio plans.
 - impr(my-portfolio-plan-details): UI/UX improvement.
 - optimize(static-data): Load index constituents from FinHub instead of local resources.
+- fix(JS): Fix error when calling JS interop.
