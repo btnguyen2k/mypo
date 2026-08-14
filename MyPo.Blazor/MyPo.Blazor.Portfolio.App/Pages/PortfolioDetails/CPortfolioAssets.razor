@@ -83,19 +83,47 @@ else
             <table class="table table-sm table-hover">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-center text-nowrap w-auto">Item</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Units</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Avg. Price</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Total Cost</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Price</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Value</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Unsettled P/L %</th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.Item)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.Item)">
+                                Item <BIcon icon="@SortIcon(AssetSortColumn.Item)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.Units)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.Units)">
+                                Units <BIcon icon="@SortIcon(AssetSortColumn.Units)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.AveragePrice)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.AveragePrice)">
+                                Avg. Price <BIcon icon="@SortIcon(AssetSortColumn.AveragePrice)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.TotalCost)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.TotalCost)">
+                                Cost Basic <BIcon icon="@SortIcon(AssetSortColumn.TotalCost)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.MarketPrice)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.MarketPrice)">
+                                Mkt. Price <BIcon icon="@SortIcon(AssetSortColumn.MarketPrice)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.MarketValue)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.MarketValue)">
+                                Mkt. Value <BIcon icon="@SortIcon(AssetSortColumn.MarketValue)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.UnsettledPnlPercent)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.UnsettledPnlPercent)">
+                                Unsettled P/L % <BIcon icon="@SortIcon(AssetSortColumn.UnsettledPnlPercent)" />
+                            </button>
+                        </th>
                         <th scope="col" class="text-center text-nowrap w-auto">Tags</th>
                         <th scope="col" class="text-center text-nowrap w-auto">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="table-group-divider">
-                    @foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
+                    @foreach (var asset in SortedAssets)
                     {
                         <tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
                             <td class="text-start text-nowrap w-auto">

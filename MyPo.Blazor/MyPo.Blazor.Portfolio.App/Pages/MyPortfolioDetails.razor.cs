@@ -266,7 +266,6 @@ public partial class MyPortfolioDetails : BasePage
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         var authToken = await GetAuthTokenAsync();
         var assetsToUpdate = (Assets ?? [])
-            .Where(a => a.Quantity > 0) // only fetch metadata for assets positive holdings
             .Where(a => a.Metadata is null
                 || string.IsNullOrEmpty(a.Metadata.CorpName)  // corp name is mandatory
                 || string.IsNullOrEmpty(a.Metadata.AssetType) // asset type is mandatory
