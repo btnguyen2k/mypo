@@ -2,17 +2,9 @@
 @using MyPo.Blazor.App.Shared
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails
-@using MyPo.Blazor.Portfolio.App.Pages.Widgets
-@using MyPo.Portfolio.Shared.Api
-@using MyPo.Portfolio.Shared.Identity
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS)]
 @inherits BasePage
-
-<HeadContent>
-    <!-- Plugins and styles required by this page-->
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.min.css" />
-</HeadContent>
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
@@ -79,6 +71,11 @@
         <NotAuthorizedView PageTitle="@($"{PAGE_TITLE} | {AppInfo?.Name} v{AppInfo?.Version} - Not Authorized")" LoginUrl="@LoginUrl" />
     </NotAuthorized>
     <Authorized>
+        <HeadContent>
+            <!-- Plugins and styles required by this page-->
+            <link rel="stylesheet" href="@($"https://cdn.datatables.net/{PortfolioUIGlobals.VERSION_DATATABLES}/css/dataTables.bootstrap5.min.css")" />
+        </HeadContent>
+
         <PageTitle>@PAGE_TITLE | @AppInfo?.Name v@(AppInfo?.Version)</PageTitle>
         <div class="container-lg px-4">
             <div class="card @((SelectedPortfolio?.IsActive??false)?"border-top-primary":"border-top-secondary") border-top-3 mb-4">
@@ -254,22 +251,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Plugins and scripts required by this page-->
+        <!-- Popperjs -->
+        <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha256-BRqBN7dYgABqtY9Hd4ynE+1slnEw+roEPFzQ7TRRfcg=" crossorigin="anonymous"></script>
+        <!-- Tempus Dominus JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
+
+        <!-- Tempus Dominus Styles -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
+
+        <!-- Datatables  -->
+        <script src="@($"https://code.jquery.com/jquery-{PortfolioUIGlobals.VERSION_JQUERY}.min.js")" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+        <script src="@($"https://cdn.datatables.net/{PortfolioUIGlobals.VERSION_DATATABLES}/js/dataTables.min.js")"></script>
+        <script src="@($"https://cdn.datatables.net/{PortfolioUIGlobals.VERSION_DATATABLES}/js/dataTables.bootstrap5.min.js")"></script>
     </Authorized>
 </AuthorizeView>
 
-<!-- Plugins and scripts required by this page-->
-<!-- Popperjs -->
-<script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha256-BRqBN7dYgABqtY9Hd4ynE+1slnEw+roEPFzQ7TRRfcg=" crossorigin="anonymous"></script>
-<!-- Tempus Dominus JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
-
-<!-- Tempus Dominus Styles -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
-
-<!-- Datatables  -->
-<script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.bootstrap5.min.js"></script>
 @code {
     private const string PAGE_TITLE = "My Portfolio";
 }

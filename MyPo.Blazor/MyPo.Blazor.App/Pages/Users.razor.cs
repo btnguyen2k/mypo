@@ -1,4 +1,4 @@
-using MyPo.Blazor.App.Shared;
+﻿using MyPo.Blazor.App.Shared;
 using MyPo.Shared.Api;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -19,17 +19,17 @@ public partial class Users
 	private IDictionary<string, UserResp>? UserMap { get; set; }
 	private UserResp? SelectedUser { get; set; }
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		AlertMessage = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	private void ShowAlert(string type, string message)
+	private async void ShowAlert(string type, string message)
 	{
 		AlertType = type;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

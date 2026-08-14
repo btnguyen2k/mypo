@@ -88,16 +88,16 @@ public sealed class PortfolioResp
     public PortfolioMetadata? Metadata { get; set; }
 
     [JsonIgnore]
-    public decimal TotalCosts => Metadata is not null ? Metadata.TotalCosts : 0;
+    public decimal TotalCosts => Metadata is not null ? Metadata.CostBasic : 0;
 
     [JsonIgnore]
-    public decimal TotalMarketValue => Metadata is not null ? Metadata.TotalMarketValue : 0;
+    public decimal TotalMarketValue => Metadata is not null ? Metadata.MarketValue : 0;
 
     [JsonIgnore]
-    public decimal TotalPnl => Metadata is not null ? Metadata.TotalPnl : 0;
+    public decimal TotalPnl => Metadata is not null ? Metadata.UnrealizedPnl : 0;
 
     [JsonIgnore]
-    public decimal TotalPnlPct => Metadata is not null ? Metadata.TotalPnlPct : 0;
+    public decimal TotalPnlPct => Metadata is not null ? Metadata.UnrealizedPnlPct : 0;
 
     [JsonIgnore]
     public SortedSet<PortfolioResp>? Children { get; set; }

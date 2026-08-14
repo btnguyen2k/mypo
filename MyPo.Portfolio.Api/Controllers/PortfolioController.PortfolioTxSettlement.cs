@@ -10,9 +10,9 @@ namespace MyPo.Portfolio.Api.Controllers;
 public partial class PortfolioController
 {
     /// <summary>
-    /// Gets current user's portfolio Settlement records.
+    /// Gets current user's portfolio settlement records.
     /// </summary>
-    /// <param name="id">ID of the portfolio to fetch ROI records from.</param>
+    /// <param name="id">ID of the portfolio to fetch settlement records from.</param>
     /// <returns></returns>
     [HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLEMENTS)]
     public async ValueTask<ActionResult<ApiResp<IEnumerable<TxSettlementResp>>>> GetMyPortfolioTxSettlements([FromRoute] string id)
@@ -31,9 +31,9 @@ public partial class PortfolioController
             return ResponseNoData(404, "Portfolio not found or not accessible.");
         }
 
-        var roiRecList = await PortfolioRepository.GetTxSettlementsByPortfolioIdAsync(id);
+        var txList = await PortfolioRepository.GetTxSettlementsByPortfolioIdAsync(id);
         var result = new List<TxSettlementResp>();
-        foreach (var rr in roiRecList)
+        foreach (var rr in txList)
         {
             var market = Globals.MarketsMap.TryGetValue(rr.RefMarketId?.ToUpper() ?? string.Empty, out var mkt) ? mkt : null;
             result.Add(TxSettlementResp.BuildFrom(rr, market));
@@ -76,10 +76,10 @@ public partial class PortfolioController
     }
 
     /// <summary>
-    /// Creates a new Settlement record and Adds it to current user's portfolio.
+    /// Creates a new settlement record and Adds it to current user's portfolio.
     /// </summary>
-    /// <param name="id">ID of the portfolio to add ROI record to.</param>
-    /// <param name="req">Details of the ROI record to add.</param>
+    /// <param name="id">ID of the portfolio to add settlement record to.</param>
+    /// <param name="req">Details of the settlement record to add.</param>
     /// <returns></returns>
     [HttpPost(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLEMENTS)]
     [Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
@@ -92,7 +92,7 @@ public partial class PortfolioController
             return authErrorResult;
         }
 
-        var (reqRoiRec, validationResult) = ValidateTxSettlement(req, null);
+        var (reqTxRec, validationResult) = ValidateTxSettlement(req, null);
         if (validationResult != null)
         {
             return validationResult;
@@ -102,36 +102,36 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(404, "Portfolio not found or not accessible.");
         }
 
         var rec = new TxSettlementEntity
         {
             Status = TxSettlementEntity.STATUS_NEW,
-            PortfolioId = reqRoiRec!.Value.PortfolioId,
-            TxType = reqRoiRec!.Value.TxType,
-            TxTime = reqRoiRec!.Value.TxTime,
-            TxValue = reqRoiRec!.Value.TxValue,
-            RefTxId = reqRoiRec!.Value.RefTxId ?? null,
-            RefItemType = reqRoiRec!.Value.RefItemType?.Trim().ToUpper() ?? null,
-            RefItemCode = reqRoiRec!.Value.RefItemCode?.Trim().ToUpper() ?? null,
-            RefMarketId = reqRoiRec!.Value.RefMarketId?.Trim() ?? null,
-            TxDesc = reqRoiRec!.Value.TxDesc?.Trim() ?? null,
+            PortfolioId = reqTxRec!.Value.PortfolioId,
+            TxType = reqTxRec!.Value.TxType,
+            TxTime = reqTxRec!.Value.TxTime,
+            TxValue = reqTxRec!.Value.TxValue,
+            RefTxId = reqTxRec!.Value.RefTxId ?? null,
+            RefItemType = reqTxRec!.Value.RefItemType?.Trim().ToUpper() ?? null,
+            RefItemCode = reqTxRec!.Value.RefItemCode?.Trim().ToUpper() ?? null,
+            RefMarketId = reqTxRec!.Value.RefMarketId?.Trim() ?? null,
+            TxDesc = reqTxRec!.Value.TxDesc?.Trim() ?? null,
         };
         var result = await PortfolioRepository.CreateTxSettlementAsync(rec);
         if (result == null)
         {
-            return ResponseNoData(500, "Failed to create ROI record.");
+            return ResponseNoData(500, "Failed to create settlement record.");
         }
         return ResponseOk(TxSettlementResp.BuildFrom(rec));
     }
 
     /// <summary>
-    /// Updates an existing Settlement record from current user's portfolio.
+    /// Updates an existing settlement record from current user's portfolio.
     /// </summary>
     /// <param name="id">ID of the portfolio.</param>
-    /// <param name="txid">ID of the ROI record.</param>
-    /// <param name="req">Details of the ROI record to update.</param>
+    /// <param name="txid">ID of the settlement record.</param>
+    /// <param name="req">Details of the settlement record to update.</param>
     /// <returns></returns>
     [HttpPut(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLEMENT_ID)]
     [Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
@@ -147,7 +147,7 @@ public partial class PortfolioController
         var existingRec = await PortfolioRepository.GetTxSettlementByIdAsync(txid);
         if (existingRec == null)
         {
-            return ResponseNoData(404, "ROI record not found.");
+            return ResponseNoData(404, "Settlement record not found.");
         }
         var (reqRec, validationResult) = ValidateTxSettlement(req, existingRec);
         if (validationResult != null)
@@ -159,12 +159,12 @@ public partial class PortfolioController
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(req.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or record does not belong to the portfolio.");
         }
 
         if (TxSettlementEntity.ImmutableStatuses.Contains(existingRec.Status?.ToUpper() ?? string.Empty))
         {
-            // for immutable ROI records, only notes/description can be updated
+            // for immutable settlement records, only notes/description can be updated
             existingRec.TxDesc = reqRec!.Value.TxDesc?.Trim() ?? null;
         }
         else
@@ -181,16 +181,16 @@ public partial class PortfolioController
         existingRec = await PortfolioRepository.UpdateTxSettlementAsync(existingRec);
         if (existingRec == null)
         {
-            return ResponseNoData(500, "Failed to update ROI record.");
+            return ResponseNoData(500, "Failed to update settlement record.");
         }
         return ResponseOk(TxSettlementResp.BuildFrom(existingRec));
     }
 
     /// <summary>
-    /// Deletes an existing Settlement record from current user's portfolio.
+    /// Deletes an existing settlement record from current user's portfolio.
     /// </summary>
     /// <param name="id">ID of the portfolio.</param>
-    /// <param name="txid">ID of the ROI record.</param>
+    /// <param name="txid">ID of the settlement record.</param>
     /// <returns></returns>
     [HttpDelete(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_ID_SETTLEMENT_ID)]
     [Authorize(Policy = PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER)]
@@ -206,26 +206,26 @@ public partial class PortfolioController
         var existingRec = await PortfolioRepository.GetTxSettlementByIdAsync(txid);
         if (existingRec == null)
         {
-            return ResponseNoData(404, "ROI record not found.");
+            return ResponseNoData(404, "Settlement record not found.");
         }
 
         // validate portfolio, must be current user's portfolio
         var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
         if (!(existingPortfolio?.Id.Equals(existingRec.PortfolioId, StringComparison.OrdinalIgnoreCase) ?? false))
         {
-            return ResponseNoData(400, "Portfolio not found or mismatched.");
+            return ResponseNoData(400, "Portfolio not found or record does not belong to the portfolio.");
         }
 
         if (TxSettlementEntity.ImmutableStatuses.Contains(existingRec.Status.ToUpper()))
         {
-            return ResponseNoData(400, $"ROI record is in status '{existingRec.Status}' and cannot be deleted.");
+            return ResponseNoData(400, $"Settlement record is in status '{existingRec.Status}' and cannot be deleted.");
         }
         else
         {
             var result = await PortfolioRepository.DeleteTxSettlementAsync(existingRec);
             if (!result)
             {
-                return ResponseNoData(500, "Failed to delete ROI record.");
+                return ResponseNoData(500, "Failed to delete settlement record.");
             }
             return ResponseOk(TxSettlementResp.BuildFrom(existingRec));
         }
@@ -247,10 +247,10 @@ public partial class PortfolioController
         }
 
         // validate portfolio, must be current user's portfolio
-        var existingPortfolio = await GetPortfolioIfOwnedByUser(currentUser, id);
+        var existingPortfolio = await GetPortfolioIfAccessible(currentUser, id);
         if (existingPortfolio == null)
         {
-            return ResponseNoData(404, "Portfolio not found.");
+            return ResponseNoData(404, "Portfolio not found or not accessible.");
         }
 
         var pnlSummary = await PortfolioRepository.GetPnlSummaryForPortfolioAsync(id);

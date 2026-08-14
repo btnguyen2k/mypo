@@ -65,59 +65,39 @@
             }
             else if (!HideUI)
             {
-                <!-- SECTION: Quick Actions -->
-                <div class="card mb-3">
-                    <div class="card-body d-flex flex-wrap align-items-center gap-2 py-2 px-3">
-                        <span class="small fw-semibold text-muted text-uppercase me-1">Quick actions</span>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
-                            <BIcon icon="bi-briefcase" extraClassName="me-1" />Manage portfolios
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">
-                            <BIcon icon="bi-distribute-vertical" extraClassName="me-1" />Portfolio plans
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_EVENTS">
-                            <BIcon icon="bi-calendar-event" extraClassName="me-1" />Market events
-                        </a>
-                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_TOOL_BUY_SELL_WITH_FEE">
-                            <BIcon icon="bi-calculator" extraClassName="me-1" />Buy/sell calculator
-                        </a>
-                    </div>
-                </div>
-
-                <!-- SECTION: Portfolio Summary  -->
+                <!-- SECTION: Currency Summary -->
                 <div class="row g-3 mb-4">
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-danger">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="text-muted small text-uppercase">Active portfolios</div>
-                                        <div class="display-6 fw-semibold">@ActivePortfolios.Count</div>
-                                    </div>
-                                    <BIcon icon="bi-briefcase" extraClassName="fs-2 text-primary" />
-                                </div>
-                                <div class="small text-muted mt-2">
-                                    @InvestmentPortfolios.Count investment(s)
-                                    @*
-                                    @if (ActiveContainerCount > 0)
-                                    {
-                                        <span> | @ActiveContainerCount container(s)</span>
-                                    }
-                                    *@
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-info">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Market value</div>
-                                    <BIcon icon="bi-wallet2" extraClassName="fs-3 text-info" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Cost basic</div>
+                                    <BIcon icon="bi-cash-stack" extraClassName="text-secondary" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2">
+                                    <div class="d-flex justify-content-between gap-2 small">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.CostBasic)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-info">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Market value</div>
+                                    <BIcon icon="bi-wallet2" extraClassName="text-info" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 small">
                                         <span class="text-muted">@summary.Currency</span>
                                         <span class="fw-semibold">@FormatAmount(summary.MarketValue)</span>
                                     </div>
@@ -129,18 +109,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 @AggregatePnlBorderClass">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Invested cost</div>
-                                    <BIcon icon="bi-cash-stack" extraClassName="fs-3 text-secondary" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Unrealized P/L</div>
+                                    <BIcon icon="bi-graph-up-arrow" extraClassName="@($"{AggregatePnlTextClass}")" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2">
-                                        <span class="text-muted">@summary.Currency</span>
-                                        <span class="fw-semibold">@FormatAmount(summary.TotalCosts)</span>
+                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.UnrealizedPnl) small">
+                                        <span>@summary.Currency</span>
+                                        <span class="fw-semibold">
+                                            @FormatSignedAmount(summary.UnrealizedPnl)
+                                            <small>(@FormatPercentage(summary.UnrealizedPnlPct))</small>
+                                        </span>
                                     </div>
                                 }
                                 @if (CurrencySummaries.Count == 0)
@@ -150,20 +133,62 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 @AggregatePnlBorderClass">
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="text-muted small text-uppercase">Unrealized P/L</div>
-                                    <BIcon icon="bi-graph-up-arrow" extraClassName="@($"fs-3 {AggregatePnlTextClass}")" />
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ investment</div>
+                                    <BIcon icon="bi-bank" extraClassName="text-primary" />
                                 </div>
                                 @foreach (var summary in CurrencySummaries)
                                 {
-                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.TotalPnl)">
+                                    <div class="d-flex justify-content-between gap-2 small">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.TotalInvestment)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 border-start-success">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ return</div>
+                                    <BIcon icon="bi-cash-coin" extraClassName="text-success" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 small">
+                                        <span class="text-muted">@summary.Currency</span>
+                                        <span class="fw-semibold">@FormatAmount(summary.TotalReturn)</span>
+                                    </div>
+                                }
+                                @if (CurrencySummaries.Count == 0)
+                                {
+                                    <div class="h4 mb-0">--</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4 col-xl-2">
+                        <div class="card h-100 border-start border-start-4 @AggregateTotalUnrealizedPnlBorderClass">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 small">
+                                    <div class="text-uppercase">Σ unrealized P/L</div>
+                                    <BIcon icon="bi-graph-up" extraClassName="@($"{AggregateTotalUnrealizedPnlTextClass}")" />
+                                </div>
+                                @foreach (var summary in CurrencySummaries)
+                                {
+                                    <div class="d-flex justify-content-between gap-2 @PnlTextClass(summary.TotalUnrealizedPnl) small">
                                         <span>@summary.Currency</span>
                                         <span class="fw-semibold">
-                                            @FormatSignedAmount(summary.TotalPnl)
-                                            <small>(@FormatPercentage(summary.TotalPnlPct))</small>
+                                            @FormatSignedAmount(summary.TotalUnrealizedPnl)
+                                            <small>(@FormatPercentage(summary.TotalUnrealizedPnlPct))</small>
                                         </span>
                                     </div>
                                 }
@@ -183,7 +208,7 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <div>
                                     <h4 class="card-title mb-0">Portfolio overview</h4>
-                                    <small class="text-muted">Current valuation for active investment portfolios</small>
+                                    <small class="text-muted">Key valuation and return metrics for active investment portfolios</small>
                                 </div>
                                 <a class="btn btn-outline-primary btn-sm" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">
                                     View all <BIcon icon="bi-arrow-right" extraClassName="ms-1" />
@@ -199,50 +224,68 @@
                                 }
                                 else
                                 {
-                                    <div class="table-responsive">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="ps-3">Portfolio</th>
-                                                    <th class="text-end">Market value</th>
-                                                    <th class="text-end">Invested cost</th>
-                                                    <th class="text-end">P/L</th>
-                                                    <th>Valuation</th>
-                                                    <th class="text-end pe-3"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="table-group-divider">
-                                                @foreach (var portfolio in InvestmentPortfolios)
-                                                {
-                                                    <tr>
-                                                        <td class="ps-3">
-                                                            <div class="fw-semibold">@portfolio.Name</div>
-                                                            <div class="small text-muted">
-                                                                @portfolio.Currency
-                                                                @if (!string.IsNullOrEmpty(ParentName(portfolio)))
-                                                                {
-                                                                    <span> | @ParentName(portfolio)</span>
-                                                                }
-                                                            </div>
-                                                        </td>
-                                                        <td class="text-end text-nowrap">@FormatAmount(portfolio.TotalMarketValue)</td>
-                                                        <td class="text-end text-nowrap">@FormatAmount(portfolio.TotalCosts)</td>
-                                                        <td class="text-end text-nowrap @PnlTextClass(portfolio.TotalPnl)">
-                                                            <div class="fw-semibold">@FormatSignedAmount(portfolio.TotalPnl)</div>
-                                                            <small>@FormatPercentage(portfolio.TotalPnlPct)</small>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge @FreshnessBadgeClass(portfolio)">@FreshnessText(portfolio)</span>
-                                                        </td>
-                                                        <td class="text-end pe-3">
-                                                            <a class="btn btn-outline-primary btn-sm" href="@PortfolioDetailsUrl(portfolio.Id)" title="Open portfolio">
-                                                                <BIcon icon="bi-arrow-right" />
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var portfolio in InvestmentPortfolios)
+                                        {
+                                            var unrealizedPnl = portfolio.Metadata?.UnrealizedPnl ?? 0m;
+                                            var unrealizedPnlPct = portfolio.Metadata?.UnrealizedPnlPct ?? 0m;
+                                            var totalUnrealizedPnl = portfolio.Metadata?.TotalUnrealizedPnl ?? 0m;
+                                            var totalUnrealizedPnlPct = portfolio.Metadata?.TotalUnrealizedPnlPct ?? 0m;
+
+                                            <div class="list-group-item p-3">
+                                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                                    <div>
+                                                        <div class="fw-semibold">@portfolio.Name</div>
+                                                        <div class="small text-muted">
+                                                            @portfolio.Currency
+                                                            @if (!string.IsNullOrEmpty(ParentName(portfolio)))
+                                                            {
+                                                                <span> | @ParentName(portfolio)</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge @FreshnessBadgeClass(portfolio)">@FreshnessText(portfolio)</span>
+                                                        <a class="btn btn-outline-primary btn-sm" href="@PortfolioDetailsUrl(portfolio.Id)" title="Open portfolio">
+                                                            <BIcon icon="bi-arrow-right" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3 mt-0">
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Cost basic</div>
+                                                        <div class="fw-semibold text-nowrap">@FormatAmount(GetCostBasic(portfolio))</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Market value</div>
+                                                        <div class="fw-semibold text-nowrap">@FormatAmount(GetMarketValue(portfolio))</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Unrealized P/L</div>
+                                                        <div class="text-nowrap @PnlTextClass(unrealizedPnl)">
+                                                            <span class="fw-semibold">@FormatSignedAmount(unrealizedPnl)</span>
+                                                            <small>(@FormatPercentage(unrealizedPnlPct))</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Total investment</div>
+                                                        <div class="fw-semibold text-nowrap">@FormatAmount(portfolio.Metadata?.TotalInvestment ?? 0m)</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Total return</div>
+                                                        <div class="fw-semibold text-nowrap">@FormatAmount(portfolio.Metadata?.TotalReturn ?? 0m)</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-4">
+                                                        <div class="small text-muted">Total unrealized P/L</div>
+                                                        <div class="text-nowrap @PnlTextClass(totalUnrealizedPnl)">
+                                                            <span class="fw-semibold">@FormatSignedAmount(totalUnrealizedPnl)</span>
+                                                            <small>(@FormatPercentage(totalUnrealizedPnlPct))</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                 }
                             </div>
@@ -290,12 +333,13 @@
                     </div>
                 </div>
 
+                <!-- SECTION: Performance highlights -->
                 @if (BestPerformer is not null || WeakestPerformer is not null)
                 {
                     <div class="card mb-4">
                         <div class="card-header">
                             <h4 class="card-title mb-0">Performance highlights</h4>
-                            <small class="text-muted">Unrealized return based on current market value and invested cost</small>
+                            <small class="text-muted">Unrealized return based on current market value and cost basic</small>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
@@ -310,9 +354,9 @@
                                                         <h5 class="text-body mb-1">@BestPerformer.Name</h5>
                                                         <span class="text-muted">@BestPerformer.Currency</span>
                                                     </div>
-                                                    <div class="text-end @PnlTextClass(BestPerformer.TotalPnl)">
+                                                    <div class="text-end @PnlTextClass(BestPerformer.Metadata?.TotalUnrealizedPnl??0m)">
                                                         <BIcon icon="bi-arrow-up-right-circle" extraClassName="fs-3" />
-                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(BestPerformer.TotalPnlPct)</div>
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(BestPerformer.Metadata?.TotalUnrealizedPnlPct??0m)</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -330,9 +374,9 @@
                                                         <h5 class="text-body mb-1">@WeakestPerformer.Name</h5>
                                                         <span class="text-muted">@WeakestPerformer.Currency</span>
                                                     </div>
-                                                    <div class="text-end @PnlTextClass(WeakestPerformer.TotalPnl)">
+                                                    <div class="text-end @PnlTextClass(WeakestPerformer.Metadata?.TotalUnrealizedPnl??0m)">
                                                         <BIcon icon="bi-arrow-down-right-circle" extraClassName="fs-3" />
-                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(WeakestPerformer.TotalPnlPct)</div>
+                                                        <div class="h5 mb-0 mt-1">@FormatPercentage(WeakestPerformer.Metadata?.TotalUnrealizedPnlPct??0m)</div>
                                                     </div>
                                                 </div>
                                             </div>

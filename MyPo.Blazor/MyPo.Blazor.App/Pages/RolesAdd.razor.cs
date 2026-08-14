@@ -27,7 +27,7 @@ public partial class RolesAdd
 			{
 				ClaimList = result.Data;
 			}
-			StateHasChanged();
+			await InvokeAsync(StateHasChanged);
 		}
 	}
 
@@ -49,11 +49,11 @@ public partial class RolesAdd
 		NavigationManager.NavigateTo(UIGlobals.ROUTE_IDENTITY_ROLES);
 	}
 
-	private void ShowAlert(string type, string message)
+	private async void ShowAlert(string type, string message)
 	{
 		AlertType = type;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private async Task BtnClickCreate()

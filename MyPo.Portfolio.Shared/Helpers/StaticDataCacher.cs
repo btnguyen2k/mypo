@@ -38,26 +38,27 @@ public class StaticDataCacher
         }
     }
 
-    public static async Task CacheIndexConstituentsAsync(IServiceProvider serviceProvider, string resourcesBaseUrl)
+    public static async Task CacheIndexConstituentsFinHubAsync(IServiceProvider serviceProvider, string resourcesBaseUrl)
     {
         var logger = serviceProvider.GetService<ILogger<StaticDataCacher>>();
 
         var httpClient = serviceProvider.GetService<HttpClient>() ?? throw new InvalidOperationException("Cannot obtain HttpClient instance.");
+        resourcesBaseUrl = resourcesBaseUrl.TrimEnd('/') + '/';
 
         var indexMapping = new Dictionary<string, string>()
         {
-            {"ASX20", $"{resourcesBaseUrl}asx20.json"},
-            {"ASX50", $"{resourcesBaseUrl}asx50.json"},
-            {"ASX100", $"{resourcesBaseUrl}asx100.json"},
-            {"ASX200", $"{resourcesBaseUrl}asx200.json"},
-            {"ASX300", $"{resourcesBaseUrl}asx300.json"},
-            {"HNX30", $"{resourcesBaseUrl}hnx30.json"},
-            {"VN30", $"{resourcesBaseUrl}vn30.json"},
-            {"VN100", $"{resourcesBaseUrl}vn100.json"},
-            {"NASDAQ100", $"{resourcesBaseUrl}nasdaq100.json"},
-            {"SP500", $"{resourcesBaseUrl}sp500.json"},
-            {"SP400", $"{resourcesBaseUrl}spmidcap400.json"},
-            {"SP600", $"{resourcesBaseUrl}spsmallcap600.json"},
+            {"ASX20", $"{resourcesBaseUrl}ASX20"},
+            {"ASX50", $"{resourcesBaseUrl}ASX50"},
+            {"ASX100", $"{resourcesBaseUrl}ASX100"},
+            {"ASX200", $"{resourcesBaseUrl}ASX200"},
+            {"ASX300", $"{resourcesBaseUrl}ASX300"},
+            {"HNX30", $"{resourcesBaseUrl}HNX30"},
+            {"VN30", $"{resourcesBaseUrl}VN30"},
+            {"VN100", $"{resourcesBaseUrl}VN100"},
+            {"NASDAQ100", $"{resourcesBaseUrl}NASDAQ100"},
+            {"SP500", $"{resourcesBaseUrl}SP500"},
+            {"SP400", $"{resourcesBaseUrl}SP400"},
+            {"SP600", $"{resourcesBaseUrl}SP600"},
         };
         foreach (var kvp in indexMapping)
         {

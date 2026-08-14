@@ -44,7 +44,7 @@ public partial class PortfolioController
     /// <returns></returns>
     /// <remarks>The user is identified by the auth token.</remarks>
     [HttpGet(IPortfolioApiClient.API_PORTFOLIO_ENDPOINT_MY_PORTFOLIO_PLANS_ID)]
-    public async ValueTask<ActionResult<ApiResp<PortfolioPlanResp>>> GetByPortfolioPlanById([FromRoute] string id)
+    public async ValueTask<ActionResult<ApiResp<PortfolioPlanResp>>> GetMyPortfolioPlanById([FromRoute] string id)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -53,7 +53,7 @@ public partial class PortfolioController
             return authErrorResult;
         }
 
-        var portfolioPlan = await GetPortfolioPlanIfOwnedByUser(currentUser, id);
+        var portfolioPlan = await GetPortfolioPlanIfAccessible(currentUser, id);
         if (portfolioPlan == null)
         {
             return ResponseNoData(404, "Portfolio plan not found.");

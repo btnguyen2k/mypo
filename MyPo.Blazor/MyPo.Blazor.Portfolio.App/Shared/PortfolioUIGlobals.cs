@@ -4,6 +4,9 @@ namespace MyPo.Blazor.Portfolio.App.Shared;
 
 public class PortfolioUIGlobals : UIGlobals
 {
+    public const string VERSION_JQUERY = "4.0.0";
+    public const string VERSION_DATATABLES = "2.3.7";
+
     public const int AFTER_ACTION_DELAY_MS = 750;
 
     public const string ROUTE_PORTFOLIO_MARKETS = $"{ROUTE_BASE}/markets";

@@ -1,4 +1,4 @@
-using MyPo.Blazor.App.Shared;
+﻿using MyPo.Blazor.App.Shared;
 using MyPo.Shared.Api;
 using MyPo.Shared.Identity;
 using Microsoft.AspNetCore.Components;
@@ -28,17 +28,17 @@ public partial class UsersAdd
 	private IConfiguration AppConfig { get; set; } = default!;
 	private bool DisabledLocalAuth { get; set; } = false;
 
-	private void ShowAlert(string type, string message)
+	private async void ShowAlert(string type, string message)
 	{
 		AlertType = type;
 		AlertMessage = message;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
-	private void CloseAlert()
+	private async void CloseAlert()
 	{
 		AlertMessage = string.Empty;
-		StateHasChanged();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private async Task<ApiResp<IEnumerable<RoleResp>>> GetAllRolesAsync(string authToken)

@@ -28,11 +28,14 @@ else
         </div>
     </div>
 
-    <div class="row mb-2">
+    <div class="row g-3 mb-2">
         <div class="col-sm-4">
-            <div class="card text-center">
-                <div class="card-body py-3">
-                    <div class="text-muted small">Total Cost</div>
+            <div class="card h-100 border-start border-start-4 border-start-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2 small">
+                        <div class="text-uppercase">Cost basic</div>
+                        <BIcon icon="bi-cash-stack" extraClassName="text-secondary" />
+                    </div>
                     <div class="h5 mb-0">
                         @(DefaultMarket?.CurrencySymbol??"")
                         @(TotalCost<=0?"--":FormatUtils.FormatValueWithScale(TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
@@ -41,10 +44,13 @@ else
             </div>
         </div>
         <div class="col-sm-4">
-            <div class="card text-center">
-                <div class="card-body py-3">
-                    <div class="text-muted small">Market Value</div>
-                    <div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+            <div class="card h-100 border-start border-start-4 border-start-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2 small">
+                        <div class="text-uppercase">Market value</div>
+                        <BIcon icon="bi-wallet2" extraClassName="text-info" />
+                    </div>
+                    <div class="h5 mb-0">
                         @(DefaultMarket?.CurrencySymbol??"")
                         @(TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
                     </div>
@@ -52,15 +58,18 @@ else
             </div>
         </div>
         <div class="col-sm-4">
-            <div class="card text-center">
-                <div class="card-body py-3">
-                    <div class="text-muted small">Unsettled P/L</div>
-                    <div class="h5 mb-0 @(TotalMarketValue>=TotalCost?"text-success":(TotalMarketValue<TotalCost?"text-danger":""))">
+            <div class="card h-100 border-start border-start-4 @TotalUnsettledPnlBorderClass">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2 small">
+                        <div class="text-uppercase">Unsettled P/L</div>
+                        <BIcon icon="bi-graph-up-arrow" extraClassName="@TotalUnsettledPnlTextClass" />
+                    </div>
+                    <div class="h5 mb-0 @TotalUnsettledPnlTextClass">
                         @(DefaultMarket?.CurrencySymbol??"")
-                        @(TotalCost<=0||TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalMarketValue-TotalCost, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+                        @(TotalCost<=0||TotalMarketValue<=0?"--":FormatUtils.FormatValueWithScale(TotalUnsettledPnl, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
                         (@(
                             TotalCost>0&&TotalMarketValue>0
-                                ? ((TotalMarketValue-TotalCost)/TotalCost*100).ToString("N2")+"%"
+                                ? (TotalUnsettledPnl/TotalCost*100).ToString("N2")+"%"
                                 : "--"
                         ))
                     </div>
@@ -74,20 +83,47 @@ else
             <table class="table table-sm table-hover">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-center text-nowrap w-auto">Item</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Units</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Avg. Price</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Total Cost</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Price</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Mkt. Value</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Unsettled P/L %</th>
-                        <th scope="col" class="text-center text-nowrap w-auto">Analyst Rec.</th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.Item)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.Item)">
+                                Item <BIcon icon="@SortIcon(AssetSortColumn.Item)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.Units)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.Units)">
+                                Units <BIcon icon="@SortIcon(AssetSortColumn.Units)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.AveragePrice)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.AveragePrice)">
+                                Avg. Price <BIcon icon="@SortIcon(AssetSortColumn.AveragePrice)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.TotalCost)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.TotalCost)">
+                                Cost Basic <BIcon icon="@SortIcon(AssetSortColumn.TotalCost)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.MarketPrice)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.MarketPrice)">
+                                Mkt. Price <BIcon icon="@SortIcon(AssetSortColumn.MarketPrice)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.MarketValue)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.MarketValue)">
+                                Mkt. Value <BIcon icon="@SortIcon(AssetSortColumn.MarketValue)" />
+                            </button>
+                        </th>
+                        <th scope="col" class="text-center text-nowrap w-auto" aria-sort="@AriaSort(AssetSortColumn.UnsettledPnlPercent)">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-body fw-semibold d-inline-flex align-items-center gap-1" @onclick="()=>SortBy(AssetSortColumn.UnsettledPnlPercent)">
+                                Unsettled P/L % <BIcon icon="@SortIcon(AssetSortColumn.UnsettledPnlPercent)" />
+                            </button>
+                        </th>
                         <th scope="col" class="text-center text-nowrap w-auto">Tags</th>
                         <th scope="col" class="text-center text-nowrap w-auto">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="table-group-divider">
-                    @foreach (var asset in Assets.Where(a=>!ShowOnlyOpenPositions || a.Quantity>0))
+                    @foreach (var asset in SortedAssets)
                     {
                         <tr style="cursor: pointer;" @onclick="()=>BtnClickAssetInfo(asset.Id)">
                             <td class="text-start text-nowrap w-auto">
@@ -125,20 +161,6 @@ else
                                 @(asset.Market?.CurrencySymbol??"")
                                 @(FormatUtils.FormatValueWithScale(UnsettledPnLMap.TryGetValue(asset.Id, out var upnl1406)?upnl1406:0, asset.Market?.PriceScale??1, asset.Market?.ValueFormat??""))
                                 (@(asset.Quantity>0&&UnsettledPnLPercentMap.TryGetValue(asset.Id, out var upnlp2699)?upnlp2699.ToString("N2")+"%":"--"))
-                            </td>
-                            <td class="text-center text-nowrap w-auto">
-                                @(QuotesMap?.TryGetValue($"{asset.ItemCode}:{asset.MarketId}".ToUpper(), out var quote)??false
-                                    ? (quote.RecommendationKey??string.Empty) switch
-                                        {
-                                            "strong_buy" => "Strong Buy",
-                                            "buy" => "Buy",
-                                            "hold" => "Hold",
-                                            "sell" => "Sell",
-                                            "strong_sell" => "Strong Sell",
-                                            _ => "--",
-                                        }
-                                    : "--"
-                                )
                             </td>
                             <td class="text-start w-auto small">
                                 @foreach (var tag in asset.TagsList)

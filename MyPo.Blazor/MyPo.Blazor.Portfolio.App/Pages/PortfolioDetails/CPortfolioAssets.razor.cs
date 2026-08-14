@@ -24,6 +24,19 @@ public partial class CPortfolioAssets : CBase
         }
         return 0;
     }) ?? 0;
+    private decimal TotalUnsettledPnl => TotalCost > 0 && TotalMarketValue > 0 ? TotalMarketValue - TotalCost : 0;
+    private string TotalUnsettledPnlTextClass => TotalUnsettledPnl switch
+    {
+        > 0 => "text-success",
+        < 0 => "text-danger",
+        _ => "text-muted",
+    };
+    private string TotalUnsettledPnlBorderClass => TotalUnsettledPnlTextClass switch
+    {
+        "text-success" => "border-start-success",
+        "text-danger" => "border-start-danger",
+        _ => "border-start-secondary",
+    };
 
     [Parameter]
     public Dictionary<string, StockQuote>? QuotesMap { get; set; } // map {asset-id --> quote}
@@ -33,6 +46,48 @@ public partial class CPortfolioAssets : CBase
     private Dictionary<string, decimal> UnsettledPnLMap { get; set; } = []; // map {asset-id --> unsettled-p/l}
 
     private Dictionary<string, decimal> UnsettledPnLPercentMap { get; set; } = []; // map {asset-id --> unsettled-p/l-percent}
+
+    private enum AssetSortColumn
+    {
+        Item,
+        Units,
+        AveragePrice,
+        TotalCost,
+        MarketPrice,
+        MarketValue,
+        UnsettledPnlPercent,
+    }
+
+    private AssetSortColumn SortColumn { get; set; } = AssetSortColumn.Item;
+    private bool SortDescending { get; set; }
+
+    private IEnumerable<AssetResp> SortedAssets
+    {
+        get
+        {
+            var assets = Assets?.Where(asset => !ShowOnlyOpenPositions || asset.Quantity > 0)
+                ?? Enumerable.Empty<AssetResp>();
+            IOrderedEnumerable<AssetResp> sorted = (SortColumn, SortDescending) switch
+            {
+                (AssetSortColumn.Item, false) => assets.OrderBy(asset => asset.ItemCode, StringComparer.OrdinalIgnoreCase),
+                (AssetSortColumn.Item, true) => assets.OrderByDescending(asset => asset.ItemCode, StringComparer.OrdinalIgnoreCase),
+                (AssetSortColumn.Units, false) => assets.OrderBy(asset => asset.Quantity),
+                (AssetSortColumn.Units, true) => assets.OrderByDescending(asset => asset.Quantity),
+                (AssetSortColumn.AveragePrice, false) => assets.OrderBy(asset => asset.AveragePrice),
+                (AssetSortColumn.AveragePrice, true) => assets.OrderByDescending(asset => asset.AveragePrice),
+                (AssetSortColumn.TotalCost, false) => assets.OrderBy(asset => asset.TotalCost),
+                (AssetSortColumn.TotalCost, true) => assets.OrderByDescending(asset => asset.TotalCost),
+                (AssetSortColumn.MarketPrice, false) => assets.OrderBy(MarketPriceForSort),
+                (AssetSortColumn.MarketPrice, true) => assets.OrderByDescending(MarketPriceForSort),
+                (AssetSortColumn.MarketValue, false) => assets.OrderBy(MarketValueForSort),
+                (AssetSortColumn.MarketValue, true) => assets.OrderByDescending(MarketValueForSort),
+                (AssetSortColumn.UnsettledPnlPercent, false) => assets.OrderBy(UnsettledPnlPercentForSort),
+                (AssetSortColumn.UnsettledPnlPercent, true) => assets.OrderByDescending(UnsettledPnlPercentForSort),
+                _ => assets.OrderBy(asset => asset.ItemCode, StringComparer.OrdinalIgnoreCase),
+            };
+            return sorted.ThenBy(asset => asset.ItemCode, StringComparer.OrdinalIgnoreCase);
+        }
+    }
 
     private string AssetTags = string.Empty;
 
@@ -47,6 +102,48 @@ public partial class CPortfolioAssets : CBase
 
     private CModal ModalDialogAssetUpdateTags { get; set; } = default!;
     private CModal ModalDialogBuySellAssetCalculator { get; set; } = default!;
+
+    private decimal MarketPriceForSort(AssetResp asset)
+    {
+        return MarketPricesMap.GetValueOrDefault(asset.Id);
+    }
+
+    private decimal MarketValueForSort(AssetResp asset)
+    {
+        return MarketPriceForSort(asset) * asset.Quantity;
+    }
+
+    private decimal UnsettledPnlPercentForSort(AssetResp asset)
+    {
+        return UnsettledPnLPercentMap.GetValueOrDefault(asset.Id);
+    }
+
+    private void SortBy(AssetSortColumn column)
+    {
+        if (SortColumn == column)
+        {
+            SortDescending = !SortDescending;
+        }
+        else
+        {
+            SortColumn = column;
+            SortDescending = false;
+        }
+    }
+
+    private string SortIcon(AssetSortColumn column)
+    {
+        return SortColumn != column
+            ? "bi-arrow-down-up"
+            : SortDescending ? "bi-caret-down-fill" : "bi-caret-up-fill";
+    }
+
+    private string AriaSort(AssetSortColumn column)
+    {
+        return SortColumn != column
+            ? "none"
+            : SortDescending ? "descending" : "ascending";
+    }
 
     private int MarketStatus(AssetResp? asset)
     {
@@ -83,7 +180,7 @@ public partial class CPortfolioAssets : CBase
                     );
                 }
             }
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

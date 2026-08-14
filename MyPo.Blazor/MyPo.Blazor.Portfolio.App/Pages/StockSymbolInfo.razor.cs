@@ -195,7 +195,7 @@ public sealed partial class StockSymbolInfo : BasePage
                 if (symbolResult.Status == 200)
                 {
                     SymbolInfo = symbolResult.Data;
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
                 }
                 await Task.Run(() => LoadSymbolInfoBackground(symbol, myTaskId));
             }
