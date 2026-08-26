@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using Finhub.Client;
 using MyPo.Libs;
 using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Identity;

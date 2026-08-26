@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Models;
+﻿using Finhub.Client;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Api.Services;

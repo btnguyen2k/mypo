@@ -1,5 +1,5 @@
 ﻿using Ddth.Utilities.Tempus;
-using MyPo.Portfolio.Api.Services;
+using Finhub.Client;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Models.FinHub;
 

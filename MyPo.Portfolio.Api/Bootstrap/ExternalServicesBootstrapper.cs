@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Api.Services;
+﻿using Finhub.Client;
+using MyPo.Portfolio.Api.Services;
 using MyPo.Shared.Bootstrap;
 using System.Reflection;
 

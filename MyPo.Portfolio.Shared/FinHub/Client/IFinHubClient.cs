@@ -1,7 +1,8 @@
-﻿using MyPo.Portfolio.Shared.Models.FinHub;
+﻿using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;
 
-namespace MyPo.Portfolio.Api.Services;
+namespace Finhub.Client;
 
 public interface IFinHubClient
 {

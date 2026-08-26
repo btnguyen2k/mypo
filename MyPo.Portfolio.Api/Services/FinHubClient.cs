@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Finhub.Client;
 using Microsoft.AspNetCore.WebUtilities;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Api;

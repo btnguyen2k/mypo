@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using Ddth.Utilities.Tempus;
-using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Utils;
@@ -8,6 +7,7 @@ using MyPo.Portfolio.Shared.Identity;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
 using Telegram.Bot.Extensions;
+using Finhub.Client;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 

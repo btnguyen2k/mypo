@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Finhub.Client;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Portfolio.Shared.Utils;
