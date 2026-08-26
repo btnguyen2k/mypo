@@ -21,18 +21,16 @@ public class ApiResp
 	/// <summary>
 	/// Extra information if any (e.g. the detailed error message).
 	/// </summary>
-	[JsonPropertyName("message")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonPropertyName("message"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Message { get; set; }
 
 	/// <summary>
 	/// Extra data if any.
 	/// </summary>
-	[JsonPropertyName("extra")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public object? Extra { get; set; }
+	[JsonPropertyName("extra"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public virtual object? Extra { get; set; }
 
-    public T? ExtraAs<T>() where T : class
+    public virtual T? ExtraAs<T>() where T : class
     {
         return JsonHelper.SafeDeserialize<T>(JsonSerializer.Serialize(Extra, (JsonSerializerOptions?)null));
     }
@@ -40,9 +38,13 @@ public class ApiResp
 	/// <summary>
 	/// Debug information if any.
 	/// </summary>
-	[JsonPropertyName("debug_info")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public object? DebugInfo { get; set; }
+	[JsonPropertyName("debug_info"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public virtual object? DebugInfo { get; set; }
+
+	public virtual T? DebugInfoAs<T>() where T : class
+    {
+        return JsonHelper.SafeDeserialize<T>(JsonSerializer.Serialize(DebugInfo, (JsonSerializerOptions?)null));
+    }
 }
 
 /// <summary>
@@ -54,9 +56,8 @@ public class ApiResp<T> : ApiResp
 	/// <summary>
 	/// The data returned by the API call (specific to individual API).
 	/// </summary>
-	[JsonPropertyName("data")]
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-	public T? Data { get; set; }
+	[JsonPropertyName("data"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public virtual T? Data { get; set; }
 }
 
 /*----------------------------------------------------------------------*/
