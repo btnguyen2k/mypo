@@ -1,7 +1,7 @@
 ﻿using Ddth.Utilities.Tempus;
 using Finhub.Client;
+using FinHub.Client.Models.Stocks;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 

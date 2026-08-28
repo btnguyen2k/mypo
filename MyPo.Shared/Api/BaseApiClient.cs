@@ -122,4 +122,21 @@ public abstract class BaseApiClient
 			return new ApiResp<T> { Status = 500, Message = ex.Message };
 		}
 	}
+
+    protected static async Task<T> ReadAndCloseResponseAsApiRespAsync<T>(HttpResponseMessage httpResult, CancellationToken cancellationToken) where T : ApiResp, new()
+	{
+		try
+		{
+			var result = await httpResult.Content.ReadFromJsonAsync<T>(cancellationToken);
+			if (result == null)
+			{
+				return new T { Status = 500, Message = "Invalid response from server." };
+			}
+			return result;
+		}
+		catch (Exception ex) when (ex is JsonException || ex is InvalidOperationException || ex is OperationCanceledException)
+		{
+			return new T { Status = 500, Message = ex.Message };
+		}
+	}
 }

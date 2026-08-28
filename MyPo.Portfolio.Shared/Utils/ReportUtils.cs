@@ -1,7 +1,7 @@
 ﻿using Ddth.Utilities.Tempus;
 using Finhub.Client;
+using FinHub.Client.Models.Stocks;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Portfolio.Shared.Utils;
 
@@ -107,7 +107,8 @@ public static class ReportUtils
         // for an in-progress (not-final) period the period end is in the future and has no price yet, so value the
         // position at the latest available date (now) instead, keeping the open position marked-to-market.
         var valuationDate = isFinal ? endDate : nowLocal;
-        var closePrice = FindClosePriceForDate(history, valuationDate, itemCode);
+        // var closePrice = FindClosePriceForDate(history, valuationDate, itemCode);
+        var closePrice = FindClosePriceForDate(history, valuationDate);
         if (itemCode.StartsWith("HNX:")||itemCode.StartsWith("HOSE:")||itemCode.StartsWith("UCOM:"))
         {
             // special case for VN market
@@ -213,7 +214,7 @@ public static class ReportUtils
     /// walks back to the previous trading day). Returns 0 when no price is available, i.e. when the date is earlier
     /// than the first data point (symbol not yet listed) or later than the last data point (date in the future).
     /// </summary>
-    private static decimal FindClosePriceForDate(HistoryPoint[] history, DateTimeOffset targetDate, string itemCode="")
+    private static decimal FindClosePriceForDate(HistoryPoint[] history, DateTimeOffset targetDate)
     {
         if (history.Length == 0)
         {

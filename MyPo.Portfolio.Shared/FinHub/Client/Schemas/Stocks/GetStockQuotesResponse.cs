@@ -1,7 +1,6 @@
-using FinHub.Client.Models.Stocks;
+﻿using FinHub.Client.Models.Stocks;
 using MyPo.Shared.Api;
 
 namespace FinHub.Client.Schemas.Stocks;
 
-public sealed class GetStockQuotesResponse
-    : ApiResp<IReadOnlyDictionary<string, StockQuote>?>;
+public sealed class GetStockQuotesResponse : ApiResp<IReadOnlyDictionary<string, StockQuote>>;

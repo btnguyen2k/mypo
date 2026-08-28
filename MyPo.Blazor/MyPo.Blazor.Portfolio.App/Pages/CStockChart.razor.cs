@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FinHub.Client.Models.Stocks;
+using Microsoft.AspNetCore.Components;
 using MyPo.Blazor.App.Shared;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 

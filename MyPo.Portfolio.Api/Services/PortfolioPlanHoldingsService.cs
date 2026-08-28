@@ -78,7 +78,7 @@ public sealed class PortfolioPlanHoldingsService : IPortfolioPlanHoldingsService
             if (country == "VN")
             {
                 // special case
-                ht.MarketPrice /= 1000;
+                ht.MarketPrice /= 1000m;
             }
             holdings.Add(ht);
         }

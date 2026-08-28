@@ -1,15 +1,16 @@
-﻿using Ddth.Utilities.Tempus;
+﻿using System.Collections.ObjectModel;
+using Ddth.Utilities.Tempus;
 using Finhub.Client;
+using FinHub.Client.Models.Stocks;
+using FinHub.Client.Schemas.Stocks;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Portfolio.Shared.Utils;
-using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Utils;
 
 public static class TickerUtils
 {
-    private static readonly Dictionary<string, StockQuote> EmptyDict = [];
+    private static readonly ReadOnlyDictionary<string, StockQuote> EmptyQuotesDict = ReadOnlyDictionary<string, StockQuote>.Empty;
 
     /// <summary>
     /// Fetches the latest stock quotes for the given tickers in batches to avoid hitting API limits.
@@ -25,7 +26,7 @@ public static class TickerUtils
         IEnumerable<string> tickers,
         IFinHubClient finHubClient,
         Action<List<string>>? preBatchFetchAction = null,
-        Action<ApiResp<IDictionary<string, StockQuote>>>? postBatchFetchAction = null,
+        Action<GetStockQuotesResponse>? postBatchFetchAction = null,
         Action<Exception>? onBatchFetchException = null,
         CancellationToken cancellationToken = default)
     {
@@ -42,7 +43,7 @@ public static class TickerUtils
             {
                 var finhubQuotesResult = await finHubClient.GetStockQuotesAsync(tickersAsCommaSeparatedList, cancellationToken: cancellationToken);
                 postBatchFetchAction?.Invoke(finhubQuotesResult);
-                foreach (var quote in finhubQuotesResult.Data ?? EmptyDict)
+                foreach (var quote in finhubQuotesResult.Data ?? EmptyQuotesDict)
                 {
                     quotesMap[quote.Key] = quote.Value;
                 }
