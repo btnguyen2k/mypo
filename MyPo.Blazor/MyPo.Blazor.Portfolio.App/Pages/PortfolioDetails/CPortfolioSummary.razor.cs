@@ -67,7 +67,7 @@ public partial class CPortfolioSummary : CBase
                 var symbolKey = $"{asset.Market?.Code ?? string.Empty}:{asset.ItemCode}".ToUpper();
                 if (QuotesMap.TryGetValue(symbolKey, out var quote))
                 {
-                    var latestPrice = quote.MarketPrice;
+                    var latestPrice = quote.MarketPrice ?? 0;
                     latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
                     MarketPricesMap[asset.Id] = latestPrice;
                 }

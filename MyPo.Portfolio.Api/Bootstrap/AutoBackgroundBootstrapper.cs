@@ -1,5 +1,6 @@
-﻿using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
+﻿using FinHub.Client.Models.Events;
+using FinHub.Client.Models.Listings;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Bootstrap;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
@@ -108,23 +109,10 @@ abstract class BackgroundPortfolioTask : BackgroundService
                 MarketId = marketId,
                 ItemCode = e.Symbol?.ToUpper() ?? CheckpointEntity.NON_ITEM,
                 EventType = MarketEventEntity.EVENT_DISTRIBUTION.Equals(e.EventCategory, StringComparison.OrdinalIgnoreCase) ? MarketEventEntity.EVENT_DISTRIBUTION : MarketEventEntity.EVENT_DIVIDEND,
-                EventTime = e.Date,
+                EventTime = e.DateUTC,
                 Metadata = new()
                 {
-                    Exchange = e.Exchange,
-                    CompanyName = e.CompanyName,
-                    SourceName = e.SourceName,
-                    Link = e.Link,
-                    Status = e.Status,
-                    Currency = e.Currency,
-                    // Capital = e.Analysis?.Overview?.MarketCap ?? 0,
-                    Dividend = new()
-                    {
-                        PaymentDate = e.PaymentDate,
-                        Amount = e.Amount,
-                        DividendYield = e.DividendYield,
-                        Analysis = e.Analysis,
-                    },
+                    Dividend = e,
                 },
             };
             var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -147,18 +135,10 @@ abstract class BackgroundPortfolioTask : BackgroundService
                 MarketId = marketId.Trim().ToUpper(),
                 ItemCode = e.Symbol?.Trim().ToUpper() ?? CheckpointEntity.NON_ITEM,
                 EventType = MarketEventEntity.EVENT_EARNINGS,
-                EventTime = e.Date,
+                EventTime = e.DateUTC,
                 Metadata = new()
                 {
-                    Exchange = e.Exchange,
-                    CompanyName = e.CompanyName,
-                    SourceName = e.SourceName,
-                    Link = e.Link,
-                    Status = e.Status?.Trim().ToLower() ?? "n/a",
-                    Earnings = new()
-                    {
-                        ReportPeriod = e.ReportPeriod?.Trim().ToLower() ?? "n/a",
-                    },
+                    Earnings = e,
                 },
             };
             var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);
@@ -181,22 +161,10 @@ abstract class BackgroundPortfolioTask : BackgroundService
                 MarketId = marketId.Trim().ToUpper(),
                 ItemCode = e.Symbol?.Trim().ToUpper() ?? CheckpointEntity.NON_ITEM,
                 EventType = MarketEventEntity.EVENT_LISTING,
-                EventTime = e.Date,
+                EventTime = e.DateUTC,
                 Metadata = new()
                 {
-                    Exchange = e.Exchange,
-                    CompanyName = e.CompanyName,
-                    SourceName = e.SourceName,
-                    Link = e.Link,
-                    Sector = e.Sector,
-                    Industry = e.Industry,
-                    Currency = e.Currency,
-                    Capital = e.Capital,
-                    Listing = new()
-                    {
-                        Price = e.Price,
-                        Analysis = e.Analysis,
-                    },
+                    Listing = e,
                 },
             };
             var dbresult = await portfolioRepo.UpsertMarketEventAsync(marketEvent, cancellationToken);

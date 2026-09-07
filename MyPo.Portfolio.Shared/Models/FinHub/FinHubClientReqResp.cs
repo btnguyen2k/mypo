@@ -54,11 +54,11 @@ public sealed class AnalyzeTickerReq
     public string? Intent { get; set; }
 }
 
-public sealed class AsyncTaskInfo
-{
-    [JsonPropertyName("task_id")]
-    public string TaskId { get; set; } = string.Empty;
+// public sealed class AsyncTaskInfo
+// {
+//     [JsonPropertyName("task_id")]
+//     public string TaskId { get; set; } = string.Empty;
 
-    [JsonPropertyName("state"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? State { get; set; }
-}
+//     [JsonPropertyName("state"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+//     public string? State { get; set; }
+// }

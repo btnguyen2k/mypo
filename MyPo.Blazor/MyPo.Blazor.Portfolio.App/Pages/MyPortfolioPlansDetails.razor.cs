@@ -158,14 +158,15 @@ public partial class MyPortfolioPlansDetails : BasePage
                 ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
                 return;
             }
-            if (spotlightResult.Data.LLMError)
-            {
-                analyzing = false;
-                ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
-                return;
-            }
+            // if (spotlightResult.Data.LLMError)
+            // {
+            //     analyzing = false;
+            //     ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
+            //     return;
+            // }
             SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Analysis;
+            // SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Anslysis;
+            SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
         }
 
         step = "analysis";
@@ -177,14 +178,15 @@ public partial class MyPortfolioPlansDetails : BasePage
                 ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
                 return;
             }
-            if (analysisResult.Data.LLMError)
-            {
-                ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
-                return;
-            }
+            // if (analysisResult.Data.LLMError)
+            // {
+            //     ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
+            //     return;
+            // }
             SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
-            SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
+            // SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+            // SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
+            SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
         }
 
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);

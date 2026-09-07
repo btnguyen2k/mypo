@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MyPo.Portfolio.Api.Services;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Portfolio.Shared.Utils;
-using MyPo.Shared.Api;
+using FinHub.Client.Schemas.TickerAnalysis;
+using FinHub.Client.Schemas.PortfolioSpotlight;
+using MyPo.Portfolio.Api.Utils;
+using FinHub.Client.Schemas.PortfolioAnalysis;
+using FinHub.Client.Models.Stocks;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -13,7 +14,7 @@ namespace MyPo.Portfolio.Api.Controllers;
 public partial class FinHubController
 {
     [HttpGet(IPortfolioApiClient.API_FINHUB_AI_ANALYZE_PORTFOLIO)]
-    public async ValueTask<ActionResult<ApiResp<PortfolioAnalysis>>> AnalyzePortfolioPlan([FromRoute] string id)
+    public async ValueTask<ActionResult<AnalyzePortfolioResponse>> AnalyzePortfolioPlan([FromRoute] string id)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -33,87 +34,48 @@ public partial class FinHubController
             : null;
         var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
 
-        // Step 0: check portfolio plan's holdings
-        var countPositiveAllocation = (portfolioPlan.Metadata?.HoldingTickers ?? []).Count(ht => ht.Shares > 0);
-        var countEntries = (portfolioPlan.Metadata?.HoldingTickers ?? []).Count;
-
         // Step 1: make API call
-        // if no holdings, or more than half of tickers are at 0 allocation ==> Build portfolio
-        // otherwise Analyze portfolio
-        var finhubResult = countEntries == 0 || (double)countPositiveAllocation / countEntries <= 0.5
-            ? await BuildPortfolio(portfolioPlan, market)
-            : await AnalyzePortfolio(portfolioPlan, market);
-
-        // Step 2: build and return result
-        if (!finhubResult.IsSuccess)
+        var finhubResult = await AnalyzePortfolio(portfolioPlan, market);
+        if (!finhubResult.IsSuccess || finhubResult.Data is null)
         {
             return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extra);
         }
-        var result = finhubResult.Data ?? new PortfolioAnalysis
-        {
-            LLMError = true,
-            LLMErrorMsg = "No data returned from FinHub API",
-            Analysis = string.Empty,
-        };
-        if (!result.LLMError)
+        var result = finhubResult.Data;
+
+        // Step 2: save analysis result to portfolio plan's metadata
         {
             portfolioPlan.Metadata ??= new();
             portfolioPlan.Metadata.LastChecksumAnalysis = portfolioPlan.Metadata.CalcChecksumAnalysis();
             portfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            portfolioPlan.Metadata.Analysis = result.Analysis;
-            portfolioPlan.Metadata.RebalancePlan = result.RebalancePlan;
+            portfolioPlan.Metadata.PortfolioAnalysis = result;
             Logger?.LogInformation("Persisting analysis for portfolio '{id}: {name}'...", portfolioPlan.Id, portfolioPlan.Name);
             var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
             if (dbresult == null)
             {
                 Logger?.LogError("Failed to persist analysis for portfolio '{id}: {name}'.", portfolioPlan.Id, portfolioPlan.Name);
-                // return ResponseNoData(500, $"Failed to persist analysis for portfolio plan '{portfolioPlan.Name}'.");
             }
         }
+
+        // Step 3: return result
         return ResponseOk(result);
     }
 
-    private static List<HoldingTickerReq> BuildHoldingTickersReq(PortfolioPlanEntity plan)
-    {
-        return [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new HoldingTickerReq
-        {
-            Ticker = ht.Ticker,
-            TargetAllocation = ht.TargetAllocation,
-            NumShares = ht.Shares,
-            AvgPrice = ht.AveragePrice,
-            MarketPrice = ht.MarketPrice,
-            Tags = ht.Tags,
-        })];
-    }
-
-    private async ValueTask<ApiResp<PortfolioAnalysis>> BuildPortfolio(PortfolioPlanEntity plan, MarketDef? market)
-    {
-        Logger?.LogInformation("Calling FinHub BuildPortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
-        var req = new BuildPortfolioReq
-        {
-            Country = market?.Country ?? "US",
-            InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = BuildHoldingTickersReq(plan)
-        };
-        return await FinHubClient.BuildPortfolioAsync(req);
-    }
-
-    private async ValueTask<ApiResp<PortfolioAnalysis>> AnalyzePortfolio(PortfolioPlanEntity plan, MarketDef? market)
+    private async ValueTask<AnalyzePortfolioResponse> AnalyzePortfolio(PortfolioPlanEntity plan, MarketDef? market)
     {
         Logger?.LogInformation("Calling FinHub AnalyzePortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
-        var req = new AnalyzePortfolioReq
+        var req = new AnalyzePortfolioRequest
         {
             Country = market?.Country ?? "US",
-            InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = BuildHoldingTickersReq(plan),
-            BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
+            InvestorTheme = plan.Metadata?.Description ?? string.Empty,
+            CurrentAllocation = FinHubHelper.BuildAllocationReqs(plan),
+            RebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
         };
         var analysisResult = await FinHubClient.AnalyzePortfolioAsync(req);
         return analysisResult;
     }
 
     [HttpGet(IPortfolioApiClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO)]
-    public async ValueTask<ActionResult<ApiResp<PortfolioAnalysis>>> SpotlightPortfolioPlan([FromRoute] string id)
+    public async ValueTask<ActionResult<PortfolioSpotlightResponse>> SpotlightPortfolioPlan([FromRoute] string id)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -135,51 +97,47 @@ public partial class FinHubController
 
         // Step 1: make API call
         var finhubResult = await SpotlightPortfolio(portfolioPlan, market);
-
-        // Step 2: build and return result
-        if (!finhubResult.IsSuccess)
+        if (!finhubResult.IsSuccess || finhubResult.Data is null)
         {
             return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to spotlight analyze portfolio plan '{portfolioPlan.Name}'", finhubResult.Extra);
         }
-        var result = finhubResult.Data ?? new PortfolioAnalysis
+        var result = finhubResult.Data;
+
+        // Step 2: save analysis result to portfolio plan's metadata
         {
-            LLMError = true,
-            LLMErrorMsg = "No data returned from FinHub API",
-            Analysis = string.Empty,
-        };
-        if (!result.LLMError)
-        {
+            // save spotlight analysis to the portfolio plan's metadata
             portfolioPlan.Metadata ??= new();
             portfolioPlan.Metadata.LastChecksumAnalysis = portfolioPlan.Metadata.CalcChecksumAnalysis();
             portfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            portfolioPlan.Metadata.Spotlight = result.Analysis;
+            portfolioPlan.Metadata.SpotlightAnalysis = result;
             Logger?.LogInformation("Persisting spotlight analysis for portfolio '{id}: {name}'...", portfolioPlan.Id, portfolioPlan.Name);
             var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
             if (dbresult == null)
             {
                 Logger?.LogError("Failed to persist spotlight analysis for portfolio '{id}: {name}'.", portfolioPlan.Id, portfolioPlan.Name);
-                // return ResponseNoData(500, $"Failed to persist spotlight analysis for portfolio plan '{portfolioPlan.Name}'.");
             }
         }
+
+        // Step 3: return result
         return ResponseOk(result);
     }
 
-    private async ValueTask<ApiResp<PortfolioAnalysis>> SpotlightPortfolio(PortfolioPlanEntity plan, MarketDef? market)
+    private async ValueTask<PortfolioSpotlightResponse> SpotlightPortfolio(PortfolioPlanEntity plan, MarketDef? market)
     {
         Logger?.LogInformation("Calling FinHub SpotlightPortfolio API for portfolio plan '{planId}: {planName}' (market: {market}) with {numHoldings} holdings...", plan.Id, plan.Name, market?.Code ?? "N/A", plan.Metadata?.HoldingTickers?.Count ?? 0);
-        var req = new SpotLightPortfolioReq
+        var req = new PortfolioSpotlightRequest
         {
             Country = market?.Country ?? "US",
-            InvestorTheme = plan.Metadata?.Description,
-            CurrentAllocation = BuildHoldingTickersReq(plan)
+            InvestorTheme = plan.Metadata?.Description ?? string.Empty,
+            CurrentAllocation = FinHubHelper.BuildAllocationReqs(plan)
         };
         return await FinHubClient.SpotlightPortfolioAsync(req);
     }
 
     /*----------------------------------------------------------------------*/
 
-    [HttpPost(IPortfolioApiClient.API_FINHUB_AI_ANALYZE_TICKER)]
-    public async ValueTask<ActionResult<ApiResp<TickerAnalysis>>> AnalyzeTickerAsync([FromBody] TickerAnalysisReq req)
+    [HttpGet(IPortfolioApiClient.API_FINHUB_AI_ANALYZE_TICKER)]
+    public async ValueTask<ActionResult<AnalyzeTickerResponse>> AnalyzeTickerAsync([FromRoute] string symbol, [FromQuery] string? pid)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -188,61 +146,47 @@ public partial class FinHubController
             return authErrorResult;
         }
 
-        var symbolInfoResp = await FinHubClient.GetStockSymbolInfoAsync(req.Symbol);
+        var symbolInfoResp = await FinHubClient.GetStockSymbolInfoAsync(symbol);
         if (!symbolInfoResp.IsSuccess || symbolInfoResp.Data is null)
         {
-            return ResponseNoData(404, $"Invalid ticker symbol '{req.Symbol}'");
+            return ResponseNoData(404, $"Invalid ticker symbol '{symbol}'");
         }
         var symbolInfo = symbolInfoResp.Data;
 
-        var portfolio = string.IsNullOrEmpty(req.PortfolioId)
+        // Step 0: check if currently owning any shares
+        var portfolio = string.IsNullOrEmpty(pid)
             ? null
-            : await GetPortfolioIfOwnedByUser(currentUser, req.PortfolioId);
+            : await GetPortfolioIfAccessible(currentUser, pid);
         var assets = portfolio is null
             ? []
             : await GetOwningAssets(portfolio.Id) ?? [];
-
         var parts = symbolInfo.NormalizedSymbol.Split(":") ?? [];
-        var (exchange, symbol) = (parts.Length > 1 ? parts[0] : string.Empty, parts.Length > 1 ? parts[1] : parts[0]);
+        var (exchange, code) = (parts.Length > 1 ? parts[0] : string.Empty, parts.Length > 1 ? parts[1] : parts[0]);
         var market = Globals.Markets.FirstOrDefault(m => string.Equals(m.Code, exchange, StringComparison.OrdinalIgnoreCase));
-        var asset = assets.FirstOrDefault(a => string.Equals(a.ItemCode, symbol, StringComparison.CurrentCultureIgnoreCase) && string.Equals(a.MarketId, market?.Id, StringComparison.OrdinalIgnoreCase));
+        var asset = assets.FirstOrDefault(a => string.Equals(a.ItemCode, code, StringComparison.CurrentCultureIgnoreCase) && string.Equals(a.MarketId, market?.Id, StringComparison.OrdinalIgnoreCase));
 
-        var intent = req.Intent;
-        if (asset is not null)
+        // Step 1: make API call
+        var finhubResult = await AnalyzeTicker(symbolInfo, asset);
+        if (!finhubResult.IsSuccess || finhubResult.Data is null)
         {
-            if (!string.IsNullOrEmpty(intent))
-            {
-                intent += "\n";
-            }
-            intent += $"Owning {FormatUtils.FormatValueMaxDecimals(asset.Quantity, 4)} shares, " +
-                $"base price {FormatUtils.FormatValueWithScale(asset.AveragePrice, market?.PriceScale ?? 2, market?.ValueFormat)}, " +
-                $"market price {FormatUtils.FormatRawValueWithScale(symbolInfo.StockQuote?.MarketPrice ?? 0, market?.PriceScale ?? 2, market?.ValueFormat)}";
+            return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to analyze ticker '{symbol}'", finhubResult.Extra);
         }
+        var result = finhubResult.Data;
 
-        var fhReq = new AnalyzeTickerReq()
-        {
-            Symbol = symbolInfo.NormalizedSymbol,
-            Intent = intent,
-        };
-        var fhResult = await FinHubClient.AnalyzeTickerAsync(fhReq);
-
-        if (!fhResult.IsSuccess)
-        {
-            return ResponseNoData(fhResult.Status, fhResult.Message ?? $"Failed to analyze ticker '{req.Symbol}'", fhResult.Extra);
-        }
-        var result = fhResult.Data ?? new TickerAnalysis
-        {
-            LLMError = true,
-            LLMErrorMsg = "No data returned from FinHub API",
-            Analysis = string.Empty,
-        };
-        //if (!result.LLMError)
-        //{
-        //	portfolioPlan.Metadata ??= new();
-        //	portfolioPlan.Metadata.AnalysisRefreshTimestsmp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        //	portfolioPlan.Metadata.Analysis = result.Analysis;
-        //	await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
-        //}
+        // Step 2: return result
         return ResponseOk(result);
+    }
+
+    private async ValueTask<AnalyzeTickerResponse> AnalyzeTicker(SymbolInfo symbol, AssetEntity? asset = null)
+    {
+        Logger?.LogInformation("Calling FinHub AnalyzeTicker API for symbol '{symbol}'...", symbol.NormalizedSymbol);
+        var req = new AnalyzeTickerRequest
+        {
+            Symbol = symbol.NormalizedSymbol,
+            CurrentHolding = asset is null
+                ? null
+                : new TickerHoldingInput{ NumShares = asset.Quantity, AvgPrice = asset.AveragePrice }
+        };
+        return await FinHubClient.AnalyzeTickerAsync(req);
     }
 }

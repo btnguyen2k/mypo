@@ -86,10 +86,10 @@
                                                                 <tr class="@(TextFormatDivident(e))">
                                                                     <td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
                                                                     <td class="text-center">@e.MarketId</td>
-                                                                    <td class="text-nowrap"><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-                                                                    <td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
+                                                                    <td class="text-nowrap"><a target="_blank" href="@(e.Metadata?.Dividend?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.Dividend?.CompanyName??"--")</small></td>
+                                                                    <td class="text-end">@(e.Metadata?.Dividend?.Currency??"--") @((e.Metadata?.Dividend?.Amount??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
                                                                     <td class="text-end">@(YieldsMap.TryGetValue(e.ItemCode, out var yield0142)&&yield0142>0?yield0142.ToString("P2"):"--")</td>
-                                                                    <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{e.Metadata?.CurrencySymbol??"--"} {quote1082.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
+                                                                    <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote1082)?$"{e.Metadata?.Dividend?.Currency??"--"} {quote1082.MarketPrice?.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
                                                                     <td class="text-center text-nowrap">
                                                                         @if (e.Metadata?.Dividend?.Analysis != null)
                                                                         {
@@ -127,7 +127,7 @@
                                                                     <td class="text-center text-nowrap">
                                                                         @if (e.Metadata?.Dividend?.Analysis != null)
                                                                         {
-                                                                            @($"{e.Metadata.Dividend.Analysis.RecoveryProb:P0}")
+                                                                            @($"{e.Metadata.Dividend.Analysis.RecoveryProbability:P0}")
                                                                         }
                                                                         else
                                                                         {
@@ -173,16 +173,16 @@
                                                                     <td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
                                                                     <td class="text-center">@e.MarketId</td>
                                                                     <td>
-                                                                        <a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small>
+                                                                        <a target="_blank" href="@(e.Metadata?.Listing?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.Listing?.CompanyName??"--")</small>
                                                                         @if (e.Metadata?.Listing?.Analysis != null)
                                                                         {
                                                                             <br />
                                                                             <small class="text-muted">
-                                                                            @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false) && w2 != null)
+                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false) && w2 != null)
                                                                             {
                                                                                 @((MarkupString)$"<code>{w2.Direction}</code>: {w2.Confidence} - {w2.Reason}")
                                                                             }
-                                                                            else
+                                                                            else *@
                                                                             {
                                                                                 @("--")
                                                                             }
@@ -190,11 +190,11 @@
 
                                                                             <br />
                                                                             <small class="text-muted">
-                                                                            @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false) && m1 != null)
+                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false) && m1 != null)
                                                                             {
                                                                                 @((MarkupString)$"<code>{m1.Direction}</code>: {m1.Confidence} - {m1.Reason}")
                                                                             }
-                                                                            else
+                                                                            else *@
                                                                             {
                                                                                 @("--")
                                                                             }
@@ -202,20 +202,20 @@
 
                                                                             <br />
                                                                             <small class="text-muted">
-                                                                            @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false) && m3 != null)
+                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false) && m3 != null)
                                                                             {
                                                                                 @((MarkupString)$"<code>{m3.Direction}</code>: {m3.Confidence} - {m3.Reason}")
                                                                             }
-                                                                            else
+                                                                            else *@
                                                                             {
                                                                                 @("--")
                                                                             }
                                                                             </small>
                                                                         }
                                                                     </td>
-                                                                    <td class="text-end">@(e.Metadata?.CurrencySymbol??"--") @((e.Metadata?.Listing?.Price??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
-                                                                    <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{e.Metadata?.CurrencySymbol??"--"} {quote0253.MarketPrice.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
-                                                                    <td class="text-end">@(FormatUtils.FormatVolume(e.Metadata?.Capital??0))</td>
+                                                                    <td class="text-end">@(e.Metadata?.Listing?.Currency??"--") @((e.Metadata?.Listing?.IssuePrice??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
+                                                                    <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{e.Metadata?.Listing?.Currency??"--"} {quote0253.MarketPrice?.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
+                                                                    <td class="text-end">@(FormatUtils.FormatVolume(e.Metadata?.Listing?.CapitalToRaise??0))</td>
                                                                 </tr>
                                                             }
                                                         </tbody>
@@ -253,8 +253,8 @@
                                                                 <tr>
                                                                     <td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
                                                                     <td class="text-center">@e.MarketId</td>
-                                                                    <td><a target="_blank" href="@(e.Metadata?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.CompanyName??"--")</small></td>
-                                                                    <td>@(e.Metadata?.Status??"--")</td>
+                                                                    <td><a target="_blank" href="@(e.Metadata?.Earnings?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.Earnings?.CompanyName??"--")</small></td>
+                                                                    <td>@(e.Metadata?.Earnings?.Status??"--")</td>
                                                                     <td class="text-end">@(e.Metadata?.Earnings?.ReportPeriod??"--")</td>
                                                                 </tr>
                                                             }
@@ -320,7 +320,7 @@
         {
             if (quote.MarketPrice > 0)
             {
-                return (quote.MarketPrice+e.Metadata?.Dividend?.Amount??0 - preExDivPrice) / preExDivPrice - 1;
+                @* return (quote.MarketPrice+e.Metadata?.Dividend?.Amount??0 - preExDivPrice) / preExDivPrice - 1; *@
             }
         }
         return 0;

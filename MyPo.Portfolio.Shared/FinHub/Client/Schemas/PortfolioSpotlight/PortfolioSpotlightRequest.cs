@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using FinHub.Client.Models.Portfolios;
 
 namespace FinHub.Client.Schemas.PortfolioSpotlight;
@@ -9,8 +9,8 @@ public sealed record PortfolioSpotlightRequest
     public required string Country { get; init; }
 
     [JsonPropertyName("current_allocation")]
-    public IReadOnlyList<PortfolioHolding> CurrentAllocation { get; init; } = [];
+    public required IReadOnlyList<PortfolioHolding> CurrentAllocation { get; init; }
 
     [JsonPropertyName("investor_theme")]
-    public string? InvestorTheme { get; init; }
+    public required string InvestorTheme { get; init; }
 }

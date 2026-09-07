@@ -1,11 +1,13 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 using Finhub.Client;
+using FinHub.Client.Models.Portfolios;
+using FinHub.Client.Schemas.PortfolioAnalysis;
+using FinHub.Client.Schemas.PortfolioSpotlight;
 using MyPo.Libs;
-using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Shared.Identity;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -124,7 +126,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             : null;
         var market = Globals.MarketsMap.TryGetValue(portfolio?.Metadata?.DefaultMarketId?.ToUpper() ?? string.Empty, out var m) ? m : null;
         var country = market?.Country ?? "US";
-        var allocation = BuildAllocationReqs(plan);
+        var allocation = FinHubHelper.BuildAllocationReqs(plan);
         var changed = false;
         var nowUtc = DateTimeOffset.UtcNow;
 
@@ -154,8 +156,9 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             if (portfolioAnalysis is not null)
             {
                 plan.Metadata.AnalysisRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                plan.Metadata.Analysis = portfolioAnalysis.Analysis;
-                plan.Metadata.RebalancePlan = portfolioAnalysis.RebalancePlan;
+                plan.Metadata.PortfolioAnalysis = portfolioAnalysis;
+                // plan.Metadata.Analysis = portfolioAnalysis.Analysis;
+                // plan.Metadata.RebalancePlan = portfolioAnalysis.RebalancePlan;
                 changed = true;
             }
         }
@@ -186,10 +189,12 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             if (portfolioSpotlight is not null)
             {
                 plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
+                // plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
+                plan.Metadata.SpotlightAnalysis = portfolioSpotlight;
                 changed = true;
+                // TODO
                 // fire-and-forget: don't block the analysis loop on Telegram delivery
-                _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, portfolioSpotlight.Analysis, cancellationToken), cancellationToken);
+                // _ = Task.Run(()=>SendSpotlightAlert(teleBot, chatIDs, plan, portfolioSpotlight.Analysis, cancellationToken), cancellationToken);
             }
         }
         else
@@ -211,34 +216,53 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         return changed;
     }
 
+    // private static bool ShouldBuildNew(PortfolioPlanEntity plan)
+    // {
+    //     var holdings = plan.Metadata?.HoldingTickers ?? [];
+    //     var countEntries = holdings.Count;
+    //     var countPositive = holdings.Count(ht => ht.Shares > 0);
+    //     var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
+    //     return buildNew;
+    // }
+
+    // /// <summary>
+    // /// Runs the portfolio building analysis.
+    // /// </summary>
+    // private async Task<PortfolioConstruction?> BuildPortfolio(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, IReadOnlyList<PortfolioHolding> allocation, CancellationToken cancellationToken)
+    // {
+    //     var holdings = plan.Metadata?.HoldingTickers ?? [];
+    //     var countEntries = holdings.Count;
+    //     var countPositive = holdings.Count(ht => ht.Shares > 0);
+    //     var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
+    //     var resp = await finHubClient.BuildPortfolioAsync(new BuildPortfolioRequest
+    //             {
+    //                 Country = country,
+    //                 InvestorTheme = plan.Metadata!.Description!, // Description check was done by caller
+    //                 CurrentAllocation = allocation,
+    //             }, cancellationToken: cancellationToken);
+    //     if (!resp.IsSuccess || resp.Data is null)
+    //     {
+    //         Logger.LogWarning("Failed to build portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Message);
+    //         return null;
+    //     }
+    //     return resp.Data;
+    // }
+
     /// <summary>
-    /// Runs the normal portfolio analysis. Mirrors <c>FinHubController.AnalyzePortfolioPlan</c>: builds a
-    /// fresh portfolio when there are no (or mostly empty) holdings, otherwise analyzes the existing one.
-    /// Returns the analysis text, or <c>null</c> if the call failed or the LLM reported an error.
+    /// Runs the portfolio analysis
     /// </summary>
-    private async Task<PortfolioAnalysis?> RunNormalAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    private async Task<IPortfolioAnalysisResult?> RunNormalAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, IReadOnlyList<PortfolioHolding> allocation, CancellationToken cancellationToken)
     {
-        var holdings = plan.Metadata?.HoldingTickers ?? [];
-        var countEntries = holdings.Count;
-        var countPositive = holdings.Count(ht => ht.Shares > 0);
-        var buildNew = countEntries == 0 || (double)countPositive / countEntries <= 0.5;
-        var resp = buildNew
-            ? await finHubClient.BuildPortfolioAsync(new BuildPortfolioReq
+        var resp = await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioRequest
                 {
                     Country = country,
-                    InvestorTheme = plan.Metadata?.Description,
+                    InvestorTheme = plan.Metadata!.Description!, // Description check was done by caller
                     CurrentAllocation = allocation,
-                }, cancellationToken: cancellationToken)
-            : await finHubClient.AnalyzePortfolioAsync(new AnalyzePortfolioReq
-                {
-                    Country = country,
-                    InvestorTheme = plan.Metadata?.Description,
-                    CurrentAllocation = allocation,
-                    BuildRebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
+                    RebalancePlan = plan.Type == PortfolioPlanEntity.PLAN_TYPE_ALLOCATION,
                 }, cancellationToken: cancellationToken);
-        if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
+        if (!resp.IsSuccess || resp.Data is null)
         {
-            Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
+            Logger.LogWarning("Failed to analyze portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Message);
             return null;
         }
         return resp.Data;
@@ -248,12 +272,18 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
     /// Runs the spotlight portfolio analysis (immediate risks/actions). Returns the analysis text, or
     /// <c>null</c> if the call failed or the LLM reported an error.
     /// </summary>
-    private async Task<PortfolioAnalysis?> RunSpotlightAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, List<HoldingTickerReq> allocation, CancellationToken cancellationToken)
+    private async Task<PortfolioSpotlightAnalysis?> RunSpotlightAnalysis(IFinHubClient finHubClient, PortfolioPlanEntity plan, string country, IReadOnlyList<PortfolioHolding> allocation, CancellationToken cancellationToken)
     {
-        var resp = await finHubClient.SpotlightPortfolioAsync(new SpotLightPortfolioReq { Country = country, InvestorTheme = plan.Metadata?.Description, CurrentAllocation = allocation }, cancellationToken: cancellationToken);
-        if (!resp.IsSuccess || resp.Data is null || resp.Data.LLMError)
+        var req = new PortfolioSpotlightRequest
         {
-            Logger.LogWarning("Failed to spotlight portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Data?.LLMErrorMsg ?? resp.Message);
+            Country = country,
+            InvestorTheme = plan.Metadata!.Description!, // Description check was done by caller
+            CurrentAllocation = allocation
+        };
+        var resp = await finHubClient.SpotlightPortfolioAsync(req, cancellationToken: cancellationToken);
+        if (!resp.IsSuccess || resp.Data is null)
+        {
+            Logger.LogWarning("Failed to spotlight portfolio plan '{planId}: {planName}': {message}", plan.Id, plan.Name, resp.Message);
             return null;
         }
         return resp.Data;
@@ -294,19 +324,19 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         }
     }
 
-    /// <summary>
-    /// Builds the FinHub request allocation list from a plan's current holdings.
-    /// </summary>
-    private static List<HoldingTickerReq> BuildAllocationReqs(PortfolioPlanEntity plan)
-        => [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new HoldingTickerReq
-        {
-            Ticker = ht.Ticker,
-            TargetAllocation = ht.TargetAllocation,
-            NumShares = ht.Shares,
-            AvgPrice = ht.AveragePrice,
-            MarketPrice = ht.MarketPrice,
-            Tags = ht.Tags,
-        })];
+    // /// <summary>
+    // /// Builds the FinHub request allocation list from a plan's current holdings.
+    // /// </summary>
+    // private static IReadOnlyList<PortfolioHolding> BuildAllocationReqs(PortfolioPlanEntity plan)
+    //     => [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new PortfolioHolding
+    //     {
+    //         Ticker = ht.Ticker,
+    //         TargetAllocation = ht.TargetAllocation,
+    //         NumShares = ht.Shares,
+    //         AvgPrice = ht.AveragePrice,
+    //         MarketPrice = ht.MarketPrice,
+    //         Tags = ht.Tags,
+    //     })];
 
     [GeneratedRegex(@"^[ \t]*#{1,6}[ \t]+(.+?)[ \t]*$", RegexOptions.Multiline)]
     private static partial Regex MarkdownHeadingRegex();

@@ -138,13 +138,13 @@ sealed class BackgroundPortfolioTaskSendMarketAlerts : BackgroundPortfolioTask
                 var ticker = YFUtils.BuildYFTicker(e.ItemCode);
                 var formatValue = market == "VN" ? "F0" : "F2";
                 var formatPercent = market == "VN" ? "P0" : "P2";
-                msg.Append($"<a href=\"{e.Metadata!.Link ?? ""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{(e.Metadata?.Dividend?.Amount ?? 0).ToString(formatValue)} ({yieldsMap[e.ItemCode].ToString(formatPercent)}</code>)\n");
+                msg.Append($"<a href=\"{e.Metadata!.Dividend?.Link ?? ""}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{(e.Metadata?.Dividend?.Amount ?? 0).ToString(formatValue)} ({yieldsMap[e.ItemCode].ToString(formatPercent)}</code>)\n");
                 if (e.Metadata?.Dividend?.Analysis != null)
                 {
-                    msg.Append($"📈 Recov: {e.Metadata.Dividend.Analysis.RecoveryProb:P0} ({e.Metadata.Dividend.Analysis.RecoveryDaysMin}-{e.Metadata.Dividend.Analysis.RecoveryDaysMax} days)\n");
+                    msg.Append($"📈 Recov: {e.Metadata.Dividend.Analysis.RecoveryProbability:P0} ({e.Metadata.Dividend.Analysis.RecoveryDaysMin}-{e.Metadata.Dividend.Analysis.RecoveryDaysMax} days)\n");
                     if (quotesMap.TryGetValue(ticker, out var quote))
                     {
-                        msg.Append(quote.MarketPrice.ToString(formatValue));
+                        msg.Append(quote.MarketPrice?.ToString(formatValue));
                     }
                     msg.Append(" → ");
                     msg.Append($"({e.Metadata.Dividend.Analysis.DropPriceMin.ToString(formatValue)} - {e.Metadata.Dividend.Analysis.DropPriceMax.ToString(formatValue)})");
@@ -192,21 +192,21 @@ sealed class BackgroundPortfolioTaskSendMarketAlerts : BackgroundPortfolioTask
             var tz = MarketEventUtils.MarketToDefaultTimeZoneId(e.MarketId);
             var ticker = YFUtils.BuildYFTicker(e.ItemCode);
             var quoteInfo = quotesMap.TryGetValue(ticker, out var quote) ? $"(curr: <code>{quote.MarketPrice:F2}</code>)" : "";
-            message.Append($"<a href=\"{e.Metadata?.Link}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.Price ?? 0:F2}</code> {quoteInfo}\n");
+            message.Append($"<a href=\"{e.Metadata?.Listing?.Link}\">{e.ItemCode}</a> - 📅 <code>{e.EventTime.ToTimeZoneSilently(tz):MMM-dd}</code> -💲<code>{e.Metadata?.Listing?.IssuePrice ?? 0:F2}</code> {quoteInfo}\n");
             if (e.Metadata?.Listing?.Analysis?.Outlook != null)
             {
-                if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
-                {
-                    message.Append($"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n");
-                }
-                if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m11))
-                {
-                    message.Append($"📈 1m: {m11.Direction} ({m11.Confidence}%), {m11.Reason}\n");
-                }
-                if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m31))
-                {
-                    message.Append($"📈 3m: {m31.Direction} ({m31.Confidence}%), {m31.Reason}\n");
-                }
+                // if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("w2", out var v21))
+                // {
+                //     message.Append($"📈 2w: {v21.Direction} ({v21.Confidence}%), {v21.Reason}\n");
+                // }
+                // if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m1", out var m11))
+                // {
+                //     message.Append($"📈 1m: {m11.Direction} ({m11.Confidence}%), {m11.Reason}\n");
+                // }
+                // if (e.Metadata.Listing.Analysis.Outlook.TryGetValue("m3", out var m31))
+                // {
+                //     message.Append($"📈 3m: {m31.Direction} ({m31.Confidence}%), {m31.Reason}\n");
+                // }
             }
             message.Append('\n');
         }

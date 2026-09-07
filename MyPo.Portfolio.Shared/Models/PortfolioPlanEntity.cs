@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Ddth.Signum;
+using FinHub.Client.Models.Portfolios;
 using MyPo.Shared.Models;
 
 namespace MyPo.Portfolio.Shared.Models;
@@ -90,6 +91,9 @@ public sealed class PortfolioPlanMetadata : ISignumFingerprintable
     [JsonPropertyName("rebalance_plan")]
     public string RebalancePlan { get; set; } = string.Empty;
 
+    [JsonPropertyName("portfolio_analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IPortfolioAnalysisResult? PortfolioAnalysis { get; set; }
+
     [JsonPropertyName("trefresh_spotlight")]
     public long SpotlightRefreshTimestamp { get; set; }
 
@@ -98,6 +102,9 @@ public sealed class PortfolioPlanMetadata : ISignumFingerprintable
 
     [JsonPropertyName("spotlight")]
     public string Spotlight { get; set; } = string.Empty;
+
+    [JsonPropertyName("spotlight_analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PortfolioSpotlightAnalysis? SpotlightAnalysis { get; set; }
 }
 
 public sealed class HoldingTicker : ISignumFingerprintable

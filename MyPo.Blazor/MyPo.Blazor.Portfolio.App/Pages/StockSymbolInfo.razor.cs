@@ -45,12 +45,12 @@ public sealed partial class StockSymbolInfo : BasePage
         ModalDialogAnalyzeSymbol.Open();
         ModalDialogAnalyzeSymbol.ShowAlert("info", alertMsg);
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var req = new TickerAnalysisReq
-        {
-            Symbol = SymbolInfo.NormalizedSymbol,
-            PortfolioId = PortfolioId,
-            Intent = Intent,
-        };
+        // var req = new TickerAnalysisReq
+        // {
+        //     Symbol = SymbolInfo.NormalizedSymbol,
+        //     PortfolioId = PortfolioId,
+        //     Intent = Intent,
+        // };
         var stopFlag = false;
         var startTimestamp = DateTime.UtcNow;
         _ = Task.Run(async () =>
@@ -65,7 +65,7 @@ public sealed partial class StockSymbolInfo : BasePage
                 await Task.Delay(100);
             }
         });
-        var analysisResponse = await apiClient.AnalyzeTickerAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
+        var analysisResponse = await apiClient.AnalyzeTickerAsync(Symbol, PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
         stopFlag = true;
         if (!analysisResponse.IsSuccess)
         {

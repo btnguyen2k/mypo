@@ -46,17 +46,17 @@ sealed class BackgroundPortfolioTaskNewListingAnnouncementsScanner : BackgroundP
                         Logger.LogInformation("Finding new listing announcements for market {market}...", country);
                         var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
                         var events = await finhubClient.GetNewListingAnnouncementsAsync(country, cancellationToken: cancellationToken);
-                        if (events.Status != 200)
+                        if (!events.IsSuccess)
                         {
                             Logger.LogError("Failed to fetch new listing announcements for market {market}. Status: {status}, Message: {message}", country, events.Status, events.Message);
                         }
                         else
                         {
                             var eventsList = events.Data ?? [];
-                            Logger.LogInformation("New listing announcements for market {market}: {event}", country, eventsList.Count());
+                            Logger.LogInformation("New listing announcements for market {market}: {event}", country, eventsList.Count);
                             foreach (var e in eventsList)
                             {
-                                Logger.LogInformation("- {date} - {symbol} {name}", e.Date, e.Symbol, e.CompanyName);
+                                Logger.LogInformation("- {date} - {symbol} {name}", e.DateUTC, e.Symbol, e.CompanyName);
                             }
                             await SaveEvents(eventsList, CheckpointEntity.NON_OWNER, country, cancellationToken);
 
