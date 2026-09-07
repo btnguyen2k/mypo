@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ddth.Utilities" Version="0.4.0" />
-    <PackageReference Include="Telegram.Bot" Version="22.10.2.1" />
+    <PackageReference Include="Telegram.Bot" Version="22.10.3" />
   </ItemGroup>
 
 </Project>
