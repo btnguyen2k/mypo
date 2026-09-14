@@ -1,5 +1,11 @@
 # My Portfolio Tracker release notes
 
+## 2026-09-14 - v2.3.1
+
+### Fixed/Improvements
+
+- Patch(buy/sell): Accept zero as a valid price.
+
 ## 2026-08-14 - v2.3.0
 
 ### Added/Refactoring/Deprecation
