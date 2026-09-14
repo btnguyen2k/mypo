@@ -103,10 +103,10 @@ public partial class CPortfolioTxBuysSells : CBase
             return false;
         }
 
-        // validate price, must be positive
-        if (!Tx.IsSettled && Tx.Price <= 0.00m)
+        // validate price, must be non-negative
+        if (!Tx.IsSettled && Tx.Price < 0.00m)
         {
-            var (alertType, alertMsg) = ("danger", "Price must be a positive value.");
+            var (alertType, alertMsg) = ("danger", "Price must be a non-negative value.");
             if (activeForm != null)
                 activeForm.ShowAlert(alertType, alertMsg);
             else

@@ -25,6 +25,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "saturday"
+    cooldown:
+      semver-patch-days: 7
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"] # do not update to major version as it may contain breaking changes
