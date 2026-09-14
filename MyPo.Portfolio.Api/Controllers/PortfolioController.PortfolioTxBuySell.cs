@@ -57,10 +57,10 @@ public partial class PortfolioController
             return (null, ResponseNoData(400, "Item code must not be empty."));
         }
 
-        // validate price, must be positive
-        if (!(existingTx?.IsSettled ?? false) && reqTx.Price <= 0.00m)
+        // validate price, must be non-negative
+        if (!(existingTx?.IsSettled ?? false) && reqTx.Price < 0.00m)
         {
-            return (null, ResponseNoData(400, "Price must be a positive value."));
+            return (null, ResponseNoData(400, "Price must be a non-negative value."));
         }
 
         // validate quantity, must be positive
