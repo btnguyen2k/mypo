@@ -6,3 +6,4 @@
 - impr: Refactor StaticDataBootstrapper and move the execution task to background service.
 - impr(startup): Refactor bootstraping await loop.
 - fix(my-portfolio): Fix a bug where BuildPortfolioTree incorrectly handle portfolios with same name.
+- impr(my-portfolio/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.

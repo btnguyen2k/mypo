@@ -95,11 +95,6 @@ public partial class MyPortfolio : BasePage
         }
     }
 
-    private void BtnClickAdd()
-    {
-        NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD);
-    }
-
     public void OnClickDeletePortfolio(PortfolioResp p)
     {
         SelectedPortfolio = p;
