@@ -82,27 +82,6 @@ public partial class MyPortfolio : BasePage
             MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
             MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
 
-            Console.WriteLine("[DEBUG]==================================================");
-            foreach (var p in allPortfolios)
-            {
-                if (p.ParentId == "93427b3e-f848-4bf7-bc95-b853143d235a")
-                {
-                    Console.WriteLine($"[DEBUG] Portfolio: {p.Name} (ID: {p.Id})");
-                }
-            }
-
-            Console.WriteLine("[DEBUG]==================================================");
-            foreach (var p in MyPortfolioList)
-            {
-                if (p.Id == "93427b3e-f848-4bf7-bc95-b853143d235a")
-                {
-                    foreach (var c in p.Children?? [])
-                    {
-                        Console.WriteLine($"[DEBUG] Child of {p.Id} - {c.Name} (ID: {c.Id})");
-                    }
-                }
-            }
-
             var (alertType, alertMessage) = GetPassedMessageFromQuery();
             if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
             {
