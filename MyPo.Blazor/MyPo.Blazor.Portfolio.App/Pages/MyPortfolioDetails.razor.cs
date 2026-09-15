@@ -440,11 +440,6 @@ public partial class MyPortfolioDetails : BasePage
         ShowAlert("success", $"Portfolio '{portfolio.Name}' deleted successfully.", ALERT_AUTO_CLOSE_MS);
     }
 
-    private void BtnClickCreatePortfolio()
-    {
-        NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD}?parentId={PortfolioId}");
-    }
-
     private bool ShowContainerPreferences { get; set; } = false;
 
     private void ToggleContainerPreferences()

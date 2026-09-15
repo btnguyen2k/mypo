@@ -10,3 +10,4 @@
 - impr(my-portfolio-details/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.
 - impr(my-portfolio-details/UI): Add modify and delete actions to child portfolio cards.
 - impr(my-portfolio-modify/UI): Return to the parent portfolio after cancelling or saving child edits.
+- fix(my-portfolio-add/UI): Return to the parent portfolio after creating a child portfolio.
