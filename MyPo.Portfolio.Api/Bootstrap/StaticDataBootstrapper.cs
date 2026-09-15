@@ -9,10 +9,34 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 [Bootstrapper]
 public class StaticDataBootstrapper
 {
-    public static async Task InitializeServicesAsync(IServiceProvider serviceProvider, IConfiguration configuration)
+    public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
-        var finhubBaseUrl = configuration.GetValue("FinHub:Url", string.Empty);
-        var resourceBaseUrl = new Uri(new Uri(finhubBaseUrl), "/market/index/");
-        await StaticDataCacher.CacheIndexConstituentsFinHubAsync(serviceProvider, resourceBaseUrl.AbsoluteUri);
+        // events
+        appBuilder.Services.AddHostedService<BackgroundTaskCacheIndexConstituentsFinHub>();
+    }
+}
+
+sealed class BackgroundTaskCacheIndexConstituentsFinHub : BackgroundService
+{
+    private readonly IServiceProvider ServiceProvider;
+    private readonly IConfiguration Configuration;
+
+    public BackgroundTaskCacheIndexConstituentsFinHub(
+        IServiceProvider serviceProvider,
+        IConfiguration configuration) : base()
+    {
+        ServiceProvider = serviceProvider;
+        Configuration = configuration;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        var finhubBaseUrl = Configuration.GetValue("FinHub:Url", string.Empty);
+        if (!Uri.TryCreate(finhubBaseUrl, UriKind.Absolute, out var finhubUri))
+        {
+            throw new InvalidOperationException($"Invalid FinHub base URL: '{finhubBaseUrl}'");
+        }
+        var resourceBaseUrl = new Uri(finhubUri, "/market/index/");
+        await StaticDataCacher.CacheIndexConstituentsFinHubAsync(ServiceProvider, resourceBaseUrl.AbsoluteUri, cancellationToken);
     }
 }

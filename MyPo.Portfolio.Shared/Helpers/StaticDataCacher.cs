@@ -7,44 +7,95 @@ namespace MyPo.Portfolio.Shared.Helpers;
 
 public class StaticDataCacher
 {
-    private static async Task CacheIndexConstituentsWithRetryAsync(HttpClient httpCLient, string index, string resourceUrl, ILogger? logger, int maxRetries = 3, int delayMs = 1000)
-    {
-        var indexData = GlobalRegistry.INDEX_CONSTITUENTS.GetValueOrDefault(index, new HashSet<string>());
-        GlobalRegistry.INDEX_CONSTITUENTS[index] = indexData;
+    private static readonly TimeSpan perAttemptTimeout = TimeSpan.FromSeconds(10);
 
+    private static async Task CacheIndexConstituentsWithRetryAsync(
+        HttpClient httpClient,
+        string index,
+        string resourceUrl,
+        ILogger? logger,
+        int maxRetries = 3,
+        int delayMs = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        var resolvedDelayMs = delayMs;
         for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
             {
-                logger?.LogInformation("Loading cached index constituents '{index}' from '{resourceUrl}'...", index, resourceUrl);
-                var data = await JsonSerializer.DeserializeAsync<IDictionary<string, object>>(await httpCLient.GetStreamAsync(resourceUrl));
+                logger?.LogInformation(
+                    "Loading index constituents '{index}' from '{resourceUrl}', attempt {attempt}...",
+                    index,
+                    resourceUrl,
+                    attempt);
+
+                using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                attemptCts.CancelAfter(perAttemptTimeout);
+
+                using var response = await httpClient.GetAsync(
+                    resourceUrl,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    attemptCts.Token);
+                response.EnsureSuccessStatusCode();
+
+                await using var responseStream = await response.Content.ReadAsStreamAsync(attemptCts.Token);
+                var data = await JsonSerializer.DeserializeAsync<IDictionary<string, object>>(
+                    responseStream,
+                    cancellationToken: attemptCts.Token);
+
+                var loadedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var symbolList = data!["data"] as JsonElement?;
-                lock (indexData)
+                foreach (var element in symbolList?.EnumerateArray() ?? [])
                 {
-                    symbolList?.EnumerateArray().ToList().ForEach(e => indexData.Add(e.GetProperty("symbol").GetString()!));
+                    var symbol = element.GetProperty("symbol").GetString();
+                    if (!string.IsNullOrWhiteSpace(symbol))
+                    {
+                        loadedSymbols.Add(symbol);
+                    }
                 }
-                return;
+                GlobalRegistry.INDEX_CONSTITUENTS[index] = loadedSymbols;
             }
-            catch (Exception ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                logger?.LogError(ex, "Attempt {attempt} - Failed to load cached index constituents for '{index}' from '{resourceUrl}'", attempt, index, resourceUrl);
-                if (attempt == maxRetries)
-                {
-                    logger?.LogError("Exceeded maximum retry attempts ({maxRetries}) for loading index constituents for '{index}'", maxRetries, index);
-                    return;
-                }
-                await Task.Delay(delayMs);
+                // Overall budget expired or the application is stopping.
+                throw;
+            }
+            catch (OperationCanceledException ex)
+            {
+                logger?.LogWarning(
+                    ex,
+                    "Attempt {attempt} timed out after {timeoutSeconds} seconds for '{index}'",
+                    attempt,
+                    perAttemptTimeout.TotalSeconds,
+                    index);
+            }
+            catch (HttpRequestException ex)
+            {
+                logger?.LogWarning(
+                    ex,
+                    "Attempt {attempt} failed for '{index}' from '{resourceUrl}'",
+                    attempt,
+                    index,
+                    resourceUrl);
+            }
+
+            if (attempt < maxRetries)
+            {
+                await Task.Delay(resolvedDelayMs, cancellationToken);
+                // backoff exponentially
+                resolvedDelayMs = (int)(resolvedDelayMs * 1.2);
             }
         }
+
+        logger?.LogError("Exceeded maximum retry attempts ({maxRetries}) for '{index}'", maxRetries, index);
     }
 
-    public static async Task CacheIndexConstituentsFinHubAsync(IServiceProvider serviceProvider, string resourcesBaseUrl)
+    public static async Task CacheIndexConstituentsFinHubAsync(
+        IServiceProvider serviceProvider,
+        string resourcesBaseUrl,
+        CancellationToken cancellationToken = default)
     {
-        var logger = serviceProvider.GetService<ILogger<StaticDataCacher>>();
-
-        var httpClient = serviceProvider.GetService<HttpClient>() ?? throw new InvalidOperationException("Cannot obtain HttpClient instance.");
         resourcesBaseUrl = resourcesBaseUrl.TrimEnd('/') + '/';
-
         var indexMapping = new Dictionary<string, string>()
         {
             {"ASX20", $"{resourcesBaseUrl}ASX20"},
@@ -60,11 +111,35 @@ public class StaticDataCacher
             {"SP400", $"{resourcesBaseUrl}SP400"},
             {"SP600", $"{resourcesBaseUrl}SP600"},
         };
-        foreach (var kvp in indexMapping)
+
+        var logger = serviceProvider.GetService<ILogger<StaticDataCacher>>();
+        var httpClient = serviceProvider.GetService<HttpClient>() ?? throw new InvalidOperationException("Cannot obtain HttpClient instance.");
+
+        using var budgetCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var maxBudgetSeconds = Math.Min(perAttemptTimeout.Seconds * indexMapping.Count, 60);
+        budgetCts.CancelAfter(TimeSpan.FromSeconds(maxBudgetSeconds));
+
+        var parallelOptions = new ParallelOptions
         {
-            var index = kvp.Key;
-            var resourceUrl = kvp.Value;
-            await CacheIndexConstituentsWithRetryAsync(httpClient, index, resourceUrl, logger);
+            MaxDegreeOfParallelism = 4,
+            CancellationToken = budgetCts.Token,
+        };
+
+        try
+        {
+            await Parallel.ForEachAsync(
+                indexMapping,
+                parallelOptions,
+                async (entry, operationToken) => await CacheIndexConstituentsWithRetryAsync(
+                    httpClient,
+                    entry.Key,
+                    entry.Value,
+                    logger,
+                    cancellationToken: operationToken));
+        }
+        catch (OperationCanceledException) when (budgetCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            logger?.LogWarning("Index constituent loading exceeded its total {timeoutSeconds}-second budget", maxBudgetSeconds);
         }
     }
 }

@@ -32,7 +32,9 @@
                     {
                         <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
                             <ChildContent Context="ctx_add_portfolio">
-                                <button class="btn btn-outline-primary btn-sm float-end" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+                                <NavLink class="btn btn-outline-primary btn-sm float-end" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD">
+                                    <BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio
+                                </NavLink>
                             </ChildContent>
                         </AuthorizeView>
                     }
@@ -49,7 +51,9 @@
                                 <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
                                     <ChildContent Context="ctx_add_portfolio">
                                         <p>Create your first portfolio to get started.</p>
-                                        <button class="btn btn-primary btn-lg" @onclick="BtnClickAdd"><BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio</button>
+                                        <NavLink class="btn btn-primary btn-lg" href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD">
+                                            <BIcon icon="bi-plus-lg" extraClassName="me-1"/>New Portfolio
+                                        </NavLink>
                                     </ChildContent>
                                 </AuthorizeView>
                             </div>
@@ -90,7 +94,7 @@
                     }
                     @if (!string.IsNullOrEmpty(BackgroundMsg))
                     {
-                        <div class="alert alert-light" role="alert">
+                        <div class="alert alert-light mt-2" role="alert">
                             <span style="font-size: small !important;">@BackgroundMsg</span>
                         </div>
                     }

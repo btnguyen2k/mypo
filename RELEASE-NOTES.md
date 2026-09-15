@@ -1,5 +1,19 @@
 # My Portfolio Tracker release notes
 
+## 2026-09-15 - v2.3.2
+
+### Fixed/Improvements
+
+- Fix(portfolio-summary): Fix Closing Balance calculation.
+- Impr: Refactor StaticDataBootstrapper and move the execution task to background service.
+- Impr(startup): Refactor bootstraping await loop.
+- Fix(my-portfolio): Fix a bug where BuildPortfolioTree incorrectly handle portfolios with same name.
+- Impr(my-portfolio/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.
+- Impr(my-portfolio-details/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.
+- Impr(my-portfolio-details/UI): Add modify and delete actions to child portfolio cards.
+- Impr(my-portfolio-modify/UI): Return to the parent portfolio after cancelling or saving child edits.
+- Fix(my-portfolio-add/UI): Return to the parent portfolio after creating a child portfolio.
+
 ## 2026-09-14 - v2.3.1
 
 ### Fixed/Improvements

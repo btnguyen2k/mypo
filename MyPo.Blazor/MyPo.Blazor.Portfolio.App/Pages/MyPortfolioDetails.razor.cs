@@ -17,6 +17,8 @@ public partial class MyPortfolioDetails : BasePage
     [Parameter]
     public string PortfolioId { get; set; } = string.Empty;
     private PortfolioResp? SelectedPortfolio { get; set; }
+    private PortfolioResp? SelectedChildPortfolio { get; set; }
+    private CModal ModalDialogDeleteChild { get; set; } = default!;
 
     private bool IsPortfolioOwner() => SelectedPortfolio?.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.OrdinalIgnoreCase) ?? false;
 
@@ -382,9 +384,61 @@ public partial class MyPortfolioDetails : BasePage
         InitializePage();
     }
 
-    private void BtnClickCreatePortfolio()
+    private void BtnClickDeleteChild(PortfolioResp portfolio)
     {
-        NavigationManager.NavigateTo($"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD}?parentId={PortfolioId}");
+        if (!string.Equals(portfolio.OwnerUserId, CurrentUser?.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            ShowAlert("danger", "You do not have permission to delete this portfolio.");
+            return;
+        }
+
+        SelectedChildPortfolio = portfolio;
+        ModalDialogDeleteChild.Open();
+    }
+
+    private void BtnClickDeleteChildClose()
+    {
+        ModalDialogDeleteChild.Close();
+    }
+
+    private async Task BtnClickDeleteChildConfirm()
+    {
+        var portfolio = SelectedChildPortfolio;
+        if (portfolio == null)
+        {
+            ModalDialogDeleteChild.Close();
+            return;
+        }
+        if (!string.Equals(portfolio.OwnerUserId, CurrentUser?.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            ModalDialogDeleteChild.Close();
+            ShowAlert("danger", "You do not have permission to delete this portfolio.");
+            return;
+        }
+
+        ModalDialogDeleteChild.Close();
+        HideUI = true;
+        ShowAlert("info", $"Deleting portfolio '{portfolio.Name}', please wait...");
+
+        var authToken = await GetAuthTokenAsync();
+        var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
+        var result = await apiClient.DeleteMyPortfolioAsync(portfolio.Id, authToken, ApiBaseUrl);
+        if (!result.IsSuccess)
+        {
+            HideUI = false;
+            ShowAlert("danger", result.Message ?? "Error deleting portfolio.");
+            return;
+        }
+
+        SelectedChildPortfolio = null;
+        SelectedPortfolio = await LoadPortfolioAsync(PortfolioId, authToken);
+        HideUI = false;
+        if (SelectedPortfolio == null)
+        {
+            return;
+        }
+
+        ShowAlert("success", $"Portfolio '{portfolio.Name}' deleted successfully.", ALERT_AUTO_CLOSE_MS);
     }
 
     private bool ShowContainerPreferences { get; set; } = false;

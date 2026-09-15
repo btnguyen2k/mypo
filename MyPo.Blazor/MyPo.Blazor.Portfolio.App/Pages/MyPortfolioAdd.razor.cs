@@ -1,6 +1,7 @@
 ﻿using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 
@@ -30,14 +31,7 @@ public partial class MyPortfolioAdd : BasePage
 
     private void BtnClickCancel()
     {
-        if (string.IsNullOrEmpty(ParentId))
-        {
-            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO);
-        }
-        else
-        {
-            NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", ParentId, StringComparison.OrdinalIgnoreCase));
-        }
+        NavigationManager.NavigateTo(ReturnUrl());
     }
 
     private async Task BtnClickSaveAndOpen()
@@ -88,21 +82,20 @@ public partial class MyPortfolioAdd : BasePage
             ShowAlert("danger", resp.Message ?? "Error creating the portfolio.");
             return;
         }
-        ShowAlert("success", "Portfolio created successfully. Navigating to my portfolio page...");
+        ShowAlert("success", "Portfolio created successfully. Navigating...");
         var passAlertMessage = $"Portfolio '{req.Name}' created successfully.";
         var passAlertType = "success";
         await Task.Delay(PortfolioUIGlobals.AFTER_ACTION_DELAY_MS);
-        var nextUrl = $"{PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO}?alertMessage={passAlertMessage}&alertType={passAlertType}";
+        var nextUrl = ReturnUrl();
         if (openAfterCreate)
         {
             var pid = resp.Data?.Id ?? string.Empty;
             nextUrl = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", pid, StringComparison.OrdinalIgnoreCase);
-            NavigationManager.NavigateTo($"{nextUrl}?alertMessage={passAlertMessage}&alertType={passAlertType}");
         }
-        else
-        {
-            NavigationManager.NavigateTo(nextUrl);
-        }
+
+        nextUrl = QueryHelpers.AddQueryString(nextUrl, QUERY_PARM_ALERT_MESSAGE, passAlertMessage);
+        nextUrl = QueryHelpers.AddQueryString(nextUrl, QUERY_PARM_ALERT_TYPE, passAlertType);
+        NavigationManager.NavigateTo(nextUrl);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -147,5 +140,18 @@ public partial class MyPortfolioAdd : BasePage
             HideUI = false;
             CloseAlert();
         }
+    }
+
+    private string ReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ParentId))
+        {
+            return PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO;
+        }
+
+        return PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace(
+            "{PortfolioId}",
+            ParentId,
+            StringComparison.OrdinalIgnoreCase);
     }
 }
