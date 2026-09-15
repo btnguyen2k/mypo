@@ -171,7 +171,7 @@ public partial class PortfolioController
         var children = myPortfolioList.Where(p => p.ParentId == existingPortfolio.Id).ToList();
         if (children.Count > 0)
         {
-            return ResponseNoData(409, "Cannot delete portfolio with child portfolios. Please delete or reassign the child portfolios first.");
+            return ResponseNoData(409, "Cannot delete portfolio with children. Please delete or reassign the child portfolios first.");
         }
 
         var resultDelete = await PortfolioRepository.DeletePortfolioAsync(existingPortfolio);
@@ -179,6 +179,14 @@ public partial class PortfolioController
         {
             return ResponseNoData(500, $"Failed to delete portfolio '{id}'.");
         }
+
+        // TODO
+        // 1. Cleanup checkpoints table
+        // 2. Cleanup buys-sells table
+        // 3. Cleanup ownings table
+        // 4. Cleanup settlements table
+        // 5. Cleanup report table
+
         return ResponseOk(PortfolioResp.BuildFrom(existingPortfolio));
     }
 }
