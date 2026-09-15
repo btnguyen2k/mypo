@@ -32,7 +32,11 @@ sealed class BackgroundTaskCacheIndexConstituentsFinHub : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var finhubBaseUrl = Configuration.GetValue("FinHub:Url", string.Empty);
-        var resourceBaseUrl = new Uri(new Uri(finhubBaseUrl), "/market/index/");
+        if (!Uri.TryCreate(finhubBaseUrl, UriKind.Absolute, out var finhubUri))
+        {
+            throw new InvalidOperationException($"Invalid FinHub base URL: '{finhubBaseUrl}'");
+        }
+        var resourceBaseUrl = new Uri(finhubUri, "/market/index/");
         await StaticDataCacher.CacheIndexConstituentsFinHubAsync(ServiceProvider, resourceBaseUrl.AbsoluteUri, cancellationToken);
     }
 }
