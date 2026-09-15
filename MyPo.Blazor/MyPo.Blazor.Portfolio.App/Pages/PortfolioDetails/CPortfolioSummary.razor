@@ -293,15 +293,7 @@
                             </td>
                             <td class="text-end fw-semibold">
                                 @(DefaultMarket?.CurrencySymbol??"")
-                                @(FormatUtils.FormatValueWithScale(
-                                    PnlSummary.Value.TotalCashIn
-                                    -PnlSummary.Value.TotalCashOut
-                                    -PnlSummary.Value.TotalBuyValue
-                                    +PnlSummary.Value.TotalSellValue
-                                    +PnlSummary.Value.TotalDividends
-                                    +PnlSummary.Value.TotalInterest
-                                    -PnlSummary.Value.TotalFees
-                                    -PnlSummary.Value.TotalTax, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
+                                @(FormatUtils.FormatValueWithScale(PnlSummary.Value.ClosingBalance, DefaultMarket?.PriceScale??1, DefaultMarket?.ValueFormat??""))
                             </td>
                         </tr>
                     </table>

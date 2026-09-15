@@ -1,3 +1,13 @@
-# This file has been cleaned up post-releasing version 2.3.1.
+﻿# This file has been cleaned up post-releasing version 2.3.1.
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
+#!VERSION=2.3.2
+- fix(portfolio-summary): Fix Closing Balance calculation.
+- impr: Refactor StaticDataBootstrapper and move the execution task to background service.
+- impr(startup): Refactor bootstraping await loop.
+- fix(my-portfolio): Fix a bug where BuildPortfolioTree incorrectly handle portfolios with same name.
+- impr(my-portfolio/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.
+- impr(my-portfolio-details/UI): Use NavLink whenever possible instead of buttons with onclick for navigation.
+- impr(my-portfolio-details/UI): Add modify and delete actions to child portfolio cards.
+- impr(my-portfolio-modify/UI): Return to the parent portfolio after cancelling or saving child edits.
+- fix(my-portfolio-add/UI): Return to the parent portfolio after creating a child portfolio.
