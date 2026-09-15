@@ -5,3 +5,4 @@
 - fix(portfolio-summary): Fix Closing Balance calculation.
 - impr: Refactor StaticDataBootstrapper and move the execution task to background service.
 - impr(startup): Refactor bootstraping await loop.
+- fix(my-portfolio): Fix a bug where BuildPortfolioTree incorrectly handle portfolios with same name.

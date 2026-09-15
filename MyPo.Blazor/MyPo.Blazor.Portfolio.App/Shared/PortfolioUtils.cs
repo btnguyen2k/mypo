@@ -6,22 +6,33 @@ namespace MyPo.Blazor.Portfolio.App.Shared;
 
 public static class PortfolioUtils
 {
+    private static readonly Comparer<PortfolioResp> PortfolioComparer = Comparer<PortfolioResp>.Create((a, b) =>
+        {
+            if (a == null && b == null) return 0;
+            if (a == null) return -1;
+            if (b == null) return 1;
+            var cmpName = string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+            if (cmpName != 0) return cmpName;
+            var cmpId = string.Compare(a.Id, b.Id, StringComparison.Ordinal);
+            return cmpId;
+        });
+
     public static IEnumerable<PortfolioResp> BuildPortfolioTree(IEnumerable<PortfolioResp> PortfolioList)
     {
         var portfolioSorted = PortfolioList.OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
         var portfolioDict = portfolioSorted.ToDictionary(p => p.Id);
         var rootPortfolios = new List<PortfolioResp>();
 
-        foreach (var portfolio in portfolioSorted)
+        foreach (var p in portfolioSorted)
         {
-            if (!string.IsNullOrEmpty(portfolio.ParentId) && portfolioDict.TryGetValue(portfolio.ParentId, out var parentPortfolio))
+            if (!string.IsNullOrEmpty(p.ParentId) && portfolioDict.TryGetValue(p.ParentId, out var parentPortfolio))
             {
-                parentPortfolio.Children ??= new SortedSet<PortfolioResp>(Comparer<PortfolioResp>.Create((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal)));
-                parentPortfolio.Children.Add(portfolio);
+                parentPortfolio.Children ??= new SortedSet<PortfolioResp>(PortfolioComparer);
+                parentPortfolio.Children.Add(p);
             }
             else
             {
-                rootPortfolios.Add(portfolio);
+                rootPortfolios.Add(p);
             }
         }
 

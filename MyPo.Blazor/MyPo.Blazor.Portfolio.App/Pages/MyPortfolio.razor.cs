@@ -60,7 +60,7 @@ public partial class MyPortfolio : BasePage
 
             ShowAlert("info", "Loading market info...");
             var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (marketResult.Status != 200)
+            if (!marketResult.IsSuccess)
             {
                 ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
                 return;
@@ -69,30 +69,50 @@ public partial class MyPortfolio : BasePage
 
             ShowAlert("info", "Loading portfolio...");
             var resultPortfolio = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (resultPortfolio.Status == 200)
+            if (!resultPortfolio.IsSuccess)
             {
-                HideUI = false;
-                var allPortfolios = resultPortfolio.Data ?? [];
-                MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
-                MyPortfolioList = PortfolioUtils.BuildPortfolioTree(allPortfolios);
-                MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
-                MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
+                ShowAlert("danger", resultPortfolio.Message ?? "Error loading portfolios.");
+                return;
+            }
 
-                var (alertType, alertMessage) = GetPassedMessageFromQuery();
-                if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+            HideUI = false;
+            var allPortfolios = resultPortfolio.Data ?? [];
+            MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
+            MyPortfolioList = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+            MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
+            MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
+
+            Console.WriteLine("[DEBUG]==================================================");
+            foreach (var p in allPortfolios)
+            {
+                if (p.ParentId == "93427b3e-f848-4bf7-bc95-b853143d235a")
                 {
-                    ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
+                    Console.WriteLine($"[DEBUG] Portfolio: {p.Name} (ID: {p.Id})");
                 }
-                else
+            }
+
+            Console.WriteLine("[DEBUG]==================================================");
+            foreach (var p in MyPortfolioList)
+            {
+                if (p.Id == "93427b3e-f848-4bf7-bc95-b853143d235a")
                 {
-                    CloseAlert();
+                    foreach (var c in p.Children?? [])
+                    {
+                        Console.WriteLine($"[DEBUG] Child of {p.Id} - {c.Name} (ID: {c.Id})");
+                    }
                 }
-                await Task.Run(FetchPortfolioPnlSummaryInBackground);
+            }
+
+            var (alertType, alertMessage) = GetPassedMessageFromQuery();
+            if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+            {
+                ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
             }
             else
             {
-                ShowAlert("danger", resultPortfolio.Message ?? "Error loading portfolios.");
+                CloseAlert();
             }
+            await Task.Run(FetchPortfolioPnlSummaryInBackground);
         }
     }
 
