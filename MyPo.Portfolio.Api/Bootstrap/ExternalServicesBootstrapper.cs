@@ -26,6 +26,8 @@ public class ExternalServicesBootstrapper
                 .AddJsonStream(stream!)
                 .AddEnvironmentVariables()
                 .Build();
+
+            appBuilder.Configuration.AddConfiguration(externalServicesSettings);
             ConfigureExternalServices(appBuilder, externalServicesSettings);
         }
     }
@@ -33,6 +35,10 @@ public class ExternalServicesBootstrapper
     private static void ConfigureExternalServices(WebApplicationBuilder appBuilder, IConfiguration externalServicesSettings)
     {
         var finhubBaseUrl = externalServicesSettings.GetValue<string>("FinHub:Url");
+        if (!Uri.TryCreate(finhubBaseUrl, UriKind.Absolute, out _))
+        {
+            throw new InvalidOperationException($"Invalid FinHub base URL: '{finhubBaseUrl}'");
+        }
         appBuilder.Services.AddSingleton<IFinHubClient, FinHubClient>(sp =>
         {
             var httpClient = sp.GetRequiredService<HttpClient>();

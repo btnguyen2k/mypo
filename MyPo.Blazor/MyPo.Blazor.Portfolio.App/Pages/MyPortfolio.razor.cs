@@ -60,7 +60,7 @@ public partial class MyPortfolio : BasePage
 
             ShowAlert("info", "Loading market info...");
             var marketResult = await apiClient.GetMarketsAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (marketResult.Status != 200)
+            if (!marketResult.IsSuccess)
             {
                 ShowAlert("danger", marketResult.Message ?? "Error loading market info.");
                 return;
@@ -69,36 +69,30 @@ public partial class MyPortfolio : BasePage
 
             ShowAlert("info", "Loading portfolio...");
             var resultPortfolio = await apiClient.GetMyPortfoliosAsync(await GetAuthTokenAsync(), ApiBaseUrl);
-            if (resultPortfolio.Status == 200)
+            if (!resultPortfolio.IsSuccess)
             {
-                HideUI = false;
-                var allPortfolios = resultPortfolio.Data ?? [];
-                MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
-                MyPortfolioList = PortfolioUtils.BuildPortfolioTree(allPortfolios);
-                MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
-                MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
+                ShowAlert("danger", resultPortfolio.Message ?? "Error loading portfolios.");
+                return;
+            }
 
-                var (alertType, alertMessage) = GetPassedMessageFromQuery();
-                if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
-                {
-                    ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
-                }
-                else
-                {
-                    CloseAlert();
-                }
-                await Task.Run(FetchPortfolioPnlSummaryInBackground);
+            HideUI = false;
+            var allPortfolios = resultPortfolio.Data ?? [];
+            MyPortfolioMap = allPortfolios.ToDictionary(p => p.Id);
+            MyPortfolioList = PortfolioUtils.BuildPortfolioTree(allPortfolios);
+            MyActivePortfolioList = MyPortfolioList.Where(p => p.IsActive);
+            MyInactivePortfolioList = MyPortfolioList.Where(p => !p.IsActive);
+
+            var (alertType, alertMessage) = GetPassedMessageFromQuery();
+            if (!string.IsNullOrEmpty(alertMessage) && !string.IsNullOrEmpty(alertType))
+            {
+                ShowAlert(alertType, alertMessage, ALERT_AUTO_CLOSE_MS);
             }
             else
             {
-                ShowAlert("danger", resultPortfolio.Message ?? "Error loading portfolios.");
+                CloseAlert();
             }
+            await Task.Run(FetchPortfolioPnlSummaryInBackground);
         }
-    }
-
-    private void BtnClickAdd()
-    {
-        NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_ADD);
     }
 
     public void OnClickDeletePortfolio(PortfolioResp p)

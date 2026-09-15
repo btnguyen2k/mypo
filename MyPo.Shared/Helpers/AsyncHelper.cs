@@ -23,6 +23,29 @@ public sealed class AsyncHelper
 		}
 	}
 
+    public static async Task WaitForBackgroundTasksAsync(IEnumerable<Task> tasks, ILogger? logger = default)
+    {
+        var remainingTasks = tasks.ToList();
+        while (remainingTasks.Count > 0)
+        {
+            var finishedTask = await Task.WhenAny(remainingTasks);
+            remainingTasks.Remove(finishedTask);
+
+            try
+            {
+                await finishedTask;
+            }
+            catch (OperationCanceledException ex)
+            {
+                logger?.LogWarning(ex, "A bootstrapper task was cancelled.");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error executing bootstrapper task.");
+            }
+        }
+    }
+
 	public static bool IsAsyncMethod(MethodInfo method) => method.ReturnType == typeof(Task)
 		|| method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>);
 }
