@@ -26,12 +26,10 @@ MyPo.Blazor.App.Globals.ApiBaseUrl = string.IsNullOrEmpty(appBuilder.Configurati
 
 // Bootstrapping
 var tasks = MyPo.Api.AppBootstrapper.Bootstrap(out var app, appBuilder, assemblies);
-await Task.Run(() =>
-{
-	var logger = app.Services.GetService<ILogger<Program>>();
-	logger?.LogInformation("Waiting for {n} background bootstrapping task(s)...", tasks.Count);
-	AsyncHelper.WaitForBackgroundTasks(tasks, logger);
-	MyPo.Shared.Api.Globals.Ready = true; // server is ready to handle requests
-	logger?.LogInformation("Background bootstrapping completed.");
-});
-app.Run();
+var logger = app.Services.GetService<ILogger<Program>>();
+logger?.LogInformation("Waiting for {n} background bootstrapping task(s)...", tasks.Count);
+await AsyncHelper.WaitForBackgroundTasksAsync(tasks, logger);
+MyPo.Shared.Api.Globals.Ready = true; // server is ready to handle requests
+logger?.LogInformation("Background bootstrapping completed.");
+
+await app.RunAsync();

@@ -4,3 +4,4 @@
 #!VERSION=2.3.2
 - fix(portfolio-summary): Fix Closing Balance calculation.
 - impr: Refactor StaticDataBootstrapper and move the execution task to background service.
+- impr(startup): Refactor bootstraping await loop.

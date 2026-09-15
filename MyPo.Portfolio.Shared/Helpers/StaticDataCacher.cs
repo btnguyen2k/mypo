@@ -18,6 +18,7 @@ public class StaticDataCacher
         int delayMs = 1000,
         CancellationToken cancellationToken = default)
     {
+        var resolvedDelayMs = delayMs;
         for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
@@ -42,17 +43,17 @@ public class StaticDataCacher
                     responseStream,
                     cancellationToken: attemptCts.Token);
 
+                var loadedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var symbolList = data!["data"] as JsonElement?;
-                var indexData = GlobalRegistry.INDEX_CONSTITUENTS.GetValueOrDefault(
-                    index,
-                    new HashSet<string>());
-                lock (indexData)
+                foreach (var element in symbolList?.EnumerateArray() ?? [])
                 {
-                    symbolList?
-                        .EnumerateArray()
-                        .ToList()
-                        .ForEach(e => indexData.Add(e.GetProperty("symbol").GetString()!));
+                    var symbol = element.GetProperty("symbol").GetString();
+                    if (!string.IsNullOrWhiteSpace(symbol))
+                    {
+                        loadedSymbols.Add(symbol);
+                    }
                 }
+                GlobalRegistry.INDEX_CONSTITUENTS[index] = loadedSymbols;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -80,7 +81,9 @@ public class StaticDataCacher
 
             if (attempt < maxRetries)
             {
-                await Task.Delay(delayMs, cancellationToken);
+                await Task.Delay(resolvedDelayMs, cancellationToken);
+                // backoff exponentially
+                resolvedDelayMs = (int)(resolvedDelayMs * 1.2);
             }
         }
 

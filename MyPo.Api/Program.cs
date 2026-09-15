@@ -23,12 +23,10 @@ foreach (var assemblyName in additionalAssemblies)
 
 // Bootstrapping
 var tasks = AppBootstrapper.Bootstrap(out var app, appBuilder, assemblies);
-await Task.Run(() =>
-{
-	var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Program");
-	logger.LogInformation("Waiting for background bootstrapping tasks...");
-	AsyncHelper.WaitForBackgroundTasks(tasks, logger);
-	MyPo.Shared.Api.Globals.Ready = true; // server is ready to handle requests
-	logger.LogInformation("Background bootstrapping completed.");
-});
-app.Run();
+var logger = app.Services.GetService<ILogger<Program>>();
+logger?.LogInformation("Waiting for {n} background bootstrapping task(s)...", tasks.Count);
+await AsyncHelper.WaitForBackgroundTasksAsync(tasks, logger);
+MyPo.Shared.Api.Globals.Ready = true;
+logger?.LogInformation("Background bootstrapping completed.");
+
+await app.RunAsync();
