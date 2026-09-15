@@ -125,9 +125,9 @@
                                                 style="cursor:pointer;" @onclick="()=>BtnClickOpenPortfolio(child.Id)">
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-start gap-2">
-                                                        <h5 class="card-title">
+                                                        <h5 class="card-title @(child.IsActive?"":"text-muted")">
                                                             @child.Name
-                                                            <span class="badge bg-secondary badge-sm ms-1 @(child.IsActive?"d-none":"")">Inactive</span>
+                                                            @* <span class="badge bg-secondary badge-sm ms-1 @(child.IsActive?"d-none":"")">Inactive</span> *@
                                                         </h5>
                                                         @if (string.Equals(child.OwnerUserId, CurrentUser?.Id, StringComparison.OrdinalIgnoreCase))
                                                         {
