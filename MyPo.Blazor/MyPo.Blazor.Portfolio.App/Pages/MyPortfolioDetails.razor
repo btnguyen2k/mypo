@@ -133,7 +133,13 @@
                                                         {
                                                             <div class="btn-group btn-group-sm" role="group" aria-label="@($"Actions for {child.Name}")">
                                                                 <NavLink class="btn btn-outline-info"
-                                                                        href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", child.Id, StringComparison.OrdinalIgnoreCase)"
+                                                                        href="@QueryHelpers.AddQueryString(
+                                                                            PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace(
+                                                                                "{PortfolioId}",
+                                                                                child.Id,
+                                                                                StringComparison.OrdinalIgnoreCase),
+                                                                            "parentId",
+                                                                            PortfolioId)"
                                                                         title="Modify portfolio"
                                                                         aria-label="@($"Modify {child.Name}")"
                                                                         @onclick:stopPropagation>
