@@ -143,17 +143,29 @@ public struct PnlSummaryResp
     [JsonPropertyName("total_interest")]
     public decimal TotalInterest { get; set; }
 
+    [JsonIgnore]
     public readonly decimal TotalMoneyIn => TotalSellValue + TotalCashIn + TotalDividends + TotalDistributions + TotalInterest;
+    [JsonIgnore]
     public readonly decimal TotalMoneyOut => TotalBuyValue + TotalCashOut + TotalTax + TotalFees;
+    [JsonIgnore]
+    public readonly decimal ClosingBalance => TotalMoneyIn - TotalMoneyOut;
 
+    [JsonIgnore]
     public readonly decimal NetCapitalContributed => TotalCashIn - TotalCashOut;
+    [JsonIgnore]
     public readonly decimal TotalIncome => TotalDividends + TotalDistributions + TotalInterest;
+    [JsonIgnore]
     public readonly decimal TotalCosts => TotalTax + TotalFees;
+    [JsonIgnore]
     public readonly decimal RealizedCapitalGains => TotalSellValue - TotalBuyValue;
+    [JsonIgnore]
     public readonly decimal GrossReturns => TotalIncome + RealizedCapitalGains;
+    [JsonIgnore]
     public readonly decimal NetReturns => GrossReturns - TotalCosts;
+    [JsonIgnore]
     public readonly decimal NetPnL => NetReturns;
     public readonly decimal UnSetledPnL(decimal marketValue) => NetPnL + marketValue;
+    [JsonIgnore]
     public readonly decimal ROIvsTotalBuy => TotalBuyValue > 0 ? (NetPnL / TotalBuyValue * 100) : 0;
     public readonly decimal UnsettledROIvsTotalBuy(decimal unsettledPnL)
     {
