@@ -124,10 +124,32 @@
                                             <div class="card h-100 @(child.IsActive?"border-top-primary":"border-top-secondary") border-top-3"
                                                 style="cursor:pointer;" @onclick="()=>BtnClickOpenPortfolio(child.Id)">
                                                 <div class="card-body">
-                                                    <h5 class="card-title">
-                                                        @child.Name
-                                                        <span class="badge bg-secondary badge-sm ms-1 @(child.IsActive?"d-none":"")">Inactive</span>
-                                                    </h5>
+                                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                                        <h5 class="card-title">
+                                                            @child.Name
+                                                            <span class="badge bg-secondary badge-sm ms-1 @(child.IsActive?"d-none":"")">Inactive</span>
+                                                        </h5>
+                                                        @if (string.Equals(child.OwnerUserId, CurrentUser?.Id, StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <div class="btn-group btn-group-sm" role="group" aria-label="@($"Actions for {child.Name}")">
+                                                                <NavLink class="btn btn-outline-info"
+                                                                        href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_MODIFY.Replace("{PortfolioId}", child.Id, StringComparison.OrdinalIgnoreCase)"
+                                                                        title="Modify portfolio"
+                                                                        aria-label="@($"Modify {child.Name}")"
+                                                                        @onclick:stopPropagation>
+                                                                    <BIcon icon="bi-pencil" />
+                                                                </NavLink>
+                                                                <button type="button"
+                                                                        class="btn btn-outline-danger"
+                                                                        title="Delete portfolio"
+                                                                        aria-label="@($"Delete {child.Name}")"
+                                                                        @onclick="() => BtnClickDeleteChild(child)"
+                                                                        @onclick:stopPropagation>
+                                                                    <BIcon icon="bi-trash" />
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
                                                     <div class="mb-2"><CBadgeRandom Text="@child.Currency" />
                                                         @if (!string.IsNullOrEmpty(child.Description))
                                                         {
@@ -254,6 +276,43 @@
                 </div>
             </div>
         </div>
+
+        <CModal @ref="@ModalDialogDeleteChild" title="Delete Child Portfolio" centered="false" type="danger" size="large">
+            <div class="card">
+                <div class="card-body">
+                    <CAlert type="warning"><span class="h6">Are you sure you want to delete the following portfolio?</span></CAlert>
+                    <form>
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="deleteChildPortfolioName"
+                                           placeholder="Name" disabled value="@(SelectedChildPortfolio?.Name ?? string.Empty)">
+                                    <label for="deleteChildPortfolioName">Name</label>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-floating mb-1">
+                                    <input type="text" class="form-control" id="deleteChildPortfolioCurrency"
+                                           placeholder="Currency" disabled value="@(SelectedChildPortfolio?.Currency ?? string.Empty)">
+                                    <label for="deleteChildPortfolioCurrency">Currency</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-floating mb-1">
+                            <textarea class="form-control" id="deleteChildPortfolioDescription"
+                                      placeholder="Description" disabled
+                                      style="height: 100px;">@(SelectedChildPortfolio?.Description ?? string.Empty)</textarea>
+                            <label for="deleteChildPortfolioDescription">Description</label>
+                        </div>
+                    </form>
+                    <hr />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="BtnClickDeleteChildClose">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="BtnClickDeleteChildConfirm">
+                        <BIcon icon="bi-trash" extraClassName="me-1" />Delete
+                    </button>
+                </div>
+            </div>
+        </CModal>
 
         <!-- Plugins and scripts required by this page-->
         <!-- Popperjs -->
