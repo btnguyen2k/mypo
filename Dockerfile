@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+﻿# syntax=docker/dockerfile:1
 
 ARG DOTNETVERBUILD=8.0
 ARG DOTNETVERRUN=8.0
@@ -63,6 +63,7 @@ ENV API__BaseUrl=http://localhost:8080
 # Set database type to InMemory for demo purposes
 ENV Databases__Identity__Type=InMemory
 ENV Databases__Portfolio__Type=InMemory
+ENV Databases__WolverineFx__Type=InMemory
 
 # Default port for dotnet application
 EXPOSE 8080

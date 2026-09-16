@@ -52,6 +52,9 @@ public class PubSubBootstrapper
                 options.PersistMessagesWithPostgresql(connectionString!, WolverineSchema);
                 options.UseEntityFrameworkCoreTransactions();
                 options.Policies.UseDurableLocalQueues();
+
+                options.Durability.DeadLetterQueueExpirationEnabled = true;
+                options.Durability.DeadLetterQueueExpiration = TimeSpan.FromDays(30);
             }
         });
 

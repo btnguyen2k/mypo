@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+﻿# syntax=docker/dockerfile:1
 
 ARG DOTNETVERSION_BUILD=8.0
 ARG DOTNETVERSION_RUN=10.0
@@ -47,6 +47,7 @@ ENV API__BaseUrl=http://localhost:8080
 # Set database type to InMemory for demo purposes
 ENV Databases__Application__Type=InMemory
 ENV Databases__Identity__Type=InMemory
+ENV Databases__WolverineFx__Type=InMemory
 
 # Set the ASP.NET Core environment to Development
 ENV ASPNETCORE_ENVIRONMENT=Development
