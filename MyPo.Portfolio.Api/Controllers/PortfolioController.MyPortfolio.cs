@@ -174,9 +174,7 @@ public partial class PortfolioController
             return ResponseNoData(409, "Cannot delete portfolio with children. Please delete or reassign the child portfolios first.");
         }
 
-        var resultDelete = await PortfolioDeletionService.DeleteAsync(
-            existingPortfolio,
-            HttpContext.RequestAborted);
+        var resultDelete = await PortfolioDeletionService.DeleteAsync(existingPortfolio, HttpContext.RequestAborted);
         if (!resultDelete)
         {
             return ResponseNoData(500, $"Failed to delete portfolio '{id}'.");
