@@ -3,3 +3,4 @@
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.4.0
 - refactor(FinHub): Migrate to FinHub v0.16.0.
+- feat(portfolio): Cleanup post-repoting a portfolio.
