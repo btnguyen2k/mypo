@@ -34,6 +34,7 @@ public class PubSubBootstrapper
             appBuilder.Services.AddScoped<IPortfolioDeletionService, PortfolioDeletionService>();
         }
 
+        // Handlers in the specified assembly will be discovered automatically
         appBuilder.Host.UseWolverine(options =>
         {
             options.Discovery.IncludeAssembly(typeof(PubSubBootstrapper).Assembly);

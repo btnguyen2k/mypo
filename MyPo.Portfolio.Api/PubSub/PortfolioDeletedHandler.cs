@@ -1,5 +1,9 @@
-﻿using MyPo.Portfolio.Shared.Models;
+﻿using System.Data.Common;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.PubSub;
+using Wolverine.Attributes;
+using Wolverine.ErrorHandling;
+using Wolverine.Runtime.Handlers;
 
 namespace MyPo.Portfolio.Api.PubSub;
 
@@ -8,10 +12,26 @@ namespace MyPo.Portfolio.Api.PubSub;
 /// </summary>
 /// <param name="portfolioRepository"></param>
 /// <param name="logger"></param>
-public sealed class PortfolioDeletedHandler(
+/// <remarks>Wolverine will automatically discover this handler in the specified assembly.</remarks>
+[StickyHandler("portfolio-deleted-checkpoints")]
+public sealed class PostPortfolioDeletionCheckpointsCleanupHandler(
     IPortfolioRepository portfolioRepository,
-    ILogger<PortfolioDeletedHandler> logger)
+    ILogger<PostPortfolioDeletionCheckpointsCleanupHandler> logger)
 {
+    public static void Configure(HandlerChain chain)
+    {
+        chain.OnException<DbException>()
+            .OrInner<DbException>()
+            .Or<TimeoutException>()
+            .ScheduleRetry(
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(2*4),
+                TimeSpan.FromSeconds(2*4*4),
+                TimeSpan.FromSeconds(2*4*4*4),
+                TimeSpan.FromSeconds(2*4*4*4*4))
+            .Then.MoveToErrorQueue();
+    }
+
     public async Task Handle(PortfolioDeletedEvent message, CancellationToken cancellationToken)
     {
         var deletedCount = await portfolioRepository.DeleteCheckpointsByPortfolioIdAsync(

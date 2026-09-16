@@ -4,3 +4,4 @@
 #!VERSION=2.4.0
 - refactor(FinHub): Migrate to FinHub v0.16.0.
 - feat(portfolio): Cleanup post-repoting a portfolio.
+- feat(pubsub): Add durable Wolverine-backed portfolio deletion events and checkpoint cleanup.
