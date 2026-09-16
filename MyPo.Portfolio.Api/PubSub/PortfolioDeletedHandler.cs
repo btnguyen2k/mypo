@@ -15,13 +15,13 @@ public sealed class PortfolioDeletedHandler(
     public async Task Handle(PortfolioDeletedEvent message, CancellationToken cancellationToken)
     {
         var deletedCount = await portfolioRepository.DeleteCheckpointsByPortfolioIdAsync(
-            message.PortfolioId,
+            message.Portfolio.Id,
             cancellationToken);
 
         logger.LogInformation(
             "Handled portfolio deletion event {MessageId} for portfolio {PortfolioId}: removed {DeletedCount} checkpoint(s).",
             message.MessageId,
-            message.PortfolioId,
+            message.Portfolio.Id,
             deletedCount);
     }
 }
