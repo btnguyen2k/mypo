@@ -37,6 +37,28 @@ public sealed partial class PortfolioDbContextRepository
         return await SaveChangesAsync(cancellationToken) > 0 ? existingEntry : null;
     }
 
+    /// <inheritdoc />
+    public async ValueTask<int> DeleteCheckpointsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(portfolioId);
+
+        var query = CheckpointStore.Where(x => x.PortfolioId == portfolioId);
+        if (Database.IsRelational())
+        {
+            return await query.ExecuteDeleteAsync(cancellationToken);
+        }
+
+        var checkpoints = await query.ToListAsync(cancellationToken);
+        if (checkpoints.Count == 0)
+        {
+            return 0;
+        }
+
+        CheckpointStore.RemoveRange(checkpoints);
+        await SaveChangesAsync(cancellationToken);
+        return checkpoints.Count;
+    }
+
     /*----------------------------------------------------------------------*/
 
     private DbSet<MarketEventEntity> MarketEventStore { get; set; }

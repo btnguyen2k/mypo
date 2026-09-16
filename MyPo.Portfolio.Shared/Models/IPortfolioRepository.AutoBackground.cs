@@ -18,6 +18,11 @@ public partial interface IPortfolioRepository
     public ValueTask<CheckpointEntity?> UpdateCheckpointAsync(CheckpointEntity checkoint, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Deletes all checkpoint records for a portfolio.
+    /// </summary>
+    public ValueTask<int> DeleteCheckpointsByPortfolioIdAsync(string portfolioId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets a list of <see cref="MarketEventEntity" /> records that are within the specified date range for the specified owner.
     /// </summary>
     public ValueTask<IEnumerable<MarketEventEntity>> GetMarketEventsAsync(string ownerId, DateTimeOffset fromDateInc, DateTimeOffset toDateExc, IEnumerable<string>? eventTypes = null, CancellationToken cancellationToken = default);
