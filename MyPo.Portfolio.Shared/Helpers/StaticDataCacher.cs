@@ -54,6 +54,8 @@ public class StaticDataCacher
                     }
                 }
                 GlobalRegistry.INDEX_CONSTITUENTS[index] = loadedSymbols;
+                logger?.LogInformation("Cached {count} constituents for index '{index}'", loadedSymbols.Count, index);
+                return;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -79,12 +81,9 @@ public class StaticDataCacher
                     resourceUrl);
             }
 
-            if (attempt < maxRetries)
-            {
-                await Task.Delay(resolvedDelayMs, cancellationToken);
-                // backoff exponentially
-                resolvedDelayMs = (int)(resolvedDelayMs * 1.2);
-            }
+            await Task.Delay(resolvedDelayMs, cancellationToken);
+            // backoff exponentially
+            resolvedDelayMs = (int)(resolvedDelayMs * 1.2);
         }
 
         logger?.LogError("Exceeded maximum retry attempts ({maxRetries}) for '{index}'", maxRetries, index);
@@ -121,7 +120,7 @@ public class StaticDataCacher
 
         var parallelOptions = new ParallelOptions
         {
-            MaxDegreeOfParallelism = 4,
+            MaxDegreeOfParallelism = 2,
             CancellationToken = budgetCts.Token,
         };
 
