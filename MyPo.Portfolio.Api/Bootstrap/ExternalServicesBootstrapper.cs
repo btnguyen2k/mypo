@@ -13,13 +13,13 @@ public class ExternalServicesBootstrapper
 
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
-        logger.LogInformation("Loading external services settings...");
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = $"{assembly.GetName().Name}.{EXTERNAL_SERVICES_SETTINGS_FILE}";
+        logger.LogInformation("Loading '{}'...", resourceName);
         var availableResources = assembly.GetManifestResourceNames();
         if (Array.IndexOf(availableResources, resourceName) == -1)
         {
-            throw new FileNotFoundException($"External services settings resource '{resourceName}' not found in assembly resources.");
+            throw new FileNotFoundException($"'{resourceName}' not found in assembly resources.");
         }
         using (var stream = assembly.GetManifestResourceStream(resourceName))
         {
