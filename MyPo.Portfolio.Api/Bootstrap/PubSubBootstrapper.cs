@@ -1,6 +1,7 @@
 ﻿using JasperFx.Resources;
 using MyPo.Portfolio.Api.PubSub;
 using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.PubSub;
 using MyPo.Shared.Api.Helpers;
 using MyPo.Shared.Bootstrap;
@@ -38,6 +39,13 @@ public class PubSubBootstrapper
         appBuilder.Host.UseWolverine(options =>
         {
             options.Discovery.IncludeAssembly(typeof(PubSubBootstrapper).Assembly);
+
+            // prepare for Wolverine 6.0+
+            options.ServiceLocationPolicy = JasperFx.CodeGeneration.Model.ServiceLocationPolicy.NotAllowed;
+
+            // to eliminate Wolverine warning:
+            // The service registration for Microsoft.EntityFrameworkCore.DbContextOptions<MyPo.Portfolio.Shared.EF.PortfolioDbContextRepository> is an 'opaque' lambda factory with the Scoped lifetime and requires service location.
+            options.CodeGeneration.AlwaysUseServiceLocationFor<IPortfolioRepository>();
 
             if (durable)
             {
