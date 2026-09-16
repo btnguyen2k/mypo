@@ -91,9 +91,9 @@ public static class DbBootstrapHelper
 			}
 		}
 		if (dbConf.UseDbContextPool)
-			services.AddDbContext<TContextService, TContextImplementation>(optionsAction);
-		else
 			services.AddDbContextPool<TContextService, TContextImplementation>(
 				optionsAction, dbConf.PoolSize > 0 ? dbConf.PoolSize : DbConf.DEFAULT_POOL_SIZE);
+		else
+			services.AddDbContext<TContextService, TContextImplementation>(optionsAction);
 	}
 }
