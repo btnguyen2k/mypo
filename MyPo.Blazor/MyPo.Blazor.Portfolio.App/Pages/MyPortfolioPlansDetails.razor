@@ -76,7 +76,9 @@
                         <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
                             <ChildContent Context="ctx_edit_delete_portfolio_plan">
                                 <div class="float-end">
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                        href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", SelectedPortfolioPlan?.Id, StringComparison.OrdinalIgnoreCase)"
+                                        @onclick:preventDefault @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</a>
                                     <button class="btn btn-sm btn-outline-danger" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
                                 </div>
                             </ChildContent>

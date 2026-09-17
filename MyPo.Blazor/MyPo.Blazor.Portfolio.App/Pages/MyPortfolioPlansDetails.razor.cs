@@ -81,13 +81,18 @@ public partial class MyPortfolioPlansDetails : BasePage
 
     private void BtnClickEdit()
     {
+        if (!SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
+        {
+            ShowAlert("danger", "You are not authorized to edit this portfolio.");
+            return;
+        }
         var id = SelectedPortfolioPlan.Id;
         NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", id, StringComparison.OrdinalIgnoreCase));
     }
 
     private void BtnClickDelete()
     {
-        if (SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
+        if (!SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
         {
             ShowAlert("danger", "You are not authorized to delete this portfolio.");
             return;
