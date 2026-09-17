@@ -141,7 +141,6 @@ public partial class CPortfolioTxBuysSells : CBase
 
         if (TxBuySellEntity.TxTypes.Contains(Tx.Type) && Tx.ItemType == TxBuySellEntity.ITEM_TYPE_STOCK && !string.IsNullOrWhiteSpace(Tx.ItemCode))
         {
-            // check if txNotes is empty or matches any of regexpBuy/regexpSell
             if (string.IsNullOrWhiteSpace(txNotes) || regexpBuy.IsMatch(txNotes) || regexpSell.IsMatch(txNotes))
             {
                 Tx.Notes = Tx.Type == TxBuySellEntity.TX_TYPE_BUY ? noteBuy : noteSell;
