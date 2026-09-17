@@ -9,41 +9,40 @@
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
-        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+        <NavLink href="@UIGlobals.ROUTE_HOME">Home</NavLink>
     </li>
     <li class="breadcrumb-item">
-        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</a>
+        <NavLink href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO">My Portfolio</NavLink>
     </li>
     @if(PortfoliosMap.TryGetValue(SelectedPortfolio?.ParentId??string.Empty, out var parent))
     {
         <li class="breadcrumb-item">
-            <a href="#" @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(parent.Id)">@(parent.Name)</a>
+            <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", parent.Id, StringComparison.OrdinalIgnoreCase)"
+                @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(parent.Id)">@(parent.Name)
+            </a>
         </li>
     }
     @if (!HideUI && SelectedPortfolio is not null)
     {
         <li class="breadcrumb-item active">
             <div class="dropdown d-inline-block">
-                <a class="dropdown-toggle text-decoration-none" href="#" role="button"
-                    data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>
-                    @SelectedPortfolio.Name
+                <a class="dropdown-toggle text-decoration-none"
+                    href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", SelectedPortfolio.Id, StringComparison.OrdinalIgnoreCase)"
+                    role="button" data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>@SelectedPortfolio.Name
                 </a>
                 <ul class="dropdown-menu">
                     @foreach (var (p, level) in FlattenPortfolioTree())
                     {
                         var isCurrent = string.Equals(p.Id, SelectedPortfolio.Id, StringComparison.Ordinal);
                         <li>
-                            <a class="dropdown-item @(isCurrent?"active":"")" href="#"
+                            <a class="dropdown-item @(isCurrent?"active":"")"
+                                href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_DETAILS.Replace("{PortfolioId}", p.Id, StringComparison.OrdinalIgnoreCase)"
                                 style="padding-left:@($"{0.5 + level * 1.25}rem")"
                                 @onclick:preventDefault @onclick="()=>BtnClickOpenPortfolio(p.Id)">
                                 @if (p.Metadata?.IsContainer ?? false)
                                 {
                                     <BIcon icon="bi-diagram-3" extraClassName="text-muted me-1" />
                                 }
-                                @* @if (isCurrent)
-                                {
-                                    <BIcon icon="bi-check-lg" extraClassName="me-1" />
-                                } *@
                                 @p.Name
                                 @if (!p.IsActive)
                                 {
