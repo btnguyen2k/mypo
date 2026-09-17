@@ -74,8 +74,7 @@ public partial class MyPortfolioPlansDetails : BasePage
             return;
         }
 
-        var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW
-            .Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
+        var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
         NavigationManager.NavigateTo(url);
         await LoadPageAsync(planId);
     }

@@ -12,25 +12,26 @@
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
-        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+        <NavLink href="@UIGlobals.ROUTE_HOME">Home</NavLink>
     </li>
     <li class="breadcrumb-item">
-        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</a>
+        <NavLink href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</NavLink>
     </li>
     @if (!HideUI && SelectedPortfolioPlan is not null)
     {
         <li class="breadcrumb-item active">
             <div class="dropdown d-inline-block">
-                <a class="dropdown-toggle text-decoration-none" href="#" role="button"
-                    data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>
-                    @SelectedPortfolioPlan.Name
+                <a class="dropdown-toggle text-decoration-none"
+                    href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", SelectedPortfolioPlan.Id, StringComparison.OrdinalIgnoreCase)"
+                    role="button" data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>@SelectedPortfolioPlan.Name
                 </a>
                 <ul class="dropdown-menu">
                     @foreach (var plan in PortfolioPlans.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
                     {
                         var isCurrent = string.Equals(plan.Id, SelectedPortfolioPlan.Id, StringComparison.Ordinal);
                         <li>
-                            <a class="dropdown-item @(isCurrent?"active":"")" href="#"
+                            <a class="dropdown-item @(isCurrent?"active":"")"
+                                href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", plan.Id, StringComparison.OrdinalIgnoreCase)"
                                 @onclick:preventDefault @onclick="()=>BtnClickOpenPlan(plan.Id)">
                                 @if (isCurrent)
                                 {

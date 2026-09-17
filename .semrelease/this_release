@@ -5,3 +5,4 @@
 - refactor(FinHub): Migrate to FinHub v0.16.0.
 - feat(portfolio): Cleanup post-repoting a portfolio.
 - feat(pubsub): Add durable Wolverine-backed portfolio deletion events and checkpoint cleanup.
+- impr(UI/UX): Show target URL in browser status bar.
