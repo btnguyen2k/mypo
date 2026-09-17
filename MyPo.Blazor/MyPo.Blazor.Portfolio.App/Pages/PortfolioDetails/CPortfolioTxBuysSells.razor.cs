@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
@@ -67,7 +68,7 @@ public partial class CPortfolioTxBuysSells : CBase
         }
 
         // validate time
-        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
+        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime.Trim());
         if (parsedDatetime == null)
         {
             var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");
@@ -128,11 +129,23 @@ public partial class CPortfolioTxBuysSells : CBase
         return true;
     }
 
+    private readonly Regex regexpBuy = MyRegexBuy();
+    private readonly Regex regexpSell = MyRegexSell();
+
     private void AutoGenTxNotes()
     {
+        var noteBuy = $"Bought {Tx.Quantity} {Tx.ItemCode.Trim().ToUpper()} share(s) @ {Tx.Price}.";
+        var noteSell = $"Sold {Tx.Quantity} {Tx.ItemCode.Trim().ToUpper()} share(s) @ {Tx.Price}.";
+        var txNotes = Tx.Notes?.Trim() ?? string.Empty;
+        Tx.Notes = txNotes;
+
         if (TxBuySellEntity.TxTypes.Contains(Tx.Type) && Tx.ItemType == TxBuySellEntity.ITEM_TYPE_STOCK && !string.IsNullOrWhiteSpace(Tx.ItemCode))
         {
-            Tx.Notes = $"{(Tx.Type == TxBuySellEntity.TX_TYPE_BUY ? "Bought" : "Sold")} {Tx.Quantity} {Tx.ItemCode.Trim().ToUpper()} share(s).";
+            // check if txNotes is empty or matches any of regexpBuy/regexpSell
+            if (string.IsNullOrWhiteSpace(txNotes) || regexpBuy.IsMatch(txNotes) || regexpSell.IsMatch(txNotes))
+            {
+                Tx.Notes = Tx.Type == TxBuySellEntity.TX_TYPE_BUY ? noteBuy : noteSell;
+            }
         }
     }
 
@@ -147,4 +160,9 @@ public partial class CPortfolioTxBuysSells : CBase
             }
         }
     }
+
+    [GeneratedRegex("Bought \\d+(.\\d+)? \\w+ share\\(s\\) @ \\d+(.\\d+)?\\.")]
+    private static partial Regex MyRegexBuy();
+    [GeneratedRegex("Sold \\d+(.\\d+)? \\w+ share\\(s\\) @ \\d+(.\\d+)?\\.")]
+    private static partial Regex MyRegexSell();
 }

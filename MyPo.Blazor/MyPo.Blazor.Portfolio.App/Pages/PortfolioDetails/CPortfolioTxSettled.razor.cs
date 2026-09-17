@@ -57,10 +57,6 @@ public partial class CPortfolioTxSettled : CBase
             var allNotes = new string[]{noteCashIn, noteCashOut, noteDist, noteDiv};
             var txDesc = Tx.TxDesc?.Trim() ?? string.Empty;
 
-            // Console.WriteLine($"[DEBUG]==========");
-            // Console.WriteLine($"TxType: {Tx.TxType}");
-            // Console.WriteLine($"txDesc: {txDesc}/{string.IsNullOrEmpty(txDesc)}/{allNotes.Contains(txDesc)}");
-
             Tx.TxDesc = Tx.TxType switch
             {
                 TxSettlementEntity.TX_TYPE_CASHIN
@@ -91,7 +87,7 @@ public partial class CPortfolioTxSettled : CBase
         }
 
         // validate time
-        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
+        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime.Trim());
         if (parsedDatetime == null)
         {
             var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");
