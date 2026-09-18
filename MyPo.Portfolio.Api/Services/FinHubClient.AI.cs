@@ -1,12 +1,12 @@
 ﻿using Finhub.Client;
 using FinHub.Client.Models.Dividends;
 using FinHub.Client.Models.Portfolios;
+using FinHub.Client.Models.Tickers;
 using FinHub.Client.Schemas.DividendAnalysis;
 using FinHub.Client.Schemas.PortfolioAnalysis;
 using FinHub.Client.Schemas.PortfolioConstruction;
 using FinHub.Client.Schemas.PortfolioSpotlight;
 using FinHub.Client.Schemas.TickerAnalysis;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace MyPo.Portfolio.Api.Services;
 
@@ -16,26 +16,27 @@ public partial class FinHubClient
     public async Task<AnalyzeTickerResponse> AnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
         var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER}_async";
-        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
-            httpClient,
-            HttpMethod.Post, baseUrl, endpoint,
-            NoAuth,
+        return await SendApiRequestAndPollAsync<AnalyzeTickerAsyncResponse, AnalyzeTickerResponse, TickerAnalysis>(
+            endpoint,
             req,
-            cancellationToken
-        );
-        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
-        {
-            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
-            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
-            return await BuildAndSendRequestAsync(
-                httpClient,
-                HttpMethod.Post, baseUrl, endpointPoll,
-                NoAuth,
-                req,
-                cancellationToken
-            );
-        }
-        return await SendApiRequestAndPoll<AnalyzeTickerResponse>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
+            MIN_TIMEOUT,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<AnalyzeTickerAsyncResponse> StartAnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER}_async";
+        return await StartApiRequestAsync<AnalyzeTickerAsyncResponse, TickerAnalysis>(endpoint, req, baseUrl, httpClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<AnalyzeTickerAsyncResponse> PollAnalyzeTickerAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_TICKER}_async";
+        return await PollApiResultAsync<AnalyzeTickerAsyncResponse, TickerAnalysis>(taskId, endpoint, baseUrl, httpClient, cancellationToken);
     }
 
     /*----------------------------------------------------------------------*/

@@ -20,6 +20,28 @@ public partial interface IFinHubClient
     /// <returns></returns>
     public Task<AnalyzeTickerResponse> AnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/>_async to start an asynchronous analyzing of a ticker symbol.
+    /// </summary>
+    /// <param name="req">The ticker analysis request</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the task ID for the asynchronous analysis.</returns>
+    public Task<AnalyzeTickerAsyncResponse> StartAnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/>_async to poll the status of an asynchronous analyzing of a ticker symbol.
+    /// </summary>
+    /// <param name="taskId">The task ID of the asynchronous analysis</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the status and result of the asynchronous analysis.</returns>
+    public Task<AnalyzeTickerAsyncResponse> PollAnalyzeTickerAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /*----------------------------------------------------------------------*/
+
     public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT = "/ai/analyze_dividend_event";
 
     /// <summary>
