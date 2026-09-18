@@ -69,4 +69,24 @@ public partial interface IFinHubClient
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
     /// <returns></returns>
     public Task<PortfolioSpotlightResponse> SpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/>_async to start an asynchronous spotlight analysis of a portfolio.
+    /// </summary>
+    /// <param name="req">The portfolio spotlight request</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the task ID for the asynchronous spotlight analysis.</returns>
+    public Task<PortfolioSpotlightAsyncResponse> StartSpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/>_async to poll the status of an asynchronous spotlight analysis of a portfolio.
+    /// </summary>
+    /// <param name="taskId">The task ID of the asynchronous spotlight analysis</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the status and result of the asynchronous spotlight analysis.</returns>
+    public Task<PortfolioSpotlightAsyncResponse> PollSpotlightPortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 }

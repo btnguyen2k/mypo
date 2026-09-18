@@ -1,4 +1,5 @@
 ﻿using Finhub.Client;
+using FinHub.Client.Models.Portfolios;
 using FinHub.Client.Schemas.DividendAnalysis;
 using FinHub.Client.Schemas.PortfolioAnalysis;
 using FinHub.Client.Schemas.PortfolioConstruction;
@@ -116,29 +117,32 @@ public partial class FinHubClient
         return await SendApiRequestAndPoll<AnalyzePortfolioResponse>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
+    /*----------------------------------------------------------------------*/
+
     /// <inheritdoc/>
     public async Task<PortfolioSpotlightResponse> SpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
         var endpoint = $"{IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO}_async";
-        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
-            httpClient,
-            HttpMethod.Post, baseUrl, endpoint,
-            NoAuth,
+        return await SendApiRequestAndPollAsync<PortfolioSpotlightAsyncResponse, PortfolioSpotlightResponse, PortfolioSpotlightAnalysis>(
+            endpoint,
             req,
-            cancellationToken
-        );
-        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
-        {
-            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
-            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
-            return await BuildAndSendRequestAsync(
-                httpClient,
-                HttpMethod.Post, baseUrl, endpointPoll,
-                NoAuth,
-                NoData,
-                cancellationToken
-            );
-        }
-        return await SendApiRequestAndPoll<PortfolioSpotlightResponse>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
+            MIN_TIMEOUT,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PortfolioSpotlightAsyncResponse> StartSpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO}_async";
+        return await StartApiRequestAsync<PortfolioSpotlightAsyncResponse, PortfolioSpotlightAnalysis>(endpoint, req, baseUrl, httpClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PortfolioSpotlightAsyncResponse> PollSpotlightPortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_SPOTLIGHT_PORTFOLIO}_async";
+        return await PollApiResultAsync<PortfolioSpotlightAsyncResponse, PortfolioSpotlightAnalysis>(taskId, endpoint, baseUrl, httpClient, cancellationToken);
     }
 }

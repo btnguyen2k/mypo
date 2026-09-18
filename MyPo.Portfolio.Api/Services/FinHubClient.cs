@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Finhub.Client;
 using FinHub.Client.Schemas;
+using Microsoft.AspNetCore.WebUtilities;
 using MyPo.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Services;
@@ -30,6 +31,103 @@ public partial class FinHubClient : BaseApiClient, IFinHubClient
     {
         base.SetupDefaultHttpClient(defaultHttpClient);
         defaultHttpClient.Timeout = defaultHttpClient.Timeout >= MIN_TIMEOUT ? defaultHttpClient.Timeout : MIN_TIMEOUT;
+    }
+
+    private static string AddTaskIdToEndpoint(string endpoint, string taskId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+        var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+        return QueryHelpers.AddQueryString(endpoint, queryParams);
+    }
+
+    private async Task<TAsyncResponse> StartApiRequestAsync<TAsyncResponse, TData>(string endpoint, object reqData, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+    {
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            HttpMethod.Post, baseUrl, endpoint,
+            NoAuth,
+            reqData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsApiRespAsync<TAsyncResponse>(httpResult, cancellationToken: cancellationToken);
+    }
+
+    private async Task<TAsyncResponse> PollApiResultAsync<TAsyncResponse, TData>(string taskId, string endpoint, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+    {
+        var endpointPoll = AddTaskIdToEndpoint(endpoint, taskId);
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            HttpMethod.Post, baseUrl, endpointPoll,
+            NoAuth,
+            NoData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsApiRespAsync<TAsyncResponse>(httpResult, cancellationToken: cancellationToken);
+    }
+
+    private async Task<TResponse> SendApiRequestAndPollAsync<TAsyncResponse, TResponse, TData>(
+        string endpoint,
+        object reqData,
+        TimeSpan timeout,
+        string? baseUrl = default,
+        HttpClient? httpClient = default,
+        CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+        where TResponse : ApiResp<TData>, new()
+    {
+        var timerStart = DateTimeOffset.Now;
+        timeout = timeout >= MIN_TIMEOUT ? timeout : MIN_TIMEOUT;
+        var apiRequestResult = await StartApiRequestAsync<TAsyncResponse, TData>(endpoint, reqData, baseUrl, httpClient, cancellationToken);
+        while (apiRequestResult.IsSuccess)
+        {
+            var taskInfo = apiRequestResult.Extra;
+            switch (taskInfo?.State)
+            {
+                case TaskState.Completed:
+                    return apiRequestResult.ToApiResp<TResponse>();
+                case TaskState.Failed:
+                    return new TResponse()
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = string.IsNullOrEmpty(apiRequestResult.Message)
+                            ? $"Task '{taskInfo.TaskId}' failed."
+                            : apiRequestResult.Message,
+                    };
+                case TaskState.Running:
+                    if (DateTimeOffset.Now - timerStart > timeout || cancellationToken.IsCancellationRequested)
+                    {
+                        return new TResponse()
+                        {
+                            Status = (int)HttpStatusCode.RequestTimeout,
+                            Message = cancellationToken.IsCancellationRequested
+                                ? $"Task '{taskInfo.TaskId}' has been canceled."
+                                : $"Task '{taskInfo.TaskId}' timeout exceeded {timeout.TotalMilliseconds} ms.",
+                        };
+                    }
+                    var delayMs = Random.Shared.Next(5000, 10000); // delay randomly 5-10 secs
+                    await Task.Delay(delayMs, cancellationToken: cancellationToken);
+                    var taskId = taskInfo.TaskId;
+                    apiRequestResult = await PollApiResultAsync<TAsyncResponse, TData>(taskId, endpoint, baseUrl, httpClient, cancellationToken);
+                    break;
+                default:
+                    return new TResponse()
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = string.IsNullOrEmpty(apiRequestResult.Message)
+                            ? $"Task '{taskInfo?.TaskId}' has unknown state '{taskInfo?.State}'."
+                            : apiRequestResult.Message,
+                    };
+            }
+        }
+        return new TResponse()
+        {
+            Status = apiRequestResult.IsSuccess ? (int)HttpStatusCode.InternalServerError : apiRequestResult.Status,
+            Message = string.IsNullOrEmpty(apiRequestResult.Message)
+                ? "Error occurred while sending task request to server"
+                : apiRequestResult.Message,
+        };
     }
 
     private static async Task<T> SendApiRequestAndPoll<T>(
@@ -90,52 +188,4 @@ public partial class FinHubClient : BaseApiClient, IFinHubClient
                 : apiResultTask.Message,
         };
     }
-
-    // private static async Task<ApiResp<T>> SendRequestAndPool<T>(
-    //     Func<Task<HttpResponseMessage>> buildAndSendTaskRequest,
-    //     Func<string, Task<HttpResponseMessage>> buildAndSendPollRequest,
-    //     TimeSpan timeout,
-    //     CancellationToken cancellationToken = default)
-    // {
-    //     var start = DateTimeOffset.Now;
-
-    //     using var httpResultTask = await buildAndSendTaskRequest();
-    //     var apiResultTask = await ReadAndCloseResponseAsync<T>(httpResultTask, cancellationToken: cancellationToken);
-    //     var taskInfo = apiResultTask.ExtraAs<AsyncTaskInfo>();
-    //     var taskId = taskInfo?.TaskId ?? string.Empty;
-    //     if (string.IsNullOrEmpty(taskId) && apiResultTask.Status != (int)HttpStatusCode.OK)
-    //     {
-    //         return new ApiResp<T>()
-    //         {
-    //             Status = apiResultTask.IsSuccess ? (int)HttpStatusCode.InternalServerError : apiResultTask.Status,
-    //             Message = string.IsNullOrEmpty(apiResultTask.Message)
-    //                 ? "No task-id returned from server"
-    //                 : apiResultTask.Message,
-    //         };
-    //     }
-
-    //     while (apiResultTask.IsSuccess)
-    //     {
-    //         if (apiResultTask.Status == (int)HttpStatusCode.OK)
-    //         {
-    //             return apiResultTask;
-    //         }
-    //         if (DateTimeOffset.Now - start > timeout)
-    //         {
-    //             return new ApiResp<T>()
-    //             {
-    //                 Status = (int)HttpStatusCode.RequestTimeout,
-    //                 Message = $"Timeout exceeded {timeout.TotalMilliseconds} ms",
-    //             };
-    //         }
-    //         var delayMs = Random.Shared.Next(5000, 10000); // delay randomly 5-10 secs
-    //         await Task.Delay(delayMs, cancellationToken: cancellationToken);
-    //         using (var httpResultPoll = await buildAndSendPollRequest(taskId))
-    //         {
-    //             apiResultTask = await ReadAndCloseResponseAsync<T>(httpResultPoll, cancellationToken: cancellationToken);
-    //         }
-    //     }
-
-    //     return apiResultTask;
-    // }
 }
