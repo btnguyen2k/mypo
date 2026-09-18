@@ -1,4 +1,5 @@
 ﻿using Finhub.Client;
+using FinHub.Client.Models.Dividends;
 using FinHub.Client.Models.Portfolios;
 using FinHub.Client.Schemas.DividendAnalysis;
 using FinHub.Client.Schemas.PortfolioAnalysis;
@@ -6,7 +7,6 @@ using FinHub.Client.Schemas.PortfolioConstruction;
 using FinHub.Client.Schemas.PortfolioSpotlight;
 using FinHub.Client.Schemas.TickerAnalysis;
 using Microsoft.AspNetCore.WebUtilities;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Portfolio.Api.Services;
 
@@ -38,30 +38,33 @@ public partial class FinHubClient
         return await SendApiRequestAndPoll<AnalyzeTickerResponse>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
     }
 
+    /*----------------------------------------------------------------------*/
+
     /// <inheritdoc/>
     public async Task<AnalyzeDividendEventResponse> AnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
         var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT}_async";
-        async Task<HttpResponseMessage> buildAndSendTaskRequest() => await BuildAndSendRequestAsync(
-            httpClient,
-            HttpMethod.Post, baseUrl, endpoint,
-            NoAuth,
+        return await SendApiRequestAndPollAsync<AnalyzeDividendEventAsyncResponse, AnalyzeDividendEventResponse, DividendEventAnalysis>(
+            endpoint,
             req,
-            cancellationToken
-        );
-        async Task<HttpResponseMessage> buildAndSendPollRequest(string taskId)
-        {
-            var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
-            var endpointPoll = QueryHelpers.AddQueryString(endpoint, queryParams);
-            return await BuildAndSendRequestAsync(
-                httpClient,
-                HttpMethod.Post, baseUrl, endpointPoll,
-                NoAuth,
-                req,
-                cancellationToken
-            );
-        }
-        return await SendApiRequestAndPoll<AnalyzeDividendEventResponse>(buildAndSendTaskRequest, buildAndSendPollRequest, MIN_TIMEOUT, cancellationToken);
+            MIN_TIMEOUT,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<AnalyzeDividendEventAsyncResponse> StartAnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT}_async";
+        return await StartApiRequestAsync<AnalyzeDividendEventAsyncResponse, DividendEventAnalysis>(endpoint, req, baseUrl, httpClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<AnalyzeDividendEventAsyncResponse> PollAnalyzeDividendEventAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"{IFinHubClient.API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT}_async";
+        return await PollApiResultAsync<AnalyzeDividendEventAsyncResponse, DividendEventAnalysis>(taskId, endpoint, baseUrl, httpClient, cancellationToken);
     }
 
     /*----------------------------------------------------------------------*/

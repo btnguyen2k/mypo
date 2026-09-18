@@ -32,6 +32,26 @@ public partial interface IFinHubClient
     /// <returns></returns>
     public Task<AnalyzeDividendEventResponse> AnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/>_async to start an asynchronous analyzing of a dividend event.
+    /// </summary>
+    /// <param name="req">The dividend event analysis request</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the task ID for the asynchronous analysis.</returns>
+    public Task<AnalyzeDividendEventAsyncResponse> StartAnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/>_async to poll the status of an asynchronous analyzing of a dividend event.
+    /// </summary>
+    /// <param name="taskId">The task ID of the asynchronous analysis</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the status and result of the asynchronous analysis.</returns>
+    public Task<AnalyzeDividendEventAsyncResponse> PollAnalyzeDividendEventAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
     /*----------------------------------------------------------------------*/
 
     public const string API_FINHUB_AI_BUILD_PORTFOLIO = "/ai/build_portfolio";
