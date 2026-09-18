@@ -135,7 +135,7 @@ public partial class FinHubClient
                 httpClient,
                 HttpMethod.Post, baseUrl, endpointPoll,
                 NoAuth,
-                req,
+                NoData,
                 cancellationToken
             );
         }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -24,7 +25,7 @@ public abstract class BaseApiClient
 		DefaultHttpClient = httpClient;
         Logger = logger;
         BaseUrl = baseUrl;
-        AttachedHeaders = attachedHeaders != null ? new Dictionary<string, string>(attachedHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
+        AttachedHeaders = attachedHeaders is not null ? new Dictionary<string, string>(attachedHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
 
         SetupDefaultHttpClient(DefaultHttpClient);
 	}
@@ -71,7 +72,7 @@ public abstract class BaseApiClient
         {
             req.Headers.Add("Authorization", $"Bearer {authToken}");
         }
-        if (requestData != null)
+        if (requestData is not null)
         {
             req.Content = JsonContent.Create(requestData);
         }

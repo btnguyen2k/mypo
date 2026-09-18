@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace FinHub.Client.Models.AI;
 
@@ -17,7 +17,7 @@ public sealed record ReferenceSource
     public required ReferenceSourceType SourceType { get; init; }
 
     [JsonPropertyName("published_at")]
-    public required DateTimeOffset? PublishedAt { get; init; }
+    public DateTimeOffset? PublishedAt { get; init; }
 
     [JsonPropertyName("accessed_at")]
     public required DateTimeOffset AccessedAt { get; init; }

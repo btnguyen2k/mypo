@@ -100,9 +100,6 @@ public sealed class PortfolioPlanMetadata : ISignumFingerprintable
     [JsonIgnore]
     public DateTime SpotlightRefreshUTC => DateTimeOffset.FromUnixTimeSeconds(SpotlightRefreshTimestamp).UtcDateTime;
 
-    [JsonPropertyName("spotlight")]
-    public string Spotlight { get; set; } = string.Empty;
-
     [JsonPropertyName("spotlight_analysis"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public PortfolioSpotlightAnalysis? SpotlightAnalysis { get; set; }
 }

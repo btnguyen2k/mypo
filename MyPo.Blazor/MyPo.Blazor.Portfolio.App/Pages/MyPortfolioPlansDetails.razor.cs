@@ -20,11 +20,11 @@ public partial class MyPortfolioPlansDetails : BasePage
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
         {
-            await LoadPageAsync(PlanId);
+            await LoadPortfolioPlanAsync(PlanId);
         }
     }
 
-    private async Task LoadPageAsync(string planId)
+    private async Task LoadPortfolioPlanAsync(string planId)
     {
         HideUI = true;
         ShowAlert("info", "Loading portfolio plan...");
@@ -76,7 +76,7 @@ public partial class MyPortfolioPlansDetails : BasePage
 
         var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
         NavigationManager.NavigateTo(url);
-        await LoadPageAsync(planId);
+        await LoadPortfolioPlanAsync(planId);
     }
 
     private void BtnClickEdit()
@@ -162,36 +162,24 @@ public partial class MyPortfolioPlansDetails : BasePage
                 ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
                 return;
             }
-            // if (spotlightResult.Data.LLMError)
-            // {
-            //     analyzing = false;
-            //     ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
-            //     return;
-            // }
             SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            // SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Anslysis;
             SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
         }
 
-        step = "analysis";
-        {
-            var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-            analyzing = false;
-            if (!analysisResult.IsSuccess || analysisResult.Data is null)
-            {
-                ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
-                return;
-            }
-            // if (analysisResult.Data.LLMError)
-            // {
-            //     ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
-            //     return;
-            // }
-            SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            // SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
-            // SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
-            SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
-        }
+        // step = "analysis";
+        // {
+        //     var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
+        //     analyzing = false;
+        //     if (!analysisResult.IsSuccess || analysisResult.Data is null)
+        //     {
+        //         ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
+        //         return;
+        //     }
+        //     SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        //     // SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
+        //     // SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
+        //     SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
+        // }
 
         ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }
@@ -202,7 +190,7 @@ public partial class MyPortfolioPlansDetails : BasePage
     private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
 
     private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
-    private bool HasSpotlight => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Spotlight);
+    private bool HasSpotlight => SelectedPortfolioPlan?.Metadata?.SpotlightAnalysis is not null;
     private bool HasRebalancePlan => !string.IsNullOrWhiteSpace(SelectedPortfolioPlan?.Metadata?.RebalancePlan);
 
     /// <summary>

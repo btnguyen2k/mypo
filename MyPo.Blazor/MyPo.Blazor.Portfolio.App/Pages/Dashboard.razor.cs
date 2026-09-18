@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using System.Text.RegularExpressions;
+using FinHub.Client.Models.Portfolios;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -11,7 +11,6 @@ public partial class Dashboard : BasePage
 {
     private static readonly TimeSpan StaleValuationAge = TimeSpan.FromHours(24);
     private const int MinActionableRebalancePlanLength = 100;
-    private static readonly Regex SpotlightRiskSummaryRegex = MyRegexSpotlightRiskSummary();
 
     private List<PortfolioResp> Portfolios { get; set; } = [];
     private List<PortfolioPlanResp> PortfolioPlans { get; set; } = [];
@@ -150,7 +149,7 @@ public partial class Dashboard : BasePage
 
     private static IEnumerable<AttentionItem> BuildPlanAttentionItems(PortfolioPlanResp plan)
     {
-        var riskCount = GetSpotlightRiskCount(plan.Metadata?.Spotlight);
+        var riskCount = GetSpotlightRiskCount(plan.Metadata?.SpotlightAnalysis);
         if (riskCount > 0)
         {
             yield return new AttentionItem(
@@ -178,19 +177,10 @@ public partial class Dashboard : BasePage
         }
     }
 
-    private static int GetSpotlightRiskCount(string? spotlight)
+    private static int GetSpotlightRiskCount(PortfolioSpotlightAnalysis? spotlight)
     {
-        if (string.IsNullOrWhiteSpace(spotlight))
-        {
-            return 0;
-        }
-
-        var match = SpotlightRiskSummaryRegex.Match(spotlight);
-        return match.Success
-            && int.TryParse(match.Groups["count"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var count)
-            && count > 0
-                ? count
-                : 0;
+        return spotlight?.Risks.Count(risk =>
+            risk.Level is PortfolioSpotlightRiskLevel.Critical or PortfolioSpotlightRiskLevel.High) ?? 0;
     }
 
     private static bool HasActionableRebalancePlan(string? rebalancePlan)
@@ -344,6 +334,4 @@ public partial class Dashboard : BasePage
         string BadgeClass,
         int Priority);
 
-    [GeneratedRegex(@"SUMMARY:\s*(?<count>\d+)\s+Critical/High risks with actions[.!]?(?:\s|[*_])*$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex MyRegexSpotlightRiskSummary();
 }

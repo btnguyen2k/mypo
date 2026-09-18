@@ -1,0 +1,584 @@
+﻿@using System.Globalization
+@using FinHub.Client.Models.AI
+@using FinHub.Client.Models.Portfolios
+@using MyPo.Blazor.App.Shared
+
+<style>
+    .portfolio-spotlight summary {
+        cursor: pointer;
+    }
+
+    .portfolio-spotlight .spotlight-action {
+        background: var(--cui-tertiary-bg, var(--bs-tertiary-bg));
+    }
+
+    .portfolio-spotlight .spotlight-reference:target {
+        background: var(--cui-highlight-bg, var(--bs-highlight-bg));
+        scroll-margin-top: 1rem;
+    }
+
+    @@media print {
+        .portfolio-spotlight details > * {
+            display: block !important;
+        }
+    }
+</style>
+
+<div class="portfolio-spotlight">
+    <div class="card @StatusBorderClass mb-4">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <div class="text-uppercase text-muted small mb-2">Analysis overview</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge @StatusBadgeClass">@StatusLabel</span>
+                    <span class="badge @DataQualityBadgeClass">@DataQualityLabel data quality</span>
+                    <span class="badge @RebalanceBadgeClass">@RebalanceLabel</span>
+                </div>
+            </div>
+            <div class="small text-muted text-md-end">
+                <BIcon icon="bi-clock" extraClassName="me-1" />
+                Market data as of @FormatTimestamp(Analysis.AsOf)
+            </div>
+        </div>
+    </div>
+
+    @if (Analysis.ValidationWarnings.Count > 0)
+    {
+        <div class="alert alert-warning" role="alert">
+            <div class="fw-semibold mb-2">
+                <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
+                Validation warnings
+            </div>
+            <ul class="mb-0 ps-3">
+                @foreach (var warning in Analysis.ValidationWarnings.Where(IsPresent))
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (Analysis.PortfolioEmpty)
+    {
+        <div class="card mb-4">
+            <div class="card-body text-center py-5">
+                <BIcon icon="bi-inbox" extraClassName="display-6 text-muted" />
+                <h5 class="mt-3">No holdings to analyze</h5>
+                <p class="text-muted mb-0">Add holdings to this portfolio plan and run Spotlight again.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <section class="mb-4" aria-labelledby="spotlight-priority-actions">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 id="spotlight-priority-actions" class="mb-0">
+                    <BIcon icon="bi-shield-exclamation" extraClassName="me-1" />
+                    Priority actions
+                </h5>
+                <span class="badge text-bg-secondary">@Analysis.Risks.Count</span>
+            </div>
+
+            @if (Analysis.Risks.Count == 0)
+            {
+                <div class="alert alert-success mb-0" role="status">
+                    <BIcon icon="bi-check-circle" extraClassName="me-1" />
+                    No immediate risks requiring action were identified.
+                </div>
+            }
+            else
+            {
+                <div class="d-grid gap-3">
+                    @foreach (var risk in Analysis.Risks.OrderBy(risk => risk.Rank))
+                    {
+                        <article class="card border-start border-start-4 @RiskBorderClass(risk.Level)">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge rounded-pill text-bg-dark">#@risk.Rank</span>
+                                        <span class="badge @RiskBadgeClass(risk.Level)">@RiskLevelLabel(risk.Level)</span>
+                                        <span class="badge @TimingBadgeClass(risk.ActionTiming)">@ActionTimingLabel(risk.ActionTiming)</span>
+                                        @if (risk.RequiresRebalance)
+                                        {
+                                            <span class="badge text-bg-warning">
+                                                <BIcon icon="bi-arrow-left-right" extraClassName="me-1" />
+                                                Rebalance
+                                            </span>
+                                        }
+                                    </div>
+                                    <span class="small text-muted">@ClampConfidence(risk.Confidence)% confidence</span>
+                                </div>
+
+                                <h6 class="mb-3">@risk.Risk</h6>
+
+                                <div class="spotlight-action rounded p-3 mb-3">
+                                    <div class="small text-uppercase text-muted fw-semibold mb-1">Recommended action</div>
+                                    <div>@risk.Action</div>
+                                </div>
+
+                                @if (risk.AffectedTickers.Any(IsPresent))
+                                {
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                        <span class="small text-muted">Affected:</span>
+                                        @foreach (var ticker in risk.AffectedTickers.Where(IsPresent).Distinct(StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-light border">@ticker</span>
+                                        }
+                                    </div>
+                                }
+
+                                @if (risk.ReferenceIds.Any(IsPresent))
+                                {
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                        <span class="small text-muted">Sources:</span>
+                                        @foreach (var referenceId in risk.ReferenceIds.Where(IsPresent).Distinct(StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            var referenceIndex = FindReferenceIndex(referenceId);
+                                            if (referenceIndex >= 0)
+                                            {
+                                                <a href="@ReferenceHref(referenceIndex)"
+                                                   class="badge text-bg-light border text-decoration-none"
+                                                   title="@Analysis.References[referenceIndex].Title">
+                                                    [@(referenceIndex + 1)]
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge text-bg-warning" title="Reference was not included in the analysis response">
+                                                    @referenceId
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+                                }
+
+                                @if (risk.DataGaps.Any(IsPresent))
+                                {
+                                    <details class="mt-3">
+                                        <summary class="small text-muted">Risk data limitations</summary>
+                                        <ul class="small mb-0 mt-2 ps-3">
+                                            @foreach (var gap in risk.DataGaps.Where(IsPresent))
+                                            {
+                                                <li>@gap</li>
+                                            }
+                                        </ul>
+                                    </details>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        @if (Analysis.Snapshot is { } snapshot)
+        {
+            <section class="mb-4" aria-labelledby="spotlight-snapshot">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h5 id="spotlight-snapshot" class="mb-0">
+                        <BIcon icon="bi-pie-chart" extraClassName="me-1" />
+                        Portfolio snapshot
+                    </h5>
+                    <span class="small text-muted">@FormatTimestamp(snapshot.AsOf)</span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-info">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Market value</div>
+                                <div class="h5 mb-0">@FormatAmount(snapshot.TotalMarketValue, snapshot.Currency)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Holdings</div>
+                                <div class="h5 mb-0">@snapshot.Holdings.Count</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Market</div>
+                                <div class="h5 mb-0">@ValueOrPlaceholder(snapshot.Country)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Currency</div>
+                                <div class="h5 mb-0">@ValueOrPlaceholder(snapshot.Currency)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <details class="card" open>
+                    <summary class="card-header fw-semibold">
+                        Verified holdings
+                        <span class="badge text-bg-secondary ms-1">@snapshot.Holdings.Count</span>
+                    </summary>
+                    @if (snapshot.Holdings.Count == 0)
+                    {
+                        <div class="card-body text-muted">No verified holdings were returned.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Ticker</th>
+                                        <th class="text-end">Market value</th>
+                                        <th class="text-end">Current</th>
+                                        <th class="text-end">Target</th>
+                                        <th class="text-end">Drift</th>
+                                        <th class="text-end">Unrealized P/L</th>
+                                        <th>Price source</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    @foreach (var holding in snapshot.Holdings.OrderByDescending(holding => holding.MarketValue))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@holding.Ticker</div>
+                                                <div class="small text-muted">
+                                                    @if (IsPresent(holding.CompanyName))
+                                                    {
+                                                        <span>@holding.CompanyName</span>
+                                                    }
+                                                    @if (IsPresent(holding.Exchange))
+                                                    {
+                                                        <span> (@holding.Exchange)</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-end">@FormatAmount(holding.MarketValue, holding.Currency)</td>
+                                            <td class="text-end">@FormatPercentage(holding.CurrentAllocation)</td>
+                                            <td class="text-end">@FormatPercentage(holding.TargetAllocation)</td>
+                                            <td class="text-end @SignedValueClass(holding.AllocationDrift)">
+                                                @FormatSignedPercentage(holding.AllocationDrift)
+                                            </td>
+                                            <td class="text-end @SignedValueClass(holding.UnrealizedProfitLoss)">
+                                                @FormatSignedAmount(holding.UnrealizedProfitLoss, holding.Currency)
+                                            </td>
+                                            <td>
+                                                <span class="badge @PriceSourceBadgeClass(holding.PriceSource)">
+                                                    @PriceSourceLabel(holding.PriceSource)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </details>
+            </section>
+        }
+        else
+        {
+            <div class="alert alert-warning" role="alert">
+                <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
+                The analysis did not include a portfolio snapshot.
+            </div>
+        }
+    }
+
+    @if (CombinedDataGaps.Count > 0)
+    {
+        <details class="card mb-4">
+            <summary class="card-header fw-semibold">
+                <BIcon icon="bi-info-circle" extraClassName="me-1" />
+                Data limitations
+                <span class="badge text-bg-secondary ms-1">@CombinedDataGaps.Count</span>
+            </summary>
+            <div class="card-body">
+                <ul class="mb-0 ps-3">
+                    @foreach (var gap in CombinedDataGaps)
+                    {
+                        <li>@gap</li>
+                    }
+                </ul>
+            </div>
+        </details>
+    }
+
+    @if (Analysis.References.Count > 0)
+    {
+        <section aria-labelledby="spotlight-references">
+            <h5 id="spotlight-references" class="mb-3">
+                <BIcon icon="bi-journal-text" extraClassName="me-1" />
+                References
+            </h5>
+            <ol class="list-group list-group-numbered">
+                @for (var index = 0; index < Analysis.References.Count; index++)
+                {
+                    var reference = Analysis.References[index];
+                    var safeUrl = SafeReferenceUrl(reference);
+                    <li id="spotlight-reference-@(index + 1)"
+                        class="spotlight-reference list-group-item d-flex justify-content-between align-items-start gap-3">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold">
+                                @if (safeUrl is not null)
+                                {
+                                    <a href="@safeUrl" target="_blank" rel="noopener noreferrer">@reference.Title</a>
+                                }
+                                else
+                                {
+                                    <span>@reference.Title</span>
+                                }
+                            </div>
+                            <div class="small text-muted">
+                                @reference.Publisher - @SourceTypeLabel(reference.SourceType)
+                                @if (reference.PublishedAt is not null)
+                                {
+                                    <span> - published @reference.PublishedAt.Value.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                                }
+                                <span> - accessed @reference.AccessedAt.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                            </div>
+                        </div>
+                        <span class="badge @(reference.IsVerified ? "text-bg-success" : "text-bg-secondary")">
+                            @(reference.IsVerified ? "Verified" : "Unverified")
+                        </span>
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PortfolioSpotlightAnalysis Analysis { get; set; } = default!;
+
+    @inject NavigationManager NavigationManager
+
+    private string ReferenceHref(int referenceIndex)
+    {
+        var uri = new UriBuilder(NavigationManager.Uri)
+        {
+            Fragment = $"spotlight-reference-{referenceIndex + 1}",
+        };
+
+        return uri.Uri.AbsoluteUri;
+    }
+
+    private IReadOnlyList<string> CombinedDataGaps => [.. Analysis.DataGaps
+        .Concat(Analysis.Snapshot?.DataGaps ?? [])
+        .Where(IsPresent)
+        .Distinct(StringComparer.OrdinalIgnoreCase)];
+
+    private string StatusLabel => Analysis.AnalysisStatus switch
+    {
+        PortfolioSpotlightAnalysisStatus.CompleteWithWarnings => "Complete with warnings",
+        _ => "Complete",
+    };
+
+    private string StatusBadgeClass => Analysis.AnalysisStatus switch
+    {
+        PortfolioSpotlightAnalysisStatus.CompleteWithWarnings => "text-bg-warning",
+        _ => "text-bg-success",
+    };
+
+    private string StatusBorderClass => Analysis.AnalysisStatus switch
+    {
+        PortfolioSpotlightAnalysisStatus.CompleteWithWarnings => "border-start border-start-4 border-start-warning",
+        _ => "border-start border-start-4 border-start-success",
+    };
+
+    private string DataQualityLabel => Analysis.OverallDataQuality switch
+    {
+        DataQuality.Insufficient => "Insufficient",
+        _ => Analysis.OverallDataQuality.ToString(),
+    };
+
+    private string DataQualityBadgeClass => Analysis.OverallDataQuality switch
+    {
+        DataQuality.High => "text-bg-success",
+        DataQuality.Medium => "text-bg-warning",
+        DataQuality.Low => "text-bg-danger",
+        _ => "text-bg-dark",
+    };
+
+    private string RebalanceLabel => Analysis.RebalanceRecommended switch
+    {
+        PortfolioSpotlightRebalanceFlag.Yes => "Rebalance recommended",
+        _ => "No rebalance recommended",
+    };
+
+    private string RebalanceBadgeClass => Analysis.RebalanceRecommended switch
+    {
+        PortfolioSpotlightRebalanceFlag.Yes => "text-bg-warning",
+        _ => "text-bg-secondary",
+    };
+
+    private static string RiskBorderClass(PortfolioSpotlightRiskLevel level)
+    {
+        return level switch
+        {
+            PortfolioSpotlightRiskLevel.Critical => "border-start-danger",
+            PortfolioSpotlightRiskLevel.High => "border-start-warning",
+            _ => "border-start-info",
+        };
+    }
+
+    private static string RiskBadgeClass(PortfolioSpotlightRiskLevel level)
+    {
+        return level switch
+        {
+            PortfolioSpotlightRiskLevel.Critical => "text-bg-danger",
+            PortfolioSpotlightRiskLevel.High => "text-bg-warning",
+            _ => "text-bg-info",
+        };
+    }
+
+    private static string RiskLevelLabel(PortfolioSpotlightRiskLevel level)
+    {
+        return level.ToString();
+    }
+
+    private static string TimingBadgeClass(PortfolioSpotlightActionTiming timing)
+    {
+        return timing switch
+        {
+            PortfolioSpotlightActionTiming.AsSoonAsPossibleWithinOneWeek => "text-bg-danger",
+            PortfolioSpotlightActionTiming.WithinOneToTwoWeeks => "text-bg-warning",
+            _ => "text-bg-secondary",
+        };
+    }
+
+    private static string ActionTimingLabel(PortfolioSpotlightActionTiming timing)
+    {
+        return timing switch
+        {
+            PortfolioSpotlightActionTiming.AsSoonAsPossibleWithinOneWeek => "ASAP, within one week",
+            PortfolioSpotlightActionTiming.WithinOneToTwoWeeks => "Within one to two weeks",
+            _ => "Monitor",
+        };
+    }
+
+    private int FindReferenceIndex(string referenceId)
+    {
+        for (var index = 0; index < Analysis.References.Count; index++)
+        {
+            if (string.Equals(Analysis.References[index].Id, referenceId, StringComparison.OrdinalIgnoreCase))
+            {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static Uri? SafeReferenceUrl(ReferenceSource reference)
+    {
+        return string.Equals(reference.Url.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(reference.Url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            ? reference.Url
+            : null;
+    }
+
+    private static string SourceTypeLabel(ReferenceSourceType sourceType)
+    {
+        return sourceType switch
+        {
+            ReferenceSourceType.MarketData => "Market data",
+            _ => sourceType.ToString(),
+        };
+    }
+
+    private static string PriceSourceLabel(PortfolioPriceSource source)
+    {
+        return source switch
+        {
+            PortfolioPriceSource.MarketData => "Market data",
+            _ => "Client",
+        };
+    }
+
+    private static string PriceSourceBadgeClass(PortfolioPriceSource source)
+    {
+        return source switch
+        {
+            PortfolioPriceSource.MarketData => "text-bg-success",
+            _ => "text-bg-secondary",
+        };
+    }
+
+    private static string SignedValueClass(double? value)
+    {
+        return value switch
+        {
+            > 0 => "text-success",
+            < 0 => "text-danger",
+            _ => "text-muted",
+        };
+    }
+
+    private static string FormatAmount(double value, string? currency)
+    {
+        var amount = value.ToString("N2", CultureInfo.CurrentCulture);
+        return IsPresent(currency)
+            ? $"{currency!.Trim().ToUpperInvariant()} {amount}"
+            : amount;
+    }
+
+    private static string FormatSignedAmount(double? value, string? currency)
+    {
+        if (value is null)
+        {
+            return "--";
+        }
+
+        var amount = value.Value > 0
+            ? $"+{value.Value.ToString("N2", CultureInfo.CurrentCulture)}"
+            : value.Value.ToString("N2", CultureInfo.CurrentCulture);
+        return IsPresent(currency)
+            ? $"{currency!.Trim().ToUpperInvariant()} {amount}"
+            : amount;
+    }
+
+    private static string FormatPercentage(double? value)
+    {
+        return value is null
+            ? "--"
+            : $"{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%";
+    }
+
+    private static string FormatSignedPercentage(double? value)
+    {
+        if (value is null)
+        {
+            return "--";
+        }
+
+        return value.Value > 0
+            ? $"+{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%"
+            : $"{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%";
+    }
+
+    private static string FormatTimestamp(DateTimeOffset timestamp)
+    {
+        return $"{timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} UTC";
+    }
+
+    private static int ClampConfidence(int confidence)
+    {
+        return Math.Clamp(confidence, 0, 100);
+    }
+
+    private static string ValueOrPlaceholder(string? value)
+    {
+        return IsPresent(value) ? value! : "--";
+    }
+
+    private static bool IsPresent(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value);
+    }
+}

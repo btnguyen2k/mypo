@@ -189,7 +189,6 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             if (portfolioSpotlight is not null)
             {
                 plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                // plan.Metadata.Spotlight = portfolioSpotlight.Analysis;
                 plan.Metadata.SpotlightAnalysis = portfolioSpotlight;
                 changed = true;
                 // TODO

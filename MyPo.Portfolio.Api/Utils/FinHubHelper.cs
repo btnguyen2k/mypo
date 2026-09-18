@@ -12,7 +12,7 @@ public static class FinHubHelper
         => [.. (plan.Metadata?.HoldingTickers ?? []).Select(ht => new PortfolioHolding
         {
             Ticker = ht.Ticker,
-            TargetAllocation = ht.TargetAllocation,
+            TargetAllocation = ht.TargetAllocation / 100m, // normalize [0, 100] to [0, 1]
             NumShares = ht.Shares,
             AvgPrice = ht.AveragePrice,
             MarketPrice = ht.MarketPrice,
