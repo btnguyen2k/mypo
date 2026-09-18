@@ -1,6 +1,11 @@
-using FinHub.Client.Models.Portfolios;
-using FinHub.Client.Schemas;
+﻿using FinHub.Client.Models.Portfolios;
 
 namespace FinHub.Client.Schemas.PortfolioAnalysis;
 
-public sealed class AnalyzePortfolioAsyncResponse : AsyncApiResponse<IPortfolioAnalysisResult?>;
+public sealed class AnalyzePortfolioAsyncResponse : AsyncApiResponse<IPortfolioAnalysisResult>
+{
+    public AnalyzePortfolioResponse ToApiResp()
+    {
+        return ToApiResp<AnalyzePortfolioResponse>();
+    }
+}

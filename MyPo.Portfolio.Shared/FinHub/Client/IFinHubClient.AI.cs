@@ -46,10 +46,30 @@ public partial interface IFinHubClient
     /// <returns></returns>
     public Task<BuildPortfolioResponse> BuildPortfolioAsync(BuildPortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/>_async to start an asynchronous building of a portfolio.
+    /// </summary>
+    /// <param name="req">The portfolio building request</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the task ID for the asynchronous analysis.</returns>
+    public Task<BuildPortfolioAsyncResponse> StartBuildPortfolioAsync(BuildPortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/>_async to poll the status of an asynchronous building of a portfolio.
+    /// </summary>
+    /// <param name="taskId">The task ID of the asynchronous analysis</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the status and result of the asynchronous analysis.</returns>
+    public Task<BuildPortfolioAsyncResponse> PollBuildPortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
     public const string API_FINHUB_AI_ANALYZE_PORTFOLIO = "/ai/analyze_portfolio";
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze a an existing portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze an existing portfolio.
     /// </summary>
     /// <param name="req">The portfolio analyze request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -57,6 +77,26 @@ public partial interface IFinHubClient
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
     /// <returns></returns>
     public Task<AnalyzePortfolioResponse> AnalyzePortfolioAsync(AnalyzePortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/>_async to start an asynchronous analysis of a portfolio.
+    /// </summary>
+    /// <param name="req">The portfolio analyze request</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the task ID for the asynchronous analysis.</returns>
+    public Task<AnalyzePortfolioAsyncResponse> StartAnalyzePortfolioAsync(AnalyzePortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/>_async to poll the status of an asynchronous analysis of a portfolio.
+    /// </summary>
+    /// <param name="taskId">The task ID of the asynchronous analysis</param>
+    /// <param name="baseUrl">The base URL of the API, optional.</param>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for the API call, optional.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use for the API call, optional.</param>
+    /// <returns>The response containing the status and result of the asynchronous analysis.</returns>
+    public Task<AnalyzePortfolioAsyncResponse> PollAnalyzePortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     public const string API_FINHUB_AI_SPOTLIGHT_PORTFOLIO = "/ai/spotlight_portfolio";
 
