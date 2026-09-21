@@ -175,9 +175,7 @@ public abstract class BaseApiClient
     {
         var timerStart = DateTimeOffset.Now;
         var apiResult = await StartApiRequestAsync<TAsyncResponse, TData>(
-            methodStart,
-            reqData,
-            endpointStart,
+            methodStart, endpointStart, reqData,
             authToken,
             baseUrl,
             httpClient,
@@ -212,9 +210,7 @@ public abstract class BaseApiClient
                     await Task.Delay(delayMs, cancellationToken: cancellationToken);
                     var taskId = taskInfo.TaskId;
                     apiResult = await PollApiResultAsync<TAsyncResponse, TData>(
-                        methodPoll,
-                        taskId,
-                        endpointPollWithoutTaskId,
+                        methodPoll, endpointPollWithoutTaskId, taskId,
                         authToken,
                         baseUrl,
                         httpClient,
@@ -267,8 +263,8 @@ public abstract class BaseApiClient
     /// <returns>The asynchronous API response of type <typeparamref name="TAsyncResponse"/>.</returns>
     protected virtual async Task<TAsyncResponse> StartApiRequestAsync<TAsyncResponse, TData>(
         HttpMethod method,
-        object? reqData,
         string endpointStart,
+        object? reqData,
         string? authToken,
         string? baseUrl = default,
         HttpClient? httpClient = default,
@@ -331,8 +327,8 @@ public abstract class BaseApiClient
     /// <returns>The asynchronous API response of type <typeparamref name="TAsyncResponse"/>.</returns>
     protected virtual async Task<TAsyncResponse> PollApiResultAsync<TAsyncResponse, TData>(
         HttpMethod method,
-        string taskId,
         string endpointPollWithoutTaskId,
+        string taskId,
         string? authToken,
         string? baseUrl = default,
         HttpClient? httpClient = default,

@@ -1,4 +1,5 @@
-﻿using PortfolioConstructionModel = FinHub.Client.Models.Portfolios.PortfolioConstruction;
+﻿using MyPo.Shared.Api;
+using PortfolioConstructionModel = FinHub.Client.Models.Portfolios.PortfolioConstruction;
 
 namespace FinHub.Client.Schemas.PortfolioConstruction;
 
