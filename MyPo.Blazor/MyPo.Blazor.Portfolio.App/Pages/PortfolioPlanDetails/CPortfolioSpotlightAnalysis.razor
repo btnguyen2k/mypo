@@ -171,123 +171,6 @@
             }
         </section>
 
-        @if (Analysis.Snapshot is { } snapshot)
-        {
-            <section class="mb-4" aria-labelledby="spotlight-snapshot">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                    <h5 id="spotlight-snapshot" class="mb-0">
-                        <BIcon icon="bi-pie-chart" extraClassName="me-1" />
-                        Portfolio snapshot
-                    </h5>
-                    <span class="small text-muted">@FormatTimestamp(snapshot.AsOf)</span>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-info">
-                            <div class="card-body">
-                                <div class="text-uppercase text-muted small mb-2">Market value</div>
-                                <div class="h5 mb-0">@FormatAmount(snapshot.TotalMarketValue, snapshot.Currency)</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-primary">
-                            <div class="card-body">
-                                <div class="text-uppercase text-muted small mb-2">Holdings</div>
-                                <div class="h5 mb-0">@snapshot.Holdings.Count</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-secondary">
-                            <div class="card-body">
-                                <div class="text-uppercase text-muted small mb-2">Market</div>
-                                <div class="h5 mb-0">@ValueOrPlaceholder(snapshot.Country)</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-xl-3">
-                        <div class="card h-100 border-start border-start-4 border-start-secondary">
-                            <div class="card-body">
-                                <div class="text-uppercase text-muted small mb-2">Currency</div>
-                                <div class="h5 mb-0">@ValueOrPlaceholder(snapshot.Currency)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <details class="card" open>
-                    <summary class="card-header fw-semibold">
-                        Verified holdings
-                        <span class="badge text-bg-secondary ms-1">@snapshot.Holdings.Count</span>
-                    </summary>
-                    @if (snapshot.Holdings.Count == 0)
-                    {
-                        <div class="card-body text-muted">No verified holdings were returned.</div>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Ticker</th>
-                                        <th class="text-end">Market value</th>
-                                        <th class="text-end">Current</th>
-                                        <th class="text-end">Target</th>
-                                        <th class="text-end">Drift</th>
-                                        <th class="text-end">Unrealized P/L</th>
-                                        <th>Price source</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="table-group-divider">
-                                    @foreach (var holding in snapshot.Holdings.OrderByDescending(holding => holding.MarketValue))
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div class="fw-semibold">@holding.Ticker</div>
-                                                <div class="small text-muted">
-                                                    @if (IsPresent(holding.CompanyName))
-                                                    {
-                                                        <span>@holding.CompanyName</span>
-                                                    }
-                                                    @if (IsPresent(holding.Exchange))
-                                                    {
-                                                        <span> (@holding.Exchange)</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td class="text-end">@FormatAmount(holding.MarketValue, holding.Currency)</td>
-                                            <td class="text-end">@FormatPercentage(holding.CurrentAllocation)</td>
-                                            <td class="text-end">@FormatPercentage(holding.TargetAllocation)</td>
-                                            <td class="text-end @SignedValueClass(holding.AllocationDrift)">
-                                                @FormatSignedPercentage(holding.AllocationDrift)
-                                            </td>
-                                            <td class="text-end @SignedValueClass(holding.UnrealizedProfitLoss)">
-                                                @FormatSignedAmount(holding.UnrealizedProfitLoss, holding.Currency)
-                                            </td>
-                                            <td>
-                                                <span class="badge @PriceSourceBadgeClass(holding.PriceSource)">
-                                                    @PriceSourceLabel(holding.PriceSource)
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </details>
-            </section>
-        }
-        else
-        {
-            <div class="alert alert-warning" role="alert">
-                <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
-                The analysis did not include a portfolio snapshot.
-            </div>
-        }
     }
 
     @if (CombinedDataGaps.Count > 0)
@@ -414,8 +297,8 @@
 
     private string RebalanceBadgeClass => Analysis.RebalanceRecommended switch
     {
-        PortfolioSpotlightRebalanceFlag.Yes => "text-bg-warning",
-        _ => "text-bg-secondary",
+        PortfolioSpotlightRebalanceFlag.Yes => "text-bg-danger",
+        _ => "text-bg-success",
     };
 
     private static string RiskBorderClass(PortfolioSpotlightRiskLevel level)
@@ -492,76 +375,6 @@
         };
     }
 
-    private static string PriceSourceLabel(PortfolioPriceSource source)
-    {
-        return source switch
-        {
-            PortfolioPriceSource.MarketData => "Market data",
-            _ => "Client",
-        };
-    }
-
-    private static string PriceSourceBadgeClass(PortfolioPriceSource source)
-    {
-        return source switch
-        {
-            PortfolioPriceSource.MarketData => "text-bg-success",
-            _ => "text-bg-secondary",
-        };
-    }
-
-    private static string SignedValueClass(double? value)
-    {
-        return value switch
-        {
-            > 0 => "text-success",
-            < 0 => "text-danger",
-            _ => "text-muted",
-        };
-    }
-
-    private static string FormatAmount(double value, string? currency)
-    {
-        var amount = value.ToString("N2", CultureInfo.CurrentCulture);
-        return IsPresent(currency)
-            ? $"{currency!.Trim().ToUpperInvariant()} {amount}"
-            : amount;
-    }
-
-    private static string FormatSignedAmount(double? value, string? currency)
-    {
-        if (value is null)
-        {
-            return "--";
-        }
-
-        var amount = value.Value > 0
-            ? $"+{value.Value.ToString("N2", CultureInfo.CurrentCulture)}"
-            : value.Value.ToString("N2", CultureInfo.CurrentCulture);
-        return IsPresent(currency)
-            ? $"{currency!.Trim().ToUpperInvariant()} {amount}"
-            : amount;
-    }
-
-    private static string FormatPercentage(double? value)
-    {
-        return value is null
-            ? "--"
-            : $"{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%";
-    }
-
-    private static string FormatSignedPercentage(double? value)
-    {
-        if (value is null)
-        {
-            return "--";
-        }
-
-        return value.Value > 0
-            ? $"+{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%"
-            : $"{value.Value.ToString("N1", CultureInfo.CurrentCulture)}%";
-    }
-
     private static string FormatTimestamp(DateTimeOffset timestamp)
     {
         return $"{timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} UTC";
@@ -570,11 +383,6 @@
     private static int ClampConfidence(int confidence)
     {
         return Math.Clamp(confidence, 0, 100);
-    }
-
-    private static string ValueOrPlaceholder(string? value)
-    {
-        return IsPresent(value) ? value! : "--";
     }
 
     private static bool IsPresent(string? value)
