@@ -1,12 +1,10 @@
 ﻿using Finhub.Client;
 using FinHub.Client.Schemas.Stocks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
-[Authorize]
 public partial class FinHubController
 {
     /// <summary>

@@ -28,16 +28,11 @@ public abstract class ApiBaseController : ControllerBase
 	protected static readonly ObjectResult _respOk = ResponseNoData(200, "Ok.");
 
 	/// <summary>
-	/// Convenience method to return a 200 OK response with data.
+	/// Convenience method to return a 200 OK response with data, using a default "Ok." message.
 	/// </summary>
 	/// <param name="data"></param>
 	/// <returns></returns>
-	protected static ObjectResult ResponseOk<T>(T? data) => data == null ? _respOk : new OkObjectResult(new ApiResp<T>
-	{
-		Status = 200,
-		Message = "Ok.",
-		Data = data
-	});
+	protected static ObjectResult ResponseOk<T>(T? data) => ResponseOk("Ok.", data);
 
 	/// <summary>
 	/// Convenience method to return a 200 OK response with data and message.
@@ -51,6 +46,33 @@ public abstract class ApiBaseController : ControllerBase
 		Message = message,
 		Data = data
 	});
+
+    /// <summary>
+    /// Convenience method to return an asynchronous response with data and task information, using a default "Ok." message.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    /// <param name="taskInfo"></param>
+    /// <returns></returns>
+    protected static ObjectResult ResponseAsyncOk<T>(T? data, AsyncTaskInfo taskInfo) => ResponseAsyncOk("Ok.", data, taskInfo);
+
+    /// <summary>
+    /// Convenience method to return an asynchronous response with data and task information.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    /// <param name="taskInfo"></param>
+    /// <returns></returns>
+    protected static ObjectResult ResponseAsyncOk<T>(string message, T? data, AsyncTaskInfo taskInfo) => new OkObjectResult(new AsyncApiResponse<T>
+    {
+        Status = taskInfo.State == TaskState.Completed
+            ? 200
+            : (taskInfo.State == TaskState.Running ? 202 : 500),
+        Message = message,
+        Data = data,
+        Extra = taskInfo
+    });
 
 	/// <summary>
 	/// Convenience method to return a response without attached data.
@@ -72,7 +94,7 @@ public abstract class ApiBaseController : ControllerBase
 	/// </summary>
 	/// <param name="statusCode"></param>
 	/// <param name="message"></param>
-	/// @param name="extras"></param>
+	/// <param name="extras"></param>
 	/// <returns></returns>
 	protected static ObjectResult ResponseNoData(int statusCode, string? message, object? extras) => new(
 		new ApiResp<object>
