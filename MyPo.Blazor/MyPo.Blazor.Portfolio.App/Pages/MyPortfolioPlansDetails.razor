@@ -199,14 +199,20 @@
                                         {
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdAnalysis?"show active":"")"
                                                 id="@(TabIdAnalysis)-content" role="tabpanel" aria-labelledby="@TabIdAnalysis" tabindex="0">
-                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                                @if (SelectedPortfolioPlan.Metadata.PortfolioAnalysis is { } portfolioAnalysis)
+                                                {
+                                                    <CPortfolioAnalysis Analysis="portfolioAnalysis" />
+                                                }
                                             </div>
                                         }
                                         @if (HasRebalancePlan && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
                                         {
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdRebalancePlan?"show active":"")"
                                                 id="@(TabIdRebalancePlan)-content" role="tabpanel" aria-labelledby="@TabIdRebalancePlan" tabindex="0">
-                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.RebalancePlan)" />
+                                                @if (SelectedPortfolioPlan.Metadata.PortfolioAnalysis is { } portfolioAnalysis)
+                                                {
+                                                    <CPortfolioRebalancePlan Analysis="portfolioAnalysis" />
+                                                }
                                             </div>
                                         }
                                     </div>

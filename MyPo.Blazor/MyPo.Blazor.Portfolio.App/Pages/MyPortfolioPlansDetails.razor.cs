@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Api;
+﻿using FinHub.Client.Models.Portfolios;
+using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
@@ -129,9 +130,13 @@ public partial class MyPortfolioPlansDetails : BasePage
 
     public volatile bool analyzing = false;
 
-    public async void BtnClickAnalyze()
+    public async Task BtnClickAnalyze()
     {
-        if (analyzing) return;
+        if (analyzing)
+        {
+            return;
+        }
+
         analyzing = true;
         var step = string.Empty;
 
@@ -152,36 +157,40 @@ public partial class MyPortfolioPlansDetails : BasePage
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         SelectedPortfolioPlan.Metadata ??= new();
 
-        step = "spotlight";
-        // Since FinHub v0.15.0+ no longer need to check for empty holdings as that is now handled at the server side.
+        try
         {
-            var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-            if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
+            var authToken = await GetAuthTokenAsync();
+
+            step = "spotlight";
             {
-                analyzing = false;
-                ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
-                return;
+                var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, authToken, ApiBaseUrl);
+                if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
+                {
+                    ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
+                    return;
+                }
+                SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
             }
-            SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
+
+            step = "analysis";
+            {
+                var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, authToken, ApiBaseUrl);
+                if (!analysisResult.IsSuccess || analysisResult.Data is null)
+                {
+                    ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
+                    return;
+                }
+                SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
+            }
+
+            ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
         }
-
-        // step = "analysis";
-        // {
-        //     var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-        //     analyzing = false;
-        //     if (!analysisResult.IsSuccess || analysisResult.Data is null)
-        //     {
-        //         ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
-        //         return;
-        //     }
-        //     SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        //     // SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
-        //     // SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
-        //     SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
-        // }
-
-        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+        finally
+        {
+            analyzing = false;
+        }
     }
 
     private const string TabIdSpotlight = "nav-spotlight-tab";
@@ -189,9 +198,14 @@ public partial class MyPortfolioPlansDetails : BasePage
     private const string TabIdRebalancePlan = "nav-rebalance-plan-tab";
     private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
 
-    private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
+    private bool HasAnalysis => SelectedPortfolioPlan?.Metadata?.PortfolioAnalysis is not null;
     private bool HasSpotlight => SelectedPortfolioPlan?.Metadata?.SpotlightAnalysis is not null;
-    private bool HasRebalancePlan => !string.IsNullOrWhiteSpace(SelectedPortfolioPlan?.Metadata?.RebalancePlan);
+    private bool HasRebalancePlan => SelectedPortfolioPlan?.Metadata?.PortfolioAnalysis switch
+    {
+        PortfolioReview { ActionPlan: not null } => true,
+        PortfolioConstruction { ActionPlan: not null } => true,
+        _ => false,
+    };
 
     /// <summary>
     /// Resolves <see cref="ActiveAnalysisTab"/> to a tab that is actually visible (has content),
