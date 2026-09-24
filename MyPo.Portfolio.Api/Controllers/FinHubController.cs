@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MyPo.Portfolio.Shared.Models;
+using MyPo.Shared.Api;
 using MyPo.Shared.Api.Services;
 using MyPo.Shared.Identity;
 
@@ -13,6 +14,8 @@ namespace MyPo.Portfolio.Api.Controllers;
 public partial class FinHubController : MyPoBaseController
 {
     private readonly IFinHubClient FinHubClient;
+
+    private readonly AsyncTaskInfo TaskCompleted = new() {TaskId = "completed-task", State = TaskState.Completed};
 
     public FinHubController(
         IIdentityRepository identityRepository,

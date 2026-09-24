@@ -169,7 +169,7 @@ public partial class MyPortfolioPlansDetails : BasePage
                     ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
                     return;
                 }
-                SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.RefreshTimestampSpotlightAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
             }
 
@@ -181,8 +181,8 @@ public partial class MyPortfolioPlansDetails : BasePage
                     ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
                     return;
                 }
-                SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                SelectedPortfolioPlan.Metadata.PortfolioAnalysis = analysisResult.Data;
+                SelectedPortfolioPlan.Metadata.RefreshTimestampDeepAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.DeepAnalysis = analysisResult.Data;
             }
 
             ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
@@ -198,9 +198,9 @@ public partial class MyPortfolioPlansDetails : BasePage
     private const string TabIdRebalancePlan = "nav-rebalance-plan-tab";
     private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
 
-    private bool HasAnalysis => SelectedPortfolioPlan?.Metadata?.PortfolioAnalysis is not null;
+    private bool HasAnalysis => SelectedPortfolioPlan?.Metadata?.DeepAnalysis is not null;
     private bool HasSpotlight => SelectedPortfolioPlan?.Metadata?.SpotlightAnalysis is not null;
-    private bool HasRebalancePlan => SelectedPortfolioPlan?.Metadata?.PortfolioAnalysis switch
+    private bool HasRebalancePlan => SelectedPortfolioPlan?.Metadata?.DeepAnalysis switch
     {
         PortfolioReview { ActionPlan: not null } => true,
         PortfolioConstruction { ActionPlan: not null } => true,

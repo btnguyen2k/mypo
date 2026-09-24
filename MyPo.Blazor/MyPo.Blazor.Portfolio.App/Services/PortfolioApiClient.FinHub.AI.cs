@@ -51,13 +51,14 @@ public partial class PortfolioApiClient
 
     /// <inheritdoc/>
     public async Task<AnalyzePortfolioAsyncResponse> PollAnalyzePortfolioPlanAsync(
+        string planId,
         string taskId,
         string authToken,
         string? baseUrl = default,
         HttpClient? requestHttpClient = default,
         CancellationToken cancellationToken = default)
     {
-        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO;
+        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
         return await PollApiResultAsync<AnalyzePortfolioAsyncResponse, IPortfolioAnalysisResult>(
             HttpMethod.Get, endpointPoll, taskId,
             authToken,
@@ -109,13 +110,14 @@ public partial class PortfolioApiClient
 
     /// <inheritdoc/>
     public async Task<PortfolioSpotlightAsyncResponse> PollSpotlightPortfolioPlanAsync(
+        string planId,
         string taskId,
         string authToken,
         string? baseUrl = default,
         HttpClient? requestHttpClient = default,
         CancellationToken cancellationToken = default)
     {
-        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO;
+        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
         return await PollApiResultAsync<PortfolioSpotlightAsyncResponse, PortfolioSpotlightAnalysis>(
             HttpMethod.Get, endpointPoll, taskId,
             authToken,

@@ -32,18 +32,19 @@ public partial interface IPortfolioApiClient
     /// <returns></returns>
     public Task<AnalyzePortfolioAsyncResponse> StartAnalyzePortfolioPlanAsync(string planId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
-    public const string API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO = "/api/finhub/ai/poll_analyze_portfolio/";
+    public const string API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO = "/api/finhub/ai/poll_analyze_portfolio/{id}";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO"/> to poll the status of the asynchronous analysis of the portfolio plan with AI.
     /// </summary>
-    /// <param name="taskId"></param>
+    /// <param name="planId">The ID of the portfolio plan to poll.</param>
+    /// <param name="taskId">The task ID of the portfolio analysis to poll.</param>
     /// <param name="authToken"></param>
     /// <param name="baseUrl"></param>
     /// <param name="requestHttpClient"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public Task<AnalyzePortfolioAsyncResponse> PollAnalyzePortfolioPlanAsync(string taskId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+    public Task<AnalyzePortfolioAsyncResponse> PollAnalyzePortfolioPlanAsync(string planId, string taskId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
     /*----------------------------------------------------------------------*/
 
@@ -73,18 +74,19 @@ public partial interface IPortfolioApiClient
     /// <returns></returns>
     public Task<PortfolioSpotlightAsyncResponse> StartSpotlightPortfolioPlanAsync(string planId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
-    public const string API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO = "/api/finhub/ai/poll_spotlight_portfolio/";
+    public const string API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO = "/api/finhub/ai/poll_spotlight_portfolio/{id}";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO"/> to poll the status of the spotlight analysis for the portfolio plan with AI.
     /// </summary>
-    /// <param name="taskId"></param>
+    /// <param name="planId">The ID of the portfolio plan to poll.</param>
+    /// <param name="taskId">The task ID of the portfolio spotlight to poll.</param>
     /// <param name="authToken"></param>
     /// <param name="baseUrl"></param>
     /// <param name="requestHttpClient"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public Task<PortfolioSpotlightAsyncResponse> PollSpotlightPortfolioPlanAsync(string taskId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
+    public Task<PortfolioSpotlightAsyncResponse> PollSpotlightPortfolioPlanAsync(string planId, string taskId, string authToken, string? baseUrl = default, HttpClient? requestHttpClient = default, CancellationToken cancellationToken = default);
 
     /*----------------------------------------------------------------------*/
 

@@ -130,12 +130,12 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         var changed = false;
         var nowUtc = DateTimeOffset.UtcNow;
 
-        var thisChecksum = plan.Metadata.CalcChecksumAnalysis();
-        var oldChecksum = plan.Metadata.LastChecksumAnalysis;
+        var thisChecksum = plan.Metadata.CalcChecksum();
+        var oldChecksum = plan.Metadata.ChecksumLastDeepAnalysis;
         var checksumChanged = !string.Equals(thisChecksum, oldChecksum, StringComparison.OrdinalIgnoreCase);
 
         // normal analysis: persisted only, no alert
-        var lastAnalysis = plan.Metadata.AnalysisRefreshTimestamp;
+        var lastAnalysis = plan.Metadata.RefreshTimestampDeepAnalysis;
         if (lastAnalysis <= 0 || checksumChanged || nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
         {
             if (lastAnalysis <= 0)
@@ -155,8 +155,8 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             var portfolioAnalysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (portfolioAnalysis is not null)
             {
-                plan.Metadata.AnalysisRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
-                plan.Metadata.PortfolioAnalysis = portfolioAnalysis;
+                plan.Metadata.RefreshTimestampDeepAnalysis = nowUtc.ToUnixTimeSeconds();
+                plan.Metadata.DeepAnalysis = portfolioAnalysis;
                 // plan.Metadata.Analysis = portfolioAnalysis.Analysis;
                 // plan.Metadata.RebalancePlan = portfolioAnalysis.RebalancePlan;
                 changed = true;
@@ -168,7 +168,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         }
 
         // spotlight analysis: persisted and pushed to Telegram as a Markdown alert
-        var lastSpotlight = plan.Metadata.SpotlightRefreshTimestamp;
+        var lastSpotlight = plan.Metadata.RefreshTimestampSpotlightAnalysis;
         if (lastSpotlight <= 0 || checksumChanged || nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
         {
             if (lastAnalysis <= 0)
@@ -188,7 +188,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             var portfolioSpotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (portfolioSpotlight is not null)
             {
-                plan.Metadata.SpotlightRefreshTimestamp = nowUtc.ToUnixTimeSeconds();
+                plan.Metadata.RefreshTimestampSpotlightAnalysis = nowUtc.ToUnixTimeSeconds();
                 plan.Metadata.SpotlightAnalysis = portfolioSpotlight;
                 changed = true;
                 // TODO
@@ -204,7 +204,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
         if (changed)
         {
             Logger.LogInformation("Saving updated portfolio plan '{planId}: {planName}' after analysis...", plan.Id, plan.Name);
-            plan.Metadata.LastChecksumAnalysis = thisChecksum;
+            plan.Metadata.ChecksumLastDeepAnalysis = thisChecksum;
             var dbresult = await portfolioRepo.UpdatePortfolioPlanAsync(plan, cancellationToken);
             if (dbresult is null)
             {
