@@ -34,9 +34,9 @@ COPY --from=build /app ./
 COPY ${BASENAME}.Blazor/${BASENAME}.Blazor/config ./config
 COPY ${BASENAME}.Blazor/${BASENAME}.Blazor/data ./data
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
-USER appuser
+# Use a non-privileged user that the app will run under.
+# See https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/nanoserver-ltsc2022/amd64/Dockerfile
+USER ContainerUser
 
 # Enable Swagger UI
 ENV ENABLE_SWAGGER_UI=true
