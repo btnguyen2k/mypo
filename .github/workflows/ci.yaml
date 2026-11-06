@@ -118,9 +118,8 @@ jobs:
           docker images
 
           CONTAINER=$(docker run -d \
-            --name test \
-            -p 1234:8080 \
-            -e Databases__Identity__Type=Memory -e Databases__Portfolio__Type=Memory \
+            --name test -p 1234:8080 \
+            -e Databases__Identity__Type=Memory -e Databases__Portfolio__Type=Memory -e Databases__WolverineFx__Type=Memory \
             --platform ${{ matrix.platform }} \
             ${{ env.DOCKER_IMAGE }}:ci)
           trap '
@@ -143,21 +142,13 @@ jobs:
             REQUEST_TIMEOUT=$((REMAINING < 2 ? REMAINING : 2))
 
             # verify status code of health endpoint
-            STATUS_CODE_HEALTHZ=$(curl -s \
-              -o /dev/null \
-              -m "$REQUEST_TIMEOUT" \
-              -w "%{http_code}" \
-              http://localhost:1234/healthz) || STATUS_CODE_HEALTHZ=000
+            STATUS_CODE_HEALTHZ=$(curl -s -o /dev/null -m "$REQUEST_TIMEOUT" -w "%{http_code}" http://localhost:1234/healthz)
             if [[ "$STATUS_CODE_HEALTHZ" != "200" ]]; then
               echo "ℹ️ Health check status code: $STATUS_CODE_HEALTHZ"
             fi
 
             # verify status code of Blazor framework endpoint
-            STATUS_CODE_BLAZOR=$(curl -s \
-              -o /dev/null \
-              -m "$REQUEST_TIMEOUT" \
-              -w "%{http_code}" \
-              http://localhost:1234/_framework/blazor.web.js) || STATUS_CODE_BLAZOR=000
+            STATUS_CODE_BLAZOR=$(curl -s -o /dev/null -m "$REQUEST_TIMEOUT" -w "%{http_code}" http://localhost:1234/_framework/blazor.web.js)
             if [[ "$STATUS_CODE_BLAZOR" != "200" ]]; then
               echo "ℹ️ Blazor check status code: $STATUS_CODE_BLAZOR"
             fi
@@ -171,6 +162,7 @@ jobs:
               sleep 1
             fi
           done
+          echo "❌ Container did not become healthy within ${STARTUP_TIMEOUT_SECONDS}s."
           if [[ "$STATUS_CODE_HEALTHZ" != "200" ]]; then
             echo "❌ Health check failed with status code $STATUS_CODE_HEALTHZ"
           fi
@@ -212,6 +204,72 @@ jobs:
               echo "❌ Docker build failed"
               exit 1
           fi
+      - name: Test Docker container
+        shell: bash
+        env:
+          STARTUP_TIMEOUT_SECONDS: '60'
+        run: |
+          set -euo pipefail
+
+          docker images
+
+          CONTAINER=$(docker run -d \
+            --name test -p 1234:8080 \
+            -e Databases__Identity__Type=Memory -e Databases__Portfolio__Type=Memory -e Databases__WolverineFx__Type=Memory \
+            --platform ${{ matrix.platform }} \
+            ${{ env.DOCKER_IMAGE }}:ci | tr -d '\r')
+          trap '
+            docker logs "$CONTAINER" || true
+            docker rm -f "$CONTAINER" >/dev/null || true
+          ' EXIT
+          echo "ℹ️ Started Docker container with ID: ${CONTAINER}"
+          DEADLINE=$((SECONDS + STARTUP_TIMEOUT_SECONDS))
+          STATUS_CODE_HEALTHZ=000
+          STATUS_CODE_BLAZOR=000
+          while (( SECONDS < DEADLINE )); do
+            if [[ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER" | tr -d '\r')" != "true" ]]; then
+              echo "❌ Container exited before becoming healthy."
+              exit 1
+            fi
+            REMAINING=$((DEADLINE - SECONDS))
+            if (( REMAINING <= 0 )); then
+              break
+            fi
+            REQUEST_TIMEOUT=$((REMAINING < 2 ? REMAINING : 2))
+
+            STATUS_CODE_HEALTHZ=$(curl.exe -s -o NUL -m "$REQUEST_TIMEOUT" -w "%{http_code}" http://localhost:1234/healthz)
+            if [[ "$STATUS_CODE_HEALTHZ" != "200" ]]; then
+              echo "ℹ️ Health check status code: $STATUS_CODE_HEALTHZ"
+            fi
+
+            REMAINING=$((DEADLINE - SECONDS))
+            if (( REMAINING <= 0 )); then
+              break
+            fi
+            REQUEST_TIMEOUT=$((REMAINING < 2 ? REMAINING : 2))
+
+            STATUS_CODE_BLAZOR=$(curl.exe -s -o NUL -m "$REQUEST_TIMEOUT" -w "%{http_code}" http://localhost:1234/_framework/blazor.web.js)
+            if [[ "$STATUS_CODE_BLAZOR" != "200" ]]; then
+              echo "ℹ️ Blazor check status code: $STATUS_CODE_BLAZOR"
+            fi
+
+            if [[ "$STATUS_CODE_HEALTHZ" == "200" && "$STATUS_CODE_BLAZOR" == "200" ]]; then
+              echo "✅ Container is healthy"
+              exit 0
+            fi
+
+            if (( SECONDS < DEADLINE )); then
+              sleep 1
+            fi
+          done
+          echo "❌ Container did not become healthy within ${STARTUP_TIMEOUT_SECONDS}s."
+          if [[ "$STATUS_CODE_HEALTHZ" != "200" ]]; then
+            echo "❌ Health check failed with status code $STATUS_CODE_HEALTHZ"
+          fi
+          if [[ "$STATUS_CODE_BLAZOR" != "200" ]]; then
+            echo "❌ Blazor check failed with status code $STATUS_CODE_BLAZOR"
+          fi
+          exit 1
 
   # PublishDockerImagesLinuxBuild:
   #   if: |
