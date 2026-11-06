@@ -2,6 +2,7 @@
 using FinHub.Client.Schemas.Stocks;
 using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -18,7 +19,10 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockQuotesAsync(symbols);
         if (!finhubResult.IsSuccess)
         {
-            Logger?.LogError("Failed to fetch stock quotes for '{symbols}' from FinHub: {message}", symbols, finhubResult.Message);
+            Logger?.LogError(
+                "Failed to fetch stock quotes for '{symbols}' from FinHub: {message}",
+                JsonHelper.SafeLogValue(symbols),
+                JsonHelper.SafeLogValue(finhubResult.Message));
             return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock quotes for '{symbols}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);
@@ -35,7 +39,10 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockQuotesAsync(symbol);
         if (!finhubResult.IsSuccess)
         {
-            Logger?.LogError("Failed to fetch stock symbol overview for '{symbol}' from FinHub: {message}", symbol, finhubResult.Message);
+            Logger?.LogError(
+                "Failed to fetch stock symbol overview for '{symbol}' from FinHub: {message}",
+                JsonHelper.SafeLogValue(symbol),
+                JsonHelper.SafeLogValue(finhubResult.Message));
             return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol overview for '{symbol}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);
@@ -52,7 +59,10 @@ public partial class FinHubController
         var finhubResult = await finHubClient.GetStockQuotesAsync(symbol);
         if (!finhubResult.IsSuccess)
         {
-            Logger?.LogError("Failed to fetch stock symbol info for '{symbol}' from FinHub: {message}", symbol, finhubResult.Message);
+            Logger?.LogError(
+                "Failed to fetch stock symbol info for '{symbol}' from FinHub: {message}",
+                JsonHelper.SafeLogValue(symbol),
+                JsonHelper.SafeLogValue(finhubResult.Message));
             return ResponseNoData(finhubResult.Status, finhubResult.Message ?? $"Failed to fetch stock symbol info for '{symbol}' from FinHub", finhubResult.Extra);
         }
         return ResponseOk(finhubResult.Data);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyPo.Portfolio.Shared.Api;
 using FinHub.Client.Schemas.TickerAnalysis;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -127,7 +128,9 @@ public partial class FinHubController
     public async ValueTask<ActionResult<AnalyzeTickerAsyncResponse>> PollAnalyzeTickerAsync([FromQuery(Name = "task_id")] string taskId)
     {
         // Step 1: make API call
-        Logger?.LogInformation("Calling FinHub PollAnalyzeTicker API for task '{taskId}'...", taskId);
+        Logger?.LogInformation(
+            "Calling FinHub PollAnalyzeTicker API for task '{taskId}'...",
+            JsonHelper.SafeLogValue(taskId));
         var finhubResult = await FinHubClient.PollAnalyzeTickerAsync(taskId);
         if (!finhubResult.IsSuccess || finhubResult.Extra is null || string.IsNullOrEmpty(finhubResult.Extra.TaskId))
         {

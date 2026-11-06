@@ -5,6 +5,7 @@ using MyPo.Portfolio.Api.Utils;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
+using MyPo.Shared.Helpers;
 
 namespace MyPo.Portfolio.Api.Controllers;
 
@@ -213,9 +214,9 @@ public partial class FinHubController
         {
             Logger?.LogInformation(
                 "Portfolio plan '{planId}: {planName}' does not have a recent deep analysis request matching task '{taskId}'",
-                portfolioPlan.Id,
-                portfolioPlan.Name,
-                taskId);
+                JsonHelper.SafeLogValue(portfolioPlan.Id),
+                JsonHelper.SafeLogValue(portfolioPlan.Name),
+                JsonHelper.SafeLogValue(taskId));
             return ResponseNoData(
                 400,
                 $"Portfolio plan '{portfolioPlan.Id}: {portfolioPlan.Name}' does not have a recent deep analysis request matching task '{taskId}'");
@@ -256,11 +257,19 @@ public partial class FinHubController
                         // The deep analysis has completed successfully. Store the analysis result too
                         StoreDeepAnalysisResult(portfolioPlan, finhubResult.Data);
                     }
-                    Logger?.LogInformation("Persisting deep analysis request for task '{taskId}' and portfolio '{id}: {name}'...", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    Logger?.LogInformation(
+                        "Persisting deep analysis request for task '{taskId}' and portfolio '{id}: {name}'...",
+                        JsonHelper.SafeLogValue(taskId),
+                        JsonHelper.SafeLogValue(portfolioPlan.Id),
+                        JsonHelper.SafeLogValue(portfolioPlan.Name));
                     var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
                     if (dbresult is null)
                     {
-                        Logger?.LogError("Failed to persist deep analysis request for task '{taskId}' and portfolio '{id}: {name}'.", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                        Logger?.LogError(
+                            "Failed to persist deep analysis request for task '{taskId}' and portfolio '{id}: {name}'.",
+                            JsonHelper.SafeLogValue(taskId),
+                            JsonHelper.SafeLogValue(portfolioPlan.Id),
+                            JsonHelper.SafeLogValue(portfolioPlan.Name));
                     }
                 }
 

@@ -7,3 +7,4 @@
 - feat(pubsub): add durable Wolverine-backed portfolio events
 - feat(pubsub): clean up portfolio checkpoints via durable deletion events
 - impr(UI/UX): show target URLs in the browser status bar
+- patch(CodeQL): fix CodeQL warnings
