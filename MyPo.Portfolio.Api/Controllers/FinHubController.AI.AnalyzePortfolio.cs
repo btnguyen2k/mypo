@@ -245,20 +245,23 @@ public partial class FinHubController
                 }
 
                 // Step 2: store the task info for tracking the deep analysis request
-                portfolioPlan.Metadata ??= new();
-                portfolioPlan.Metadata.ChecksumRequestDeepAnalysis = portfolioPlan.Metadata.CalcChecksum();
-                portfolioPlan.Metadata.TimestampRequestDeepAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                portfolioPlan.Metadata.RequestDeepAnalysis = finhubResult.Extra;
-                if (finhubResult.Extra.State == TaskState.Completed && finhubResult.Data is not null)
+                if (finhubResult.Extra.State != recentDeepAnalysisRequest.State)
                 {
-                    // The deep analysis has completed successfully. Store the analysis result too
-                    StoreDeepAnalysisResult(portfolioPlan, finhubResult.Data);
-                }
-                Logger?.LogInformation("Persisting deep analysis request for task '{taskId}' and portfolio '{id}: {name}'...", taskId, portfolioPlan.Id, portfolioPlan.Name);
-                var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
-                if (dbresult is null)
-                {
-                    Logger?.LogError("Failed to persist deep analysis request for task '{taskId}' and portfolio '{id}: {name}'.", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    portfolioPlan.Metadata ??= new();
+                    portfolioPlan.Metadata.ChecksumRequestDeepAnalysis = portfolioPlan.Metadata.CalcChecksum();
+                    portfolioPlan.Metadata.TimestampRequestDeepAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    portfolioPlan.Metadata.RequestDeepAnalysis = finhubResult.Extra;
+                    if (finhubResult.Extra.State == TaskState.Completed && finhubResult.Data is not null)
+                    {
+                        // The deep analysis has completed successfully. Store the analysis result too
+                        StoreDeepAnalysisResult(portfolioPlan, finhubResult.Data);
+                    }
+                    Logger?.LogInformation("Persisting deep analysis request for task '{taskId}' and portfolio '{id}: {name}'...", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+                    if (dbresult is null)
+                    {
+                        Logger?.LogError("Failed to persist deep analysis request for task '{taskId}' and portfolio '{id}: {name}'.", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    }
                 }
 
                 // Step 3: return result

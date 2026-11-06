@@ -9,6 +9,8 @@ namespace Finhub.Client;
 public partial interface IFinHubClient
 {
     public const string API_FINHUB_AI_ANALYZE_TICKER = "/ai/analyze_ticker";
+    public const string API_FINHUB_AI_ANALYZE_TICKER_ASYNC_START = "/ai/start_analyze_ticker_async";
+    public const string API_FINHUB_AI_ANALYZE_TICKER_ASYNC_POLL = "/ai/poll_analyze_ticker_async";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/> to analyze a ticker symbol.
@@ -21,7 +23,7 @@ public partial interface IFinHubClient
     public Task<AnalyzeTickerResponse> AnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/>_async to start an asynchronous analyzing of a ticker symbol.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER_ASYNC_START"/>_async to start an asynchronous analyzing of a ticker symbol.
     /// </summary>
     /// <param name="req">The ticker analysis request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -31,7 +33,7 @@ public partial interface IFinHubClient
     public Task<AnalyzeTickerAsyncResponse> StartAnalyzeTickerAsync(AnalyzeTickerRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER"/>_async to poll the status of an asynchronous analyzing of a ticker symbol.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_TICKER_ASYNC_POLL"/>_async to poll the status of an asynchronous analyzing of a ticker symbol.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous analysis</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -43,6 +45,8 @@ public partial interface IFinHubClient
     /*----------------------------------------------------------------------*/
 
     public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT = "/ai/analyze_dividend_event";
+    public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT_ASYNC_START = "/ai/start_analyze_dividend_event_async";
+    public const string API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT_ASYNC_POLL = "/ai/poll_analyze_dividend_event_async";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/> to analyze a dividend event.
@@ -55,7 +59,7 @@ public partial interface IFinHubClient
     public Task<AnalyzeDividendEventResponse> AnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/>_async to start an asynchronous analyzing of a dividend event.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT_ASYNC_START"/>_async to start an asynchronous analyzing of a dividend event.
     /// </summary>
     /// <param name="req">The dividend event analysis request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -65,7 +69,7 @@ public partial interface IFinHubClient
     public Task<AnalyzeDividendEventAsyncResponse> StartAnalyzeDividendEventAsync(AnalyzeDividendEventRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT"/>_async to poll the status of an asynchronous analyzing of a dividend event.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_DIVIDEND_EVENT_ASYNC_POLL"/>_async to poll the status of an asynchronous analyzing of a dividend event.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous analysis</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -77,6 +81,8 @@ public partial interface IFinHubClient
     /*----------------------------------------------------------------------*/
 
     public const string API_FINHUB_AI_BUILD_PORTFOLIO = "/ai/build_portfolio";
+    public const string API_FINHUB_AI_BUILD_PORTFOLIO_ASYNC_START = "/ai/start_build_portfolio_async";
+    public const string API_FINHUB_AI_BUILD_PORTFOLIO_ASYNC_POLL = "/ai/poll_build_portfolio_async";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/> to build a new portfolio.
@@ -89,7 +95,7 @@ public partial interface IFinHubClient
     public Task<BuildPortfolioResponse> BuildPortfolioAsync(BuildPortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/>_async to start an asynchronous building of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO_ASYNC_START"/>_async to start an asynchronous building of a portfolio.
     /// </summary>
     /// <param name="req">The portfolio building request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -99,7 +105,7 @@ public partial interface IFinHubClient
     public Task<BuildPortfolioAsyncResponse> StartBuildPortfolioAsync(BuildPortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO"/>_async to poll the status of an asynchronous building of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_BUILD_PORTFOLIO_ASYNC_POLL"/>_async to poll the status of an asynchronous building of a portfolio.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous analysis</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -109,6 +115,8 @@ public partial interface IFinHubClient
     public Task<BuildPortfolioAsyncResponse> PollBuildPortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     public const string API_FINHUB_AI_ANALYZE_PORTFOLIO = "/ai/analyze_portfolio";
+    public const string API_FINHUB_AI_ANALYZE_PORTFOLIO_ASYNC_START = "/ai/start_analyze_portfolio_async";
+    public const string API_FINHUB_AI_ANALYZE_PORTFOLIO_ASYNC_POLL = "/ai/poll_analyze_portfolio_async";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/> to analyze an existing portfolio.
@@ -121,7 +129,7 @@ public partial interface IFinHubClient
     public Task<AnalyzePortfolioResponse> AnalyzePortfolioAsync(AnalyzePortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/>_async to start an asynchronous analysis of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO_ASYNC_START"/>_async to start an asynchronous analysis of a portfolio.
     /// </summary>
     /// <param name="req">The portfolio analyze request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -131,7 +139,7 @@ public partial interface IFinHubClient
     public Task<AnalyzePortfolioAsyncResponse> StartAnalyzePortfolioAsync(AnalyzePortfolioRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO"/>_async to poll the status of an asynchronous analysis of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_ANALYZE_PORTFOLIO_ASYNC_POLL"/>_async to poll the status of an asynchronous analysis of a portfolio.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous analysis</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -141,9 +149,11 @@ public partial interface IFinHubClient
     public Task<AnalyzePortfolioAsyncResponse> PollAnalyzePortfolioAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     public const string API_FINHUB_AI_SPOTLIGHT_PORTFOLIO = "/ai/spotlight_portfolio";
+    public const string API_FINHUB_AI_SPOTLIGHT_PORTFOLIO_ASYNC_START = "/ai/start_spotlight_portfolio_async";
+    public const string API_FINHUB_AI_SPOTLIGHT_PORTFOLIO_ASYNC_POLL = "/ai/poll_spotlight_portfolio_async";
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/> to analyze a an existing portfolio for immediate risks and actions.
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/> to analyze an existing portfolio for immediate risks and actions.
     /// </summary>
     /// <param name="req">The portfolio analyze request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -153,7 +163,7 @@ public partial interface IFinHubClient
     public Task<PortfolioSpotlightResponse> SpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/>_async to start an asynchronous spotlight analysis of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO_ASYNC_START"/>_async to start an asynchronous spotlight analysis of a portfolio.
     /// </summary>
     /// <param name="req">The portfolio spotlight request</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>
@@ -163,7 +173,7 @@ public partial interface IFinHubClient
     public Task<PortfolioSpotlightAsyncResponse> StartSpotlightPortfolioAsync(PortfolioSpotlightRequest req, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO"/>_async to poll the status of an asynchronous spotlight analysis of a portfolio.
+    /// Calls the API <see cref="API_FINHUB_AI_SPOTLIGHT_PORTFOLIO_ASYNC_POLL"/>_async to poll the status of an asynchronous spotlight analysis of a portfolio.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous spotlight analysis</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>

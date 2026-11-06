@@ -243,20 +243,23 @@ public partial class FinHubController
                 }
 
                 // Step 2: store the task info for tracking the spotlight analysis request
-                portfolioPlan.Metadata ??= new();
-                portfolioPlan.Metadata.ChecksumRequestSpotlightAnalysis = portfolioPlan.Metadata.CalcChecksum();
-                portfolioPlan.Metadata.TimestampRequestSpotlightAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                portfolioPlan.Metadata.RequestSpotlightAnalysis = finhubResult.Extra;
-                if (finhubResult.Extra.State == TaskState.Completed && finhubResult.Data is not null)
+                if (finhubResult.Extra.State != recentSpotlightAnalysisRequest.State)
                 {
-                    // The spotlight analysis has completed successfully. Store the analysis result too
-                    StoreSpotlightAnalysisResult(portfolioPlan, finhubResult.Data);
-                }
-                Logger?.LogInformation("Persisting spotlight analysis request for task '{taskId}' and portfolio '{id}: {name}'...", taskId, portfolioPlan.Id, portfolioPlan.Name);
-                var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
-                if (dbresult is null)
-                {
-                    Logger?.LogError("Failed to persist spotlight analysis request for task '{taskId}' and portfolio '{id}: {name}'.", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    portfolioPlan.Metadata ??= new();
+                    portfolioPlan.Metadata.ChecksumRequestSpotlightAnalysis = portfolioPlan.Metadata.CalcChecksum();
+                    portfolioPlan.Metadata.TimestampRequestSpotlightAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    portfolioPlan.Metadata.RequestSpotlightAnalysis = finhubResult.Extra;
+                    if (finhubResult.Extra.State == TaskState.Completed && finhubResult.Data is not null)
+                    {
+                        // The spotlight analysis has completed successfully. Store the analysis result too
+                        StoreSpotlightAnalysisResult(portfolioPlan, finhubResult.Data);
+                    }
+                    Logger?.LogInformation("Persisting spotlight analysis request for task '{taskId}' and portfolio '{id}: {name}'...", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    var dbresult = await PortfolioRepository.UpdatePortfolioPlanAsync(portfolioPlan);
+                    if (dbresult is null)
+                    {
+                        Logger?.LogError("Failed to persist spotlight analysis request for task '{taskId}' and portfolio '{id}: {name}'.", taskId, portfolioPlan.Id, portfolioPlan.Name);
+                    }
                 }
 
                 // Step 3: return result

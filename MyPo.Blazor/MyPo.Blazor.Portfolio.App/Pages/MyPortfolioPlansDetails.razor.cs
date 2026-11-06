@@ -146,12 +146,16 @@ public partial class MyPortfolioPlansDetails : BasePage
             while (analyzing)
             {
                 var delta = DateTimeOffset.UtcNow - start;
-                if (analyzing)
+                if (step.Equals("done", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+                }
+                else
                 {
                     var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
                     ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta.TotalSeconds}s)");
+                    await Task.Delay(1000);
                 }
-                await Task.Delay(1000);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
@@ -185,6 +189,7 @@ public partial class MyPortfolioPlansDetails : BasePage
                 SelectedPortfolioPlan.Metadata.DeepAnalysis = analysisResult.Data;
             }
 
+            step = "done";
             ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
         }
         finally

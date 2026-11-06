@@ -19,7 +19,7 @@ public partial class PortfolioApiClient
         CancellationToken cancellationToken = default)
     {
         var endpointStart = IPortfolioApiClient.API_FINHUB_AI_START_ANALYZE_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
-        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO;
+        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_ANALYZE_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
         return await SendApiRequestAndPollAsync<AnalyzePortfolioAsyncResponse, AnalyzePortfolioResponse, IPortfolioAnalysisResult>(
             HttpMethod.Get, endpointStart, NoData,
             HttpMethod.Get, endpointPoll,
@@ -78,7 +78,7 @@ public partial class PortfolioApiClient
         CancellationToken cancellationToken = default)
     {
         var endpointStart = IPortfolioApiClient.API_FINHUB_AI_START_SPOTLIGHT_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
-        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO;
+        var endpointPoll = IPortfolioApiClient.API_FINHUB_AI_POLL_SPOTLIGHT_PORTFOLIO.Replace("{id}", planId, StringComparison.OrdinalIgnoreCase);
         return await SendApiRequestAndPollAsync<PortfolioSpotlightAsyncResponse, PortfolioSpotlightResponse, PortfolioSpotlightAnalysis>(
             HttpMethod.Get, endpointStart, NoData,
             HttpMethod.Get, endpointPoll,

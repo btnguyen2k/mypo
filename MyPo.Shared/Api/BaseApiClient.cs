@@ -206,7 +206,7 @@ public abstract class BaseApiClient
                                 : $"Task '{taskInfo.TaskId}' timeout exceeded {timeout.TotalMilliseconds} ms.",
                         };
                     }
-                    var delayMs = Random.Shared.Next(1000, 3000); // delay randomly 1-3 secs
+                    var delayMs = Random.Shared.Next(3000, 5000); // delay randomly 3-5 secs
                     await Task.Delay(delayMs, cancellationToken: cancellationToken);
                     var taskId = taskInfo.TaskId;
                     apiResult = await PollApiResultAsync<TAsyncResponse, TData>(
