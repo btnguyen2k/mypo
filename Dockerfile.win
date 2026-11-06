@@ -4,7 +4,8 @@
 
 ARG DOTNETVERSION_BUILD=8.0
 ARG DOTNETVERSION_RUN=8.0
-ARG BASEIMAGE=nanoserver-ltsc2022
+ARG WINDOWS_SERVER=ltsc2022
+ARG BASEIMAGE=nanoserver-$WINDOWS_SERVER
 
 # Version of the Windows image must match the host OS version (e.g. both must be 2022).
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION_BUILD-$BASEIMAGE AS build
@@ -24,8 +25,20 @@ RUN dotnet publish --configuration Debug --property:PublishDir=/app /p:Environme
 
 ################################################################################
 
+FROM mcr.microsoft.com/windows/servercore:$WINDOWS_SERVER AS timezone-data
+
+# export timezone data from matching Server Core
+RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", "C:\\timezones.reg", "/y"]
+
+################################################################################
+
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
 WORKDIR /app
+
+# import timezone data from Server Core image
+USER ContainerAdministrator
+COPY --from=timezone-data ["timezones.reg", "C:\\timezones.reg"]
+RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
 
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
