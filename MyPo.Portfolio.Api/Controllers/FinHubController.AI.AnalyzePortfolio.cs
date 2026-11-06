@@ -276,7 +276,10 @@ public partial class FinHubController
                 // Step 3: return result
                 return ResponseAsyncOk(finhubResult.Data, finhubResult.Extra);
             default:
-                Logger?.LogInformation("Deep analysis task '{taskId}' has an unknown status '{status}'.", taskId, recentDeepAnalysisRequest.State);
+                Logger?.LogInformation(
+                    "Deep analysis task '{taskId}' has an unknown status '{status}'.",
+                    JsonHelper.SafeLogValue(taskId),
+                    recentDeepAnalysisRequest.State);
                 return ResponseNoData(
                     400,
                     $"Deep analysis task '{taskId}' has an unknown status '{recentDeepAnalysisRequest.State}'.");

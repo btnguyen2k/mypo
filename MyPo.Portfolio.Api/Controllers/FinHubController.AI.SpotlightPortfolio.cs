@@ -224,16 +224,22 @@ public partial class FinHubController
         switch (recentSpotlightAnalysisRequest.State)
         {
             case TaskState.Failed:
-                Logger?.LogWarning("Spotlight analysis task '{taskId}' has failed.", taskId);
+                Logger?.LogWarning(
+                    "Spotlight analysis task '{taskId}' has failed.",
+                    JsonHelper.SafeLogValue(taskId));
                 return ResponseNoData(
                     400,
                     $"Spotlight analysis task '{taskId}' has failed.");
             case TaskState.Completed:
-                Logger?.LogInformation("Spotlight analysis task '{taskId}' has been completed.", taskId);
+                Logger?.LogInformation(
+                    "Spotlight analysis task '{taskId}' has been completed.",
+                    JsonHelper.SafeLogValue(taskId));
                 return ResponseAsyncOk(portfolioPlan.Metadata!.SpotlightAnalysis, recentSpotlightAnalysisRequest);
             case TaskState.Running:
                 // Step 1: make API call
-                Logger?.LogInformation("Calling FinHub PollSpotlightPortfolio API for task '{taskId}'...", taskId);
+                Logger?.LogInformation(
+                    "Calling FinHub PollSpotlightPortfolio API for task '{taskId}'...",
+                    JsonHelper.SafeLogValue(taskId));
                 var finhubResult = await FinHubClient.PollSpotlightPortfolioAsync(taskId);
                 if (!finhubResult.IsSuccess || finhubResult.Extra is null || string.IsNullOrEmpty(finhubResult.Extra.TaskId))
                 {
@@ -274,7 +280,10 @@ public partial class FinHubController
                 // Step 3: return result
                 return ResponseAsyncOk(finhubResult.Data, finhubResult.Extra);
             default:
-                Logger?.LogInformation("Spotlight analysis task '{taskId}' has an unknown status '{status}'.", taskId, recentSpotlightAnalysisRequest.State);
+                Logger?.LogInformation(
+                    "Spotlight analysis task '{taskId}' has an unknown status '{status}'.",
+                    JsonHelper.SafeLogValue(taskId),
+                    recentSpotlightAnalysisRequest.State);
                 return ResponseNoData(
                     400,
                     $"Spotlight analysis task '{taskId}' has an unknown status '{recentSpotlightAnalysisRequest.State}'.");
