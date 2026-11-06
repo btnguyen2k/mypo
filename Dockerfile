@@ -1,4 +1,6 @@
 ﻿# syntax=docker/dockerfile:1
+## Sample build command:
+##     docker build --rm -t mypo -f Dockerfile .
 
 ARG DOTNETVERBUILD=8.0
 ARG DOTNETVERRUN=8.0
@@ -26,7 +28,6 @@ RUN dotnet publish -a $TARGETARCH --property:PublishDir=/app MyPo.Blazor/MyPo.Bl
 # https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERRUN-$BASEIMAGE AS final
-# FROM mcr.microsoft.com/dotnet/sdk:$DOTNETVERRUN-$BASEIMAGE AS final
 WORKDIR /app
 
 RUN apk add --no-cache tzdata
@@ -60,6 +61,8 @@ ENV ENABLE_SWAGGER_UI=true
 # API base URL setting for Blazor Server mode
 ENV API__BaseUrl=http://localhost:8080
 
+# Do NOT initialize the database
+ENV INIT_DB=false
 # Set database type to InMemory for demo purposes
 ENV Databases__Identity__Type=InMemory
 ENV Databases__Portfolio__Type=InMemory
