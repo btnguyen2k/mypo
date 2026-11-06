@@ -226,16 +226,22 @@ public partial class FinHubController
         switch (recentDeepAnalysisRequest.State)
         {
             case TaskState.Failed:
-                Logger?.LogWarning("Deep analysis task '{taskId}' has failed.", taskId);
+                Logger?.LogWarning(
+                    "Deep analysis task '{taskId}' has failed.",
+                    JsonHelper.SafeLogValue(taskId));
                 return ResponseNoData(
                     400,
                     $"Deep analysis task '{taskId}' has failed.");
             case TaskState.Completed:
-                Logger?.LogInformation("Deep analysis task '{taskId}' has been completed.", taskId);
+                Logger?.LogInformation(
+                    "Deep analysis task '{taskId}' has been completed.",
+                    JsonHelper.SafeLogValue(taskId));
                 return ResponseAsyncOk(portfolioPlan.Metadata!.DeepAnalysis, recentDeepAnalysisRequest);
             case TaskState.Running:
                 // Step 1: make API call
-                Logger?.LogInformation("Calling FinHub PollAnalyzePortfolio API for task '{taskId}'...", taskId);
+                Logger?.LogInformation(
+                    "Calling FinHub PollAnalyzePortfolio API for task '{taskId}'...",
+                    JsonHelper.SafeLogValue(taskId));
                 var finhubResult = await FinHubClient.PollAnalyzePortfolioAsync(taskId);
                 if (!finhubResult.IsSuccess || finhubResult.Extra is null || string.IsNullOrEmpty(finhubResult.Extra.TaskId))
                 {
