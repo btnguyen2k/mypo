@@ -33,14 +33,14 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 
 ################################################################################
 
-# FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2022 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
+# FROM mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2022 AS final
 WORKDIR /app
 
 # import timezone data from Server Core image
-# USER ContainerAdministrator
-# COPY --from=timezone-data ["C:\\timezones.reg", "C:\\timezones.reg"]
-# RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
+USER ContainerAdministrator
+COPY --from=timezone-data ["C:\\timezones.reg", "C:\\timezones.reg"]
+RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
 
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
@@ -77,8 +77,8 @@ ENV DOTNET_ROLL_FORWARD=LatestMajor
 
 # # Pin ICU version
 # ENV DOTNET_SYSTEM_GLOBALIZATION_APPLOCALICU=72.1
-# ENV DOTNET_SYSTEM_GLOBALIZATION_USENLS=false
-# ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV DOTNET_SYSTEM_GLOBALIZATION_USENLS=true
+# ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
 
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]
