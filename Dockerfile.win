@@ -34,7 +34,7 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 ################################################################################
 
 # FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
-FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$WINDOWS_SERVER AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2022 AS final
 WORKDIR /app
 
 # import timezone data from Server Core image
