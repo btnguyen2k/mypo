@@ -26,7 +26,7 @@ RUN dotnet publish --configuration Debug --property:PublishDir=/app /p:Environme
 
 ################################################################################
 
-FROM mcr.microsoft.com/windows/servercore:$WINDOWS_SERVER AS timezone-data
+FROM mcr.microsoft.com/windows/servercore:$WINDOWS_SERVER AS servercore
 
 # export timezone data from matching Server Core
 RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", "C:\\timezones.reg", "/y"]
@@ -34,13 +34,19 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 ################################################################################
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
-# FROM mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2022 AS final
-WORKDIR /app
 
-# import timezone data from Server Core image
+#===== START: Add timezone data and ICU
 USER ContainerAdministrator
-COPY --from=timezone-data ["C:\\timezones.reg", "C:\\timezones.reg"]
+
+# Import timezone data from ServerCore image
+COPY --from=servercore ["C:\\timezones.reg", "C:\\timezones.reg"]
 RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
+
+# Copy ICU DLLs from ServerCore image
+COPY --from=servercore ["C:\\Windows\\System32\\icu*.dll", "C:\\Windows\\System32\\"]
+#===== END: Add timezone data and ICU
+
+WORKDIR /app
 
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
@@ -75,10 +81,8 @@ EXPOSE 8080
 # Roll forward to latest major version of .NET installed in the container
 ENV DOTNET_ROLL_FORWARD=LatestMajor
 
-# # Pin ICU version
-# ENV DOTNET_SYSTEM_GLOBALIZATION_APPLOCALICU=72.1
-ENV DOTNET_SYSTEM_GLOBALIZATION_USENLS=1
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+# (Optional) Tell .NET explicitly to use the newly added system ICU
+ENV DOTNET_SYSTEM_GLOBALIZATION_ICU=None
 
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]
