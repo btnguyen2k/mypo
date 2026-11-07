@@ -33,13 +33,14 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 
 ################################################################################
 
-FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
+# FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$WINDOWS_SERVER AS final
 WORKDIR /app
 
 # import timezone data from Server Core image
-USER ContainerAdministrator
-COPY --from=timezone-data ["C:\\timezones.reg", "C:\\timezones.reg"]
-RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
+# USER ContainerAdministrator
+# COPY --from=timezone-data ["C:\\timezones.reg", "C:\\timezones.reg"]
+# RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
 
 # ATTENTION: Change this to match the name of your application.
 ARG BASENAME="MyPo"
