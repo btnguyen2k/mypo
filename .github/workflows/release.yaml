@@ -107,14 +107,15 @@ jobs:
             const versionFile = 'MyPo.Blazor/MyPo.Blazor/appsettings.json';
             const versionSource = fs.readFileSync(versionFile, 'utf8');
 
-            # TODO: update version info in versionFile matching the equivalent bash script:
-            ## DATE=`date +%Y%m%d%H%M%S`
-            ## sed -i -E "s/^(\s*\"Version\"\s*:\s*)\"[^\"]+\"/\1\"${VERSION}-${DATE}\"/" MyPo.Blazor/MyPo.Blazor/appsettings.json
-            const versionPattern = /^VERSION\s*=.*$/m;
+            const versionPattern = /^(\s*"Version"\s*:\s*)"[^"]*"/gm;
             if (!versionPattern.test(versionSource)) {
-              throw new Error(`No VERSION assignment found in ${versionFile}.`);
+              throw new Error(`No "Version" string property found in ${versionFile}.`);
             }
-            fs.writeFileSync(versionFile, versionSource.replace(versionPattern, `VERSION = ${JSON.stringify(VERSION)}`));
+            const timestamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+            fs.writeFileSync(
+              versionFile,
+              versionSource.replace(versionPattern, (_, prefix) => `${prefix}${JSON.stringify(`${VERSION}-${timestamp}`)}`),
+            );
 
             core.info(`✅ Updated metadata for version ${tag}.`);
       - name: Commit release metadata and capture commit SHA C
@@ -224,7 +225,7 @@ jobs:
     name: Build and Publish Linux Docker Images
     if: |
       needs.Release.outputs.RESULT == 'SUCCESS'
-    needs: [ Release ]
+    needs: [ Release, MergeToMain ]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.Release.outputs.VERSION }}
