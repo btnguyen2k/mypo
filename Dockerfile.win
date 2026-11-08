@@ -33,19 +33,19 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 
 # Export ICU DLLs
 RUN ["cmd.exe", "/S", "/C", "mkdir C:\\icu-export && copy /Y C:\\Windows\\System32\\icu*.dll C:\\icu-export"]
-RUN ["cmd.exe", "/C", "dir C:\\Windows\\Globalization"]
 
 ################################################################################
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
 
-#===== START: Add timezone data and ICU
+#===== START: Add timezone and ICU data
 USER ContainerAdministrator
 
 # Import timezone data from ServerCore image
 COPY --from=servercore ["C:\\timezones.reg", "C:\\timezones.reg"]
 RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
-# COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zones", "C:\\Windows\\Globalization\\Time Zones\\"]
+RUN ["cmd.exe", "/C", "dir C:\\Windows\\Globalization"]
+COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zone", "C:\\Windows\\Globalization\\Time Zone\\"]
 
 # Copy ICU DLLs from ServerCore image
 COPY --from=servercore ["C:\\icu-export", "C:\\Windows\\System32\\"]
@@ -86,10 +86,6 @@ EXPOSE 8080
 
 # Roll forward to latest major version of .NET installed in the container
 ENV DOTNET_ROLL_FORWARD=LatestMajor
-
-# # (Optional) Tell .NET explicitly to use the newly added system ICU
-# # Note: not supported by .NET 8
-# ENV DOTNET_SYSTEM_GLOBALIZATION_ICU=None
 
 # ATTENTION: Change this to match the name of your application.
 ENTRYPOINT ["dotnet", "MyPo.Blazor.dll"]
