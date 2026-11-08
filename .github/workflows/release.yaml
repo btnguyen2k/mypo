@@ -162,23 +162,24 @@ jobs:
           branches: ${{ env.BRANCH_TO_RELEASE }}
           tag-prefix: ${{ env.TAG_PREFIX }}
 
-  MergeToMain:
+  CleanupReleaseMetadata:
     runs-on: ubuntu-latest
     needs: [ Release ]
     if: needs.Release.outputs.RESULT == 'SUCCESS'
     permissions:
       contents: write
-      pull-requests: write
     env:
       TARGET_SHA: ${{ needs.Release.outputs.TARGET_SHA }}
       VERSION: ${{ needs.Release.outputs.VERSION }}
-      RELEASE_NOTES: ${{ needs.Release.outputs.RELEASE_NOTES }}
+    outputs:
+      CLEANUP_SHA: ${{ steps.cleanup.outputs.cleanup-sha }}
     steps:
       - name: Checkout released commit
         uses: actions/checkout@v7
         with:
           ref: ${{ env.TARGET_SHA }}
       - name: Cleanup release metadata after publication
+        id: cleanup
         run: |
           set -euo pipefail
 
@@ -199,13 +200,34 @@ jobs:
               git push origin "HEAD:refs/heads/${BRANCH_TO_RELEASE}"
             fi
           fi
+          printf 'cleanup-sha=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "✅ Cleaned up release metadata for version ${TAG_PREFIX}${VERSION} at commit $(git rev-parse HEAD)."
+
+  MergeToMain:
+    runs-on: ubuntu-latest
+    needs: [ Release, CleanupReleaseMetadata ]
+    if: needs.Release.outputs.RESULT == 'SUCCESS'
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      CLEANUP_SHA: ${{ needs.CleanupReleaseMetadata.outputs.CLEANUP_SHA }}
+      VERSION: ${{ needs.Release.outputs.VERSION }}
+      RELEASE_NOTES: ${{ needs.Release.outputs.RELEASE_NOTES }}
+    steps:
       - name: Create or update release-to-main PR
         uses: actions/github-script@v9
         with:
           script: |
             const { owner, repo } = context.repo;
             const branch = process.env.BRANCH_TO_RELEASE;
+            const { data: remoteBranch } = await github.rest.repos.getBranch({
+              owner, repo, branch,
+            });
+            if (remoteBranch.commit.sha !== process.env.CLEANUP_SHA) {
+              throw new Error('Release branch changed after cleanup; refusing to create/update a stale merge PR.');
+            }
+
             const { data: existing } = await github.rest.pulls.list({
               owner, repo, state: 'open', head: `${owner}:${branch}`, base: 'main',
             });
