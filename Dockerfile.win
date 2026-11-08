@@ -33,6 +33,7 @@ RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 
 # Export ICU DLLs
 RUN ["cmd.exe", "/S", "/C", "mkdir C:\\icu-export && copy /Y C:\\Windows\\System32\\icu*.dll C:\\icu-export"]
+RUN ["cmd.exe", "/C", "dir C:\\Windows\\Globalization"]
 
 ################################################################################
 
@@ -44,7 +45,7 @@ USER ContainerAdministrator
 # Import timezone data from ServerCore image
 COPY --from=servercore ["C:\\timezones.reg", "C:\\timezones.reg"]
 RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
-COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zones", "C:\\Windows\\Globalization\\Time Zones\\"]
+# COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zones", "C:\\Windows\\Globalization\\Time Zones\\"]
 
 # Copy ICU DLLs from ServerCore image
 COPY --from=servercore ["C:\\icu-export", "C:\\Windows\\System32\\"]
