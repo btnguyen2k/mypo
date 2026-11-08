@@ -32,6 +32,8 @@ FROM mcr.microsoft.com/windows/servercore:$WINDOWS_SERVER AS servercore
 RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", "C:\\timezones.reg", "/y"]
 
 # Export ICU DLLs
+# Note: Windows cross-stage wildcard COPY bug, we need to "export" icu*.dll files to a directory first
+#       then copy the whole directory over
 RUN ["cmd.exe", "/S", "/C", "mkdir C:\\icu-export && copy /Y C:\\Windows\\System32\\icu*.dll C:\\icu-export"]
 
 ################################################################################
@@ -44,7 +46,6 @@ USER ContainerAdministrator
 # Import timezone data from ServerCore image
 COPY --from=servercore ["C:\\timezones.reg", "C:\\timezones.reg"]
 RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
-RUN ["cmd.exe", "/C", "dir C:\\Windows\\Globalization"]
 COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zone", "C:\\Windows\\Globalization\\Time Zone\\"]
 
 # Copy ICU DLLs from ServerCore image
