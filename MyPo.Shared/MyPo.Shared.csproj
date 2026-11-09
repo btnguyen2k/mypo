@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ddth.Opurator" Version="0.1.1" />
     <PackageReference Include="Ddth.Utilities" Version="0.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.32" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.21">

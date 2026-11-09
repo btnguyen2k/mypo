@@ -1,4 +1,5 @@
-﻿using FinHub.Client.Models.Stocks;
+﻿using Ddth.Opurator;
+using FinHub.Client.Models.Stocks;
 using FinHub.Client.Models.Tickers;
 using FinHub.Client.Schemas.Stocks;
 using Microsoft.AspNetCore.Components;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
-using MyPo.Libs.Opurator;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 
@@ -156,8 +156,12 @@ public sealed partial class StockSymbolInfo : BasePage
             );
         }
 
-        var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-        taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground(Symbol, RefreshBackgroundTaskId = Random.Shared.Next()));
+        var backgroundTaskManager = ServiceProvider.GetRequiredService<IBackgroundTaskManager>();
+        backgroundTaskManager.RunOnce(
+            async cancellationToken =>
+            {
+                LoadSymbolInfoBackground(Symbol, RefreshBackgroundTaskId = Random.Shared.Next());
+            });
 
         HideUI = false;
         CloseAlert();

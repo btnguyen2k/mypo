@@ -1,12 +1,12 @@
 ﻿using MyPo.Blazor.App.Helpers;
 using MyPo.Blazor.App.Services;
-using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ddth.Opurator;
 
 namespace MyPo.Blazor.App.Layout;
 
@@ -78,22 +78,21 @@ public abstract class BaseLayout : LayoutComponentBase
 
 		if (!IsBrowser)
 		{
-			var taskExecutor = ServiceProvider.GetRequiredService<ITaskOperator>();
-			await InvokeAsync(async () =>
-			{
-				await taskExecutor.ExecuteOnlyOnceAsync("FetchAppInfo", () =>
-				{
+            var backgroundTaskManager = ServiceProvider.GetRequiredService<IBackgroundTaskManager>();
+            var oneShotHandle = backgroundTaskManager.RunOnce(
+                async cancellationToken =>
+                {
 					// Get the app info from the configuration, once, if in Blazor Server mode
-					// In WASM mode, the app info is automatically fetched from the server and stored in <see cref="Globals.AppInfo"/>
+					// In WASM mode, the app info is automatically fetched from the server
+                    // The app info object is stored in <see cref="Globals.AppInfo"/> after fetching.
 					var conf = ServiceProvider.GetRequiredService<IConfiguration>();
 					Globals.AppInfo = conf.GetSection("App").Get<AppInfo>();
-				});
-				await InvokeAsync(StateHasChanged);
-				// StateContainer.NotifyStateChanged();
-			});
+                    await InvokeAsync(StateHasChanged);
+                });
+            await oneShotHandle.Completion;
+            await InvokeAsync(StateHasChanged);
+            // StateContainer.NotifyStateChanged();
 		}
-
-		// Add your logic here
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

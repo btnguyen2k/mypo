@@ -3,12 +3,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
-using MyPo.Libs.Opurator;
-using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Blazor.Portfolio.App.Shared;
 using FinHub.Client.Models.Stocks;
 using FinHub.Client.Schemas.Stocks;
+using Ddth.Opurator;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -342,9 +341,17 @@ public partial class MyPortfolioDetails : BasePage
                 .Distinct()
                 .ToList() ?? [];
             SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
-            var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-            taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
-            taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
+            var backgroundTaskManager = ServiceProvider.GetRequiredService<IBackgroundTaskManager>();
+            backgroundTaskManager.RunOnce(
+                async cancellationToken =>
+                {
+                    GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next());
+                });
+            backgroundTaskManager.RunOnce(
+                async cancellationToken =>
+                {
+                    AutoPopulateAssetMetadata();
+                });
         }
 
         HideUI = false;

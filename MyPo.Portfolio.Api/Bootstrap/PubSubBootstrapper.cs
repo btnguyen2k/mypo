@@ -11,6 +11,9 @@ using Wolverine.Postgresql;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
+/// <summary>
+/// Bootstrapper that configures the pub/sub system using Wolverine, with optional PostgreSQL persistence.
+/// </summary>
 [Bootstrapper(Priority = 1100)]
 public class PubSubBootstrapper
 {

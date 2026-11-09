@@ -3,15 +3,21 @@ using MyPo.Shared.Bootstrap;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
+/// <summary>
+/// Bootstrapper that configures custom authorization policies.
+/// </summary>
 [Bootstrapper]
 public class AuthBootstrapper
 {
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
         // Configurate authorization policies
-        appBuilder.Services.AddAuthorization(c =>
-        {
-            c.AddPolicy(PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER, PortfolioPolicies.POLICY_ADMIN_ROLE_OR_PORTFOLIO_MANAGER);
-        });
+        // appBuilder.Services.AddAuthorization(c =>
+        // {
+        //     c.AddPolicy(PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER, PortfolioPolicies.POLICY_ADMIN_ROLE_OR_PORTFOLIO_MANAGER);
+        // });
+        appBuilder.Services.AddAuthorizationBuilder().AddPolicy(
+            PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER,
+            PortfolioPolicies.POLICY_ADMIN_ROLE_OR_PORTFOLIO_MANAGER);
     }
 }
