@@ -7,6 +7,7 @@
 @using MyPo.Portfolio.Shared.Api
 
 @inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 
 <style>
     .new-listings .listing-copy {
@@ -535,6 +536,16 @@
         }
     </text>;
 
+    private string ReferenceHref(int referenceIndex)
+    {
+        var uri = new UriBuilder(NavigationManager.Uri)
+        {
+            Fragment = $"listing-reference-{referenceIndex + 1}",
+        };
+
+        return uri.Uri.AbsoluteUri;
+    }
+
     private RenderFragment ReferenceLinks(IEnumerable<string>? ids) => @<span class="d-inline-flex flex-wrap gap-1">
         @foreach (var id in CleanStrings(ids))
         {
@@ -549,7 +560,7 @@
             }
             @if (index >= 0)
             {
-                <a href="#listing-reference-@(index + 1)" class="badge text-bg-light border text-decoration-none" title="@References[index].Title">[@(index + 1)]</a>
+                <a href="@ReferenceHref(index)" class="badge text-bg-light border text-decoration-none" title="@References[index].Title">[@(index + 1)]</a>
             }
             else
             {
