@@ -14,8 +14,8 @@ sealed class BackgroundPortfolioTaskNewListingAnnouncementsScanner : BackgroundP
     // TODO: move this to configuration
     private static readonly List<string> COUNTRIES = ["AU"];
 
-    // Run task ~every 2 days per market
-    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24*2-1);
+    // Run task ~every 1 day per market
+    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24-1);
 
     private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 
