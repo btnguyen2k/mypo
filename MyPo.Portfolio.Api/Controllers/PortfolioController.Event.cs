@@ -32,8 +32,8 @@ public partial class PortfolioController
             startDateEarnings, endDateEarnings,
             [MarketEventEntity.EVENT_EARNINGS]);
 
-        var startDateListing = currentDate.AddDays(-21);
-        var endDateListing = currentDate.AddDays(14);
+        var startDateListing = currentDate.AddDays(-14);
+        var endDateListing = currentDate.AddDays(60);
         var eventsListing = await PortfolioRepository.GetMarketEventsAsync(
             MarketEventEntity.NON_OWNER,
             startDateListing, endDateListing,

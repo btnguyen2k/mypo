@@ -1,0 +1,581 @@
+﻿@using System.Globalization
+@using FinHub.Client.Models.AI
+@using FinHub.Client.Models.Listings
+@using FinHub.Client.Models.Stocks
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+
+@inject IJSRuntime JS
+
+<style>
+    .new-listings .listing-copy {
+        white-space: pre-line;
+    }
+
+    .new-listings summary {
+        cursor: pointer;
+    }
+
+    .new-listings .listing-reference:target {
+        background: var(--cui-highlight-bg, var(--bs-highlight-bg));
+        scroll-margin-top: 1rem;
+    }
+</style>
+
+<div class="new-listings mt-3">
+    @if (Events.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-muted">
+                <BIcon icon="bi-calendar-event" extraClassName="me-1" />
+                No new listings available.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>New listings <span class="badge text-bg-secondary">@Events.Count</span></h5>
+                <p class="small text-muted">Select Details to explore an offer, its outlook and supporting research.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 small" id="tblListingEvents" data-order='[[ 0, "asc" ]]'>
+                        <thead>
+                            <tr>
+                                <th scope="col">Listing date</th>
+                                <th scope="col" class="text-center">Market</th>
+                                <th scope="col">Listing</th>
+                                <th scope="col" class="text-end">Issue price</th>
+                                <th scope="col" class="text-end" data-dt-order="disable">Current price</th>
+                                <th scope="col" class="text-end">Capital to raise</th>
+                                <th scope="col" data-dt-order="disable">Analysis</th>
+                                <th scope="col" data-dt-order="disable"><span class="visually-hidden">Details</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            @foreach (var e in Events)
+                            {
+                                var listing = e.Metadata?.Listing;
+                                var sourceUrl = SafeUrl(listing?.Link);
+                                <tr @key="e.Id">
+                                    <td class="text-nowrap" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center">@e.MarketId</td>
+                                    <td>
+                                        @if (sourceUrl is not null)
+                                        {
+                                            <a href="@sourceUrl" target="_blank" rel="noopener noreferrer" class="fw-semibold">@e.ItemCode</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold">@e.ItemCode</span>
+                                        }
+                                        <div>@ValueOrPlaceholder(listing?.CompanyName)</div>
+                                        @*
+                                        @if (!string.IsNullOrWhiteSpace(listing?.Sector))
+                                        {
+                                            <div class="small text-muted">@listing.Sector</div>
+                                        }
+                                        *@
+                                    </td>
+                                    <td class="text-end text-nowrap" data-order="@(listing?.IssuePrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">
+                                        @FormatMoney(listing?.IssuePrice, listing?.Currency, e.MarketId)
+                                    </td>
+                                    <td class="text-end text-nowrap">@CurrentPrice(e)</td>
+                                    <td class="text-end text-nowrap" data-order="@(listing?.CapitalToRaise?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">
+                                        @FormatCapital(listing?.CapitalToRaise, listing?.Currency)
+                                    </td>
+                                    <td>
+                                        <span class="badge @AnalysisStatusClass(listing)">@AnalysisStatusLabel(listing)</span>
+                                        @*
+                                        @if (listing?.Analysis is { } analysis)
+                                        {
+                                            <div class="mt-1">
+                                                <span class="badge @StanceClass(analysis.OverallStance)">@EnumLabel(analysis.OverallStance)</span>
+                                                <span class="text-muted text-nowrap">@Math.Clamp(analysis.OverallConfidence, 0, 100)% confidence</span>
+                                            </div>
+                                        }
+                                        *@
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                                                aria-label="@($"View details for {e.ItemCode}")" aria-controls="listing-details"
+                                                @onclick="() => SelectListing(e)">
+                                            <BIcon icon="bi-card-text" extraClassName="me-1" />Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if (SelectedEvent is { } selected)
+        {
+            var listing = selected.Metadata?.Listing;
+            <section id="listing-details" tabindex="-1" aria-labelledby="listing-details-title" @ref="DetailsElement">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                            <div>
+                                <h5 id="listing-details-title">@selected.ItemCode <span class="text-muted">@ValueOrPlaceholder(listing?.CompanyName)</span></h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge text-bg-primary">@selected.MarketId</span>
+                                    @if (!string.IsNullOrWhiteSpace(listing?.Exchange))
+                                    {
+                                        <span class="badge text-bg-light border">@listing.Exchange</span>
+                                    }
+                                    <span class="badge @AnalysisStatusClass(listing)">@AnalysisStatusLabel(listing)</span>
+                                </div>
+                            </div>
+                            @if (SafeUrl(listing?.Link) is { } sourceUrl)
+                            {
+                                <a href="@sourceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                                    <BIcon icon="bi-box-arrow-up-right" extraClassName="me-1" />Source announcement
+                                </a>
+                            }
+                        </div>
+                        @if (listing is not null)
+                        {
+                            <div class="row">
+                                <div class="col-md-4">@TextField("Issue type", listing.IssueType)</div>
+                                <div class="col-md-4">@TextField("Sector", listing.Sector)</div>
+                                <div class="col-md-4">@TextField("Industry", listing.Industry)</div>
+                                <div class="col-md-4">@TextField("Public offer closes", listing.PublicOfferCloseDate)</div>
+                                <div class="col-md-4">@TextField("Underwritten", listing.IsUnderwritten is { } underwritten ? (underwritten ? "Yes" : "No") : "--")</div>
+                                <div class="col-md-4">@TextField("Source", listing.SourceName)</div>
+                            </div>
+                            @TextField("Principal activities", listing.PrincipalActivities)
+                            @TextList("Underwriters", listing.Underwriters)
+                            @TextList("Lead managers", listing.LeadManagers)
+                        }
+                        else
+                        {
+                            <p class="text-muted mt-3 mb-0">Listing details are unavailable.</p>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(listing?.AnalysisError))
+                {
+                    <div class="alert alert-warning listing-copy" role="alert">@listing.AnalysisError</div>
+                }
+
+                @if (listing?.Analysis is { } analysis)
+                {
+                    <section class="card mb-4" aria-labelledby="listing-summary-title">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                                <div>
+                                    <h5 id="listing-summary-title"><BIcon icon="bi-card-text" extraClassName="me-1" />Investment overview</h5>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge @StanceClass(analysis.OverallStance)">@EnumLabel(analysis.OverallStance)</span>
+                                        <span class="badge text-bg-light border">@Math.Clamp(analysis.OverallConfidence, 0, 100)% confidence</span>
+                                        <span class="badge @QualityClass(analysis.OverallDataQuality)">@analysis.OverallDataQuality data quality</span>
+                                        <span class="badge text-bg-secondary">@analysis.ListingStatus</span>
+                                    </div>
+                                </div>
+                                <div class="small text-muted">
+                                    <BIcon icon="bi-clock" extraClassName="me-1" />
+                                    As of @analysis.AsOf.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) UTC
+                                </div>
+                            </div>
+                            <div class="listing-copy">@analysis.ExecutiveSummary?.Summary</div>
+                            @EvidenceDetails(analysis.ExecutiveSummary)
+                        </div>
+                    </section>
+
+                    <section class="mb-4" aria-labelledby="listing-outlook-title">
+                        <h5 id="listing-outlook-title"><BIcon icon="bi-graph-up" extraClassName="me-1" />Listing outlook</h5>
+                        <p class="small text-muted">Forecasts are estimates; observed assessments describe a period that has already occurred.</p>
+                        <div class="row g-3">
+                            @foreach (var (label, period) in OutlookPeriods(analysis.Outlook))
+                            {
+                                <div class="col-md-6 col-xl-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6>@label</h6>
+                                            @if (period is not null)
+                                            {
+                                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                                    <span class="badge text-bg-light border">@EnumLabel(period.AssessmentType)</span>
+                                                    <span class="badge @DirectionClass(period.Direction)">@EnumLabel(period.Direction)</span>
+                                                </div>
+                                                @if (period.PeriodEnd is { } periodEnd)
+                                                {
+                                                    <div class="small text-muted mb-2">Period ends @periodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</div>
+                                                }
+                                                @if (period.AssessmentType != ListingOutlookAssessmentType.InsufficientData)
+                                                {
+                                                    <div class="small text-muted">@(period.AssessmentType == ListingOutlookAssessmentType.Observed ? "Observed price range" : "Expected price range")</div>
+                                                    <div class="fw-semibold">@FormatRange(period.ExpectedPriceMin, period.ExpectedPriceMax, value => WithCurrency(value.ToString(PriceFormat(selected.MarketId)), listing.Currency))</div>
+                                                    <div class="small text-muted mt-2">@(period.AssessmentType == ListingOutlookAssessmentType.Observed ? "Observed return" : "Expected return")</div>
+                                                    <div class="fw-semibold">@FormatRange(period.ExpectedReturnMinPct, period.ExpectedReturnMaxPct, value => $"{value.ToString("+0.0;-0.0;0.0")}%")</div>
+                                                    <div class="small text-muted mt-2">@Math.Clamp(period.Confidence, 0, 100)% confidence</div>
+                                                }
+                                                <p class="small listing-copy mt-3 mb-2">@period.Rationale</p>
+                                                @ReferenceLinks(period.ReferenceIds)
+                                                <details class="small mt-3">
+                                                    <summary>Drivers, risks and assumptions</summary>
+                                                    @TextList("Key drivers", period.KeyDrivers)
+                                                    @TextList("Risk factors", period.RiskFactors)
+                                                    @TextList("Assumptions", period.Assumptions)
+                                                    @TextList("Data gaps", period.DataGaps)
+                                                </details>
+                                            }
+                                            else
+                                            {
+                                                <p class="small text-muted mb-0">No outlook available.</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </section>
+
+                    @foreach (var (title, section) in ResearchSections(analysis))
+                    {
+                        @if (section is not null)
+                        {
+                            <details class="card mb-3" @key="section">
+                                <summary class="card-header fw-semibold">
+                                    @title <span class="badge @QualityClass(section.DataQuality) ms-2">@section.DataQuality data quality</span>
+                                </summary>
+                                <div class="card-body">
+                                    <div class="listing-copy">@section.Summary</div>
+                                    @switch (section)
+                                    {
+                                        case ListingOfferAnalysis offer:
+                                            @TextField("Issue price assessment", offer.IssuePriceAssessment)
+                                            @TextField("Capital raise assessment", offer.CapitalRaiseAssessment)
+                                            @TextField("Underwriting assessment", offer.UnderwritingAssessment)
+                                            @TextList("Use of funds", offer.UseOfFunds)
+                                            @TextField("Dilution and escrow", offer.DilutionAndEscrow)
+                                            break;
+                                        case ListingBusinessAnalysis business:
+                                            @TextField("Business model", business.BusinessModel)
+                                            @TextList("Revenue sources", business.RevenueSources)
+                                            @TextField("Competitive position", business.CompetitivePosition)
+                                            @TextField("Sector context", business.SectorContext)
+                                            break;
+                                        case ListingFinancialAnalysis financials:
+                                            @TextField("Historical performance", financials.HistoricalPerformance)
+                                            @TextField("Profitability and cash flow", financials.ProfitabilityAndCashFlow)
+                                            @TextField("Balance sheet and funding", financials.BalanceSheetAndFunding)
+                                            @TextField("Forecast quality", financials.ForecastQuality)
+                                            break;
+                                        case ListingValuationAnalysis valuation:
+                                            @TextField("Valuation view", valuation.ValuationView)
+                                            @TextField("Implied market cap", valuation.ImpliedMarketCap is { } marketCap && double.IsFinite(marketCap) ? WithCurrency(marketCap.ToString("N0"), listing.Currency) : "--")
+                                            @TextField("Peer comparison", valuation.PeerComparison)
+                                            @TextField("Sensitivity", valuation.Sensitivity)
+                                            break;
+                                        case ListingGovernanceAnalysis governance:
+                                            @TextField("Board and management", governance.BoardAndManagement)
+                                            @TextField("Ownership and escrow", governance.OwnershipAndEscrow)
+                                            @TextList("Governance concerns", governance.GovernanceConcerns)
+                                            break;
+                                        case ListingRiskCatalystAnalysis drivers:
+                                            @foreach (var driver in (drivers.Risks ?? []).Cast<ListingDriver>().Concat(drivers.Catalysts ?? []))
+                                            {
+                                                <div class="border rounded p-3 mt-3">
+                                                    <div class="fw-semibold mb-2">@driver.Title</div>
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        @if (driver is ListingRisk risk)
+                                                        {
+                                                            <span class="badge @(risk.Severity is ListingRiskSeverity.Critical or ListingRiskSeverity.High ? "text-bg-danger" : risk.Severity == ListingRiskSeverity.Medium ? "text-bg-warning" : "text-bg-secondary")">@risk.Severity risk</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge text-bg-info">Catalyst</span>
+                                                        }
+                                                        <span class="badge text-bg-light border">@driver.Likelihood likelihood</span>
+                                                        <span class="badge text-bg-light border">@EnumLabel(driver.Horizon)</span>
+                                                    </div>
+                                                    <div class="listing-copy">@driver.Description</div>
+                                                    @ReferenceLinks(driver.ReferenceIds)
+                                                </div>
+                                            }
+                                            break;
+                                    }
+                                    @EvidenceDetails(section)
+                                </div>
+                            </details>
+                        }
+                    }
+
+                    @if (References.Count > 0)
+                    {
+                        <section class="card mt-4" aria-labelledby="listing-references-title">
+                            <div class="card-header fw-semibold" id="listing-references-title">
+                                <BIcon icon="bi-journal-text" extraClassName="me-1" />References
+                            </div>
+                            <ol class="list-group list-group-flush list-group-numbered">
+                                @for (var index = 0; index < References.Count; index++)
+                                {
+                                    var reference = References[index];
+                                    var referenceUrl = SafeUrl(reference.Url?.ToString());
+                                    <li id="listing-reference-@(index + 1)" class="listing-reference list-group-item d-flex align-items-start gap-2">
+                                        <div class="me-auto">
+                                            @if (referenceUrl is not null)
+                                            {
+                                                <a href="@referenceUrl" target="_blank" rel="noopener noreferrer">@reference.Title</a>
+                                            }
+                                            else
+                                            {
+                                                <span>@reference.Title</span>
+                                            }
+                                            <div class="small text-muted">
+                                                @reference.Publisher - @EnumLabel(reference.SourceType)
+                                                @if (reference.PublishedAt is { } published)
+                                                {
+                                                    <span> - published @published.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                                                }
+                                                <span> - accessed @reference.AccessedAt.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                                            </div>
+                                        </div>
+                                        <span class="badge @(reference.IsVerified ? "text-bg-success" : "text-bg-secondary")">@(reference.IsVerified ? "Verified" : "Unverified")</span>
+                                    </li>
+                                }
+                            </ol>
+                        </section>
+                    }
+                }
+                else if (listing is not null)
+                {
+                    <div class="alert alert-light border" role="status">
+                        @AnalysisUnavailableMessage(listing)
+                    </div>
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<MarketEventResp> Events { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyDictionary<string, StockQuote> Quotes { get; set; } = new Dictionary<string, StockQuote>();
+
+    private MarketEventResp? SelectedEvent { get; set; }
+    private ElementReference DetailsElement;
+    private bool TableInitialized;
+    private bool FocusDetails;
+    private IReadOnlyList<ReferenceSource> References => SelectedEvent?.Metadata?.Listing?.Analysis?.References ?? [];
+
+    protected override void OnParametersSet()
+    {
+        if (SelectedEvent is { } selected)
+        {
+            foreach (var e in Events)
+            {
+                if (e.Id == selected.Id)
+                {
+                    SelectedEvent = e;
+                    return;
+                }
+            }
+        }
+        SelectedEvent = Events.Count > 0 ? Events[0] : null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Events.Count > 0 && !TableInitialized)
+        {
+            TableInitialized = true;
+            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblListingEvents");
+        }
+        if (FocusDetails)
+        {
+            FocusDetails = false;
+            await DetailsElement.FocusAsync();
+        }
+    }
+
+    private void SelectListing(MarketEventResp e)
+    {
+        SelectedEvent = e;
+        FocusDetails = true;
+    }
+
+    private string CurrentPrice(MarketEventResp e)
+    {
+        return Quotes.TryGetValue(e.ItemCode, out var quote)
+            ? FormatMoney(quote.MarketPrice, string.IsNullOrWhiteSpace(quote.Currency) ? e.Metadata?.Listing?.Currency : quote.Currency, e.MarketId)
+            : "--";
+    }
+
+    private static string PriceFormat(string market) => string.Equals(market, "VN", StringComparison.OrdinalIgnoreCase) ? "F0" : "F2";
+    private static string FormatMoney(decimal? amount, string? currency, string market) => amount is { } value ? WithCurrency(value.ToString(PriceFormat(market)), currency) : "--";
+    private static string FormatCapital(long? amount, string? currency) => amount is { } value ? WithCurrency(FormatUtils.FormatVolume(value), currency) : "--";
+    private static string WithCurrency(string value, string? currency) => string.IsNullOrWhiteSpace(currency) ? value : $"{currency} {value}";
+    private static string ValueOrPlaceholder(string? value) => string.IsNullOrWhiteSpace(value) ? "--" : value;
+
+    private static string FormatRange(double? minimum, double? maximum, Func<double, string> format)
+    {
+        var lower = minimum is { } min && double.IsFinite(min) ? format(min) : null;
+        var upper = maximum is { } max && double.IsFinite(max) ? format(max) : null;
+        if (lower is null)
+        {
+            return upper is null ? "--" : $"Up to {upper}";
+        }
+        return upper is null ? $"From {lower}" : $"{lower} to {upper}";
+    }
+
+    private static Uri? SafeUrl(string? value)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) ? uri : null;
+    }
+
+    private static string EnumLabel<T>(T value) where T : Enum => value.ToString() switch
+    {
+        "NotStarted" => "Not started",
+        "InsufficientData" => "Insufficient data",
+        "IpoDay" => "IPO day",
+        "FirstWeek" => "First week",
+        "FirstTwoWeeks" => "First two weeks",
+        "FirstMonth" => "First month",
+        "LongerTerm" => "Longer term",
+        "MarketData" => "Market data",
+        _ => value.ToString(),
+    };
+
+    private static string AnalysisStatusLabel(ListingEvent? listing) => listing switch
+    {
+        null or { AnalysisStatus: ListingAnalysisStatus.Completed, Analysis: null } => "Unavailable",
+        _ => EnumLabel(listing.AnalysisStatus),
+    };
+
+    private static string AnalysisStatusClass(ListingEvent? listing) => listing switch
+    {
+        { AnalysisStatus: ListingAnalysisStatus.Completed, Analysis: not null } => "text-bg-success",
+        { AnalysisStatus: ListingAnalysisStatus.Failed } => "text-bg-danger",
+        null or { AnalysisStatus: ListingAnalysisStatus.Completed } => "text-bg-warning",
+        _ => "text-bg-secondary",
+    };
+
+    private static string AnalysisUnavailableMessage(ListingEvent listing) => listing.AnalysisStatus switch
+    {
+        ListingAnalysisStatus.NotStarted => "Analysis has not started for this listing.",
+        ListingAnalysisStatus.Failed => "Analysis failed for this listing. No research is available.",
+        ListingAnalysisStatus.Skipped => "Analysis was skipped for this listing.",
+        _ => "Analysis is unavailable for this listing.",
+    };
+
+    private static string StanceClass(ListingStance stance) => stance switch
+    {
+        ListingStance.Bullish => "text-bg-success",
+        ListingStance.Bearish => "text-bg-danger",
+        ListingStance.Neutral => "text-bg-secondary",
+        _ => "text-bg-warning",
+    };
+
+    private static string DirectionClass(ListingOutlookDirection direction) => direction switch
+    {
+        ListingOutlookDirection.Up => "text-bg-success",
+        ListingOutlookDirection.Down => "text-bg-danger",
+        ListingOutlookDirection.Flat => "text-bg-secondary",
+        _ => "text-bg-warning",
+    };
+
+    private static string QualityClass(DataQuality quality) => quality switch
+    {
+        DataQuality.High => "text-bg-success",
+        DataQuality.Medium => "text-bg-warning",
+        DataQuality.Low => "text-bg-danger",
+        _ => "text-bg-secondary",
+    };
+
+    private static (string Label, ListingPeriodOutlook? Period)[] OutlookPeriods(ListingOutlook? outlook) =>
+    [
+        ("IPO day", outlook?.IpoDay),
+        ("First week", outlook?.FirstWeek),
+        ("First two weeks", outlook?.FirstTwoWeeks),
+        ("First month", outlook?.FirstMonth),
+    ];
+
+    private static (string Title, ListingAnalysisSection? Section)[] ResearchSections(ListingAnalysis analysis) =>
+    [
+        ("Offer", analysis.Offer),
+        ("Business", analysis.Business),
+        ("Financials", analysis.Financials),
+        ("Valuation", analysis.Valuation),
+        ("Governance", analysis.Governance),
+        ("Risks and catalysts", analysis.RisksAndCatalysts),
+    ];
+
+    private static IReadOnlyList<string> CleanStrings(IEnumerable<string>? values) =>
+        values?.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? [];
+
+    private static RenderFragment TextField(string label, string? value) => @<div class="mt-3">
+        <div class="small text-muted">@label</div>
+        <div class="listing-copy">@ValueOrPlaceholder(value)</div>
+    </div>;
+
+    private static RenderFragment TextList(string label, IEnumerable<string>? values) => @<text>
+        @if (CleanStrings(values) is { Count: > 0 } items)
+        {
+            <div class="mt-3">
+                <div class="small fw-semibold mb-1">@label</div>
+                <ul class="mb-0 ps-3">
+                    @foreach (var item in items)
+                    {
+                        <li class="listing-copy">@item</li>
+                    }
+                </ul>
+            </div>
+        }
+    </text>;
+
+    private RenderFragment ReferenceLinks(IEnumerable<string>? ids) => @<span class="d-inline-flex flex-wrap gap-1">
+        @foreach (var id in CleanStrings(ids))
+        {
+            var index = -1;
+            for (var i = 0; i < References.Count; i++)
+            {
+                if (string.Equals(References[i].Id, id, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            @if (index >= 0)
+            {
+                <a href="#listing-reference-@(index + 1)" class="badge text-bg-light border text-decoration-none" title="@References[index].Title">[@(index + 1)]</a>
+            }
+            else
+            {
+                <span class="badge text-bg-warning" title="Source unavailable">@id</span>
+            }
+        }
+    </span>;
+
+    private RenderFragment EvidenceDetails(ListingAnalysisSection? section) => @<text>
+        @if (section is not null)
+        {
+            @ReferenceLinks(section.ReferenceIds)
+            @if (section.Facts is { Count: > 0 })
+            {
+                <details class="mt-3">
+                    <summary class="small fw-semibold">Supporting evidence</summary>
+                    <ul class="mt-2 mb-0 ps-3">
+                        @foreach (var fact in section.Facts)
+                        {
+                            <li class="listing-copy">@fact.Text @ReferenceLinks(fact.ReferenceIds)</li>
+                        }
+                    </ul>
+                </details>
+            }
+            @TextList("Assumptions", section.Assumptions)
+            @TextList("Data gaps", section.DataGaps)
+        }
+    </text>;
+}

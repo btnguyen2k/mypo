@@ -132,9 +132,8 @@ public partial class Events : BasePage
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
             var taskDatatableDividendEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblDividendEvents");
-            var taskDatatableListingEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblListingEvents");
             var taskDatatableEarningsEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
-            await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableListingEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
+            await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
 
             SwitchToSavedTab();
         }

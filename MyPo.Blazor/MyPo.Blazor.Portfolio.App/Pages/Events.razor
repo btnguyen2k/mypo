@@ -1,5 +1,6 @@
 ﻿@using MyPo.Blazor.App.Layout
 @using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Pages.MarketEvents
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Portfolio.Shared.Api
 
@@ -145,86 +146,7 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade @(ActiveTab==TabIdListing?"show active":"")" id="@(TabIdListing)-content" role="tabpanel" aria-labelledby="@TabIdListing" tabindex="0">
-                                <div class="row mt-2">
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                @if(EventsListing.Count <= 0)
-                                                {
-                                                    <h5>No Data</h5>
-                                                }
-                                                else
-                                                {
-                                                    <table class="table table-sm mb-0 small" id="tblListingEvents" data-order='[[ 0, "asc" ]]'>
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th class="text-center" data-dt-order="disable">Market</th>
-                                                                <th data-dt-order="disable">Item</th>
-                                                                <th class="text-end" data-dt-order="disable">Price</th>
-                                                                <th class="text-end" data-dt-order="disable">Cur.Price</th>
-                                                                <th class="text-end" data-dt-order="disable">Capital</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="table-group-divider align-middle">
-                                                            @foreach (var e in EventsListing)
-                                                            {
-                                                                <tr>
-                                                                    <td class="text-nowrap">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                                                    <td class="text-center">@e.MarketId</td>
-                                                                    <td>
-                                                                        <a target="_blank" href="@(e.Metadata?.Listing?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.Listing?.CompanyName??"--")</small>
-                                                                        @if (e.Metadata?.Listing?.Analysis != null)
-                                                                        {
-                                                                            <br />
-                                                                            <small class="text-muted">
-                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("w2", out var w2)??false) && w2 != null)
-                                                                            {
-                                                                                @((MarkupString)$"<code>{w2.Direction}</code>: {w2.Confidence} - {w2.Reason}")
-                                                                            }
-                                                                            else *@
-                                                                            {
-                                                                                @("--")
-                                                                            }
-                                                                            </small>
-
-                                                                            <br />
-                                                                            <small class="text-muted">
-                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m1", out var m1)??false) && m1 != null)
-                                                                            {
-                                                                                @((MarkupString)$"<code>{m1.Direction}</code>: {m1.Confidence} - {m1.Reason}")
-                                                                            }
-                                                                            else *@
-                                                                            {
-                                                                                @("--")
-                                                                            }
-                                                                            </small>
-
-                                                                            <br />
-                                                                            <small class="text-muted">
-                                                                            @* @if ((e.Metadata.Listing.Analysis.Outlook?.TryGetValue("m3", out var m3)??false) && m3 != null)
-                                                                            {
-                                                                                @((MarkupString)$"<code>{m3.Direction}</code>: {m3.Confidence} - {m3.Reason}")
-                                                                            }
-                                                                            else *@
-                                                                            {
-                                                                                @("--")
-                                                                            }
-                                                                            </small>
-                                                                        }
-                                                                    </td>
-                                                                    <td class="text-end">@(e.Metadata?.Listing?.Currency??"--") @((e.Metadata?.Listing?.IssuePrice??0).ToString(DecimalFormatForMarket(e.MarketId)))</td>
-                                                                    <td class="text-end">@(QuotesMap.TryGetValue(e.ItemCode, out var quote0253)?$"{e.Metadata?.Listing?.Currency??"--"} {quote0253.MarketPrice?.ToString(DecimalFormatForMarket(e.MarketId))}":"--")</td>
-                                                                    <td class="text-end">@(FormatUtils.FormatVolume(e.Metadata?.Listing?.CapitalToRaise??0))</td>
-                                                                </tr>
-                                                            }
-                                                        </tbody>
-                                                    </table>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <CNewListings Events="@EventsListing" Quotes="@QuotesMap" />
                             </div>
                             <div class="tab-pane fade @(ActiveTab==TabIdEarnings?"show active":"")" id="@(TabIdEarnings)-content" role="tabpanel" aria-labelledby="@TabIdEarnings" tabindex="0">
                                 <div class="row mt-2">
