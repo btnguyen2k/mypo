@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace FinHub.Client.Models.Listings;
 
@@ -8,4 +8,5 @@ public enum ListingAnalysisStatus
     NotStarted,
     Completed,
     Failed,
+    Skipped,
 }

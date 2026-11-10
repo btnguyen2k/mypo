@@ -117,10 +117,11 @@ public partial class FinHubClient
         {
             queryParams["index"] = index;
         }
-        var endpoint = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS}_async", queryParams);
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_START}", queryParams);
+        var endpointPoll = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_POLL}", queryParams);
         return await SendApiRequestAndPollAsync<GetNewListingsAsyncResponse, GetNewListingsResponse, IReadOnlyList<ListingEvent>>(
-            HttpMethod.Get, endpoint, NoData,
-            HttpMethod.Get, endpoint,
+            HttpMethod.Get, endpointStart, NoData,
+            HttpMethod.Get, endpointPoll,
             MIN_TIMEOUT,
             NoAuth,
             baseUrl,
@@ -136,9 +137,9 @@ public partial class FinHubClient
         {
             queryParams["index"] = index;
         }
-        var endpoint = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS}_async", queryParams);
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_START}", queryParams);
         return await StartApiRequestAsync<GetNewListingsAsyncResponse, IReadOnlyList<ListingEvent>>(
-            HttpMethod.Get, endpoint, NoData,
+            HttpMethod.Get, endpointStart, NoData,
             NoAuth,
             baseUrl,
             httpClient,
@@ -148,9 +149,9 @@ public partial class FinHubClient
     /// <inheritdoc/>
     public async Task<GetNewListingsAsyncResponse> PollNewListingAnnouncementsAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS}_async";
-        return await StartApiRequestAsync<GetNewListingsAsyncResponse, IReadOnlyList<ListingEvent>>(
-            HttpMethod.Get, endpoint, taskId,
+        var endpointPoll = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_POLL}";
+        return await PollApiResultAsync<GetNewListingsAsyncResponse, IReadOnlyList<ListingEvent>>(
+            HttpMethod.Get, endpointPoll, taskId,
             NoAuth,
             baseUrl,
             httpClient,

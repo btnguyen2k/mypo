@@ -9,13 +9,13 @@ namespace MyPo.Portfolio.Api.Bootstrap;
 sealed class BackgroundPortfolioTaskOldEventsCleaner : BackgroundPortfolioTask
 {
     public BackgroundPortfolioTaskOldEventsCleaner(
-            IServiceProvider serviceProvider, ILogger<BackgroundPortfolioTaskOldEventsCleaner> logger
-        ) : base(serviceProvider, logger)
+        IServiceProvider serviceProvider,
+        ILogger<BackgroundPortfolioTaskOldEventsCleaner> logger) : base(serviceProvider, logger)
     {
     }
 
     // Run task ~one per day.
-    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24);
+    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24-1);
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -42,10 +42,12 @@ sealed class BackgroundPortfolioTaskOldEventsCleaner : BackgroundPortfolioTask
                         Logger.LogInformation("Removing old events...");
                         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 
+                        // remove old events older than 30 days
                         var cutoffDate = DateTimeOffset.UtcNow.AddDays(-30);
                         var deletedCount = await portfolioRepo.DeleteMarketEventsOlderThanAsync(cutoffDate, cancellationToken);
                         Logger.LogInformation("Removed {deletedCount} events older than {cutoffDate}.", deletedCount, cutoffDate);
 
+                        // remove invalid listing events
                         var eventsListing = (await portfolioRepo.GetMarketEventsAsync(
                             MarketEventEntity.NON_OWNER,
                             DateTimeOffset.UtcNow.StartOfDay().AddDays(-14), DateTimeOffset.UtcNow.StartOfDay().AddDays(-1),
