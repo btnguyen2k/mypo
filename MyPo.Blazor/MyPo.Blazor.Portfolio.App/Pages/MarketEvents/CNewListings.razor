@@ -45,11 +45,12 @@
                         <thead>
                             <tr>
                                 <th scope="col">Listing date</th>
-                                <th scope="col" class="text-center">Market</th>
+                                <th scope="col">Public offer closes</th>
                                 <th scope="col">Listing</th>
                                 <th scope="col" class="text-end">Issue price</th>
                                 <th scope="col" class="text-end" data-dt-order="disable">Current price</th>
                                 <th scope="col" class="text-end">Capital to raise</th>
+                                <th scope="col" class="text-center">Underwritten</th>
                                 <th scope="col" data-dt-order="disable">Analysis</th>
                                 <th scope="col" data-dt-order="disable"><span class="visually-hidden">Details</span></th>
                             </tr>
@@ -60,8 +61,8 @@
                                 var listing = e.Metadata?.Listing;
                                 var sourceUrl = SafeUrl(listing?.Link);
                                 <tr @key="e.Id">
-                                    <td class="text-nowrap" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-center">@e.MarketId</td>
+                                    <td class="text-nowrap text-center" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-nowrap text-center">@ValueOrPlaceholder(listing?.PublicOfferCloseDate)</td>
                                     <td>
                                         @if (sourceUrl is not null)
                                         {
@@ -71,7 +72,7 @@
                                         {
                                             <span class="fw-semibold">@e.ItemCode</span>
                                         }
-                                        <div>@ValueOrPlaceholder(listing?.CompanyName)</div>
+                                        <div class="small text-muted">@ValueOrPlaceholder(listing?.CompanyName)</div>
                                         @*
                                         @if (!string.IsNullOrWhiteSpace(listing?.Sector))
                                         {
@@ -86,17 +87,23 @@
                                     <td class="text-end text-nowrap" data-order="@(listing?.CapitalToRaise?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">
                                         @FormatCapital(listing?.CapitalToRaise, listing?.Currency)
                                     </td>
+                                    <td class="text-center">@(listing?.IsUnderwritten switch { true => "Yes", false => "No", _ => "--" })</td>
                                     <td>
-                                        <span class="badge @AnalysisStatusClass(listing)">@AnalysisStatusLabel(listing)</span>
-                                        @*
-                                        @if (listing?.Analysis is { } analysis)
+                                        @if (listing?.AnalysisStatus != ListingAnalysisStatus.Completed)
+                                        {
+                                            <span class="badge @AnalysisStatusClass(listing)">@AnalysisStatusLabel(listing)</span>
+                                        }
+                                        else if (listing?.Analysis is { } analysis)
+                                        {
+                                            <span class="badge @StanceClass(analysis.OverallStance)">@EnumLabel(analysis.OverallStance)</span>
+                                        }
+                                        @* if (listing?.Analysis is { } analysis)
                                         {
                                             <div class="mt-1">
                                                 <span class="badge @StanceClass(analysis.OverallStance)">@EnumLabel(analysis.OverallStance)</span>
                                                 <span class="text-muted text-nowrap">@Math.Clamp(analysis.OverallConfidence, 0, 100)% confidence</span>
                                             </div>
-                                        }
-                                        *@
+                                        } *@
                                     </td>
                                     <td class="text-end">
                                         <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
