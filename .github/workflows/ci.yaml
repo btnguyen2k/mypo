@@ -39,8 +39,33 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ matrix.dotnet }}
-      - name: Display dotnet version
-        run: dotnet --version
+      - name: Pin .NET version
+        env:
+          REQUESTED_DOTNET_VERSION: ${{ matrix.dotnet }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SDK_MAJOR="${REQUESTED_DOTNET_VERSION%%.*}"
+          SDK_VERSION=$(
+            dotnet --list-sdks |
+              awk -v prefix="${SDK_MAJOR}." \
+                '$1 ~ ("^" prefix) { print $1 }' |
+              sort -V |
+              tail -n 1
+          )
+
+          if [ -z "${SDK_VERSION}" ]; then
+            echo "❌ No installed .NET ${SDK_MAJOR}.x SDK was found."
+            exit 1
+          fi
+
+          printf \
+            '{"sdk":{"version":"%s","rollForward":"latestPatch"}}\n' \
+            "${SDK_VERSION}" \
+            > global.json
+
+          dotnet --version
       - name: Install dependencies
         run: dotnet restore
       - name: Build

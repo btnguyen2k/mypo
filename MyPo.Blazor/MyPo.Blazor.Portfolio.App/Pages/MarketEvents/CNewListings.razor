@@ -250,10 +250,10 @@
                         {
                             <details class="card mb-3" @key="section">
                                 <summary class="card-header fw-semibold">
-                                    @title <span class="badge @QualityClass(section.DataQuality) ms-2">@section.DataQuality data quality</span>
+                                    @title <span class="badge @QualityClass(section.DataQuality) ms-2">@(section.DataQuality) data quality</span>
                                 </summary>
                                 <div class="card-body">
-                                    <div class="listing-copy">@section.Summary</div>
+                                    <div class="listing-copy">@(section.Summary)</div>
                                     @switch (section)
                                     {
                                         case ListingOfferAnalysis offer:
