@@ -32,12 +32,6 @@ public partial class Events : BasePage
     // map {symbol --> quote}
     private readonly Dictionary<string, StockQuote> QuotesMap = [];
 
-    // map {symbol --> yield_vs_current_price}
-    private readonly Dictionary<string, decimal> YieldsMap = [];
-
-    // map {symbol --> market close price before ex-dividend date}
-    private readonly Dictionary<string, decimal> PreExDivPrice = [];
-
     [Inject]
     private IJSRuntime JS { get; set; } = default!;
 
@@ -84,8 +78,6 @@ public partial class Events : BasePage
                     foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
                     {
                         QuotesMap[quote.Key] = quote.Value;
-                        var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-                        YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
                     }
                     InvokeAsync(StateHasChanged);
                 }
@@ -122,7 +114,6 @@ public partial class Events : BasePage
                 {
                     CloseAlert();
                     await Task.Run(GetStocksQuotesBackground);
-                    // await Task.Run(GetPricePreExDivBackground);
                 }
             }
             else
@@ -131,9 +122,7 @@ public partial class Events : BasePage
             }
 
             var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            var taskDatatableDividendEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblDividendEvents");
-            var taskDatatableEarningsEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
-            await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
+            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
 
             SwitchToSavedTab();
         }

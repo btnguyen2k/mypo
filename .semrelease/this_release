@@ -2,10 +2,11 @@
 # Generate its content quickly using the following command:
 #   git log origin..HEAD | grep "^\s" > .semrelease/this_release
 #!VERSION=2.4.0
-- refactor(finhub): migrate to FinHub v0.16.0+
+- refactor(finhub): migrate to FinHub v0.17.0+
 - feat(portfolio): delete reports when their portfolio is deleted
 - feat(pubsub): add durable Wolverine-backed portfolio events
 - feat(pubsub): clean up portfolio checkpoints via durable deletion events
 - impr(UI/UX): show target URLs in the browser status bar
 - patch(CodeQL): fix CodeQL warnings
 - refactor(UI/events): redesign "New Listings" tab
+- refactor(UI/events): redesign "Upcoming Dividends" tab

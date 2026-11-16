@@ -12,7 +12,7 @@ sealed class BackgroundPortfolioTaskNewListingAnnouncementsScanner : BackgroundP
     }
 
     // TODO: move this to configuration
-    private static readonly List<string> COUNTRIES = ["AU"];
+    private static readonly List<string> COUNTRIES = ["AU", "US", "VN"];
 
     // Run task ~every 1 day per market
     private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(24-1);

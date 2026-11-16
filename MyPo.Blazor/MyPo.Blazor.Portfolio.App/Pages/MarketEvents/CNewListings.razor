@@ -36,6 +36,7 @@
     }
     else
     {
+        var today = DateOnly.FromDateTime(DateTime.Today);
         <div class="card mb-4">
             <div class="card-body">
                 <h5>New listings <span class="badge text-bg-secondary">@Events.Count</span></h5>
@@ -60,9 +61,12 @@
                             {
                                 var listing = e.Metadata?.Listing;
                                 var sourceUrl = SafeUrl(listing?.Link);
-                                <tr @key="e.Id">
-                                    <td class="text-nowrap text-center" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-nowrap text-center">@ValueOrPlaceholder(listing?.PublicOfferCloseDate)</td>
+                                var listingHasPassed = DateOnly.FromDateTime(e.EventTimeLocalTz.DateTime) < today;
+                                var publicOfferHasClosed = DateOnly.TryParse(listing?.PublicOfferCloseDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var offerCloseDate)
+                                    && offerCloseDate < today;
+                                <tr @key="e.Id" class="table-primary">
+                                    <td class="text-nowrap text-center @(listingHasPassed ? "text-primary" : string.Empty)" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-nowrap text-center @(publicOfferHasClosed ? "text-secondary" : string.Empty)">@ValueOrPlaceholder(listing?.PublicOfferCloseDate)</td>
                                     <td>
                                         @if (sourceUrl is not null)
                                         {
@@ -81,7 +85,11 @@
                                         *@
                                     </td>
                                     <td class="text-end text-nowrap" data-order="@(listing?.IssuePrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">
-                                        @FormatMoney(listing?.IssuePrice, listing?.Currency, e.MarketId)
+                                        @FormatMoney(listing?.IssuePrice, listing?.Currency, e.MarketId, rangeEndpoint: listing?.IssuePriceUpper is not null)
+                                        @if (listing?.IssuePrice is not null && listing.IssuePriceUpper is { } upper)
+                                        {
+                                            <text> - @FormatMoney(upper, listing.Currency, e.MarketId, rangeEndpoint: true)</text>
+                                        }
                                     </td>
                                     <td class="text-end text-nowrap">@CurrentPrice(e)</td>
                                     <td class="text-end text-nowrap" data-order="@(listing?.CapitalToRaise?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">
@@ -415,14 +423,47 @@
 
     private string CurrentPrice(MarketEventResp e)
     {
-        return Quotes.TryGetValue(e.ItemCode, out var quote)
+        return Quotes.TryGetValue(e.ItemCode, out var quote) && quote.MarketPrice > 0
             ? FormatMoney(quote.MarketPrice, string.IsNullOrWhiteSpace(quote.Currency) ? e.Metadata?.Listing?.Currency : quote.Currency, e.MarketId)
             : "--";
     }
 
     private static string PriceFormat(string market) => string.Equals(market, "VN", StringComparison.OrdinalIgnoreCase) ? "F0" : "F2";
-    private static string FormatMoney(decimal? amount, string? currency, string market) => amount is { } value ? WithCurrency(value.ToString(PriceFormat(market)), currency) : "--";
-    private static string FormatCapital(long? amount, string? currency) => amount is { } value ? WithCurrency(FormatUtils.FormatVolume(value), currency) : "--";
+    private static string FormatMoney(decimal? amount, string? currency, string market, bool rangeEndpoint = false)
+    {
+        if (amount is not { } value)
+        {
+            return "--";
+        }
+        var format = !rangeEndpoint && decimal.Truncate(value) == value ? "F0" : PriceFormat(market);
+        return WithCompactCurrency(value.ToString(format), currency, spaceAfterSymbol: rangeEndpoint);
+    }
+
+    private static string FormatCapital(long? amount, string? currency)
+    {
+        if (amount is not { } value)
+        {
+            return "--";
+        }
+        var formattedValue = FormatUtils.FormatVolume(value)
+            .Replace($"{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}00", string.Empty, StringComparison.Ordinal);
+        return WithCompactCurrency(formattedValue, currency);
+    }
+
+    private static string WithCompactCurrency(string value, string? currency, bool spaceAfterSymbol = false)
+    {
+        var symbol = currency?.Trim().ToUpperInvariant() switch
+        {
+            "AUD" => "A$",
+            "USD" => "$",
+            "VND" => "\u20ab",
+            _ => null
+        };
+        return symbol is null
+            ? WithCurrency(value, currency)
+            : $"{symbol}{(spaceAfterSymbol ? " " : string.Empty)}{value}";
+    }
+
     private static string WithCurrency(string value, string? currency) => string.IsNullOrWhiteSpace(currency) ? value : $"{currency} {value}";
     private static string ValueOrPlaceholder(string? value) => string.IsNullOrWhiteSpace(value) ? "--" : value;
 
