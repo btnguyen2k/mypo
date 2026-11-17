@@ -48,7 +48,7 @@
                                 var metrics = dividend?.Analysis;
                                 var paymentDate = ParsePaymentDate(dividend?.PaymentDate);
                                 var sourceUrl = SafeUrl(dividend?.Link);
-                                var exDateHasPassed = DateOnly.FromDateTime(e.EventTimeLocalTz.DateTime) < today;
+                                var exDateHasPassed = DateOnly.FromDateTime(e.EventTimeLocalTz.DateTime) <= today;
                                 var paymentDateHasPassed = paymentDate is { } date && date < today;
                                 <tr @key="e.Id" class="@(SelectedEvent?.Id == e.Id ? "table-active" : string.Empty)">
                                     <td class="text-nowrap @(exDateHasPassed ? "text-secondary" : string.Empty)" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
@@ -62,7 +62,7 @@
                                         {
                                             <span class="fw-semibold">@e.ItemCode</span>
                                         }
-                                        <div class="small text-muted">@ValueOrPlaceholder(metrics?.CompanyName)</div>
+                                        <div class="small text-muted">@ValueOrPlaceholder(metrics?.CompanyName ?? dividend?.CompanyName)</div>
                                         @*
                                         <div class="d-flex flex-wrap gap-1 mt-1">
                                             <span class="badge text-bg-light border">@e.MarketId</span>
@@ -116,12 +116,13 @@
         @if (SelectedEvent is { } selected)
         {
             var dividend = selected.Metadata?.Dividend;
+            var metrics = dividend?.Analysis;
             <section id="dividend-details" tabindex="-1" aria-labelledby="dividend-details-title" @ref="DetailsElement">
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                             <div>
-                                <h5 id="dividend-details-title">@selected.ItemCode <span class="text-muted">@ValueOrPlaceholder(dividend?.CompanyName)</span></h5>
+                                <h5 id="dividend-details-title">@selected.ItemCode <span class="text-muted">@ValueOrPlaceholder(metrics?.CompanyName ?? dividend?.CompanyName)</span></h5>
                                 <div class="d-flex flex-wrap gap-2">
                                     <span class="badge text-bg-primary">@selected.MarketId</span>
                                     @if (!string.IsNullOrWhiteSpace(dividend?.Exchange))
