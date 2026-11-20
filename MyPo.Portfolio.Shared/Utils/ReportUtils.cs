@@ -225,7 +225,7 @@ public static class ReportUtils
         var maxDate = DateTimeOffset.MinValue;
         foreach (var point in history)
         {
-            var pointDate = point.Date.StartOfDay();
+            var pointDate = point.DateUTC.StartOfDay();
             if (pointDate > maxDate)
             {
                 maxDate = pointDate;
