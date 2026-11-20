@@ -68,10 +68,11 @@ public partial class FinHubClient
         {
             queryParams["index"] = index;
         }
-        var endpoint = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS}_async", queryParams);
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START}", queryParams);
+        var endpointPoll = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL}", queryParams);
         return await SendApiRequestAndPollAsync<GetUpcomingEarningsAsyncResponse, GetUpcomingEarningsResponse, IReadOnlyList<UpcomingEarningsEvent>>(
-            HttpMethod.Get, endpoint, NoData,
-            HttpMethod.Get, endpoint,
+            HttpMethod.Get, endpointStart, NoData,
+            HttpMethod.Get, endpointPoll,
             MIN_TIMEOUT,
             NoAuth,
             baseUrl,
@@ -87,9 +88,9 @@ public partial class FinHubClient
         {
             queryParams["index"] = index;
         }
-        var endpoint = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS}_async", queryParams);
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START}", queryParams);
         return await StartApiRequestAsync<GetUpcomingEarningsAsyncResponse, IReadOnlyList<UpcomingEarningsEvent>>(
-            HttpMethod.Get, endpoint, NoData,
+            HttpMethod.Get, endpointStart, NoData,
             NoAuth,
             baseUrl,
             httpClient,
@@ -99,9 +100,9 @@ public partial class FinHubClient
     /// <inheritdoc/>
     public async Task<GetUpcomingEarningsAsyncResponse> PollUpcomingEarningsAnnouncementsAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
     {
-        var endpoint = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS}_async";
-        return await StartApiRequestAsync<GetUpcomingEarningsAsyncResponse, IReadOnlyList<UpcomingEarningsEvent>>(
-            HttpMethod.Get, endpoint, taskId,
+        var endpointPoll = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL}";
+        return await PollApiResultAsync<GetUpcomingEarningsAsyncResponse, IReadOnlyList<UpcomingEarningsEvent>>(
+            HttpMethod.Get, endpointPoll, taskId,
             NoAuth,
             baseUrl,
             httpClient,

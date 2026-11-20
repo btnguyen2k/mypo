@@ -121,9 +121,6 @@ public partial class Events : BasePage
                 ShowAlert("danger", result.Message ?? "Error loading portfolios.");
             }
 
-            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
-
             SwitchToSavedTab();
         }
     }

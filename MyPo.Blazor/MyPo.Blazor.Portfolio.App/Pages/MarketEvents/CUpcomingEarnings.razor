@@ -1,0 +1,114 @@
+﻿@using System.Globalization
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+
+@inject IJSRuntime JS
+
+<div class="upcoming-earnings mt-3">
+    @if (Events.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-muted">
+                <BIcon icon="bi-calendar-event" extraClassName="me-1" />
+                No upcoming earnings announcements available.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Upcoming earnings <span class="badge text-bg-secondary">@Events.Count</span></h5>
+                <p class="small text-muted">Reporting dates and statuses are supplied by the source and may change.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 small" id="tblEarningsEvents" data-order='[[ 0, "asc" ]]'>
+                        <caption class="visually-hidden">Upcoming earnings announcements</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-nowrap">Announcement date</th>
+                                <th scope="col">Security</th>
+                                <th scope="col" class="text-center text-nowrap">Market / Exchange</th>
+                                <th scope="col" class="text-nowrap">Report period</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Source</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            @foreach (var e in Events)
+                            {
+                                var earnings = e.Metadata?.Earnings;
+                                var sourceUrl = SafeUrl(earnings?.Link);
+                                <tr @key="e.Id">
+                                    <td class="text-nowrap" data-order="@e.EventTime.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)">@e.EventTimeLocalTz.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</td>
+                                    <td>
+                                        <span class="fw-semibold text-nowrap">@e.ItemCode</span>
+                                        <div class="small text-muted">@ValueOrPlaceholder(earnings?.CompanyName)</div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge text-bg-light border">@ValueOrPlaceholder(e.MarketId)</span>
+                                        @if (!string.IsNullOrWhiteSpace(earnings?.Exchange))
+                                        {
+                                            <div class="small text-muted mt-1">@earnings.Exchange</div>
+                                        }
+                                    </td>
+                                    <td>@ValueOrPlaceholder(earnings?.ReportPeriod)</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(earnings?.Status))
+                                        {
+                                            <span class="badge text-bg-light border text-wrap">@earnings.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">--</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (sourceUrl is not null)
+                                        {
+                                            <a href="@sourceUrl" target="_blank" rel="noopener noreferrer"
+                                               aria-label="@($"View earnings source for {e.ItemCode}")">
+                                                @(string.IsNullOrWhiteSpace(earnings?.SourceName) ? "View source" : earnings.SourceName)
+                                                <BIcon icon="bi-box-arrow-up-right" extraClassName="ms-1" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@ValueOrPlaceholder(earnings?.SourceName)</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<MarketEventResp> Events { get; set; } = [];
+
+    private bool TableInitialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Events.Count == 0)
+        {
+            TableInitialized = false;
+        }
+        else if (!TableInitialized)
+        {
+            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
+            TableInitialized = true;
+        }
+    }
+
+    private static string ValueOrPlaceholder(string? value) => string.IsNullOrWhiteSpace(value) ? "--" : value;
+
+    private static Uri? SafeUrl(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) ? uri : null;
+}

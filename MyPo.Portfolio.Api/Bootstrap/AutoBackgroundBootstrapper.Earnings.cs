@@ -12,10 +12,10 @@ sealed class BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner : Backg
     }
 
     // TODO: move this to configuration
-    private static readonly List<string> COUNTRIES = ["AU", "US"];
+    private static readonly List<string> COUNTRIES = ["AU", "US", "VN"];
 
     // Run task ~every 2 days per market
-    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(47);
+    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(48-1);
 
     private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 

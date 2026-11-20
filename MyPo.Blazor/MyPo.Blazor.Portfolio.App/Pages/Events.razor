@@ -63,44 +63,7 @@
                                 <CNewListings Events="@EventsListing" Quotes="@QuotesMap" />
                             </div>
                             <div class="tab-pane fade @(ActiveTab==TabIdEarnings?"show active":"")" id="@(TabIdEarnings)-content" role="tabpanel" aria-labelledby="@TabIdEarnings" tabindex="0">
-                                <div class="row mt-2">
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                @if(EventsEarnings.Count <= 0)
-                                                {
-                                                    <h5>No Data</h5>
-                                                }
-                                                else
-                                                {
-                                                    <table class="table table-sm mb-0 small" id="tblEarningsEvents" data-order='[[ 0, "asc" ]]'>
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th class="text-center" data-dt-order="disable">Market</th>
-                                                                <th data-dt-order="disable">Item</th>
-                                                                <th data-dt-order="disable">Status</th>
-                                                                <th class="text-end" data-dt-order="disable">Period</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="table-group-divider">
-                                                            @foreach (var e in EventsEarnings)
-                                                            {
-                                                                <tr>
-                                                                    <td>@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
-                                                                    <td class="text-center">@e.MarketId</td>
-                                                                    <td><a target="_blank" href="@(e.Metadata?.Earnings?.Link??"--")">@e.ItemCode</a> <small class="text-muted">@(e.Metadata?.Earnings?.CompanyName??"--")</small></td>
-                                                                    <td>@(e.Metadata?.Earnings?.Status??"--")</td>
-                                                                    <td class="text-end">@(e.Metadata?.Earnings?.ReportPeriod??"--")</td>
-                                                                </tr>
-                                                            }
-                                                        </tbody>
-                                                    </table>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <CUpcomingEarnings Events="@EventsEarnings" />
                             </div>
                         </div>
                     }
