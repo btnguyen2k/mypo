@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace FinHub.Client.Models.Events;
 
@@ -17,7 +17,7 @@ public sealed record UpcomingDividendEvent : EventBase
     public string Currency { get; init; } = string.Empty;
 
     [JsonPropertyName("payment_date")]
-    public required string? PaymentDate { get; init; }
+    public string? PaymentDate { get; init; }
 
     [JsonPropertyName("analysis")]
     public DividendEventMetrics? Analysis { get; init; }

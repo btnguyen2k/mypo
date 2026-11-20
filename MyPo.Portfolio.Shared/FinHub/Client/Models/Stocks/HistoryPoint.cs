@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace FinHub.Client.Models.Stocks;
 
@@ -9,11 +9,6 @@ public sealed record HistoryPoint
 
     [JsonPropertyName("timestamp_str")]
     public required string TimestampStr { get; init; }
-
-    [JsonIgnore]
-    public DateTimeOffset Date => !string.IsNullOrEmpty(TimestampStr)
-        ? DateTimeOffset.TryParse(TimestampStr, out var dt) ? dt : DateTimeOffset.FromUnixTimeSeconds(Timestamp)
-        : DateTimeOffset.FromUnixTimeSeconds(Timestamp);
 
     [JsonPropertyName("currency")]
     public string Currency { get; init; } = string.Empty;

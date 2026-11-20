@@ -1,4 +1,4 @@
-﻿using FinHub.Client.Models.Portfolios;
+using FinHub.Client.Models.Portfolios;
 using MyPo.Shared.Api;
 
 namespace FinHub.Client.Schemas.PortfolioSpotlight;

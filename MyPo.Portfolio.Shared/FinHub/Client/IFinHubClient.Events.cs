@@ -44,6 +44,8 @@ public partial interface IFinHubClient
     /*----------------------------------------------------------------------*/
 
     public const string API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS = "/events/upcoming_earnings";
+    public const string API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START = "/events/start_upcoming_earnings_async";
+    public const string API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL = "/events/poll_upcoming_earnings_async";
 
     /// <summary>
     /// Calls the API <see cref="API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS"/> to get upcoming earnings announcements for the given country and index.
@@ -57,7 +59,7 @@ public partial interface IFinHubClient
     public Task<GetUpcomingEarningsResponse> GetUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS"/>_async to start fetching upcoming earnings announcements for the given country and index asynchronously.
+    /// Calls the API <see cref="API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START"/> to start fetching upcoming earnings announcements for the given country and index asynchronously.
     /// </summary>
     /// <param name="country">2-leter country code to filter events (e.g. AU, US, VN, etc)</param>
     /// <param name="index">Optional stock index to filter events by (e.g., NASDAQ 100, S&P/ASX 200, etc).</param>
@@ -68,7 +70,7 @@ public partial interface IFinHubClient
     public Task<GetUpcomingEarningsAsyncResponse> StartUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Calls the API <see cref="API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS"/>_async to poll the status of the asynchronous fetching of upcoming earnings announcements for the given country and index.
+    /// Calls the API <see cref="API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL"/> to poll the status of the asynchronous fetching of upcoming earnings announcements for the given country and index.
     /// </summary>
     /// <param name="taskId">The task ID of the asynchronous fetching of upcoming earnings announcements.</param>
     /// <param name="baseUrl">The base URL of the API, optional.</param>

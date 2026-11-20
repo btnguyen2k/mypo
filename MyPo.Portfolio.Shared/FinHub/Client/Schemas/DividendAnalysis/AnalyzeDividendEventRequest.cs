@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using FinHub.Client.Models.Dividends;
 
 namespace FinHub.Client.Schemas.DividendAnalysis;

@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace FinHub.Client.Models.Tickers;
 
@@ -14,7 +14,7 @@ public sealed record TickerMarketSnapshot
     public string? CompanyName { get; init; }
 
     [JsonPropertyName("asset_type")]
-    public required TickerAssetType? AssetType { get; init; }
+    public TickerAssetType? AssetType { get; init; }
 
     [JsonPropertyName("exchange")]
     public required string Exchange { get; init; }
