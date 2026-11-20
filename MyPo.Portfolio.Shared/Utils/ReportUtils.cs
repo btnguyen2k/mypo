@@ -231,7 +231,7 @@ public static class ReportUtils
                 maxDate = pointDate;
             }
             // keep the latest data point on or before the target date (walking back over non-trading days)
-            if (pointDate <= targetDate && (best is null || pointDate > best.Date.StartOfDay()))
+            if (pointDate <= targetDate && (best is null || pointDate > best.DateUTC.StartOfDay()))
             {
                 best = point;
             }

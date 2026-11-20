@@ -1,4 +1,5 @@
-﻿using FinHub.Client.Models.Events;
+﻿using FinHub.Client.Models.Dividends;
+using FinHub.Client.Models.Earnings;
 using FinHub.Client.Models.Listings;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Bootstrap;

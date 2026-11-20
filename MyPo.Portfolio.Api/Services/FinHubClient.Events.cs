@@ -1,5 +1,6 @@
 ﻿using Finhub.Client;
-using FinHub.Client.Models.Events;
+using FinHub.Client.Models.Dividends;
+using FinHub.Client.Models.Earnings;
 using FinHub.Client.Models.Listings;
 using FinHub.Client.Schemas.Events;
 using FinHub.Client.Schemas.NewListings;
