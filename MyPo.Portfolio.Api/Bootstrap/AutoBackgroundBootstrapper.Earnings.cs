@@ -53,19 +53,20 @@ sealed class BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner : Backg
                             timeSinceLastRun.Hours);
                         goto end;
                     }
+
                     var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-                    var events = await finhubClient.GetUpcomingEarningsAnnouncementsAsync(country, cancellationToken: cancellationToken);
-                    if (events.Status != 200)
+                    var eventsResp = await finhubClient.GetUpcomingEarningsAnnouncementsAsync(country, cancellationToken: cancellationToken);
+                    if (!eventsResp.IsSuccess)
                     {
                         Logger.LogError(
                             "Failed to fetch upcoming earnings announcements for market {market}. Status: {status}, Message: {message}",
                             country,
-                            events.Status,
-                            events.Message);
+                            eventsResp.Status,
+                            eventsResp.Message);
                         goto end;
                     }
-                    Logger.LogInformation("Upcoming earnings announcements for market {market}: {event}", country, (events.Data ?? []).Count);
-                    await SaveEvents(events.Data ?? [], CheckpointEntity.NON_OWNER, country, cancellationToken);
+                    Logger.LogInformation("Upcoming earnings announcements for market {market}: {event}", country, (eventsResp.Data ?? []).Count);
+                    await SaveEvents(eventsResp.Data ?? [], CheckpointEntity.NON_OWNER, country, cancellationToken);
 
                     checkpoint!.CheckpointTime = DateTimeOffset.UtcNow;
                     var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();

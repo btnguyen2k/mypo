@@ -36,46 +36,55 @@ sealed class BackgroundPortfolioTaskOldEventsCleaner : BackgroundPortfolioTask
                         checkpointType: CheckpointEntity.CHECKPOINT_REMOVE_OLD_EVENTS,
                         cancellationToken
                     );
+                    if (checkpoint == null) goto end;
 
-                    if (checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow - checkpoint.CheckpointTime >= INTERVAL))
+                    Logger.LogInformation("Removing old events...");
+                    var validForNextRun = checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow - checkpoint.CheckpointTime >= INTERVAL);
+                    if (!validForNextRun)
                     {
-                        Logger.LogInformation("Removing old events...");
-                        var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+                        var timeSinceLastRun = DateTimeOffset.UtcNow - checkpoint!.CheckpointTime;
+                        Logger.LogInformation(
+                            "Skipping old events cleanup as last run was recent ({lastRun} hours).",
+                            timeSinceLastRun.Hours
+                        );
+                        goto end;
+                    }
 
-                        // remove old events older than 30 days
-                        var cutoffDate = DateTimeOffset.UtcNow.AddDays(-30);
-                        var deletedCount = await portfolioRepo.DeleteMarketEventsOlderThanAsync(cutoffDate, cancellationToken);
-                        Logger.LogInformation("Removed {deletedCount} events older than {cutoffDate}.", deletedCount, cutoffDate);
+                    var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
 
-                        // remove invalid listing events
-                        var eventsListing = (await portfolioRepo.GetMarketEventsAsync(
-                            MarketEventEntity.NON_OWNER,
-                            DateTimeOffset.UtcNow.StartOfDay().AddDays(-14), DateTimeOffset.UtcNow.StartOfDay().AddDays(-1),
-                            [MarketEventEntity.EVENT_LISTING],
-                            cancellationToken: cancellationToken)).ToList();
-                        var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-                        var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
-                            eventsListing.Select(e => e.ItemCode).Distinct(),
-                            finHubClient, cancellationToken: cancellationToken);
-                        foreach (var e in eventsListing)
+                    // remove old events older than 30 days
+                    var cutoffDate = DateTimeOffset.UtcNow.AddDays(-30);
+                    var deletedCount = await portfolioRepo.DeleteMarketEventsOlderThanAsync(cutoffDate, cancellationToken);
+                    Logger.LogInformation("Removed {deletedCount} events older than {cutoffDate}.", deletedCount, cutoffDate);
+
+                    // remove invalid listing events
+                    var eventsListing = (await portfolioRepo.GetMarketEventsAsync(
+                        MarketEventEntity.NON_OWNER,
+                        DateTimeOffset.UtcNow.StartOfDay().AddDays(-14), DateTimeOffset.UtcNow.StartOfDay().AddDays(-1),
+                        [MarketEventEntity.EVENT_LISTING],
+                        cancellationToken: cancellationToken)).ToList();
+                    var finHubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+                    var quotesMap = await TickerUtils.FetchQuotesForTickersAsync(
+                        eventsListing.Select(e => e.ItemCode).Distinct(),
+                        finHubClient, cancellationToken: cancellationToken);
+                    foreach (var e in eventsListing)
+                    {
+                        var ticker = YFUtils.BuildYFTicker(e.ItemCode);
+                        if (!quotesMap.TryGetValue(ticker, out _))
                         {
-                            var ticker = YFUtils.BuildYFTicker(e.ItemCode);
-                            if (!quotesMap.TryGetValue(ticker, out _))
-                            {
-                                Logger.LogInformation("Deleting invalid listing event for {itemCode}...", e.ItemCode);
-                                await portfolioRepo.DeleteMarketEventAsync(e, cancellationToken: cancellationToken);
-                            }
+                            Logger.LogInformation("Deleting invalid listing event for {itemCode}...", e.ItemCode);
+                            await portfolioRepo.DeleteMarketEventAsync(e, cancellationToken: cancellationToken);
                         }
+                    }
 
-                        checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
-                        var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
-                        if (dbresult == null)
-                        {
-                            Logger.LogError(
-                                "Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
-                                checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
-                            );
-                        }
+                    checkpoint!.CheckpointTime = DateTimeOffset.UtcNow;
+                    var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+                    if (dbresult == null)
+                    {
+                        Logger.LogError(
+                            "Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+                            checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+                        );
                     }
                 }
                 catch (Exception ex)
@@ -83,6 +92,7 @@ sealed class BackgroundPortfolioTaskOldEventsCleaner : BackgroundPortfolioTask
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
+            end:
             await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken: cancellationToken); // delay 1-2 hours before next execution
         }
     }
