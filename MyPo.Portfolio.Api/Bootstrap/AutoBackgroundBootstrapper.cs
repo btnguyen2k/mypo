@@ -15,10 +15,10 @@ public class AutoBackgroundBootstrapper
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
         // events
-       appBuilder.Services.AddHostedService<BackgroundPortfolioTaskOldEventsCleaner>();
-        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner>();
+    //    appBuilder.Services.AddHostedService<BackgroundPortfolioTaskOldEventsCleaner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner>();
         appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpcomingEarningsAnnouncementsScanner>();
-        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
+        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
 
         // portfolio plans
 //        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
