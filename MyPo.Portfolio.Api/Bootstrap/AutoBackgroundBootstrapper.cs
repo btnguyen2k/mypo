@@ -22,7 +22,7 @@ public class AutoBackgroundBootstrapper
 
         // portfolio plans
         appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
-        // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskAnalyzePortfolioPlans>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskAnalyzePortfolioPlans>();
         // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskSendMarketAlerts>();
 
         // reports
