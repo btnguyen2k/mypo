@@ -90,6 +90,8 @@ sealed class BackgroundPortfolioTaskBuildPortfolioReports : BackgroundPortfolioT
             return;
         }
 
+        Logger.LogInformation("Building reports for portfolio '{portfolioId}: {portfolioName}'.", portfolio.Id, portfolio.Name);
+
         // cache to store stock quote history
         var quoteHistoryCache = new Dictionary<string, HistoryPoint[]>();
 

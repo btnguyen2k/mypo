@@ -21,12 +21,12 @@ public class AutoBackgroundBootstrapper
         appBuilder.Services.AddHostedService<BackgroundPortfolioTaskNewListingAnnouncementsScanner>();
 
         // portfolio plans
-//        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskUpdatePortfolioPlans>();
         // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskAnalyzePortfolioPlans>();
         // appBuilder.Services.AddHostedService<BackgroundPortfolioTaskSendMarketAlerts>();
 
         // reports
-//        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskBuildPortfolioReports>();
+        appBuilder.Services.AddHostedService<BackgroundPortfolioTaskBuildPortfolioReports>();
     }
 }
 
