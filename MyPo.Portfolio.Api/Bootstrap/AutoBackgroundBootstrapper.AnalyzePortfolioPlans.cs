@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Finhub.Client;
 using FinHub.Client.Models.Portfolios;
 using FinHub.Client.Schemas.PortfolioAnalysis;
@@ -90,7 +91,10 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             ? new TelegramBotClient(botApiKey)
             : null;
 
-        var plans = await portfolioRepo.GetPortfolioPlansByOwnerUserIdAsync(user.Id, cancellationToken);
+        var userPlans = await portfolioRepo.GetPortfolioPlansByOwnerUserIdAsync(user.Id, cancellationToken);
+        var plans = userPlans?.ToList() ?? [];
+        Logger.LogInformation("There are {plans} portfolio plan(s) for user {userName}.", plans.Count, userName);
+
         foreach (var plan in plans)
         {
             try
@@ -144,15 +148,14 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             {
                 Logger.LogCritical("'{planId}: {planName}' never run analysis before", plan.Id, plan.Name);
             }
+            else if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last analysis is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
+            }
             if (checksumChanged)
             {
                 Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis (old-checksum: {oldChecksum} vs new-checksum: {newChecksum})", plan.Id, plan.Name, oldChecksum, thisChecksum);
             }
-            if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastAnalysis) >= analyzeDelay)
-            {
-                Logger.LogCritical("'{planId}: {planName}' last analysis is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastAnalysis));
-            }
-
             Logger.LogInformation("Running normal analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var portfolioAnalysis = await RunNormalAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (portfolioAnalysis is not null)
@@ -175,15 +178,14 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             {
                 Logger.LogCritical("'{planId}: {planName}' never run spotlight before", plan.Id, plan.Name);
             }
+            else if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
+            {
+                Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
+            }
             if (checksumChanged)
             {
                 Logger.LogCritical("'{planId}: {planName}' desc/holdings changed since last analysis (old-checksum: {oldChecksum} vs new-checksum: {newChecksum})", plan.Id, plan.Name, oldChecksum, thisChecksum);
             }
-            if (nowUtc - DateTimeOffset.FromUnixTimeSeconds(lastSpotlight) >= analyzeDelay)
-            {
-                Logger.LogCritical("'{planId}: {planName}' last spotlight is too old (last refresh: {lastRefresh})", plan.Id, plan.Name, DateTimeOffset.FromUnixTimeSeconds(lastSpotlight));
-            }
-
             Logger.LogInformation("Running spotlight analysis for portfolio plan '{planId}: {planName}'...", plan.Id, plan.Name);
             var portfolioSpotlight = await RunSpotlightAnalysis(finHubClient, plan, country, allocation, cancellationToken);
             if (portfolioSpotlight is not null)
@@ -292,7 +294,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
 
     /// <summary>
     /// Formats a concise Telegram Markdown summary of the highest-ranked risks/actions and any
-    /// rebalance recommendation. Dynamic text is escaped and bounded to keep the alert deliverable.
+    /// rebalance recommendation. Figures are emphasized; dynamic text is escaped and bounded.
     /// </summary>
     private static string BuildSpotlightMessage(PortfolioPlanEntity plan, PortfolioSpotlightAnalysis spotlightAnalysis)
     {
@@ -306,7 +308,7 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
 
         if (spotlightAnalysis.RebalanceRecommended == PortfolioSpotlightRebalanceFlag.Yes)
         {
-            message.AppendLine("*Rebalance recommended.*");
+            message.AppendLine().AppendLine("\U0001F501 *REBALANCE RECOMMENDED*");
         }
 
         var risks = (spotlightAnalysis.Risks ?? [])
@@ -315,26 +317,38 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             .ToList();
         if (risks.Count == 0)
         {
-            message.AppendLine("No risks/actions reported.");
+            message.AppendLine().AppendLine("No risks/actions reported.");
         }
         foreach (var risk in risks.Take(maxRisks))
         {
-            message.Append("- ").Append(risk.Level).Append(": ").AppendLine(SpotlightSummaryText(risk.Risk, 200));
+            var marker = risk.Level switch
+            {
+                PortfolioSpotlightRiskLevel.Critical => "\U0001F534",
+                PortfolioSpotlightRiskLevel.High => "\U0001F7E0",
+                PortfolioSpotlightRiskLevel.Medium => "\U0001F7E1",
+                _ => "\u26aa"
+            };
+            message.AppendLine().Append(marker).Append(" *").Append(risk.Level).AppendLine("*");
+            if (!string.IsNullOrWhiteSpace(risk.Risk))
+            {
+                message.AppendLine(SpotlightSummaryText(risk.Risk, 200, emphasizeFigures: true));
+            }
             if (!string.IsNullOrWhiteSpace(risk.Action))
             {
-                message.Append("  Action: ").AppendLine(SpotlightSummaryText(risk.Action, 300));
+                // Allow for escaping and bold figures within Telegram's message limit.
+                message.Append("\u2192 *Action:* ").AppendLine(SpotlightSummaryText(risk.Action, 280, emphasizeFigures: true));
             }
         }
         if (risks.Count > maxRisks)
         {
             var remaining = risks.Count - maxRisks;
-            message.Append('+').Append(remaining).AppendLine(remaining == 1 ? " more risk." : " more risks.");
+            message.AppendLine().Append('+').Append(remaining).AppendLine(remaining == 1 ? " more risk." : " more risks.");
         }
 
         return message.ToString().TrimEnd();
     }
 
-    private static string SpotlightSummaryText(string? value, int maxLength)
+    private static string SpotlightSummaryText(string? value, int maxLength, bool emphasizeFigures = false)
     {
         var text = string.Join(" ", (value ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         if (text.Length > maxLength)
@@ -346,6 +360,27 @@ sealed partial class BackgroundPortfolioTaskAnalyzePortfolioPlans : BackgroundPo
             }
             text = text[..length].TrimEnd() + "...";
         }
+        if (!emphasizeFigures)
+        {
+            return EscapeSpotlightMarkdown(text);
+        }
+
+        var formatted = new StringBuilder();
+        var position = 0;
+        foreach (Match figure in SpotlightFigurePattern().Matches(text))
+        {
+            formatted.Append(EscapeSpotlightMarkdown(text[position..figure.Index]));
+            formatted.Append('*').Append(figure.Value).Append('*');
+            position = figure.Index + figure.Length;
+        }
+        return formatted.Append(EscapeSpotlightMarkdown(text[position..])).ToString();
+    }
+
+    [GeneratedRegex(@"(?<![\w\\])(?:[+-]?(?:[A-Z]{1,2}\$|[$\u20ac\u00a3\u00a5\u20ab\u20b9])\s*|(?:USD|AUD|VND|EUR|GBP|JPY|CAD|NZD|SGD|HKD|CNY|CHF|INR)\s+)?[+-]?\d+(?:[.,]\d+)*(?:\s?(?:%|bps?|[KMBT]|x))?(?!\w)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SpotlightFigurePattern();
+
+    private static string EscapeSpotlightMarkdown(string text)
+    {
         return text.Replace("_", "\\_", StringComparison.Ordinal)
             .Replace("*", "\\*", StringComparison.Ordinal)
             .Replace("`", "\\`", StringComparison.Ordinal)
