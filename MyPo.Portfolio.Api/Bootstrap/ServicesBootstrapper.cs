@@ -4,6 +4,9 @@ using MyPo.Shared.Bootstrap;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
+/// <summary>
+/// Bootstrapper that configures and registers application-wide services.
+/// </summary>
 [Bootstrapper]
 public class ServicesBootstrapper
 {
@@ -12,7 +15,7 @@ public class ServicesBootstrapper
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
         ConfigureClavis(appBuilder.Services);
-        appBuilder.Services.AddScoped<IPortfolioPlanHoldingsService, PortfolioPlanHoldingsService>();
+        ConfigurePortfolioPlanHoldingsService(appBuilder.Services);
     }
 
     private static void ConfigureClavis(IServiceCollection services)
@@ -30,5 +33,10 @@ public class ServicesBootstrapper
             throw new InvalidOperationException("Clavis key must be at least 32 characters long. Please provide a valid key in the CLAVIS_KEY environment variable.");
         }
         services.AddSingleton<Clavis, Clavis>(sp => new Clavis(key));
+    }
+
+    private static void ConfigurePortfolioPlanHoldingsService(IServiceCollection services)
+    {
+        services.AddScoped<IPortfolioPlanHoldingsService, PortfolioPlanHoldingsService>();
     }
 }

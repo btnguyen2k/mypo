@@ -1,6 +1,5 @@
 ﻿using MyPo.Blazor.App.Helpers;
 using MyPo.Blazor.App.Services;
-using MyPo.Libs.Opurator;
 using MyPo.Shared.Api;
 using MyPo.Shared.Bootstrap;
 using Blazored.LocalStorage;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Ddth.Opurator;
 
 namespace MyPo.Blazor.App.Bootstrap;
 
@@ -30,10 +30,10 @@ public class BlazorServicesBootstrapper
         });
 		services.AddBlazoredLocalStorage();
 		services.AddScoped<LocalStorageHelper>();
-		services.AddTaskOperator();
+		services.AddOpurator(); // see https://github.com/DDTH/Ddth.Opurator
 		services.AddSingleton<StateContainer>();
 
-		// https://stackoverflow.com/questions/52889827/remove-http-client-logging-handler-in-asp-net-core
+		// see https://stackoverflow.com/questions/52889827/remove-http-client-logging-handler-in-asp-net-core
 		services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
 	}
 }

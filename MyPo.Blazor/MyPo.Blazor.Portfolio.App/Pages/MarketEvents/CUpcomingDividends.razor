@@ -1,0 +1,410 @@
+﻿@using System.Globalization
+@using FinHub.Client.Models.Stocks
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+@using MyPo.Portfolio.Shared.Models
+
+@inject IJSRuntime JS
+
+<div class="upcoming-dividends mt-3">
+    @if (Events.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-muted">
+                <BIcon icon="bi-calendar-event" extraClassName="me-1" />
+                No upcoming dividends or distributions available.
+            </div>
+        </div>
+    }
+    else
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Upcoming dividends <span class="badge text-bg-secondary">@Events.Count</span></h5>
+                <p class="small text-muted">Select Details for payout information and historical price patterns.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 small" id="tblDividendEvents" data-order='[[ 0, "asc" ]]'>
+                        <caption class="visually-hidden">Upcoming dividend and distribution events</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-nowrap">Ex-date</th>
+                                <th scope="col" class="text-nowrap">Payment date</th>
+                                <th scope="col" class="text-nowrap">Security</th>
+                                <th scope="col" class="text-end text-nowrap">Dividend</th>
+                                <th scope="col" class="text-end text-nowrap">Dividend yield</th>
+                                <th scope="col" class="text-end text-nowrap" data-dt-order="disable">Current price</th>
+                                <th scope="col" class="text-end text-nowrap" data-dt-order="disable">Post-drop price</th>
+                                <th scope="col" class="text-center text-nowrap" data-dt-order="disable">Recovery</th>
+                                <th scope="col" data-dt-order="disable"><span class="visually-hidden">Details</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            @foreach (var e in Events)
+                            {
+                                var metadata = e.Metadata;
+                                var dividend = metadata?.Dividend;
+                                var metrics = dividend?.Analysis;
+                                var paymentDate = ParsePaymentDate(dividend?.PaymentDate);
+                                var sourceUrl = SafeUrl(dividend?.Link);
+                                var exDateHasPassed = DateOnly.FromDateTime(e.EventTimeLocalTz.DateTime) <= today;
+                                var paymentDateHasPassed = paymentDate is { } date && date < today;
+                                <tr @key="e.Id" class="@(SelectedEvent?.Id == e.Id ? "table-active" : string.Empty)">
+                                    <td class="text-nowrap @(exDateHasPassed ? "text-secondary" : string.Empty)" data-order="@e.EventTime.ToUnixTimeSeconds()">@e.EventTimeLocalTz.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-nowrap @(paymentDateHasPassed ? "text-secondary" : string.Empty)" data-order="@(paymentDate?.DayNumber.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">@PaymentDateText(dividend?.PaymentDate)</td>
+                                    <td class="text-nowrap">
+                                        @if (sourceUrl is not null)
+                                        {
+                                            <a href="@sourceUrl" target="_blank" rel="noopener noreferrer" class="fw-semibold">@e.ItemCode</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold">@e.ItemCode</span>
+                                        }
+                                        <div class="small text-muted">@ValueOrPlaceholder(metrics?.CompanyName ?? dividend?.CompanyName)</div>
+                                        @*
+                                        <div class="d-flex flex-wrap gap-1 mt-1">
+                                            <span class="badge text-bg-light border">@e.MarketId</span>
+                                            @if (IsDistribution(e))
+                                            {
+                                                <span class="badge text-bg-light border">Distribution</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(dividend?.Status))
+                                            {
+                                                <span class="badge text-bg-light border">@dividend.Status</span>
+                                            }
+                                            @if (e.AttentionLevel > 0)
+                                            {
+                                                <span class="badge @AttentionClass(e.AttentionLevel)">Attention: @AttentionLabel(e.AttentionLevel)</span>
+                                            }
+                                        </div>
+                                        *@
+                                    </td>
+                                    <td class="text-end text-nowrap" data-order="@(dividend?.Amount.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">@FormatMoney(dividend?.Amount, dividend?.Currency, e.MarketId)</td>
+                                    <td class="text-end text-nowrap" data-order="@(dividend?.DividendYield.ToString(CultureInfo.InvariantCulture) ?? string.Empty)">@FormatYield(dividend?.DividendYield)</td>
+                                    <td class="text-end text-nowrap">@CurrentPrice(e)</td>
+                                    <td class="text-end text-nowrap">@PostDropPriceRange(e)</td>
+                                    <td class="text-center text-nowrap">
+                                        @if (metrics is { NumSamples: > 0 })
+                                        {
+                                            <div class="fw-semibold">@FormatProbability(metrics.RecoveryProbability)</div>
+                                            <div class="small text-muted">@FormatDays(metrics.RecoveryDaysMin, metrics.RecoveryDaysMax)</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-light border">@(metrics is null ? "No analysis" : "No samples")</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                                                aria-label="@($"View dividend details for {e.ItemCode} on {e.EventTimeLocalTz:yyyy-MM-dd}")"
+                                                aria-controls="dividend-details" aria-expanded="@(SelectedEvent?.Id == e.Id ? "true" : "false")"
+                                                @onclick="() => SelectDividend(e)">
+                                            <BIcon icon="bi-card-text" extraClassName="me-1" />Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mt-2 mb-0">Recovery estimates describe historical price recovery, not net profit after fees or taxes. Past patterns do not guarantee future results.</p>
+            </div>
+        </div>
+
+        @if (SelectedEvent is { } selected)
+        {
+            var dividend = selected.Metadata?.Dividend;
+            var metrics = dividend?.Analysis;
+            <section id="dividend-details" tabindex="-1" aria-labelledby="dividend-details-title" @ref="DetailsElement">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                            <div>
+                                <h5 id="dividend-details-title">@selected.ItemCode <span class="text-muted">@ValueOrPlaceholder(metrics?.CompanyName ?? dividend?.CompanyName)</span></h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge text-bg-primary">@selected.MarketId</span>
+                                    @if (!string.IsNullOrWhiteSpace(dividend?.Exchange))
+                                    {
+                                        <span class="badge text-bg-light border">@dividend.Exchange</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(dividend?.Status))
+                                    {
+                                        <span class="badge text-bg-light border">@dividend.Status</span>
+                                    }
+                                </div>
+                            </div>
+                            @if (SafeUrl(dividend?.Link) is { } sourceUrl)
+                            {
+                                <a href="@sourceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                                    <BIcon icon="bi-box-arrow-up-right" extraClassName="me-1" />Source announcement
+                                </a>
+                            }
+                        </div>
+                        <dl class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-1 mb-0">
+                            @MetricField("Ex-dividend date", selected.EventTimeLocalTz.ToString("yyyy-MM-dd"))
+                            @MetricField("Payment date", PaymentDateText(dividend?.PaymentDate))
+                            @MetricField("Dividend per share", FormatMoney(dividend?.Amount, dividend?.Currency, selected.MarketId))
+                            @MetricField("Reported dividend yield", FormatYield(dividend?.DividendYield))
+                            @MetricField("Current price", CurrentPrice(selected))
+                            @MetricField("Event type", IsDistribution(selected) ? "Distribution" : "Dividend")
+                            @MetricField("Exchange", ValueOrPlaceholder(dividend?.Exchange))
+                            @MetricField("Source", ValueOrPlaceholder(dividend?.SourceName))
+                        </dl>
+                    </div>
+                </div>
+
+                @if (dividend?.Analysis is { } analysis)
+                {
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h6><BIcon icon="bi-graph-up" extraClassName="me-1" />Historical ex-dividend pattern</h6>
+                            <dl class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-1 mb-0">
+                                @MetricField("Historical samples", analysis.NumSamples >= 0 ? analysis.NumSamples.ToString("N0") : "--")
+                                @MetricField("Reference price", FormatMetricPrice(analysis.Price, dividend.Currency, selected.MarketId))
+                                @MetricField("Dividend used in analysis", FormatMetricPrice(analysis.DividendAmount, dividend.Currency, selected.MarketId))
+                                @MetricField("Yield used in analysis", FormatMetricYield(analysis.DividendYield))
+                                @if (analysis.NumSamples > 0)
+                                {
+                                    @MetricField("Post-drop price range", PostDropPriceRange(selected))
+                                    @MetricField("Recovery price range", FormatPriceRange(analysis.RecoveryPriceMin, analysis.RecoveryPriceMax, dividend.Currency, selected.MarketId))
+                                    @MetricField("Recovery probability", FormatProbability(analysis.RecoveryProbability))
+                                    @MetricField("Recovery period", FormatDays(analysis.RecoveryDaysMin, analysis.RecoveryDaysMax))
+                                }
+                            </dl>
+                            @if (analysis.NumSamples <= 0)
+                            {
+                                <p class="small text-muted mt-3 mb-0" role="status">No historical dividend samples were reported. Drop and recovery estimates are unavailable.</p>
+                            }
+                        </div>
+                    </div>
+
+                    <details class="card mb-4">
+                        <summary class="card-header fw-semibold"><BIcon icon="bi-activity" extraClassName="me-1" />Technical and liquidity metrics</summary>
+                        <div class="card-body">
+                            <dl class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 mb-3">
+                                @MetricField("Beta", FormatNumber(analysis.Beta, "F2"))
+                                @MetricField("RSI (14)", analysis.Rsi14.ToString("N0"))
+                                @MetricField("Bid-ask spread", FormatNumber(analysis.BidAskSpread, "0.####"))
+                                @MetricField("Stock trend (60d)", FormatNumber(analysis.Trend60D, "+0.####;-0.####;0"))
+                                @MetricField("Market trend (60d)", FormatNumber(analysis.MarketTrend60D, "+0.####;-0.####;0"))
+                                @MetricField("Peer trend (60d)", FormatNumber(analysis.PeerTrend60D, "+0.####;-0.####;0"))
+                            </dl>
+                            <p class="small text-muted">Spread and trend metrics are shown as reported by FinHub.</p>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0 small">
+                                    <caption class="visually-hidden">Trading activity averages and standard deviations</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Trading activity</th>
+                                            <th scope="col" class="text-end">Average</th>
+                                            <th scope="col" class="text-end">Standard deviation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row">Daily traded value (7d)</th>
+                                            <td class="text-end">@FormatTradedValue(analysis.AverageDailyValueTraded7D, dividend.Currency)</td>
+                                            <td class="text-end">@FormatTradedValue(analysis.DailyValueTradedStandardDeviation7D, dividend.Currency)</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Daily share volume (30d)</th>
+                                            <td class="text-end">@FormatVolume(analysis.AverageVolume30D)</td>
+                                            <td class="text-end">@FormatVolume(analysis.VolumeStandardDeviation30D)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </details>
+                }
+                else
+                {
+                    <div class="alert alert-light border" role="status">Historical analysis is unavailable for this event.</div>
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<MarketEventResp> Events { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyDictionary<string, StockQuote> Quotes { get; set; } = new Dictionary<string, StockQuote>();
+
+    private MarketEventResp? SelectedEvent;
+    private ElementReference DetailsElement;
+    private bool TableInitialized;
+    private bool FocusDetails;
+
+    protected override void OnParametersSet()
+    {
+        if (Events.Count == 0)
+        {
+            SelectedEvent = null;
+            TableInitialized = false;
+            FocusDetails = false;
+            return;
+        }
+        if (SelectedEvent is { } selected)
+        {
+            foreach (var e in Events)
+            {
+                if (e.Id == selected.Id)
+                {
+                    SelectedEvent = e;
+                    return;
+                }
+            }
+        }
+        SelectedEvent = Events[0];
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Events.Count > 0 && !TableInitialized)
+        {
+            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblDividendEvents");
+            TableInitialized = true;
+        }
+        if (FocusDetails)
+        {
+            FocusDetails = false;
+            await DetailsElement.FocusAsync();
+        }
+    }
+
+    private void SelectDividend(MarketEventResp e)
+    {
+        SelectedEvent = e;
+        FocusDetails = true;
+    }
+
+    private string CurrentPrice(MarketEventResp e) =>
+        Quotes.TryGetValue(e.ItemCode, out var quote) && quote.MarketPrice > 0
+            ? FormatMoney(quote.MarketPrice, string.IsNullOrWhiteSpace(quote.Currency) ? e.Metadata?.Dividend?.Currency : quote.Currency, e.MarketId)
+            : "--";
+
+    private string PostDropPriceRange(MarketEventResp e)
+    {
+        var dividend = e.Metadata?.Dividend;
+        var metrics = dividend?.Analysis;
+        if (metrics is not { NumSamples: > 0 } || !Quotes.TryGetValue(e.ItemCode, out var quote)
+            || quote.MarketPrice is not { } currentPrice || currentPrice <= 0
+            || !double.IsFinite(metrics.DropPriceMin) || !double.IsFinite(metrics.DropPriceMax)
+            || metrics.DropPriceMin < 0 || metrics.DropPriceMax < metrics.DropPriceMin)
+        {
+            return "--";
+        }
+        try
+        {
+            var minimum = currentPrice - (decimal)metrics.DropPriceMax;
+            var maximum = currentPrice - (decimal)metrics.DropPriceMin;
+            if (minimum < 0)
+            {
+                return "--";
+            }
+            var currency = string.IsNullOrWhiteSpace(quote.Currency) ? dividend?.Currency : quote.Currency;
+            if (minimum == maximum)
+            {
+                return FormatMoney(minimum, currency, e.MarketId);
+            }
+            var format = PriceFormat(e.MarketId);
+            return $"{WithCurrency(minimum.ToString(format), currency, spaceAfterSymbol: true)} - {WithCurrency(maximum.ToString(format), currency, spaceAfterSymbol: true)}";
+        }
+        catch (OverflowException)
+        {
+            return "--";
+        }
+    }
+
+    private static bool IsDistribution(MarketEventResp e) =>
+        string.Equals(e.EventType, MarketEventEntity.EVENT_DISTRIBUTION, StringComparison.OrdinalIgnoreCase);
+
+    private static string AttentionClass(int level) => level > 2 ? "text-bg-danger" : level == 2 ? "text-bg-success" : "text-bg-info";
+    private static string AttentionLabel(int level) => level > 2 ? "High" : level == 2 ? "Medium" : "Low";
+    private static string ValueOrPlaceholder(string? value) => string.IsNullOrWhiteSpace(value) ? "--" : value;
+    private static string PriceFormat(string market) => string.Equals(market, "VN", StringComparison.OrdinalIgnoreCase) ? "F0" : "F2";
+    private static string FormatYield(decimal? value) => value > 0 ? value.Value.ToString("P2") : "--";
+    private static string FormatMetricYield(double value) => double.IsFinite(value) && value > 0 ? value.ToString("P2") : "--";
+    private static string FormatNumber(double value, string format) => double.IsFinite(value) ? value.ToString(format) : "--";
+    private static string FormatProbability(double value) => double.IsFinite(value) && value is >= 0 and <= 1 ? value.ToString("P0") : "--";
+
+    private static string FormatDays(int minimum, int maximum)
+    {
+        if (minimum < 0 || maximum < minimum)
+        {
+            return "--";
+        }
+        return minimum == maximum ? $"{minimum} days" : $"{minimum} - {maximum} days";
+    }
+
+    private static string FormatMoney(decimal? amount, string? currency, string market) =>
+        amount is { } value ? WithCurrency(value.ToString(decimal.Truncate(value) == value ? "F0" : PriceFormat(market)), currency) : "--";
+
+    private static string FormatMetricPrice(double value, string? currency, string market) =>
+        double.IsFinite(value) && value > 0
+            ? WithCurrency(value.ToString(Math.Truncate(value) == value ? "F0" : PriceFormat(market)), currency)
+            : "--";
+
+    private static string FormatPriceRange(double minimum, double maximum, string? currency, string market)
+    {
+        if (!double.IsFinite(minimum) || !double.IsFinite(maximum) || minimum < 0 || maximum < minimum)
+        {
+            return "--";
+        }
+        if (minimum == maximum)
+        {
+            return FormatMetricPrice(minimum, currency, market);
+        }
+        var format = PriceFormat(market);
+        return $"{WithCurrency(minimum.ToString(format), currency, spaceAfterSymbol: true)} - {WithCurrency(maximum.ToString(format), currency, spaceAfterSymbol: true)}";
+    }
+
+    private static string FormatVolume(long value) => value >= 0
+        ? FormatUtils.FormatVolume(value).Replace($"{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}00", string.Empty, StringComparison.Ordinal)
+        : "--";
+
+    private static string FormatTradedValue(long value, string? currency) =>
+        value >= 0 ? WithCurrency(FormatVolume(value), currency) : "--";
+
+    private static string WithCurrency(string value, string? currency, bool spaceAfterSymbol = false)
+    {
+        var symbol = currency?.Trim().ToUpperInvariant() switch
+        {
+            "AUD" => "A$",
+            "USD" => "$",
+            "VND" => "\u20ab",
+            _ => null
+        };
+        return symbol is null
+            ? string.IsNullOrWhiteSpace(currency) ? value : $"{currency} {value}"
+            : $"{symbol}{(spaceAfterSymbol ? " " : string.Empty)}{value}";
+    }
+
+    private static DateOnly? ParsePaymentDate(string? value)
+    {
+        if (DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return date;
+        }
+        return DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var timestamp)
+            ? DateOnly.FromDateTime(timestamp.DateTime)
+            : null;
+    }
+
+    private static string PaymentDateText(string? value) =>
+        ParsePaymentDate(value)?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? ValueOrPlaceholder(value);
+
+    private static Uri? SafeUrl(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) ? uri : null;
+
+    private static RenderFragment MetricField(string label, string value) => @<div class="col">
+        <dt class="small text-muted fw-normal">@label</dt>
+        <dd class="mb-0">@value</dd>
+    </div>;
+}

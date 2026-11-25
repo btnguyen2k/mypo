@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -24,7 +26,7 @@ public abstract class BaseApiClient
 		DefaultHttpClient = httpClient;
         Logger = logger;
         BaseUrl = baseUrl;
-        AttachedHeaders = attachedHeaders != null ? new Dictionary<string, string>(attachedHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
+        AttachedHeaders = attachedHeaders is not null ? new Dictionary<string, string>(attachedHeaders) : new Dictionary<string, string>(DEFAULT_HEADERS);
 
         SetupDefaultHttpClient(DefaultHttpClient);
 	}
@@ -71,7 +73,7 @@ public abstract class BaseApiClient
         {
             req.Headers.Add("Authorization", $"Bearer {authToken}");
         }
-        if (requestData != null)
+        if (requestData is not null)
         {
             req.Content = JsonContent.Create(requestData);
         }
@@ -122,4 +124,224 @@ public abstract class BaseApiClient
 			return new ApiResp<T> { Status = 500, Message = ex.Message };
 		}
 	}
+
+    protected static async Task<T> ReadAndCloseResponseAsApiRespAsync<T>(HttpResponseMessage httpResult, CancellationToken cancellationToken) where T : ApiResp, new()
+	{
+		try
+		{
+			var result = await httpResult.Content.ReadFromJsonAsync<T>(cancellationToken);
+			if (result == null)
+			{
+				return new T { Status = 500, Message = "Invalid response from server." };
+			}
+			return result;
+		}
+		catch (Exception ex) when (ex is JsonException || ex is InvalidOperationException || ex is OperationCanceledException)
+		{
+			return new T { Status = 500, Message = ex.Message };
+		}
+	}
+
+    /// <summary>
+    /// Sends an API request and polls for the result until completion or timeout.
+    /// </summary>
+    /// <typeparam name="TAsyncResponse"></typeparam>
+    /// <typeparam name="TResponse"></typeparam>
+    /// <typeparam name="TData"></typeparam>
+    /// <param name="methodStart">The HTTP method for the initial API request.</param>
+    /// <param name="endpointStart">The endpoint URL for the initial API request.</param>
+    /// <param name="reqData">The request data for the initial API request.</param>
+    /// <param name="methodPoll">The HTTP method for polling the API request status.</param>
+    /// <param name="endpointPollWithoutTaskId">The endpoint URL for polling the API request status, without the task ID.</param>
+    /// <param name="timeout">The maximum duration to wait for the API request to complete.</param>
+    /// <param name="authToken">The authentication token for the API request.</param>
+    /// <param name="baseUrl">The base URL for the API request.</param>
+    /// <param name="httpClient">The HTTP client to use for the API request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the API request.</param>
+    /// <returns>The final API response after polling for completion or timeout.</returns>
+    protected virtual async Task<TResponse> SendApiRequestAndPollAsync<TAsyncResponse, TResponse, TData>(
+        HttpMethod methodStart,
+        string endpointStart,
+        object? reqData,
+        HttpMethod methodPoll,
+        string endpointPollWithoutTaskId,
+        TimeSpan timeout,
+        string? authToken,
+        string? baseUrl = default,
+        HttpClient? httpClient = default,
+        CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+        where TResponse : ApiResp<TData>, new()
+    {
+        var timerStart = DateTimeOffset.Now;
+        var apiResult = await StartApiRequestAsync<TAsyncResponse, TData>(
+            methodStart, endpointStart, reqData,
+            authToken,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+        while (apiResult.IsSuccess)
+        {
+            var taskInfo = apiResult.Extra;
+            switch (taskInfo?.State)
+            {
+                case TaskState.Completed:
+                    return apiResult.ToApiResp<TResponse>();
+                case TaskState.Failed:
+                    return new TResponse()
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = string.IsNullOrEmpty(apiResult.Message)
+                            ? $"Task '{taskInfo.TaskId}' failed."
+                            : apiResult.Message,
+                    };
+                case TaskState.Running:
+                    if (DateTimeOffset.Now - timerStart > timeout || cancellationToken.IsCancellationRequested)
+                    {
+                        return new TResponse()
+                        {
+                            Status = (int)HttpStatusCode.RequestTimeout,
+                            Message = cancellationToken.IsCancellationRequested
+                                ? $"Task '{taskInfo.TaskId}' has been canceled."
+                                : $"Task '{taskInfo.TaskId}' timeout exceeded {timeout.TotalMilliseconds} ms.",
+                        };
+                    }
+                    var delayMs = Random.Shared.Next(3000, 5000); // delay randomly 3-5 secs
+                    await Task.Delay(delayMs, cancellationToken: cancellationToken);
+                    var taskId = taskInfo.TaskId;
+                    apiResult = await PollApiResultAsync<TAsyncResponse, TData>(
+                        methodPoll, endpointPollWithoutTaskId, taskId,
+                        authToken,
+                        baseUrl,
+                        httpClient,
+                        cancellationToken);
+                    break;
+                default:
+                    return new TResponse()
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = string.IsNullOrEmpty(apiResult.Message)
+                            ? $"Task '{taskInfo?.TaskId}' has unknown state '{taskInfo?.State}'."
+                            : apiResult.Message,
+                    };
+            }
+        }
+        return new TResponse()
+        {
+            Status = apiResult.IsSuccess ? (int)HttpStatusCode.InternalServerError : apiResult.Status,
+            Message = string.IsNullOrEmpty(apiResult.Message)
+                ? "Error occurred while sending task request to server"
+                : apiResult.Message,
+        };
+    }
+
+    /// <summary>
+    /// Adds the task ID as a query parameter to the given endpoint URL.
+    /// </summary>
+    /// <param name="endpoint">The endpoint URL to which the task ID should be added.</param>
+    /// <param name="taskId">The task ID to add as a query parameter.</param>
+    /// <returns>The endpoint URL with the task ID added as a query parameter.</returns>
+    protected virtual string AddTaskIdToEndpoint(string endpoint, string taskId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+        var queryParams = new Dictionary<string, string?> { { "task_id", taskId } };
+        return QueryHelpers.AddQueryString(endpoint, queryParams);
+    }
+
+    /// <summary>
+    /// Starts an async API request with the specified parameters and returns the asynchronous response.
+    /// </summary>
+    /// <typeparam name="TAsyncResponse">The type of the asynchronous API response.</typeparam>
+    /// <typeparam name="TData">The type of the data contained in the API response.</typeparam>
+    /// <param name="method">The HTTP method to use for the request.</param>
+    /// <param name="reqData">The request data to send with the API request.</param>
+    /// <param name="endpointStart">The endpoint URL for the API request.</param>
+    /// <param name="authToken">The authentication token to include in the request headers.</param>
+    /// <param name="baseUrl">The base URL for the API request.</param>
+    /// <param name="httpClient">The HTTP client to use for sending the request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the request.</param>
+    /// <returns>The asynchronous API response of type <typeparamref name="TAsyncResponse"/>.</returns>
+    protected virtual async Task<TAsyncResponse> StartApiRequestAsync<TAsyncResponse, TData>(
+        HttpMethod method,
+        string endpointStart,
+        object? reqData,
+        string? authToken,
+        string? baseUrl = default,
+        HttpClient? httpClient = default,
+        CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+    {
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            method, baseUrl, endpointStart,
+            authToken,
+            reqData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsApiRespAsync<TAsyncResponse>(httpResult, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Polls the API for the result of an asynchronous request using the specified task ID.
+    /// </summary>
+    /// <typeparam name="TAsyncResponse">The type of the asynchronous API response.</typeparam>
+    /// <typeparam name="TData">The type of the data contained in the API response.</typeparam>
+    /// <param name="method">The HTTP method to use for the request.</param>
+    /// <param name="endpointPollWithTaskId">The endpoint URL for polling the API with the task ID.</param>
+    /// <param name="authToken">The authentication token to include in the request headers.</param>
+    /// <param name="baseUrl">The base URL for the API request.</param>
+    /// <param name="httpClient">The HTTP client to use for sending the request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the request.</param>
+    /// <returns>The asynchronous API response of type <typeparamref name="TAsyncResponse"/>.</returns>
+    protected virtual async Task<TAsyncResponse> PollApiResultAsync<TAsyncResponse, TData>(
+        HttpMethod method,
+        string endpointPollWithTaskId,
+        string? authToken,
+        string? baseUrl = default,
+        HttpClient? httpClient = default,
+        CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+    {
+        using var httpResult = await BuildAndSendRequestAsync(
+            httpClient,
+            method, baseUrl, endpointPollWithTaskId,
+            authToken,
+            NoData,
+            cancellationToken
+        );
+        return await ReadAndCloseResponseAsApiRespAsync<TAsyncResponse>(httpResult, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Polls the API for the result of an asynchronous request using the specified task ID, adding the task ID to the endpoint URL.
+    /// </summary>
+    /// <typeparam name="TAsyncResponse">The type of the asynchronous API response.</typeparam>
+    /// <typeparam name="TData">The type of the data contained in the API response.</typeparam>
+    /// <param name="method">The HTTP method to use for the request.</param>
+    /// <param name="taskId">The task ID to include in the endpoint URL.</param>
+    /// <param name="endpointPollWithoutTaskId">The endpoint URL for polling the API without the task ID.</param>
+    /// <param name="authToken">The authentication token to include in the request headers.</param>
+    /// <param name="baseUrl">The base URL for the API request.</param>
+    /// <param name="httpClient">The HTTP client to use for sending the request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the request.</param>
+    /// <returns>The asynchronous API response of type <typeparamref name="TAsyncResponse"/>.</returns>
+    protected virtual async Task<TAsyncResponse> PollApiResultAsync<TAsyncResponse, TData>(
+        HttpMethod method,
+        string endpointPollWithoutTaskId,
+        string taskId,
+        string? authToken,
+        string? baseUrl = default,
+        HttpClient? httpClient = default,
+        CancellationToken cancellationToken = default)
+        where TAsyncResponse : AsyncApiResponse<TData>, new()
+    {
+        return await PollApiResultAsync<TAsyncResponse, TData>(
+            method,
+            AddTaskIdToEndpoint(endpointPollWithoutTaskId, taskId),
+            authToken,
+            baseUrl,
+            httpClient,
+            cancellationToken
+        );
+    }
 }

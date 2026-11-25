@@ -138,21 +138,21 @@ public static partial class FormatUtils
         return (newValue - oldValue) / Math.Abs(oldValue) * 100;
     }
 
-    public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
-    {
-        return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
-    }
+    // public static decimal CalculatePnL(AssetResp asset, MarketDefResp? market, StockQuote quote)
+    // {
+    //     return CalculatePnL(asset.ToModel(), market?.ToModel(), quote);
+    // }
 
-    public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, StockQuote quote)
-    {
-        if (market == null)
-        {
-            return 0;
-        }
-        var currentPrice = quote.MarketPrice;
-        var pnl = (currentPrice - asset.AveragePrice * market!.PriceScale) * asset.Quantity;
-        return pnl;
-    }
+    // public static decimal CalculatePnL(AssetEntity asset, MarketDef? market, StockQuote quote)
+    // {
+    //     if (market == null)
+    //     {
+    //         return 0;
+    //     }
+    //     var currentPrice = quote.MarketPrice;
+    //     var pnl = (currentPrice - asset.AveragePrice * market!.PriceScale) * asset.Quantity;
+    //     return pnl;
+    // }
 
     public static string ExtractFirstCharIfEmoji(string? input)
     {

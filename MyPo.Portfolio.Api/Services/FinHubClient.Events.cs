@@ -1,0 +1,163 @@
+﻿using Finhub.Client;
+using FinHub.Client.Models.Dividends;
+using FinHub.Client.Models.Earnings;
+using FinHub.Client.Models.Listings;
+using FinHub.Client.Schemas.Events;
+using FinHub.Client.Schemas.NewListings;
+using Microsoft.AspNetCore.WebUtilities;
+
+namespace MyPo.Portfolio.Api.Services;
+
+public partial class FinHubClient
+{
+    /// <inheritdoc/>
+    public async Task<GetUpcomingDividendsResponse> GetUpcomingDividendAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_DIVIDENDS_ASYNC_START}", queryParams);
+        var endpointPoll = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_DIVIDENDS_ASYNC_POLL}", queryParams);
+        return await SendApiRequestAndPollAsync<GetUpcomingDividendsAsyncResponse, GetUpcomingDividendsResponse, IReadOnlyList<UpcomingDividendEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            HttpMethod.Get, endpointPoll,
+            MIN_TIMEOUT,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetUpcomingDividendsAsyncResponse> StartUpcomingDividendAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_DIVIDENDS_ASYNC_START}", queryParams);
+        return await StartApiRequestAsync<GetUpcomingDividendsAsyncResponse, IReadOnlyList<UpcomingDividendEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetUpcomingDividendsAsyncResponse> PollUpcomingDividendAnnouncementsAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpointPoll = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_DIVIDENDS_ASYNC_POLL}";
+        return await PollApiResultAsync<GetUpcomingDividendsAsyncResponse, IReadOnlyList<UpcomingDividendEvent>>(
+            HttpMethod.Get, endpointPoll, taskId,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /*----------------------------------------------------------------------*/
+
+    /// <inheritdoc/>
+    public async Task<GetUpcomingEarningsResponse> GetUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START}", queryParams);
+        var endpointPoll = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL}", queryParams);
+        return await SendApiRequestAndPollAsync<GetUpcomingEarningsAsyncResponse, GetUpcomingEarningsResponse, IReadOnlyList<UpcomingEarningsEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            HttpMethod.Get, endpointPoll,
+            MIN_TIMEOUT,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetUpcomingEarningsAsyncResponse> StartUpcomingEarningsAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_START}", queryParams);
+        return await StartApiRequestAsync<GetUpcomingEarningsAsyncResponse, IReadOnlyList<UpcomingEarningsEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetUpcomingEarningsAsyncResponse> PollUpcomingEarningsAnnouncementsAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpointPoll = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_UPCOMING_EARNINGS_ASYNC_POLL}";
+        return await PollApiResultAsync<GetUpcomingEarningsAsyncResponse, IReadOnlyList<UpcomingEarningsEvent>>(
+            HttpMethod.Get, endpointPoll, taskId,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /*----------------------------------------------------------------------*/
+
+    /// <inheritdoc/>
+    public async Task<GetNewListingsResponse> GetNewListingAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_START}", queryParams);
+        var endpointPoll = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_POLL}", queryParams);
+        return await SendApiRequestAndPollAsync<GetNewListingsAsyncResponse, GetNewListingsResponse, IReadOnlyList<ListingEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            HttpMethod.Get, endpointPoll,
+            MIN_TIMEOUT,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetNewListingsAsyncResponse> StartNewListingAnnouncementsAsync(string country, string? index = default, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?> { { "country", country } };
+        if (!string.IsNullOrWhiteSpace(index))
+        {
+            queryParams["index"] = index;
+        }
+        var endpointStart = QueryHelpers.AddQueryString($"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_START}", queryParams);
+        return await StartApiRequestAsync<GetNewListingsAsyncResponse, IReadOnlyList<ListingEvent>>(
+            HttpMethod.Get, endpointStart, NoData,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GetNewListingsAsyncResponse> PollNewListingAnnouncementsAsync(string taskId, string? baseUrl = default, HttpClient? httpClient = default, CancellationToken cancellationToken = default)
+    {
+        var endpointPoll = $"{IFinHubClient.API_FINHUB_ENDPOINT_EVENTS_NEW_LISTINGS_ASYNC_POLL}";
+        return await PollApiResultAsync<GetNewListingsAsyncResponse, IReadOnlyList<ListingEvent>>(
+            HttpMethod.Get, endpointPoll, taskId,
+            NoAuth,
+            baseUrl,
+            httpClient,
+            cancellationToken);
+    }
+}

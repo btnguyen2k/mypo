@@ -1,0 +1,164 @@
+﻿@using System.Globalization
+@using MyPo.Blazor.App.Shared
+@using MyPo.Blazor.Portfolio.App.Shared
+@using MyPo.Portfolio.Shared.Api
+
+@inject IJSRuntime JS
+
+<div class="upcoming-earnings mt-3">
+    @if (Events.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-muted">
+                <BIcon icon="bi-calendar-event" extraClassName="me-1" />
+                No upcoming earnings announcements available.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Upcoming earnings <span class="badge text-bg-secondary">@Events.Count</span></h5>
+                <p class="small text-muted">Compare forecast and actual results as supplied by the source. Announcement dates and forecasts may change.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 small" id="tblEarningsEvents" data-order='[[ 0, "asc" ]]'>
+                        <caption class="visually-hidden">Upcoming earnings announcements with market capitalization, forecast and actual earnings per share and revenue</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" rowspan="2" class="align-middle text-nowrap">Announcement</th>
+                                <th scope="col" rowspan="2" class="align-middle">Security</th>
+                                <th scope="col" rowspan="2" class="align-middle text-end text-nowrap">Market cap</th>
+                                <th scope="colgroup" colspan="2" class="text-center" data-dt-order="disable"><abbr title="Earnings per share">EPS</abbr></th>
+                                <th scope="colgroup" colspan="2" class="text-center" data-dt-order="disable">Revenue</th>
+                                <th scope="col" rowspan="2" class="align-middle text-center" data-dt-order="disable">Status / Source</th>
+                            </tr>
+                            <tr>
+                                <th scope="col" class="text-end text-nowrap">Forecast</th>
+                                <th scope="col" class="text-end text-nowrap">Actual</th>
+                                <th scope="col" class="text-end text-nowrap">Forecast</th>
+                                <th scope="col" class="text-end text-nowrap">Actual</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            @foreach (var e in Events)
+                            {
+                                var earnings = e.Metadata?.Earnings;
+                                var epsComparisonClass = earnings?.Eps is < 0 || earnings?.EpsForecast is < 0
+                                    ? "text-danger"
+                                    : ForecastComparisonClass(earnings?.Eps, earnings?.EpsForecast);
+                                var revenueComparisonClass = ForecastComparisonClass(earnings?.Revenue, earnings?.RevenueForecast);
+                                var sourceUrl = SafeUrl(earnings?.Link);
+                                var sourceLabel = string.IsNullOrWhiteSpace(earnings?.SourceName) ? "View source" : earnings.SourceName;
+                                <tr @key="e.Id">
+                                    <td class="text-nowrap" data-order="@e.EventTime.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)">
+                                        <div>@e.EventTimeLocalTz.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</div>
+                                        <div class="small text-muted">Period: @ValueOrPlaceholder(earnings?.ReportPeriod)</div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-nowrap">@e.ItemCode</span>
+                                        <div class="small text-muted">@ValueOrPlaceholder(earnings?.CompanyName)</div>
+                                    </td>
+                                    <td class="text-end text-nowrap" data-order="@NumericOrder(earnings?.MarketCap)" title="@ExactAmount(earnings?.MarketCap, earnings?.Currency)">@FormatAmount(earnings?.MarketCap, earnings?.Currency)</td>
+                                    <td class="text-end text-nowrap @epsComparisonClass" data-order="@NumericOrder(earnings?.EpsForecast)">@FormatEps(earnings?.EpsForecast, earnings?.Currency)</td>
+                                    <td class="text-end text-nowrap @epsComparisonClass" data-order="@NumericOrder(earnings?.Eps)">@FormatEps(earnings?.Eps, earnings?.Currency)</td>
+                                    <td class="text-end text-nowrap @revenueComparisonClass" data-order="@NumericOrder(earnings?.RevenueForecast)" title="@ExactAmount(earnings?.RevenueForecast, earnings?.Currency)">@FormatAmount(earnings?.RevenueForecast, earnings?.Currency)</td>
+                                    <td class="text-end text-nowrap @revenueComparisonClass" data-order="@NumericOrder(earnings?.Revenue)" title="@ExactAmount(earnings?.Revenue, earnings?.Currency)">@FormatAmount(earnings?.Revenue, earnings?.Currency)</td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrWhiteSpace(earnings?.Status))
+                                        {
+                                            <span class="badge text-bg-light border text-wrap">@earnings.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">--</span>
+                                        }
+                                        <span class="small ms-1">
+                                            @if (sourceUrl is not null)
+                                            {
+                                                <a href="@sourceUrl" target="_blank" rel="noopener noreferrer"
+                                                   aria-label="@($"{sourceLabel} for {e.ItemCode} (opens in a new tab)")">
+                                                    @sourceLabel
+                                                    <BIcon icon="bi-box-arrow-up-right" extraClassName="ms-1" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@ValueOrPlaceholder(earnings?.SourceName)</span>
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mt-2 mb-0">Currencies are shown when supplied; amounts are not converted. Zero/default financial values are shown as -- because missing values and genuine zeros are not distinguished.</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<MarketEventResp> Events { get; set; } = [];
+
+    private bool TableInitialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Events.Count == 0)
+        {
+            TableInitialized = false;
+        }
+        else if (!TableInitialized)
+        {
+            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
+            await jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
+            TableInitialized = true;
+        }
+    }
+
+    private static string ValueOrPlaceholder(string? value) => string.IsNullOrWhiteSpace(value) ? "--" : value;
+
+    private static string ForecastComparisonClass(decimal? actual, decimal? forecast)
+    {
+        if (actual is not { } actualValue || forecast is not { } forecastValue || actualValue == 0 || forecastValue == 0)
+        {
+            return string.Empty;
+        }
+        return forecastValue > actualValue ? "text-success" : forecastValue < actualValue ? "text-danger" : string.Empty;
+    }
+
+    private static string NumericOrder(decimal? value) =>
+        value is { } amount && amount != 0 ? amount.ToString(CultureInfo.InvariantCulture) : string.Empty;
+
+    private static string FormatEps(decimal? value, string? currency) =>
+        value is { } amount && amount != 0 ? WithCurrency(amount.ToString("#,##0.00##########################"), currency) : "--";
+
+    private static string FormatAmount(long? value, string? currency) =>
+        value is { } amount && amount != 0
+            ? WithCurrency(FormatUtils.FormatVolume(amount).Replace($"{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}00", string.Empty, StringComparison.Ordinal), currency)
+            : "--";
+
+    private static string? ExactAmount(long? value, string? currency) =>
+        value is { } amount && amount != 0 ? WithCurrency(amount.ToString("N0"), currency) : null;
+
+    private static string WithCurrency(string value, string? currency)
+    {
+        var code = currency?.Trim().ToUpperInvariant();
+        var symbol = code switch
+        {
+            "AUD" => "A$",
+            "USD" => "$",
+            "VND" => "\u20ab",
+            _ => null
+        };
+        return symbol is null
+            ? string.IsNullOrEmpty(code) ? value : $"{code} {value}"
+            : $"{symbol}{value}";
+    }
+
+    private static Uri? SafeUrl(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) ? uri : null;
+}

@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FinHub.Client.Models.Stocks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -31,12 +31,6 @@ public partial class Events : BasePage
 
     // map {symbol --> quote}
     private readonly Dictionary<string, StockQuote> QuotesMap = [];
-
-    // map {symbol --> yield_vs_current_price}
-    private readonly Dictionary<string, decimal> YieldsMap = [];
-
-    // map {symbol --> market close price before ex-dividend date}
-    private readonly Dictionary<string, decimal> PreExDivPrice = [];
 
     [Inject]
     private IJSRuntime JS { get; set; } = default!;
@@ -84,8 +78,6 @@ public partial class Events : BasePage
                     foreach (var quote in quotesResp.Data ?? new Dictionary<string, StockQuote>())
                     {
                         QuotesMap[quote.Key] = quote.Value;
-                        var eventInfo = MarketEventsList?.FirstOrDefault(e => e.ItemCode.Equals(quote.Key, StringComparison.OrdinalIgnoreCase));
-                        YieldsMap[quote.Key] = eventInfo?.Metadata?.Dividend?.DividendYield ?? 0;
                     }
                     InvokeAsync(StateHasChanged);
                 }
@@ -122,19 +114,12 @@ public partial class Events : BasePage
                 {
                     CloseAlert();
                     await Task.Run(GetStocksQuotesBackground);
-                    // await Task.Run(GetPricePreExDivBackground);
                 }
             }
             else
             {
                 ShowAlert("danger", result.Message ?? "Error loading portfolios.");
             }
-
-            var jsDatatable = await PortfolioUtils.LoadJSDatatable(JS);
-            var taskDatatableDividendEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblDividendEvents");
-            var taskDatatableListingEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblListingEvents");
-            var taskDatatableEarningsEvents = jsDatatable.InvokeVoidAsync("MakeDatatable", "#tblEarningsEvents");
-            await Task.WhenAll(taskDatatableDividendEvents.AsTask(), taskDatatableListingEvents.AsTask(), taskDatatableEarningsEvents.AsTask());
 
             SwitchToSavedTab();
         }

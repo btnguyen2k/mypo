@@ -1,8 +1,12 @@
+﻿# escape=`
 # syntax=docker/dockerfile:1
+## Sample build command:
+##     docker build --rm -t mypo:win -f Dockerfile.win .
 
 ARG DOTNETVERSION_BUILD=8.0
-ARG DOTNETVERSION_RUN=10.0
-ARG BASEIMAGE=nanoserver-ltsc2022
+ARG DOTNETVERSION_RUN=8.0
+ARG WINDOWS_SERVER=ltsc2022
+ARG BASEIMAGE=nanoserver-$WINDOWS_SERVER
 
 # Version of the Windows image must match the host OS version (e.g. both must be 2022).
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNETVERSION_BUILD-$BASEIMAGE AS build
@@ -16,12 +20,39 @@ ARG TARGETPLATFORM
 
 # Build the application.
 RUN echo Running on %BUILDPLATFORM%, building for %TARGETPLATFORM% (%TARGETARCH%)
-RUN dotnet restore
-RUN dotnet publish --no-restore --configuration Debug --property:PublishDir=/app /p:EnvironmentName=Development
+# RUN dotnet restore
+# RUN dotnet publish --no-restore --configuration Debug --property:PublishDir=/app /p:EnvironmentName=Development
+RUN dotnet publish --configuration Debug --property:PublishDir=/app /p:EnvironmentName=Development MyPo.Blazor/MyPo.Blazor/MyPo.Blazor.csproj
+
+################################################################################
+
+FROM mcr.microsoft.com/windows/servercore:$WINDOWS_SERVER AS servercore
+
+# Export timezone data
+RUN ["reg.exe", "export", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", "C:\\timezones.reg", "/y"]
+
+# Export ICU DLLs
+# Note: Windows cross-stage wildcard COPY bug, we need to "export" icu*.dll files to a directory first
+#       then copy the whole directory over
+RUN ["cmd.exe", "/S", "/C", "mkdir C:\\icu-export && copy /Y C:\\Windows\\System32\\icu*.dll C:\\icu-export"]
 
 ################################################################################
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNETVERSION_RUN-$BASEIMAGE AS final
+
+#===== START: Add timezone and ICU data
+USER ContainerAdministrator
+
+# Import timezone data from ServerCore image
+COPY --from=servercore ["C:\\timezones.reg", "C:\\timezones.reg"]
+RUN ["cmd.exe", "/S", "/C", "reg.exe import C:\\timezones.reg && del C:\\timezones.reg"]
+COPY --from=servercore ["C:\\Windows\\Globalization\\Time Zone", "C:\\Windows\\Globalization\\Time Zone\\"]
+
+# Copy ICU DLLs from ServerCore image
+COPY --from=servercore ["C:\\icu-export", "C:\\Windows\\System32\\"]
+COPY --from=servercore ["C:\\Windows\\Globalization\\ICU", "C:\\Windows\\Globalization\\ICU\\"]
+#===== END: Add timezone data and ICU
+
 WORKDIR /app
 
 # ATTENTION: Change this to match the name of your application.
@@ -31,22 +62,22 @@ COPY --from=build /app ./
 COPY ${BASENAME}.Blazor/${BASENAME}.Blazor/config ./config
 COPY ${BASENAME}.Blazor/${BASENAME}.Blazor/data ./data
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
-USER appuser
+# Use a non-privileged user that the app will run under.
+# See https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/nanoserver-ltsc2022/amd64/Dockerfile
+USER ContainerUser
 
 # Enable Swagger UI
 ENV ENABLE_SWAGGER_UI=true
 
-# Initialize the database
-ENV INIT_DB=true
-
 # API base URL setting for Blazor Server mode
 ENV API__BaseUrl=http://localhost:8080
 
+# Initialize the database
+ENV INIT_DB=true
 # Set database type to InMemory for demo purposes
 ENV Databases__Application__Type=InMemory
 ENV Databases__Identity__Type=InMemory
+ENV Databases__WolverineFx__Type=InMemory
 
 # Set the ASP.NET Core environment to Development
 ENV ASPNETCORE_ENVIRONMENT=Development

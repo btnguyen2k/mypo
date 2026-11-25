@@ -1,7 +1,7 @@
 ﻿using Ddth.Utilities.Tempus;
-using MyPo.Portfolio.Api.Services;
+using Finhub.Client;
+using FinHub.Client.Models.Stocks;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
 using MyPo.Portfolio.Shared.Utils;
 using MyPo.Shared.Identity;
 
@@ -89,6 +89,8 @@ sealed class BackgroundPortfolioTaskBuildPortfolioReports : BackgroundPortfolioT
             Logger.LogInformation("Skipping reports for portfolio '{portfolioId}: {portfolioName}': FiscalYearStartMonth is not set.", portfolio.Id, portfolio.Name);
             return;
         }
+
+        Logger.LogInformation("Building reports for portfolio '{portfolioId}: {portfolioName}'.", portfolio.Id, portfolio.Name);
 
         // cache to store stock quote history
         var quoteHistoryCache = new Dictionary<string, HistoryPoint[]>();

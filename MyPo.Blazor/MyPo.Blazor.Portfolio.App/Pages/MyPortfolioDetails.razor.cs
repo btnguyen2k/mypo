@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using Microsoft.JSInterop;
-using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Libs.Opurator;
-using MyPo.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Blazor.Portfolio.App.Shared;
+using FinHub.Client.Models.Stocks;
+using FinHub.Client.Schemas.Stocks;
+using Ddth.Opurator;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -82,7 +82,7 @@ public partial class MyPortfolioDetails : BasePage
             SetBackgroundMsg($"⌛Fetching quotes for symbols: {string.Join(",", symbols)}");
         }
 
-        bool postfetchCallback(ApiResp<IDictionary<string, StockQuote>> quotesResp)
+        bool postfetchCallback(GetStockQuotesResponse quotesResp)
         {
             var emptyDict = new Dictionary<string, StockQuote>();
             if (!quotesResp.IsSuccess)
@@ -292,7 +292,7 @@ public partial class MyPortfolioDetails : BasePage
                 a.Metadata.CorpName = overview.LongName?.Trim() ?? overview.ShortName?.Trim() ?? string.Empty;
                 a.Metadata.Industry = overview.Industry?.Trim() ?? string.Empty;
                 a.Metadata.Sector = overview.Sector?.Trim() ?? string.Empty;
-                a.Metadata.AssetType = overview.AssetType?.Trim().ToUpper() ?? "N/A";
+                a.Metadata.AssetType = overview.AssetType?.ToString().Trim().ToUpper() ?? "N/A";
                 a.Metadata.Tags = new HashSet<string>(a.Metadata.Tags ?? new HashSet<string>(), StringComparer.OrdinalIgnoreCase);
                 if (!string.IsNullOrEmpty(a.Metadata.Industry))
                 {
@@ -341,9 +341,17 @@ public partial class MyPortfolioDetails : BasePage
                 .Distinct()
                 .ToList() ?? [];
             SetBackgroundMsg($"ℹ️Initializing page for portfolio '{SelectedPortfolio.Name}' with {Assets?.Count() ?? 0} assets. Symbols: {string.Join(", ", symbolsList)}");
-            var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-            taskOperator.ExecuteInBackground(() => GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next()));
-            taskOperator.ExecuteInBackground(() => AutoPopulateAssetMetadata());
+            var backgroundTaskManager = ServiceProvider.GetRequiredService<IBackgroundTaskManager>();
+            backgroundTaskManager.RunOnce(
+                async cancellationToken =>
+                {
+                    GetStocksQuotesBackground(symbolsList, RefreshBackgroundTaskId = Random.Shared.Next());
+                });
+            backgroundTaskManager.RunOnce(
+                async cancellationToken =>
+                {
+                    AutoPopulateAssetMetadata();
+                });
         }
 
         HideUI = false;

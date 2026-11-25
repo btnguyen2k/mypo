@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Api;
+﻿using FinHub.Client.Models.Portfolios;
+using MyPo.Portfolio.Shared.Api;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
@@ -20,11 +21,11 @@ public partial class MyPortfolioPlansDetails : BasePage
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
         {
-            await LoadPageAsync(PlanId);
+            await LoadPortfolioPlanAsync(PlanId);
         }
     }
 
-    private async Task LoadPageAsync(string planId)
+    private async Task LoadPortfolioPlanAsync(string planId)
     {
         HideUI = true;
         ShowAlert("info", "Loading portfolio plan...");
@@ -74,21 +75,25 @@ public partial class MyPortfolioPlansDetails : BasePage
             return;
         }
 
-        var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW
-            .Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
+        var url = PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", planId, StringComparison.OrdinalIgnoreCase);
         NavigationManager.NavigateTo(url);
-        await LoadPageAsync(planId);
+        await LoadPortfolioPlanAsync(planId);
     }
 
     private void BtnClickEdit()
     {
+        if (!SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
+        {
+            ShowAlert("danger", "You are not authorized to edit this portfolio.");
+            return;
+        }
         var id = SelectedPortfolioPlan.Id;
         NavigationManager.NavigateTo(PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", id, StringComparison.OrdinalIgnoreCase));
     }
 
     private void BtnClickDelete()
     {
-        if (SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
+        if (!SelectedPortfolioPlan.OwnerUserId.Equals(CurrentUser?.Id, StringComparison.Ordinal))
         {
             ShowAlert("danger", "You are not authorized to delete this portfolio.");
             return;
@@ -125,9 +130,13 @@ public partial class MyPortfolioPlansDetails : BasePage
 
     public volatile bool analyzing = false;
 
-    public async void BtnClickAnalyze()
+    public async Task BtnClickAnalyze()
     {
-        if (analyzing) return;
+        if (analyzing)
+        {
+            return;
+        }
+
         analyzing = true;
         var step = string.Empty;
 
@@ -137,57 +146,56 @@ public partial class MyPortfolioPlansDetails : BasePage
             while (analyzing)
             {
                 var delta = DateTimeOffset.UtcNow - start;
-                if (analyzing)
+                if (step.Equals("done", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+                }
+                else
                 {
                     var stepStr = string.IsNullOrEmpty(step) ? string.Empty : $" - step: {step}";
                     ShowAlert("waiting", $"Analyzing portfolio plan '{SelectedPortfolioPlan.Name}'{stepStr}, please wait... ({delta.TotalSeconds}s)");
+                    await Task.Delay(1000);
                 }
-                await Task.Delay(1000);
             }
         });
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
         SelectedPortfolioPlan.Metadata ??= new();
 
-        step = "spotlight";
-        // Since FinHub v0.15.0+ no longer need to check for empty holdings as that is now handled at the server side.
+        try
         {
-            var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
-            if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
-            {
-                analyzing = false;
-                ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
-                return;
-            }
-            if (spotlightResult.Data.LLMError)
-            {
-                analyzing = false;
-                ShowAlert("danger", $"Portfolio plan spotlight completed with LLM error: {spotlightResult.Data.LLMErrorMsg}");
-                return;
-            }
-            SelectedPortfolioPlan.Metadata.SpotlightRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            SelectedPortfolioPlan.Metadata.Spotlight = spotlightResult.Data.Analysis;
-        }
+            var authToken = await GetAuthTokenAsync();
 
-        step = "analysis";
+            step = "spotlight";
+            {
+                var spotlightResult = await apiClient.SpotlightPortfolioPlanAsync(SelectedPortfolioPlan.Id, authToken, ApiBaseUrl);
+                if (!spotlightResult.IsSuccess || spotlightResult.Data is null)
+                {
+                    ShowAlert("danger", spotlightResult.Message ?? "Error spotlighting portfolio plan.");
+                    return;
+                }
+                SelectedPortfolioPlan.Metadata.RefreshTimestampSpotlightAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.SpotlightAnalysis = spotlightResult.Data;
+            }
+
+            step = "analysis";
+            {
+                var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, authToken, ApiBaseUrl);
+                if (!analysisResult.IsSuccess || analysisResult.Data is null)
+                {
+                    ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
+                    return;
+                }
+                SelectedPortfolioPlan.Metadata.RefreshTimestampDeepAnalysis = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                SelectedPortfolioPlan.Metadata.DeepAnalysis = analysisResult.Data;
+            }
+
+            step = "done";
+            ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
+        }
+        finally
         {
-            var analysisResult = await apiClient.AnalyzePortfolioPlanAsync(SelectedPortfolioPlan.Id, await GetAuthTokenAsync(), ApiBaseUrl);
             analyzing = false;
-            if (!analysisResult.IsSuccess || analysisResult.Data is null)
-            {
-                ShowAlert("danger", analysisResult.Message ?? $"{analysisResult.Status}: Error analyzing portfolio plan.");
-                return;
-            }
-            if (analysisResult.Data.LLMError)
-            {
-                ShowAlert("danger", $"Portfolio plan analysis completed with LLM error: {analysisResult.Data.LLMErrorMsg}");
-                return;
-            }
-            SelectedPortfolioPlan.Metadata.AnalysisRefreshTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            SelectedPortfolioPlan.Metadata.Analysis = analysisResult.Data.Analysis;
-            SelectedPortfolioPlan.Metadata.RebalancePlan = analysisResult.Data.RebalancePlan;
         }
-
-        ShowAlert("success", $"Portfolio plan '{SelectedPortfolioPlan.Name}' analyzed successfully.", autoCloseAfterMs: ALERT_AUTO_CLOSE_MS);
     }
 
     private const string TabIdSpotlight = "nav-spotlight-tab";
@@ -195,9 +203,14 @@ public partial class MyPortfolioPlansDetails : BasePage
     private const string TabIdRebalancePlan = "nav-rebalance-plan-tab";
     private string ActiveAnalysisTab { get; set; } = TabIdSpotlight;
 
-    private bool HasAnalysis => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Analysis);
-    private bool HasSpotlight => !string.IsNullOrEmpty(SelectedPortfolioPlan?.Metadata?.Spotlight);
-    private bool HasRebalancePlan => !string.IsNullOrWhiteSpace(SelectedPortfolioPlan?.Metadata?.RebalancePlan);
+    private bool HasAnalysis => SelectedPortfolioPlan?.Metadata?.DeepAnalysis is not null;
+    private bool HasSpotlight => SelectedPortfolioPlan?.Metadata?.SpotlightAnalysis is not null;
+    private bool HasRebalancePlan => SelectedPortfolioPlan?.Metadata?.DeepAnalysis switch
+    {
+        PortfolioReview { ActionPlan: not null } => true,
+        PortfolioConstruction { ActionPlan: not null } => true,
+        _ => false,
+    };
 
     /// <summary>
     /// Resolves <see cref="ActiveAnalysisTab"/> to a tab that is actually visible (has content),

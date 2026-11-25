@@ -1,0 +1,849 @@
+@using System.Globalization
+@using FinHub.Client.Models.AI
+@using FinHub.Client.Models.Portfolios
+@using MyPo.Blazor.App.Shared
+
+@inject NavigationManager NavigationManager
+
+<style>
+    .portfolio-rebalance-plan summary {
+        cursor: pointer;
+    }
+
+    .portfolio-rebalance-plan .plan-copy {
+        white-space: pre-line;
+    }
+
+    .portfolio-rebalance-plan .plan-action {
+        background: var(--cui-tertiary-bg, var(--bs-tertiary-bg));
+    }
+
+    .portfolio-rebalance-plan .plan-reference:target {
+        background: var(--cui-highlight-bg, var(--bs-highlight-bg));
+        scroll-margin-top: 1rem;
+    }
+
+    @@media print {
+        .portfolio-rebalance-plan details > * {
+            display: block !important;
+        }
+    }
+</style>
+
+<div class="portfolio-rebalance-plan">
+    @if (Analysis is PortfolioReview review)
+    {
+        <div class="card @RebalanceBorderClass(review.RebalanceRecommended) mb-4">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <div class="text-uppercase text-muted small mb-2">Portfolio rebalance plan</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge @RebalanceBadgeClass(review.RebalanceRecommended)">
+                            @RebalanceLabel(review.RebalanceRecommended)
+                        </span>
+                        @if (review.ActionPlan is { } headerPlan)
+                        {
+                            <span class="badge text-bg-primary">@PlanTypeLabel(headerPlan.PlanType)</span>
+                            <span class="badge text-bg-info">@FormatRatio(review.TargetTurnover) target turnover</span>
+                        }
+                    </div>
+                </div>
+                <div class="small text-muted text-md-end">
+                    <BIcon icon="bi-clock" extraClassName="me-1" />
+                    Plan as of @FormatTimestamp(review.AsOf)
+                </div>
+            </div>
+        </div>
+
+        @if (review.ActionPlan is { } actionPlan)
+        {
+            <section class="card mb-4" aria-labelledby="portfolio-rebalance-summary">
+                <div class="card-body">
+                    <h5 id="portfolio-rebalance-summary">
+                        <BIcon icon="bi-card-checklist" extraClassName="me-1" />
+                        Plan summary
+                    </h5>
+                    <div class="plan-copy">@actionPlan.Summary</div>
+                </div>
+            </section>
+
+            @if (review.MajorRebalanceReasons.Any(IsPresent))
+            {
+                <section class="alert alert-warning mb-4" aria-labelledby="portfolio-rebalance-reasons">
+                    <h6 id="portfolio-rebalance-reasons">
+                        <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
+                        Major rebalance reasons
+                    </h6>
+                    <ul class="mb-0 ps-3">
+                        @foreach (var reason in review.MajorRebalanceReasons.Where(IsPresent))
+                        {
+                            <li>@reason</li>
+                        }
+                    </ul>
+                </section>
+            }
+
+            <section class="mb-4" aria-labelledby="portfolio-rebalance-cash-ledger">
+                <h5 id="portfolio-rebalance-cash-ledger" class="mb-3">
+                    <BIcon icon="bi-cash-stack" extraClassName="me-1" />
+                    Budget and cash ledger
+                </h5>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-xl">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Budget</div>
+                                <div class="h5 mb-1">@FormatBudget(actionPlan.Budget)</div>
+                                @if (actionPlan.Budget.IsInferred)
+                                {
+                                    <span class="badge text-bg-info">Inferred</span>
+                                }
+                                @if (IsPresent(actionPlan.Budget.SourceText))
+                                {
+                                    <div class="small text-muted mt-2">@actionPlan.Budget.SourceText</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl">
+                        <div class="card h-100 border-start border-start-4 border-start-info">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">New money</div>
+                                <div class="h5 mb-0">@FormatAmount(actionPlan.CashLedger.NewMoneyBudget, ReviewCurrency(review, actionPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl">
+                        <div class="card h-100 border-start border-start-4 border-start-success">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Sale proceeds</div>
+                                <div class="h5 mb-0">@FormatAmount(actionPlan.CashLedger.EstimatedSaleProceeds, ReviewCurrency(review, actionPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl">
+                        <div class="card h-100 border-start border-start-4 border-start-warning">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Purchase spend</div>
+                                <div class="h5 mb-0">@FormatAmount(actionPlan.CashLedger.PurchaseSpend, ReviewCurrency(review, actionPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl">
+                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Unallocated cash</div>
+                                <div class="h5 mb-0">@FormatAmount(actionPlan.CashLedger.UnallocatedCash, ReviewCurrency(review, actionPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-4" aria-labelledby="portfolio-rebalance-actions">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 id="portfolio-rebalance-actions" class="mb-0">
+                        <BIcon icon="bi-list-check" extraClassName="me-1" />
+                        Rebalance actions
+                    </h5>
+                    <span class="badge text-bg-secondary">@actionPlan.Actions.Count</span>
+                </div>
+
+                @if (actionPlan.Actions.Count == 0)
+                {
+                    <div class="alert alert-info mb-0" role="status">
+                        <BIcon icon="bi-info-circle" extraClassName="me-1" />
+                        No individual rebalance actions were returned.
+                    </div>
+                }
+                else
+                {
+                    <div class="d-grid gap-3">
+                        @foreach (var action in actionPlan.Actions.OrderBy(action => action.Priority))
+                        {
+                            var allocationChange = action.TargetAllocation - action.CurrentAllocation;
+                            <article class="card border-start border-start-4 @ReviewActionBorderClass(action.Action)">
+                                <div class="card-body">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="badge rounded-pill text-bg-dark">#@action.Priority</span>
+                                            <span class="badge @ReviewActionBadgeClass(action.Action)">
+                                                <BIcon icon="@ReviewActionIcon(action.Action)" extraClassName="me-1" />
+                                                @ReviewActionLabel(action.Action)
+                                            </span>
+                                            <span class="fw-semibold">@action.Ticker</span>
+                                            @if (IsPresent(action.CompanyName))
+                                            {
+                                                <span class="text-muted">@action.CompanyName</span>
+                                            }
+                                        </div>
+                                        <div class="text-end">
+                                            <span>@FormatRatio(action.CurrentAllocation)</span>
+                                            <span class="text-muted mx-1">to</span>
+                                            <span class="fw-semibold">@FormatRatio(action.TargetAllocation)</span>
+                                            <div class="small @SignedValueClass(allocationChange)">
+                                                @FormatPercentagePointChange(allocationChange)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="plan-action rounded p-3 mb-3">
+                                        <div class="small text-uppercase text-muted fw-semibold mb-1">Instruction</div>
+                                        <div class="plan-copy">@action.Instruction</div>
+                                    </div>
+
+                                    @if (action.Quantity is not null || action.MarketPrice is not null || action.EstimatedAmount is not null)
+                                    {
+                                        <div class="row g-3 mb-3">
+                                            @if (action.Quantity is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Quantity</div>
+                                                    <div class="fw-semibold">@action.Quantity.Value.ToString("N0", CultureInfo.CurrentCulture)</div>
+                                                </div>
+                                            }
+                                            @if (action.MarketPrice is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Market price</div>
+                                                    <div class="fw-semibold">@FormatAmount(action.MarketPrice.Value, ReviewCurrency(review, actionPlan))</div>
+                                                </div>
+                                            }
+                                            @if (action.EstimatedAmount is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Estimated amount</div>
+                                                    <div class="fw-semibold">@FormatAmount(action.EstimatedAmount.Value, ReviewCurrency(review, actionPlan))</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <details>
+                                        <summary class="small text-muted">Reasoning</summary>
+                                        <div class="plan-copy small mt-2">@action.Reasoning</div>
+                                    </details>
+
+                                    @if (action.ReferenceIds.Any(IsPresent))
+                                    {
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                                            <span class="small text-muted">Sources:</span>
+                                            @foreach (var referenceId in action.ReferenceIds.Where(IsPresent).Distinct(StringComparer.OrdinalIgnoreCase))
+                                            {
+                                                var referenceIndex = FindReferenceIndex(referenceId);
+                                                if (referenceIndex >= 0)
+                                                {
+                                                    <a href="@ReferenceHref(referenceIndex)"
+                                                       class="badge text-bg-light border text-decoration-none"
+                                                       title="@References[referenceIndex].Title">
+                                                        [@(referenceIndex + 1)]
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge text-bg-warning" title="Reference was not included in the analysis response">
+                                                        @referenceId
+                                                    </span>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+        else
+        {
+            <div class="alert @(review.RebalanceRecommended == PortfolioReviewRebalanceFlag.NO ? "alert-success" : "alert-warning")" role="status">
+                <BIcon icon="@(review.RebalanceRecommended == PortfolioReviewRebalanceFlag.NO ? "bi-check-circle" : "bi-exclamation-triangle")" extraClassName="me-1" />
+                @(review.RebalanceRecommended == PortfolioReviewRebalanceFlag.NO
+                    ? "No rebalance action plan is required."
+                    : "Rebalance was recommended, but no action plan was returned.")
+            </div>
+        }
+    }
+    else if (Analysis is PortfolioConstruction construction)
+    {
+        <div class="card @ConstructionStatusBorderClass(construction.ConstructionStatus) mb-4">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <div class="text-uppercase text-muted small mb-2">Portfolio implementation plan</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge @ConstructionStatusBadgeClass(construction.ConstructionStatus)">
+                            @ConstructionStatusLabel(construction.ConstructionStatus)
+                        </span>
+                        <span class="badge text-bg-primary">@ConstructionModeLabel(construction.ConstructionMode)</span>
+                    </div>
+                </div>
+                <div class="small text-muted text-md-end">
+                    <BIcon icon="bi-clock" extraClassName="me-1" />
+                    Plan as of @FormatTimestamp(construction.AsOf)
+                </div>
+            </div>
+        </div>
+
+        @if (construction.ActionPlan is { } implementationPlan)
+        {
+            <section class="card mb-4" aria-labelledby="portfolio-implementation-summary">
+                <div class="card-body">
+                    <h5 id="portfolio-implementation-summary">
+                        <BIcon icon="bi-card-checklist" extraClassName="me-1" />
+                        Plan summary
+                    </h5>
+                    <div class="plan-copy">@implementationPlan.Summary</div>
+                </div>
+            </section>
+
+            <section class="mb-4" aria-labelledby="portfolio-implementation-budget">
+                <h5 id="portfolio-implementation-budget" class="mb-3">
+                    <BIcon icon="bi-cash-stack" extraClassName="me-1" />
+                    Implementation budget
+                </h5>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-primary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Budget</div>
+                                <div class="h5 mb-1">@FormatBudget(implementationPlan.Budget)</div>
+                                @if (implementationPlan.Budget.IsInferred)
+                                {
+                                    <span class="badge text-bg-info">Inferred</span>
+                                }
+                                @if (IsPresent(implementationPlan.Budget.SourceText))
+                                {
+                                    <div class="small text-muted mt-2">@implementationPlan.Budget.SourceText</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-success">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Budget utilized</div>
+                                <div class="h5 mb-0">@FormatOptionalAmount(implementationPlan.BudgetUtilized, ConstructionCurrency(construction, implementationPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-secondary">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Unallocated</div>
+                                <div class="h5 mb-0">@FormatOptionalAmount(implementationPlan.UnallocatedAmount, ConstructionCurrency(construction, implementationPlan))</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card h-100 border-start border-start-4 border-start-info">
+                            <div class="card-body">
+                                <div class="text-uppercase text-muted small mb-2">Implementation steps</div>
+                                <div class="h5 mb-0">@implementationPlan.Steps.Count</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-4" aria-labelledby="portfolio-implementation-steps">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 id="portfolio-implementation-steps" class="mb-0">
+                        <BIcon icon="bi-list-check" extraClassName="me-1" />
+                        Implementation steps
+                    </h5>
+                    <span class="badge text-bg-secondary">@implementationPlan.Steps.Count</span>
+                </div>
+
+                @if (implementationPlan.Steps.Count == 0)
+                {
+                    <div class="alert alert-info mb-0" role="status">
+                        <BIcon icon="bi-info-circle" extraClassName="me-1" />
+                        No individual implementation steps were returned.
+                    </div>
+                }
+                else
+                {
+                    <div class="d-grid gap-3">
+                        @foreach (var step in implementationPlan.Steps.OrderBy(step => step.Priority))
+                        {
+                            <article class="card border-start border-start-4 @ConstructionActionBorderClass(step.Action)">
+                                <div class="card-body">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="badge rounded-pill text-bg-dark">#@step.Priority</span>
+                                            <span class="badge @ConstructionActionBadgeClass(step.Action)">
+                                                <BIcon icon="@ConstructionActionIcon(step.Action)" extraClassName="me-1" />
+                                                @ConstructionActionLabel(step.Action)
+                                            </span>
+                                            <span class="fw-semibold">@step.Ticker</span>
+                                            @if (IsPresent(step.CompanyName))
+                                            {
+                                                <span class="text-muted">@step.CompanyName</span>
+                                            }
+                                        </div>
+                                        @if (step.TargetAllocation is not null)
+                                        {
+                                            <span class="badge text-bg-info">@FormatRatio(step.TargetAllocation.Value) target</span>
+                                        }
+                                    </div>
+
+                                    <div class="plan-action rounded p-3 mb-3">
+                                        <div class="small text-uppercase text-muted fw-semibold mb-1">Instruction</div>
+                                        <div class="plan-copy">@step.Instruction</div>
+                                    </div>
+
+                                    @if (step.Quantity is not null || step.MarketPrice is not null || step.EstimatedAmount is not null)
+                                    {
+                                        <div class="row g-3 mb-3">
+                                            @if (step.Quantity is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Quantity</div>
+                                                    <div class="fw-semibold">@step.Quantity.Value.ToString("N0", CultureInfo.CurrentCulture)</div>
+                                                </div>
+                                            }
+                                            @if (step.MarketPrice is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Market price</div>
+                                                    <div class="fw-semibold">@FormatAmount(step.MarketPrice.Value, ConstructionCurrency(construction, implementationPlan))</div>
+                                                </div>
+                                            }
+                                            @if (step.EstimatedAmount is not null)
+                                            {
+                                                <div class="col-sm-4">
+                                                    <div class="small text-uppercase text-muted">Estimated amount</div>
+                                                    <div class="fw-semibold">@FormatAmount(step.EstimatedAmount.Value, ConstructionCurrency(construction, implementationPlan))</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <details>
+                                        <summary class="small text-muted">Reasoning</summary>
+                                        <div class="plan-copy small mt-2">@step.Reasoning</div>
+                                    </details>
+
+                                    @if (step.ReferenceIds.Any(IsPresent))
+                                    {
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                                            <span class="small text-muted">Sources:</span>
+                                            @foreach (var referenceId in step.ReferenceIds.Where(IsPresent).Distinct(StringComparer.OrdinalIgnoreCase))
+                                            {
+                                                var referenceIndex = FindReferenceIndex(referenceId);
+                                                if (referenceIndex >= 0)
+                                                {
+                                                    <a href="@ReferenceHref(referenceIndex)"
+                                                       class="badge text-bg-light border text-decoration-none"
+                                                       title="@References[referenceIndex].Title">
+                                                        [@(referenceIndex + 1)]
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge text-bg-warning" title="Reference was not included in the analysis response">
+                                                        @referenceId
+                                                    </span>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+        else
+        {
+            <div class="alert alert-warning" role="status">
+                <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
+                No implementation plan was returned.
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-warning" role="alert">
+            <BIcon icon="bi-exclamation-triangle" extraClassName="me-1" />
+            Unsupported portfolio analysis result: @Analysis.ResultType
+        </div>
+    }
+
+    @if (References.Count > 0)
+    {
+        <section aria-labelledby="portfolio-rebalance-references">
+            <h5 id="portfolio-rebalance-references" class="mb-3">
+                <BIcon icon="bi-journal-text" extraClassName="me-1" />
+                Plan references
+            </h5>
+            <ol class="list-group list-group-numbered">
+                @for (var index = 0; index < References.Count; index++)
+                {
+                    var reference = References[index];
+                    var safeUrl = SafeReferenceUrl(reference);
+                    <li id="portfolio-rebalance-reference-@(index + 1)"
+                        class="plan-reference list-group-item d-flex justify-content-between align-items-start gap-3">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold">
+                                @if (safeUrl is not null)
+                                {
+                                    <a href="@safeUrl" target="_blank" rel="noopener noreferrer">@reference.Title</a>
+                                }
+                                else
+                                {
+                                    <span>@reference.Title</span>
+                                }
+                            </div>
+                            <div class="small text-muted">
+                                @reference.Publisher - @SourceTypeLabel(reference.SourceType)
+                                @if (reference.PublishedAt is not null)
+                                {
+                                    <span> - published @reference.PublishedAt.Value.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                                }
+                                <span> - accessed @reference.AccessedAt.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</span>
+                            </div>
+                        </div>
+                        <span class="badge @(reference.IsVerified ? "text-bg-success" : "text-bg-secondary")">
+                            @(reference.IsVerified ? "Verified" : "Unverified")
+                        </span>
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IPortfolioAnalysisResult Analysis { get; set; } = default!;
+
+    private IReadOnlyList<ReferenceSource> References
+    {
+        get
+        {
+            var allReferences = Analysis switch
+            {
+                PortfolioReview review => review.References,
+                PortfolioConstruction construction => construction.References,
+                _ => [],
+            };
+
+            var referencedIds = Analysis switch
+            {
+                PortfolioReview { ActionPlan: { } plan } => plan.Actions
+                    .SelectMany(action => action.ReferenceIds)
+                    .Where(IsPresent),
+                PortfolioConstruction { ActionPlan: { } plan } => plan.Steps
+                    .SelectMany(step => step.ReferenceIds)
+                    .Where(IsPresent),
+                _ => [],
+            };
+
+            var referencedIdSet = referencedIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return [.. allReferences.Where(reference => referencedIdSet.Contains(reference.Id))];
+        }
+    }
+
+    private string ReferenceHref(int referenceIndex)
+    {
+        var uri = new UriBuilder(NavigationManager.Uri)
+        {
+            Fragment = $"portfolio-rebalance-reference-{referenceIndex + 1}",
+        };
+
+        return uri.Uri.AbsoluteUri;
+    }
+
+    private int FindReferenceIndex(string referenceId)
+    {
+        for (var index = 0; index < References.Count; index++)
+        {
+            if (string.Equals(References[index].Id, referenceId, StringComparison.OrdinalIgnoreCase))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    private static string RebalanceLabel(PortfolioReviewRebalanceFlag flag)
+    {
+        return flag switch
+        {
+            PortfolioReviewRebalanceFlag.YES => "Rebalance recommended",
+            _ => "No rebalance recommended",
+        };
+    }
+
+    private static string RebalanceBadgeClass(PortfolioReviewRebalanceFlag flag)
+    {
+        return flag switch
+        {
+            PortfolioReviewRebalanceFlag.YES => "text-bg-danger",
+            _ => "text-bg-success",
+        };
+    }
+
+    private static string RebalanceBorderClass(PortfolioReviewRebalanceFlag flag)
+    {
+        return flag switch
+        {
+            PortfolioReviewRebalanceFlag.YES => "border-start border-start-4 border-start-danger",
+            _ => "border-start border-start-4 border-start-success",
+        };
+    }
+
+    private static string PlanTypeLabel(PortfolioReviewPlanType planType)
+    {
+        return planType switch
+        {
+            PortfolioReviewPlanType.Growth => "Growth plan",
+            _ => "Rebalance plan",
+        };
+    }
+
+    private static string ReviewActionLabel(PortfolioReviewActionType action)
+    {
+        return action switch
+        {
+            PortfolioReviewActionType.BUY_MORE => "Buy more",
+            PortfolioReviewActionType.INTRODUCE => "Introduce",
+            PortfolioReviewActionType.ACCUMULATE => "Accumulate",
+            PortfolioReviewActionType.TRIM => "Trim",
+            PortfolioReviewActionType.EXIT => "Exit",
+            _ => "Hold",
+        };
+    }
+
+    private static string ReviewActionBadgeClass(PortfolioReviewActionType action)
+    {
+        return action switch
+        {
+            PortfolioReviewActionType.EXIT => "text-bg-danger",
+            PortfolioReviewActionType.TRIM => "text-bg-warning",
+            PortfolioReviewActionType.BUY_MORE or PortfolioReviewActionType.INTRODUCE or PortfolioReviewActionType.ACCUMULATE => "text-bg-success",
+            _ => "text-bg-secondary",
+        };
+    }
+
+    private static string ReviewActionBorderClass(PortfolioReviewActionType action)
+    {
+        return action switch
+        {
+            PortfolioReviewActionType.EXIT => "border-start-danger",
+            PortfolioReviewActionType.TRIM => "border-start-warning",
+            PortfolioReviewActionType.BUY_MORE or PortfolioReviewActionType.INTRODUCE or PortfolioReviewActionType.ACCUMULATE => "border-start-success",
+            _ => "border-start-secondary",
+        };
+    }
+
+    private static string ReviewActionIcon(PortfolioReviewActionType action)
+    {
+        return action switch
+        {
+            PortfolioReviewActionType.EXIT => "bi-box-arrow-right",
+            PortfolioReviewActionType.TRIM => "bi-dash-circle",
+            PortfolioReviewActionType.BUY_MORE or PortfolioReviewActionType.INTRODUCE or PortfolioReviewActionType.ACCUMULATE => "bi-plus-circle",
+            _ => "bi-pause-circle",
+        };
+    }
+
+    private static string ConstructionActionLabel(PortfolioActionType action)
+    {
+        return action switch
+        {
+            PortfolioActionType.BUY => "Buy",
+            PortfolioActionType.ACCUMULATE => "Accumulate",
+            PortfolioActionType.TRIM => "Trim",
+            PortfolioActionType.EXIT => "Exit",
+            _ => "Hold",
+        };
+    }
+
+    private static string ConstructionActionBadgeClass(PortfolioActionType action)
+    {
+        return action switch
+        {
+            PortfolioActionType.EXIT => "text-bg-danger",
+            PortfolioActionType.TRIM => "text-bg-warning",
+            PortfolioActionType.BUY or PortfolioActionType.ACCUMULATE => "text-bg-success",
+            _ => "text-bg-secondary",
+        };
+    }
+
+    private static string ConstructionActionBorderClass(PortfolioActionType action)
+    {
+        return action switch
+        {
+            PortfolioActionType.EXIT => "border-start-danger",
+            PortfolioActionType.TRIM => "border-start-warning",
+            PortfolioActionType.BUY or PortfolioActionType.ACCUMULATE => "border-start-success",
+            _ => "border-start-secondary",
+        };
+    }
+
+    private static string ConstructionActionIcon(PortfolioActionType action)
+    {
+        return action switch
+        {
+            PortfolioActionType.EXIT => "bi-box-arrow-right",
+            PortfolioActionType.TRIM => "bi-dash-circle",
+            PortfolioActionType.BUY or PortfolioActionType.ACCUMULATE => "bi-plus-circle",
+            _ => "bi-pause-circle",
+        };
+    }
+
+    private static string ConstructionStatusLabel(PortfolioConstructionStatus status)
+    {
+        return status switch
+        {
+            PortfolioConstructionStatus.CompleteWithWarnings => "Complete with warnings",
+            _ => "Complete",
+        };
+    }
+
+    private static string ConstructionStatusBadgeClass(PortfolioConstructionStatus status)
+    {
+        return status switch
+        {
+            PortfolioConstructionStatus.CompleteWithWarnings => "text-bg-warning",
+            _ => "text-bg-success",
+        };
+    }
+
+    private static string ConstructionStatusBorderClass(PortfolioConstructionStatus status)
+    {
+        return status switch
+        {
+            PortfolioConstructionStatus.CompleteWithWarnings => "border-start border-start-4 border-start-warning",
+            _ => "border-start border-start-4 border-start-success",
+        };
+    }
+
+    private static string ConstructionModeLabel(PortfolioConstructionMode mode)
+    {
+        return mode switch
+        {
+            PortfolioConstructionMode.Seeded => "Seeded portfolio",
+            _ => "Built from scratch",
+        };
+    }
+
+    private static string ReviewCurrency(PortfolioReview review, PortfolioReviewActionPlan plan)
+    {
+        return IsPresent(plan.Budget.Currency)
+            ? plan.Budget.Currency!
+            : review.Snapshot.Currency;
+    }
+
+    private static string? ConstructionCurrency(PortfolioConstruction construction, PortfolioActionPlan plan)
+    {
+        if (IsPresent(plan.Budget.Currency))
+        {
+            return plan.Budget.Currency;
+        }
+
+        return construction.VerifiedSeedHoldings
+            .Select(holding => holding.Currency)
+            .FirstOrDefault(IsPresent);
+    }
+
+    private static string FormatBudget(PortfolioBudget budget)
+    {
+        if (budget.Amount is null)
+        {
+            return budget.BudgetType == PortfolioBudgetType.NotProvided
+                ? "Not provided"
+                : BudgetTypeLabel(budget.BudgetType);
+        }
+
+        var amount = FormatAmount(budget.Amount.Value, budget.Currency);
+        return budget.Frequency is null
+            ? amount
+            : $"{amount} {BudgetFrequencyLabel(budget.Frequency.Value).ToLowerInvariant()}";
+    }
+
+    private static string BudgetTypeLabel(PortfolioBudgetType type)
+    {
+        return type switch
+        {
+            PortfolioBudgetType.NotProvided => "Not provided",
+            PortfolioBudgetType.Total => "Total budget",
+            _ => "Recurring budget",
+        };
+    }
+
+    private static string BudgetFrequencyLabel(PortfolioBudgetFrequency frequency)
+    {
+        return frequency switch
+        {
+            PortfolioBudgetFrequency.Fortnightly => "Fortnightly",
+            PortfolioBudgetFrequency.Annually => "Annually",
+            _ => frequency.ToString(),
+        };
+    }
+
+    private static string FormatAmount(double value, string? currency)
+    {
+        var amount = value.ToString("N2", CultureInfo.CurrentCulture);
+        return IsPresent(currency)
+            ? $"{currency!.Trim().ToUpperInvariant()} {amount}"
+            : amount;
+    }
+
+    private static string FormatOptionalAmount(double? value, string? currency)
+    {
+        return value is null ? "--" : FormatAmount(value.Value, currency);
+    }
+
+    private static string FormatRatio(double value)
+    {
+        return value.ToString("P1", CultureInfo.CurrentCulture);
+    }
+
+    private static string FormatPercentagePointChange(double value)
+    {
+        return $"{(value * 100).ToString("+0.0;-0.0;0.0", CultureInfo.CurrentCulture)} pp";
+    }
+
+    private static string SignedValueClass(double value)
+    {
+        return value switch
+        {
+            > 0 => "text-success",
+            < 0 => "text-danger",
+            _ => "text-muted",
+        };
+    }
+
+    private static string FormatTimestamp(DateTimeOffset timestamp)
+    {
+        return $"{timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)} UTC";
+    }
+
+    private static Uri? SafeReferenceUrl(ReferenceSource reference)
+    {
+        return string.Equals(reference.Url.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(reference.Url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            ? reference.Url
+            : null;
+    }
+
+    private static string SourceTypeLabel(ReferenceSourceType sourceType)
+    {
+        return sourceType switch
+        {
+            ReferenceSourceType.MarketData => "Market data",
+            _ => sourceType.ToString(),
+        };
+    }
+
+    private static bool IsPresent(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value);
+    }
+}

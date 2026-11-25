@@ -1,4 +1,5 @@
-﻿using MyPo.Portfolio.Shared.Models;
+﻿using Finhub.Client;
+using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Utils;
 
 namespace MyPo.Portfolio.Api.Services;
@@ -77,7 +78,7 @@ public sealed class PortfolioPlanHoldingsService : IPortfolioPlanHoldingsService
             if (country == "VN")
             {
                 // special case
-                ht.MarketPrice /= 1000;
+                ht.MarketPrice /= 1000m;
             }
             holdings.Add(ht);
         }

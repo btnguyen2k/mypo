@@ -1,5 +1,22 @@
 # My Portfolio Tracker release notes
 
+## 2026-11-25 - v2.4.0
+
+### Added/Refactoring/Deprecation
+
+- Feat(portfolio): delete reports when their portfolio is deleted
+- Feat(pubsub): add durable Wolverine-backed portfolio events
+- Feat(pubsub): clean up portfolio checkpoints via durable deletion events
+- Refactor(UI/events): redesign "New Listings" tab
+- Refactor(UI/events): redesign "Upcoming Dividends" tab
+- Refactor(UI/events): redesign "Upcoming Earnings" tab
+- Refactor(finhub): migrate to FinHub v0.18.0+
+
+### Fixed/Improvements
+
+- Impr(UI/UX): show target URLs in the browser status bar
+- Patch(CodeQL): fix CodeQL warnings
+
 ## 2026-09-15 - v2.3.2
 
 ### Fixed/Improvements
