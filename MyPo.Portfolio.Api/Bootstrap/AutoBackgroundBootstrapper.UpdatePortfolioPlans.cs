@@ -54,13 +54,15 @@ sealed class BackgroundPortfolioTaskUpdatePortfolioPlans : BackgroundPortfolioTa
     private async Task UpdatePortfolioPlansForUser(IServiceScope scope, MyPoUser user, CancellationToken cancellationToken)
     {
         var userName = user.UserName!.ToLower();
+        Logger.LogInformation("Auto-updating portfolio plans for user {userName}...", userName);
+
         var prefs = user.Metadata?.GetPortfolioPlanPreferences();
         if (user.Metadata is null || prefs is null || prefs.AutoUpdateDays <= 0)  // auto-update disabled
         {
+            Logger.LogInformation("Auto-update is disabled for user {userName}.", userName);
             return;
         }
 
-        Logger.LogInformation("Auto-updating portfolio plans for user {userName}...", userName);
         var updateDelay = TimeSpan.FromDays(prefs.AutoUpdateDays);
         var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
         var holdingsService = scope.ServiceProvider.GetRequiredService<IPortfolioPlanHoldingsService>();
@@ -97,6 +99,7 @@ sealed class BackgroundPortfolioTaskUpdatePortfolioPlans : BackgroundPortfolioTa
         var existingHoldings = plan.Metadata?.HoldingTickers ?? [];
         if (existingHoldings.Count == 0)
         {
+            Logger.LogInformation("No existing holdings found for plan '{planId}: {planName}'; skipping refresh.", plan.Id, plan.Name);
             return;
         }
 
@@ -113,6 +116,10 @@ sealed class BackgroundPortfolioTaskUpdatePortfolioPlans : BackgroundPortfolioTa
         if (dbresult == null)
         {
             Logger.LogError("Failed to persist auto-updated portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
+        }
+        else
+        {
+            Logger.LogInformation("Successfully auto-updated portfolio plan '{planId}: {planName}'.", plan.Id, plan.Name);
         }
     }
 }

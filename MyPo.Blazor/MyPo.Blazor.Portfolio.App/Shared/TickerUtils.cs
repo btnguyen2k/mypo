@@ -1,6 +1,6 @@
-﻿using MyPo.Portfolio.Shared.Api;
-using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Shared.Api;
+﻿using FinHub.Client.Models.Stocks;
+using FinHub.Client.Schemas.Stocks;
+using MyPo.Portfolio.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Shared;
 
@@ -9,13 +9,13 @@ public static class TickerUtils
     /// <summary>
     /// Fetches the latest stock quotes for a list of tickers, return raw response from API.
     /// </summary>
-    /// <param name="tickers">List of tickers to fetch quotes for.</param>
+    /// <param name="tickersList">List of tickers to fetch quotes for.</param>
     /// <param name="apiClient"></param>
     /// <param name="authToken"></param>
     /// <param name="apiBaseUrl"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static async Task<ApiResp<IDictionary<string, StockQuote>>> FetchQuotesForTickersRaw(
+    public static async Task<GetStockQuotesResponse> FetchQuotesForTickersRaw(
         IEnumerable<string> tickersList,
         IPortfolioApiClient apiClient,
         string authToken,
@@ -43,7 +43,7 @@ public static class TickerUtils
         string authToken,
         string apiBaseUrl,
         Action<IEnumerable<string>>? callbackPrefetch = null,
-        Func<ApiResp<IDictionary<string, StockQuote>>, bool>? callbackPostfetch = null,
+        Func<GetStockQuotesResponse, bool>? callbackPostfetch = null,
         CancellationToken cancellationToken = default)
     {
         var emptyDict = new Dictionary<string, StockQuote>();

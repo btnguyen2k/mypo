@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
+using Finhub.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MyPo.Portfolio.Shared.Api;
-using MyPo.Portfolio.Shared.Identity;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Shared.Api;
 using MyPo.Shared.Api.Services;
@@ -26,7 +26,7 @@ public partial class DebugController : MyPoBaseController
     }
 
     [HttpGet(IPortfolioApiClient.API_DEBUG)]
-    public async ValueTask<ActionResult<ApiResp<string[]>>> Debug()
+    public async ValueTask<ActionResult<ApiResp<string[]>>> Debug(IFinHubClient finHubClient)
     {
         var (authErrorResult, currentUser) = await VerifyAuthTokenAndCurrentUser();
         if (authErrorResult != null)
@@ -35,17 +35,19 @@ public partial class DebugController : MyPoBaseController
             return authErrorResult;
         }
 
-        // TODO
-        var result = new List<string>();
+        var upcomingEarnings = await finHubClient.GetUpcomingEarningsAnnouncementsAsync("US");
+        if ( upcomingEarnings is null || !upcomingEarnings.IsSuccess)
+        {
+            Console.WriteLine("Failed to fetch upcoming earnings.");
+        }
+        else
+        {
+            foreach (var item in upcomingEarnings.Data ?? [])
+            {
+                Console.WriteLine(JsonSerializer.Serialize(item));
+            }
+        }
 
-        var portfolioId = "752b4a6c-e73d-45de-91f2-1c943c2a6062";
-        var startPeriodIncl = new DateTime(2025, 12, 1);
-        var endPeriodExcl = new DateTime(2026, 01, 01);
-        var pnlSummary = await PortfolioRepository.GetPnlSummaryForPortfolioForPeriodAsync(portfolioId, startPeriodIncl, endPeriodExcl);
-        result.Add($"Portfolio Id: {portfolioId}");
-        result.Add($"Period: {startPeriodIncl:yyyy-MM-dd} to {endPeriodExcl:yyyy-MM-dd}");
-        result.Add($"PnL Summary: {JsonSerializer.Serialize(pnlSummary)}");
-
-        return ResponseOk("Debug endpoint is working.", result.ToArray());
+        return ResponseOk("Debug endpoint is working.");
     }
 }

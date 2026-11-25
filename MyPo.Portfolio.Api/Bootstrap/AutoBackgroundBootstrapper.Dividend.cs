@@ -1,4 +1,4 @@
-﻿using MyPo.Portfolio.Api.Services;
+﻿using Finhub.Client;
 using MyPo.Portfolio.Shared.Models;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
@@ -14,8 +14,8 @@ sealed class BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner : Backg
     // TODO: move this to configuration
     private static readonly List<string> COUNTRIES = ["AU", "US", "VN"];
 
-    // Run task ~every 1.5 days per market
-    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(37);
+    // Run task ~every 12 hours per market
+    private static readonly TimeSpan INTERVAL = TimeSpan.FromHours(12-1);
 
     private int currentCountryIndex = Random.Shared.Next(0, COUNTRIES.Count);
 
@@ -41,32 +41,43 @@ sealed class BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner : Backg
                         checkpointType: CheckpointEntity.CHECKPOINT_UPCOMING_DIVIDEND,
                         cancellationToken
                     );
+                    if (checkpoint is null) continue;
 
-                    if (checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow - checkpoint.CheckpointTime >= INTERVAL))
+                    Logger.LogInformation("Finding upcoming dividend/distribution announcements for market {market}...", country);
+                    var validForNextRun = checkpoint != null && (checkpoint.CheckpointTime == DateTimeOffset.MinValue || DateTimeOffset.UtcNow - checkpoint.CheckpointTime >= INTERVAL);
+                    if (!validForNextRun)
                     {
-                        Logger.LogInformation("Finding upcoming dividend/distribution announcements for market {market}...", country);
-                        var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
-                        var events = await finhubClient.GetUpcomingDividendAnnouncementsAsync(country, cancellationToken: cancellationToken);
-                        if (events.Status != 200)
-                        {
-                            Logger.LogError("Failed to fetch upcoming dividend/distribution announcements for market {market}. Status: {status}, Message: {message}", country, events.Status, events.Message);
-                        }
-                        else
-                        {
-                            Logger.LogInformation("Upcoming dividend/distribution announcements for market {market}: {event}", country, (events.Data ?? []).Count());
-                            await SaveEvents(events.Data ?? [], CheckpointEntity.NON_OWNER, country, cancellationToken);
+                        var timeSinceLastRun = DateTimeOffset.UtcNow - checkpoint!.CheckpointTime;
+                        Logger.LogInformation(
+                            "Skipping upcoming dividend/distribution announcements for market {market} as last run was recent ({lastRun} hours).",
+                            country,
+                            timeSinceLastRun.Hours);
+                        goto end;
+                    }
 
-                            checkpoint.CheckpointTime = DateTimeOffset.UtcNow;
-                            var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
-                            var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
-                            if (dbresult == null)
-                            {
-                                Logger.LogError(
-                                    "Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
-                                    checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
-                                );
-                            }
-                        }
+                    var finhubClient = scope.ServiceProvider.GetRequiredService<IFinHubClient>();
+                    var eventsResp = await finhubClient.GetUpcomingDividendAnnouncementsAsync(country, cancellationToken: cancellationToken);
+                    if (!eventsResp.IsSuccess)
+                    {
+                        Logger.LogError(
+                            "Failed to fetch upcoming dividend/distribution announcements for market {market}. Status: {status}, Message: {message}",
+                            country,
+                            eventsResp.Status,
+                            eventsResp.Message);
+                        goto end;
+                    }
+                    Logger.LogInformation("Upcoming dividend/distribution announcements for market {market}: {event}", country, (eventsResp.Data ?? []).Count);
+                    await SaveEvents(eventsResp.Data ?? [], CheckpointEntity.NON_OWNER, country, cancellationToken);
+
+                    checkpoint!.CheckpointTime = DateTimeOffset.UtcNow;
+                    var portfolioRepo = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+                    var dbresult = await portfolioRepo.UpdateCheckpointAsync(checkpoint, cancellationToken);
+                    if (dbresult == null)
+                    {
+                        Logger.LogError(
+                            "Failed to update checkpoint: Owner: {owner} - Portfolio: {portfolio} - Market: {market} - Item: {item} - Type: {type}.",
+                            checkpoint.OwnerId, checkpoint.PortfolioId, checkpoint.MarketId, checkpoint.ItemCode, checkpoint.CheckpointType
+                        );
                     }
                 }
                 catch (Exception ex)
@@ -74,6 +85,7 @@ sealed class BackgroundPortfolioTaskUpcomingDividendAnnouncementsScanner : Backg
                     Logger.LogError(ex, "An error occurred while executing the periodic task.");
                 }
             }
+            end:
             await DelayForRandomInterval(1 * 60 * 60, 2 * 60 * 60, cancellationToken: cancellationToken); // delay 1-2 hours before next execution
         }
     }

@@ -50,11 +50,24 @@ public partial class CPortfolioTxSettled : CBase
     {
         if (TxSettlementEntity.TxTypes.Contains(Tx.TxType) && Tx.TxValue > 0)
         {
+            var noteCashIn = $"Topup to account";
+            var noteCashOut = $"WIthdraw from account";
+            var noteDiv = $"Dividend from {Tx.RefItemCode?.ToUpper()}";
+            var noteDist = $"Distribution from {Tx.RefItemCode?.ToUpper()}";
+            var allNotes = new string[]{noteCashIn, noteCashOut, noteDist, noteDiv};
+            var txDesc = Tx.TxDesc?.Trim() ?? string.Empty;
+
             Tx.TxDesc = Tx.TxType switch
             {
-                TxSettlementEntity.TX_TYPE_DIVIDEND => $"Dividend from {Tx.RefItemCode?.ToUpper()}",
-                TxSettlementEntity.TX_TYPE_DISTRIBUTION => $"Distribution from {Tx.RefItemCode?.ToUpper()}",
-                _ => Tx.TxDesc,
+                TxSettlementEntity.TX_TYPE_CASHIN
+                    => !(string.IsNullOrEmpty(txDesc) || allNotes.Contains(txDesc)) ? txDesc : noteCashIn,
+                TxSettlementEntity.TX_TYPE_CASHOUT
+                    => !(string.IsNullOrEmpty(txDesc) || allNotes.Contains(txDesc)) ? txDesc : noteCashOut,
+                TxSettlementEntity.TX_TYPE_DISTRIBUTION
+                    => !(string.IsNullOrEmpty(txDesc) || allNotes.Contains(txDesc)) ? txDesc : noteDist,
+                TxSettlementEntity.TX_TYPE_DIVIDEND
+                    => !(string.IsNullOrEmpty(txDesc) || allNotes.Contains(txDesc)) ? txDesc : noteDiv,
+                _ => txDesc,
             };
         }
     }
@@ -74,7 +87,7 @@ public partial class CPortfolioTxSettled : CBase
         }
 
         // validate time
-        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime);
+        var parsedDatetime = FormatUtils.ParseDateTimeOffsetFromDateTimePicker(TxTime.Trim());
         if (parsedDatetime == null)
         {
             var (alertType, alertMsg) = ("danger", $"Invalid transaction time format: {TxTime}");

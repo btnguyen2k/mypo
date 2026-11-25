@@ -34,7 +34,16 @@ public class CryptoKeysBootstrapper
 			// load RSA private key from PFX file if available
 			logger.LogInformation("Loading RSA private key from PFX file '{rsaPfxFile}'...", rsaPfxFile);
 			var rsaPfxPassword = config[KEK_RSA_PFX_PASSWORD] ?? "";
-			using var cert = new X509Certificate2(rsaPfxFile, rsaPfxPassword);
+
+            /*
+             * Use X509KeyStorageFlags.EphemeralKeySet to avoid persisting the imported key to disk
+             * This is particularly useful in containerized environments where persisting keys to disk is undesirable.
+             */
+			// using var cert = new X509Certificate2(rsaPfxFile, rsaPfxPassword);
+            using var cert = new X509Certificate2(
+                rsaPfxFile,
+                rsaPfxPassword,
+                X509KeyStorageFlags.EphemeralKeySet);
 			privKey = cert.GetRSAPrivateKey() ?? throw new InvalidDataException($"Failed to load RSA private key from PFX file '{rsaPfxFile}'");
 		}
 		else if (!string.IsNullOrWhiteSpace(rsaPrivKeyFile))

@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using System.Text.RegularExpressions;
+using FinHub.Client.Models.Portfolios;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
@@ -10,8 +10,6 @@ namespace MyPo.Blazor.Portfolio.App.Pages;
 public partial class Dashboard : BasePage
 {
     private static readonly TimeSpan StaleValuationAge = TimeSpan.FromHours(24);
-    private const int MinActionableRebalancePlanLength = 100;
-    private static readonly Regex SpotlightRiskSummaryRegex = MyRegexSpotlightRiskSummary();
 
     private List<PortfolioResp> Portfolios { get; set; } = [];
     private List<PortfolioPlanResp> PortfolioPlans { get; set; } = [];
@@ -150,7 +148,7 @@ public partial class Dashboard : BasePage
 
     private static IEnumerable<AttentionItem> BuildPlanAttentionItems(PortfolioPlanResp plan)
     {
-        var riskCount = GetSpotlightRiskCount(plan.Metadata?.Spotlight);
+        var riskCount = GetSpotlightRiskCount(plan.Metadata?.SpotlightAnalysis);
         if (riskCount > 0)
         {
             yield return new AttentionItem(
@@ -164,45 +162,67 @@ public partial class Dashboard : BasePage
                 0);
         }
 
-        if (HasActionableRebalancePlan(plan.Metadata?.RebalancePlan))
+        var actionPlanAttention = BuildActionPlanAttentionItem(plan);
+        if (actionPlanAttention is not null)
         {
-            yield return new AttentionItem(
-                PortfolioPlanDetailsUrl(plan.Id),
-                plan.Name,
-                "A rebalance plan is available.",
-                "bi-arrow-left-right",
-                "text-warning",
-                "Rebalance",
-                "text-bg-warning",
-                1);
+            yield return actionPlanAttention;
         }
     }
 
-    private static int GetSpotlightRiskCount(string? spotlight)
+    private static int GetSpotlightRiskCount(PortfolioSpotlightAnalysis? spotlight)
     {
-        if (string.IsNullOrWhiteSpace(spotlight))
-        {
-            return 0;
-        }
-
-        var match = SpotlightRiskSummaryRegex.Match(spotlight);
-        return match.Success
-            && int.TryParse(match.Groups["count"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var count)
-            && count > 0
-                ? count
-                : 0;
+        return spotlight?.Risks.Count(risk =>
+            risk.Level is PortfolioSpotlightRiskLevel.Critical or PortfolioSpotlightRiskLevel.High) ?? 0;
     }
 
-    private static bool HasActionableRebalancePlan(string? rebalancePlan)
+    private static AttentionItem? BuildActionPlanAttentionItem(PortfolioPlanResp plan)
     {
-        if (string.IsNullOrWhiteSpace(rebalancePlan))
-        {
-            return false;
-        }
+        var targetUrl = PortfolioPlanDetailsUrl(plan.Id);
 
-        var normalizedPlan = rebalancePlan.Trim();
-        return normalizedPlan.Length >= MinActionableRebalancePlanLength
-            && !normalizedPlan.Contains("No rebalance needed", StringComparison.OrdinalIgnoreCase);
+        switch (plan.Metadata?.DeepAnalysis)
+        {
+            case PortfolioReview { ActionPlan: { } actionPlan }
+                when actionPlan.Actions.Any(action => action.Action != PortfolioReviewActionType.HOLD):
+            {
+                var actionCount = actionPlan.Actions.Count(action => action.Action != PortfolioReviewActionType.HOLD);
+                var isGrowthPlan = actionPlan.PlanType == PortfolioReviewPlanType.Growth;
+                return new AttentionItem(
+                    targetUrl,
+                    plan.Name,
+                    $"A {(isGrowthPlan ? "growth" : "rebalance")} plan with {actionCount} actionable {(actionCount == 1 ? "action" : "actions")} is available.",
+                    isGrowthPlan ? "bi-graph-up-arrow" : "bi-arrow-left-right",
+                    isGrowthPlan ? "text-primary" : "text-warning",
+                    isGrowthPlan ? "Growth" : "Rebalance",
+                    isGrowthPlan ? "text-bg-primary" : "text-bg-warning",
+                    1);
+            }
+            case PortfolioReview { RebalanceRecommended: PortfolioReviewRebalanceFlag.YES }:
+                return new AttentionItem(
+                    targetUrl,
+                    plan.Name,
+                    "Rebalance is recommended, but no actionable plan was returned.",
+                    "bi-exclamation-triangle",
+                    "text-danger",
+                    "Rebalance",
+                    "text-bg-danger",
+                    1);
+            case PortfolioConstruction { ActionPlan: { } actionPlan }
+                when actionPlan.Steps.Any(step => step.Action != PortfolioActionType.HOLD):
+            {
+                var stepCount = actionPlan.Steps.Count(step => step.Action != PortfolioActionType.HOLD);
+                return new AttentionItem(
+                    targetUrl,
+                    plan.Name,
+                    $"An implementation plan with {stepCount} actionable {(stepCount == 1 ? "step" : "steps")} is available.",
+                    "bi-list-check",
+                    "text-info",
+                    "Build",
+                    "text-bg-info",
+                    1);
+            }
+            default:
+                return null;
+        }
     }
 
     private string ParentName(PortfolioResp portfolio)
@@ -344,6 +364,4 @@ public partial class Dashboard : BasePage
         string BadgeClass,
         int Priority);
 
-    [GeneratedRegex(@"SUMMARY:\s*(?<count>\d+)\s+Critical/High risks with actions[.!]?(?:\s|[*_])*$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex MyRegexSpotlightRiskSummary();
 }

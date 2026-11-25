@@ -1,49 +1,62 @@
-﻿using MyPo.Portfolio.Api.Services;
+﻿using Finhub.Client;
+using MyPo.Portfolio.Api.Services;
+using MyPo.Portfolio.Shared.Helpers;
 using MyPo.Shared.Bootstrap;
-using System.Reflection;
 
 namespace MyPo.Portfolio.Api.Bootstrap;
 
+/// <summary>
+/// Bootstrapper that configures and registers external services, such as the FinHub API client.
+/// </summary>
 [Bootstrapper]
 public class ExternalServicesBootstrapper
 {
-    private const string EXTERNAL_SERVICES_SETTINGS_FILE = "Resources.ext_services_settings.json";
-    private static readonly ILogger<ExternalServicesBootstrapper> logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ExternalServicesBootstrapper>();
+    private static readonly ILogger<ExternalServicesBootstrapper> logger
+        = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ExternalServicesBootstrapper>();
+
+    private static Uri FinHubBaseUrl = default!;
 
     public static void ConfigureBuilder(WebApplicationBuilder appBuilder)
     {
-        logger.LogInformation("Loading external services settings...");
-        var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = $"{assembly.GetName().Name}.{EXTERNAL_SERVICES_SETTINGS_FILE}";
-        var availableResources = assembly.GetManifestResourceNames();
-        if (Array.IndexOf(availableResources, resourceName) == -1)
-        {
-            throw new FileNotFoundException($"External services settings resource '{resourceName}' not found in assembly resources.");
-        }
-        using (var stream = assembly.GetManifestResourceStream(resourceName))
-        {
-            var externalServicesSettings = new ConfigurationBuilder()
-                .AddJsonStream(stream!)
-                .AddEnvironmentVariables()
-                .Build();
-
-            appBuilder.Configuration.AddConfiguration(externalServicesSettings);
-            ConfigureExternalServices(appBuilder, externalServicesSettings);
-        }
+        ConfigureFinHub(appBuilder.Configuration, appBuilder.Services);
+        appBuilder.Services.AddHostedService<BackgroundTaskCacheIndexConstituentsFinHub>();
     }
 
-    private static void ConfigureExternalServices(WebApplicationBuilder appBuilder, IConfiguration externalServicesSettings)
+    private static void ConfigureFinHub(IConfiguration configuration, IServiceCollection services)
     {
-        var finhubBaseUrl = externalServicesSettings.GetValue<string>("FinHub:Url");
-        if (!Uri.TryCreate(finhubBaseUrl, UriKind.Absolute, out _))
+        logger.LogInformation("Configuring FinHub API services...");
+
+        var finhubBaseUrl = configuration.GetValue("FinHub:Url", string.Empty);
+        if (string.IsNullOrEmpty(finhubBaseUrl) || !Uri.TryCreate(finhubBaseUrl, UriKind.Absolute, out var finhubUri))
         {
             throw new InvalidOperationException($"Invalid FinHub base URL: '{finhubBaseUrl}'");
         }
-        appBuilder.Services.AddSingleton<IFinHubClient, FinHubClient>(sp =>
+        FinHubBaseUrl = finhubUri;
+
+        services.AddSingleton<IFinHubClient, FinHubClient>(sp =>
         {
             var httpClient = sp.GetRequiredService<HttpClient>();
             var logger = sp.GetService<ILogger<FinHubClient>>();
-            return new FinHubClient(httpClient, baseUrl: finhubBaseUrl??string.Empty, logger: logger);
+            return new FinHubClient(httpClient, baseUrl: finhubBaseUrl, logger: logger);
         });
+    }
+
+    sealed class BackgroundTaskCacheIndexConstituentsFinHub : BackgroundService
+    {
+        private readonly IServiceProvider ServiceProvider;
+
+        public BackgroundTaskCacheIndexConstituentsFinHub(IServiceProvider serviceProvider) : base()
+        {
+            ServiceProvider = serviceProvider;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            var resourceBaseUrl = new Uri(FinHubBaseUrl, "/market/index/");
+            await StaticDataCacher.CacheIndexConstituentsFinHubAsync(
+                ServiceProvider,
+                resourceBaseUrl.AbsoluteUri,
+                cancellationToken);
+        }
     }
 }

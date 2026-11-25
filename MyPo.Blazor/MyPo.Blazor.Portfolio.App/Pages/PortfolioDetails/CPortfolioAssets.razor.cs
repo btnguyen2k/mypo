@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FinHub.Client.Models.Stocks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
 using MyPo.Portfolio.Shared.Utils;
-using MyPo.Portfolio.Shared.Models.FinHub;
 
 namespace MyPo.Blazor.Portfolio.App.Pages.PortfolioDetails;
 
@@ -169,7 +169,7 @@ public partial class CPortfolioAssets : CBase
                 var symbolKey = $"{asset.Market?.Code ?? string.Empty}:{asset.ItemCode}".ToUpper();
                 if (QuotesMap.TryGetValue(symbolKey, out var quote))
                 {
-                    var latestPrice = quote.MarketPrice;
+                    var latestPrice = quote.MarketPrice ?? 0;
                     latestPrice /= (asset.Market?.PriceScale != 0 ? asset.Market?.PriceScale : 1) ?? 1;
                     MarketPricesMap[asset.Id] = latestPrice;
                     var unsettledPnL = (latestPrice - asset.AveragePrice) * asset.Quantity;

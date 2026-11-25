@@ -12,25 +12,26 @@
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
-        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+        <NavLink href="@UIGlobals.ROUTE_HOME">Home</NavLink>
     </li>
     <li class="breadcrumb-item">
-        <a href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</a>
+        <NavLink href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS">My Portfolio Plans</NavLink>
     </li>
     @if (!HideUI && SelectedPortfolioPlan is not null)
     {
         <li class="breadcrumb-item active">
             <div class="dropdown d-inline-block">
-                <a class="dropdown-toggle text-decoration-none" href="#" role="button"
-                    data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>
-                    @SelectedPortfolioPlan.Name
+                <a class="dropdown-toggle text-decoration-none"
+                    href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", SelectedPortfolioPlan.Id, StringComparison.OrdinalIgnoreCase)"
+                    role="button" data-coreui-toggle="dropdown" aria-expanded="false" @onclick:preventDefault>@SelectedPortfolioPlan.Name
                 </a>
                 <ul class="dropdown-menu">
                     @foreach (var plan in PortfolioPlans.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
                     {
                         var isCurrent = string.Equals(plan.Id, SelectedPortfolioPlan.Id, StringComparison.Ordinal);
                         <li>
-                            <a class="dropdown-item @(isCurrent?"active":"")" href="#"
+                            <a class="dropdown-item @(isCurrent?"active":"")"
+                                href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_VIEW.Replace("{PlanId}", plan.Id, StringComparison.OrdinalIgnoreCase)"
                                 @onclick:preventDefault @onclick="()=>BtnClickOpenPlan(plan.Id)">
                                 @if (isCurrent)
                                 {
@@ -75,7 +76,9 @@
                         <AuthorizeView Policy="@PortfolioPolicies.POLICY_NAME_ADMIN_ROLE_OR_PORTFOLIO_MANAGER">
                             <ChildContent Context="ctx_edit_delete_portfolio_plan">
                                 <div class="float-end">
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</button>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                        href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", SelectedPortfolioPlan?.Id, StringComparison.OrdinalIgnoreCase)"
+                                        @onclick:preventDefault @onclick="BtnClickEdit"><BIcon icon="bi-pencil" extraClassName="me-1"/>Edit</a>
                                     <button class="btn btn-sm btn-outline-danger" @onclick="BtnClickDelete"><BIcon icon="bi-trash" extraClassName="me-1"/>Delete</button>
                                 </div>
                             </ChildContent>
@@ -145,7 +148,7 @@
                                                     type="button" role="tab" aria-controls="@(TabIdSpotlight)-content"
                                                     aria-selected="@(EffectiveAnalysisTab==TabIdSpotlight?"true":"false")">
                                                     🔦 Spotlight
-                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.SpotlightRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.RefreshUtcSpotlightAnalysis.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
                                                     <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdSpotlight)-content', 'Spotlight - @(SelectedPortfolioPlan.Name)')" title="Print">
                                                         <BIcon icon="bi-printer" />
                                                     </a>
@@ -158,7 +161,7 @@
                                                     type="button" role="tab" aria-controls="@(TabIdAnalysis)-content"
                                                     aria-selected="@(EffectiveAnalysisTab==TabIdAnalysis?"true":"false")">
                                                     📊 Analysis
-                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.RefreshUtcDeepAnalysis.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
                                                     <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdAnalysis)-content', 'Analysis - @(SelectedPortfolioPlan.Name)')" title="Print">
                                                         <BIcon icon="bi-printer" />
                                                     </a>
@@ -171,7 +174,7 @@
                                                     type="button" role="tab" aria-controls="@(TabIdRebalancePlan)-content"
                                                     aria-selected="@(EffectiveAnalysisTab==TabIdRebalancePlan?"true":"false")">
                                                     <BIcon icon="bi-arrow-left-right" extraClassName="me-1" />Rebalance Plan
-                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.AnalysisRefreshUTC.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
+                                                    <span class="text-muted xsmall">@(SelectedPortfolioPlan.Metadata.RefreshUtcDeepAnalysis.ToString("yyyy-MM-dd HH:mm")+" UTC")</span>
                                                     <a class="btn btn-outline-secondary btn-sm" onclick="PrintMarkdownContent('@(TabIdRebalancePlan)-content', 'Rebalance Plan - @(SelectedPortfolioPlan.Name)')" title="Print">
                                                         <BIcon icon="bi-printer" />
                                                     </a>
@@ -186,21 +189,30 @@
                                         {
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdSpotlight?"show active":"")"
                                                 id="@(TabIdSpotlight)-content" role="tabpanel" aria-labelledby="@TabIdSpotlight" tabindex="0">
-                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Spotlight)" />
+                                                @if (SelectedPortfolioPlan.Metadata.SpotlightAnalysis is { } spotlightAnalysis)
+                                                {
+                                                    <CPortfolioSpotlightAnalysis Analysis="spotlightAnalysis" />
+                                                }
                                             </div>
                                         }
                                         @if (HasAnalysis && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
                                         {
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdAnalysis?"show active":"")"
                                                 id="@(TabIdAnalysis)-content" role="tabpanel" aria-labelledby="@TabIdAnalysis" tabindex="0">
-                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.Analysis)" />
+                                                @if (SelectedPortfolioPlan.Metadata.DeepAnalysis is { } portfolioAnalysis)
+                                                {
+                                                    <CPortfolioAnalysis Analysis="portfolioAnalysis" />
+                                                }
                                             </div>
                                         }
                                         @if (HasRebalancePlan && SelectedPortfolioPlan is not null && SelectedPortfolioPlan.Metadata is not null)
                                         {
                                             <div class="tab-pane fade @(EffectiveAnalysisTab==TabIdRebalancePlan?"show active":"")"
                                                 id="@(TabIdRebalancePlan)-content" role="tabpanel" aria-labelledby="@TabIdRebalancePlan" tabindex="0">
-                                                <WidgetMarkdownViewer Content="@(SelectedPortfolioPlan.Metadata.RebalancePlan)" />
+                                                @if (SelectedPortfolioPlan.Metadata.DeepAnalysis is { } portfolioAnalysis)
+                                                {
+                                                    <CPortfolioRebalancePlan Analysis="portfolioAnalysis" />
+                                                }
                                             </div>
                                         }
                                     </div>

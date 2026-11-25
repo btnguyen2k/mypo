@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Ddth.Opurator;
+using FinHub.Client.Models.Stocks;
+using FinHub.Client.Models.Tickers;
+using FinHub.Client.Schemas.Stocks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MyPo.Blazor.App.Shared;
 using MyPo.Blazor.Portfolio.App.Shared;
-using MyPo.Libs.Opurator;
 using MyPo.Portfolio.Shared.Api;
 using MyPo.Portfolio.Shared.Models;
-using MyPo.Portfolio.Shared.Models.FinHub;
-using MyPo.Shared.Api;
 
 namespace MyPo.Blazor.Portfolio.App.Pages;
 
@@ -44,12 +45,12 @@ public sealed partial class StockSymbolInfo : BasePage
         ModalDialogAnalyzeSymbol.Open();
         ModalDialogAnalyzeSymbol.ShowAlert("info", alertMsg);
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
-        var req = new TickerAnalysisReq
-        {
-            Symbol = SymbolInfo.NormalizedSymbol,
-            PortfolioId = PortfolioId,
-            Intent = Intent,
-        };
+        // var req = new TickerAnalysisReq
+        // {
+        //     Symbol = SymbolInfo.NormalizedSymbol,
+        //     PortfolioId = PortfolioId,
+        //     Intent = Intent,
+        // };
         var stopFlag = false;
         var startTimestamp = DateTime.UtcNow;
         _ = Task.Run(async () =>
@@ -64,14 +65,15 @@ public sealed partial class StockSymbolInfo : BasePage
                 await Task.Delay(100);
             }
         });
-        var analysisResponse = await apiClient.AnalyzeTickerAsync(req, await GetAuthTokenAsync(), ApiBaseUrl);
+        var analysisResponse = await apiClient.AnalyzeTickerAsync(Symbol, PortfolioId, await GetAuthTokenAsync(), ApiBaseUrl);
         stopFlag = true;
         if (!analysisResponse.IsSuccess)
         {
             ModalDialogAnalyzeSymbol.ShowAlert("danger", analysisResponse.Message ?? "Error analyzing symbol.");
             return;
         }
-        TickerAnalysis = analysisResponse.Data;
+        // TODO
+        // TickerAnalysis = analysisResponse.Data;
         ModalDialogAnalyzeSymbol.CloseAlert();
     }
 
@@ -107,7 +109,7 @@ public sealed partial class StockSymbolInfo : BasePage
         base.Dispose(disposing);
     }
 
-    private async Task<ApiResp<SymbolInfo>> FetchSymbolInfo(string symbol)
+    private async Task<GetSymbolInfoResponse> FetchSymbolInfo(string symbol)
     {
         SetBackgroundMsg($"⌛Loading symbol info for {symbol}...");
         var apiClient = ServiceProvider.GetRequiredService<IPortfolioApiClient>();
@@ -154,8 +156,12 @@ public sealed partial class StockSymbolInfo : BasePage
             );
         }
 
-        var taskOperator = ServiceProvider.GetRequiredService<ITaskOperator>();
-        taskOperator.ExecuteInBackground(() => LoadSymbolInfoBackground(Symbol, RefreshBackgroundTaskId = Random.Shared.Next()));
+        var backgroundTaskManager = ServiceProvider.GetRequiredService<IBackgroundTaskManager>();
+        backgroundTaskManager.RunOnce(
+            async cancellationToken =>
+            {
+                LoadSymbolInfoBackground(Symbol, RefreshBackgroundTaskId = Random.Shared.Next());
+            });
 
         HideUI = false;
         CloseAlert();

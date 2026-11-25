@@ -2,7 +2,6 @@
 @using MyPo.Blazor.Portfolio.App.Shared
 @using MyPo.Blazor.Portfolio.App.Pages.Widgets
 @using MyPo.Blazor.App.Layout
-@using MyPo.Portfolio.Shared.Identity
 @using MyPo.Portfolio.Shared.Utils
 
 @attribute [Route(PortfolioUIGlobals.ROUTE_PORTFOLIO_STOCK_SYMBOL_INFO_EMPTY)]
@@ -305,12 +304,12 @@
                                                         : "--"
                                                     )</td>
                                                 <td class="col-4">MA10</td>
-                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice))">
-                                                    @((SymbolInfo.StockHistory?.MA10??0) > 0
-                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA10??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.Ma10, SymbolInfo.StockQuote?.MarketPrice))">
+                                                    @((SymbolInfo.StockHistory?.Ma10??0) > 0
+                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.Ma10??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                             + " ("
-                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
-                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA10, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma10, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma10, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                                 + ")"
                                                         : "--"
                                                     )</td>
@@ -322,12 +321,12 @@
                                                         : "--"
                                                     )</td>
                                                 <td class="col-4">MA20</td>
-                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice))">
-                                                    @((SymbolInfo.StockHistory?.MA20??0) > 0
-                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA20??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.Ma20, SymbolInfo.StockQuote?.MarketPrice))">
+                                                    @((SymbolInfo.StockHistory?.Ma20??0) > 0
+                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.Ma20??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                             + " ("
-                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
-                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA20, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma20, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma20, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                                 + ")"
                                                         : "--"
                                                     )</td>
@@ -339,12 +338,12 @@
                                                         : "--"
                                                     )</td>
                                                 <td class="col-4">MA50</td>
-                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice))">
-                                                    @((SymbolInfo.StockHistory?.MA50??0) > 0
-                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA50??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.Ma50, SymbolInfo.StockQuote?.MarketPrice))">
+                                                    @((SymbolInfo.StockHistory?.Ma50??0) > 0
+                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.Ma50??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                             + " ("
-                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
-                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA50, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma50, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma50, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                                 + ")"
                                                         : "--"
                                                     )</td>
@@ -356,12 +355,12 @@
                                                         : "--"
                                                     )</td>
                                                 <td class="col-4">MA100</td>
-                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice))">
-                                                    @((SymbolInfo.StockHistory?.MA100??0) > 0
-                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA100??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.Ma100, SymbolInfo.StockQuote?.MarketPrice))">
+                                                    @((SymbolInfo.StockHistory?.Ma100??0) > 0
+                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.Ma100??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                             + " ("
-                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
-                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA100, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma100, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma100, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                                 + ")"
                                                         : "--"
                                                     )</td>
@@ -373,12 +372,12 @@
                                                         : "--"
                                                     )</td>
                                                 <td class="col-4">MA200</td>
-                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice))">
-                                                    @((SymbolInfo.StockHistory?.MA200??0) > 0
-                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.MA200??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                <td class="col-2 text-end fw-semibold @(PortfolioUtils.BootstrapCssClassForDelta(SymbolInfo.StockHistory?.Ma200, SymbolInfo.StockQuote?.MarketPrice))">
+                                                    @((SymbolInfo.StockHistory?.Ma200??0) > 0
+                                                        ? FormatUtils.FormatRawValueWithScale(SymbolInfo.StockHistory?.Ma200??0, Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                             + " ("
-                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
-                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.MA200, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
+                                                                + (PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma200, SymbolInfo.StockQuote?.MarketPrice)>=0?"+":"")
+                                                                + FormatUtils.FormatRawValueWithScale(PortfolioUtils.Delta(SymbolInfo.StockHistory?.Ma200, SymbolInfo.StockQuote?.MarketPrice), Market?.PriceScale??0, Market?.ValueFormat??"N2")
                                                                 + ")"
                                                         : "--"
                                                     )</td>
@@ -391,8 +390,8 @@
                                                     )</td>
                                                 <td class="col-4">RSI-14</td>
                                                 <td class="col-2 text-end fw-semibold">
-                                                    @((SymbolInfo.StockHistory?.RSI14??0) > 0
-                                                        ? SymbolInfo.StockHistory?.RSI14.ToString("N2")
+                                                    @((SymbolInfo.StockHistory?.Rsi14??0) > 0
+                                                        ? SymbolInfo.StockHistory?.Rsi14.ToString("N2")
                                                         : "--"
                                                     )</td>
                                             </tr>
@@ -423,7 +422,7 @@
                     <CAlert @ref="@ModalDialogAnalyzeSymbol.Alert" />
                     @if (TickerAnalysis is not null)
                     {
-                        <WidgetMarkdownViewer Content="@TickerAnalysis.Analysis" />
+                        @* <WidgetMarkdownViewer Content="@TickerAnalysis.Analysis" /> *@
                     }
                 </div>
                 @if (TickerAnalysis is not null)

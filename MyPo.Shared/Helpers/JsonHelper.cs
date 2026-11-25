@@ -16,6 +16,11 @@ public static class JsonHelper
 			return null;
 		}
 	}
+
+    public static string SafeLogValue(string? value)
+    {
+        return JsonSerializer.Serialize(value);
+    }
 }
 
 public sealed class DefaultDecimalConverter : JsonConverter<decimal>

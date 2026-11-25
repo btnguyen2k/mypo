@@ -10,7 +10,7 @@
 
 <SectionContent SectionId="MainLayout.Breadcrumb">
     <li class="breadcrumb-item">
-        <a href="@UIGlobals.ROUTE_HOME">Home</a>
+        <NavLink href="@UIGlobals.ROUTE_HOME">Home</NavLink>
     </li>
     <li class="breadcrumb-item active">
         <span>@PAGE_TITLE</span>
@@ -86,9 +86,19 @@
                                                             <BIcon icon="bi-three-dots-vertical" />
                                                         </button>
                                                         <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li><a class="dropdown-item" href="#" @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-pencil" extraClassName="me-2" />Edit</a></li>
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                    href="@PortfolioUIGlobals.ROUTE_PORTFOLIO_MY_PORTFOLIO_PLANS_EDIT.Replace("{PlanId}", plan.Id, StringComparison.OrdinalIgnoreCase)"
+                                                                    @onclick="()=>BtnClickEditPlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault>
+                                                                    <BIcon icon="bi-pencil" extraClassName="me-2" />Edit
+                                                                </a>
+                                                            </li>
                                                             <li><hr class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault><BIcon icon="bi-trash" extraClassName="me-2" />Delete</a></li>
+                                                            <li>
+                                                                <a class="dropdown-item text-danger" href="#" @onclick="()=>BtnClickDeletePlan(plan.Id)" @onclick:stopPropagation @onclick:preventDefault>
+                                                                    <BIcon icon="bi-trash" extraClassName="me-2" />Delete
+                                                                </a>
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                 </div>
